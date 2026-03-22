@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#060D18">
+<title>EY CREAS · Campo App</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+:root{
+  --bg:#060D18;--s1:#0A1420;--s2:#0E1A2A;--s3:#111C2E;
+  --b0:#1A2E42;--b1:#1E3650;--b2:#243C5C;
+  --or:#FF5500;--cy:#00C8F0;--gr:#10D858;
+  --re:#E02020;--ye:#F0A000;--wa:#25D366;--tg:#2AABEE;
+  --t0:#E8F4FF;--t1:#7AAAC8;--t2:#3A607A;
+  --nav-h:66px;--top-h:56px;
+  --font:'Space Grotesk',sans-serif;
+  --mono:'JetBrains Mono',monospace;
+}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--t0);font-family:var(--font);}
+.topbar{position:fixed;top:0;left:0;right:0;height:var(--top-h);z-index:100;background:rgba(6,13,24,.95);backdrop-filter:blur(16px);border-bottom:1px solid var(--b0);display:flex;align-items:center;padding:0 16px;gap:12px;}
+.top-logo{width:32px;height:32px;background:var(--or);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:#fff;flex-shrink:0;letter-spacing:-.5px;}
+.top-title{font-size:15px;font-weight:700;flex:1;letter-spacing:-.3px;}
+.top-subtitle{font-size:9px;font-family:var(--mono);color:var(--t2);letter-spacing:.5px;}
+.top-badge{display:flex;align-items:center;gap:5px;background:rgba(16,216,88,.08);border:1px solid rgba(16,216,88,.25);border-radius:20px;padding:4px 10px;font-size:10px;font-family:var(--mono);color:var(--gr);}
+.top-badge-dot{width:6px;height:6px;border-radius:50%;background:var(--gr);animation:pulse 1.5s ease infinite;}
+.alert-fab{width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.05);border:1px solid var(--b1);display:flex;align-items:center;justify-content:center;font-size:15px;cursor:pointer;position:relative;flex-shrink:0;}
+.alert-count{position:absolute;top:-4px;right:-4px;background:var(--re);color:#fff;width:15px;height:15px;border-radius:50%;font-size:8px;font-weight:800;display:none;align-items:center;justify-content:center;}
+.demo-bar{background:linear-gradient(90deg,rgba(255,85,0,.15),rgba(220,0,85,.15));border-bottom:1px solid rgba(255,85,0,.2);padding:5px 16px;font-size:9px;font-family:var(--mono);color:rgba(255,100,50,.8);letter-spacing:1px;text-align:center;font-weight:700;}
+.screens{position:fixed;top:var(--top-h);left:0;right:0;bottom:var(--nav-h);overflow:hidden;}
+.screen{position:absolute;inset:0;overflow-y:auto;display:none;background:var(--bg);}
+.screen.active{display:block;}
+.screen::-webkit-scrollbar{width:3px;}.screen::-webkit-scrollbar-thumb{background:var(--b1);}
+.flex-screen{display:none;flex-direction:column;}
+.flex-screen.active{display:flex;}
+.nav{position:fixed;bottom:0;left:0;right:0;height:var(--nav-h);background:rgba(6,13,24,.97);backdrop-filter:blur(20px);border-top:1px solid var(--b0);display:flex;z-index:100;}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:8px 4px;cursor:pointer;transition:all .15s;position:relative;}
+.nav-icon{font-size:22px;transition:transform .15s;}
+.nav-label{font-size:9px;font-family:var(--mono);color:var(--t2);letter-spacing:.5px;transition:color .15s;}
+.nav-item.active .nav-label{color:var(--or);}
+.nav-item.active .nav-icon{transform:scale(1.1);}
+.nav-item.active::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:32px;height:2px;background:var(--or);border-radius:0 0 2px 2px;}
+.nav-notif{position:absolute;top:6px;right:calc(50% - 18px);width:8px;height:8px;border-radius:50%;background:var(--re);display:none;border:2px solid var(--bg);}
+.nav-notif.show{display:block;}
+.sec-title{font-size:9px;font-family:var(--mono);color:var(--t2);letter-spacing:2px;margin:16px 0 8px;font-weight:500;}
+.card{background:var(--s2);border:1px solid var(--b0);border-radius:12px;padding:14px;margin-bottom:10px;}
+.kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;}
+.kpi-tile{background:var(--s3);border:1px solid var(--b0);border-radius:10px;padding:12px;}
+.kpi-val{font-size:24px;font-weight:700;font-family:var(--mono);letter-spacing:-1px;}
+.kpi-val.ok{color:var(--gr);}.kpi-val.warn{color:var(--ye);}.kpi-val.al{color:var(--re);animation:bk .7s infinite;}
+.kpi-label{font-size:9px;font-family:var(--mono);color:var(--t2);margin-top:3px;letter-spacing:.5px;}
+.row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.05);}
+.row:last-child{border-bottom:none;}
+.rk{font-size:11px;color:var(--t2);font-family:var(--mono);}
+.rv{font-size:11px;font-weight:600;}.rv.ok{color:var(--gr);}.rv.warn{color:var(--ye);}.rv.al{color:var(--re);}
+.btn{width:100%;padding:14px;border:none;border-radius:10px;font-size:14px;font-weight:700;font-family:var(--font);cursor:pointer;transition:all .15s;}
+.btn.primary{background:var(--or);color:#fff;}.btn.primary:active{opacity:.85;}
+.btn.ghost{background:transparent;border:1px solid var(--b1);color:var(--t1);}
+.btn.green{background:var(--gr);color:#000;}
+.section-hdr{font-size:18px;font-weight:700;margin-bottom:4px;letter-spacing:-.5px;}
+@keyframes bk{0%,100%{opacity:1}50%{opacity:.4}}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
+@keyframes scanline{0%{top:10%}100%{top:90%}}
+
+/* HOME */
+#s-home{padding:12px 16px;}
+.farm-hero{background:linear-gradient(135deg,var(--s2),var(--s3));border:1px solid var(--b0);border-radius:16px;padding:16px;margin-bottom:14px;position:relative;overflow:hidden;}
+.farm-hero::before{content:'';position:absolute;top:-20px;right:-20px;width:100px;height:100px;border-radius:50%;background:radial-gradient(circle,rgba(255,85,0,.1),transparent 70%);}
+.farm-hero-title{font-size:12px;font-family:var(--mono);color:var(--t2);letter-spacing:1.5px;margin-bottom:4px;}
+.farm-hero-name{font-size:20px;font-weight:700;letter-spacing:-.5px;margin-bottom:2px;}
+.farm-hero-sub{font-size:11px;color:var(--t1);font-family:var(--mono);}
+.farm-hero-iot{display:flex;align-items:center;gap:6px;margin-top:10px;padding-top:10px;border-top:1px solid var(--b0);font-size:10px;font-family:var(--mono);color:var(--gr);}
+.activity-item{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.04);}
+.activity-item:last-child{border-bottom:none;}
+.activity-icon{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+.activity-title{font-size:13px;font-weight:600;margin-bottom:2px;}
+.activity-sub{font-size:10px;font-family:var(--mono);color:var(--t2);}
+.activity-time{font-size:9px;font-family:var(--mono);color:var(--t2);white-space:nowrap;}
+
+/* QR */
+.qr-viewfinder{position:relative;flex:0 0 auto;background:#000;overflow:hidden;aspect-ratio:1;width:100%;max-height:56vw;}
+.qr-video-bg{width:100%;height:100%;background:linear-gradient(135deg,#0a1420,#081018);display:flex;align-items:center;justify-content:center;font-size:48px;position:relative;overflow:hidden;}
+.qr-corner{position:absolute;width:48px;height:48px;border-color:var(--or);border-style:solid;border-width:0;}
+.qr-corner.tl{top:20px;left:20px;border-top-width:3px;border-left-width:3px;border-radius:6px 0 0 0;}
+.qr-corner.tr{top:20px;right:20px;border-top-width:3px;border-right-width:3px;border-radius:0 6px 0 0;}
+.qr-corner.bl{bottom:20px;left:20px;border-bottom-width:3px;border-left-width:3px;border-radius:0 0 0 6px;}
+.qr-corner.br{bottom:20px;right:20px;border-bottom-width:3px;border-right-width:3px;border-radius:0 0 6px 0;}
+.qr-scanline{position:absolute;left:20px;right:20px;height:2px;background:linear-gradient(90deg,transparent,var(--or),transparent);animation:scanline 2s ease-in-out infinite alternate;box-shadow:0 0 10px var(--or);}
+.qr-status{position:absolute;bottom:12px;left:0;right:0;text-align:center;font-size:11px;font-family:var(--mono);color:rgba(255,255,255,.6);}
+.qr-assets-list{flex:1;overflow-y:auto;padding:14px 16px;}
+.qr-asset-row{display:flex;align-items:center;gap:12px;padding:12px;background:var(--s2);border:1px solid var(--b0);border-radius:10px;margin-bottom:8px;cursor:pointer;transition:all .15s;}
+.qr-asset-row:active{background:rgba(255,85,0,.08);border-color:rgba(255,85,0,.3);}
+.qr-asset-icon{width:40px;height:40px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+.qr-asset-id{font-size:10px;font-family:var(--mono);color:var(--cy);margin-bottom:2px;}
+.qr-asset-name{font-size:13px;font-weight:600;margin-bottom:2px;}
+.qr-asset-tax{font-size:10px;color:var(--t2);}
+.qr-scan-btn{padding:14px 20px;background:var(--or);color:#fff;border:none;font-size:14px;font-weight:700;font-family:var(--font);cursor:pointer;transition:all .15s;}
+
+/* MACHINE DETAIL */
+.mdet-back{display:flex;align-items:center;gap:8px;padding:12px 16px;font-size:14px;font-weight:600;cursor:pointer;color:var(--cy);background:var(--s1);border-bottom:1px solid var(--b0);flex-shrink:0;}
+.mdet-body-wrap{flex:1;overflow-y:auto;padding:14px 16px;}
+.mdet-hero{background:linear-gradient(135deg,var(--s2),var(--s3));border:1px solid var(--b0);border-radius:14px;padding:16px;margin-bottom:12px;}
+.mdet-qr-row{display:flex;gap:12px;align-items:flex-start;}
+.mdet-id{font-size:10px;font-family:var(--mono);color:var(--cy);margin-bottom:3px;}
+.mdet-name{font-size:15px;font-weight:700;margin-bottom:6px;letter-spacing:-.3px;}
+.tax-chain{display:flex;flex-direction:column;gap:2px;}
+.tax-item{display:flex;align-items:center;gap:5px;font-size:10px;}
+.tax-level{font-family:var(--mono);color:var(--t2);min-width:44px;}.tax-sep{color:var(--b2);font-size:10px;}.tax-val{color:var(--t1);font-weight:500;}
+.mdet-iot-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;}
+.mdet-iot-kpi{background:var(--s3);border:1px solid var(--b0);border-radius:10px;padding:12px;}
+.mdet-iot-val{font-size:20px;font-weight:700;font-family:var(--mono);}
+.mdet-iot-val.ok{color:var(--gr);}.mdet-iot-val.warn{color:var(--ye);}.mdet-iot-val.al{color:var(--re);animation:bk .7s infinite;}
+.mdet-iot-label{font-size:9px;font-family:var(--mono);color:var(--t2);margin-top:2px;}
+.mdet-iot-bar{height:3px;background:rgba(255,255,255,.06);border-radius:2px;margin-top:5px;overflow:hidden;}
+.mdet-iot-fill{height:100%;border-radius:2px;transition:width .5s;}
+.mdet-iot-fill.ok{background:var(--gr);}.mdet-iot-fill.warn{background:var(--ye);}.mdet-iot-fill.al{background:var(--re);}
+.mdet-sap-row{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
+.mdet-sap-badge{display:flex;align-items:center;gap:5px;padding:6px 10px;border-radius:7px;font-size:10px;font-family:var(--mono);font-weight:700;}
+.mdet-sap-badge.sap{background:rgba(10,110,209,.12);border:1px solid rgba(10,110,209,.25);color:#4A9EE0;}
+.mdet-sap-badge.tandem{background:rgba(6,150,215,.12);border:1px solid rgba(6,150,215,.25);color:#0696d7;}
+.mdet-action-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;}
+.mdet-action-btn{padding:12px 8px;border-radius:10px;border:1px solid;font-size:12px;font-weight:700;font-family:var(--font);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;transition:all .15s;}
+.mdet-action-btn:active{opacity:.75;}
+.mdet-action-btn.pm{border-color:rgba(255,85,0,.3);background:rgba(255,85,0,.08);color:#FF7040;}
+.mdet-action-btn.wa{border-color:rgba(37,211,102,.3);background:rgba(37,211,102,.08);color:var(--wa);}
+.mdet-action-btn.sap{border-color:rgba(10,110,209,.3);background:rgba(10,110,209,.08);color:#4A9EE0;}
+.mdet-action-btn.qr-act{border-color:rgba(0,200,240,.3);background:rgba(0,200,240,.08);color:var(--cy);}
+.mdet-action-icon{font-size:22px;}
+
+/* ALERTS */
+#s-alerts{padding:12px 16px;}
+.alrt-card{background:var(--s2);border-radius:12px;overflow:hidden;margin-bottom:10px;border:1px solid;transition:all .2s;}
+.alrt-card.active{border-color:rgba(224,32,32,.4);}
+.alrt-card.inactive{border-color:var(--b0);}
+.alrt-card-hdr{padding:12px 14px;display:flex;align-items:center;gap:10px;cursor:pointer;}
+.alrt-card.active .alrt-card-hdr{background:rgba(224,32,32,.06);}
+.alrt-pulse{width:8px;height:8px;border-radius:50%;background:var(--re);animation:bk .6s infinite;flex-shrink:0;}
+.alrt-pulse.off{background:var(--t2);animation:none;}
+.alrt-card-title{font-size:13px;font-weight:700;flex:1;}
+.alrt-card-val{font-size:12px;font-family:var(--mono);font-weight:700;}
+.alrt-card-val.al{color:var(--re);}.alrt-card-val.ok{color:var(--t2);}
+.alrt-card-body{padding:0 14px 14px;display:none;}
+.alrt-card.open .alrt-card-body{display:block;}
+.alrt-impact{background:rgba(224,32,32,.06);border-radius:8px;padding:10px;font-size:11px;color:rgba(255,255,255,.7);line-height:1.6;margin-bottom:10px;}
+.alrt-btn-row{display:flex;gap:8px;}
+.alrt-btn{flex:1;padding:10px;border-radius:8px;border:1px solid;font-size:12px;font-weight:700;font-family:var(--font);cursor:pointer;transition:all .15s;text-align:center;}
+.alrt-btn:active{opacity:.75;}
+.alrt-btn.wa{border-color:rgba(37,211,102,.4);background:rgba(37,211,102,.1);color:var(--wa);}
+.alrt-btn.resolve{border-color:rgba(16,216,88,.4);background:rgba(16,216,88,.1);color:var(--gr);}
+.alrt-btn.escalate{border-color:rgba(240,160,0,.3);background:rgba(240,160,0,.08);color:var(--ye);}
+
+/* RONDA */
+#s-ronda{padding:12px 16px 30px;}
+.ronda-progress{background:var(--s2);border:1px solid var(--b0);border-radius:12px;padding:14px;margin-bottom:14px;}
+.ronda-prog-bar-wrap{background:rgba(255,255,255,.06);border-radius:4px;height:6px;margin:8px 0 4px;}
+.ronda-prog-bar{height:6px;border-radius:4px;background:var(--or);transition:width .4s;}
+.ronda-section-title{font-size:11px;font-family:var(--mono);color:var(--cy);letter-spacing:1.5px;margin-bottom:10px;font-weight:700;display:flex;align-items:center;gap:8px;}
+.ronda-section-title::after{content:'';flex:1;height:1px;background:var(--b0);}
+.field-row{margin-bottom:10px;}
+.field-label{font-size:11px;font-family:var(--mono);color:var(--t2);margin-bottom:5px;letter-spacing:.3px;}
+.field-input{width:100%;background:var(--s2);border:1px solid var(--b1);border-radius:8px;padding:11px 14px;font-size:15px;font-family:var(--font);color:var(--t0);outline:none;transition:border-color .15s;-webkit-appearance:none;}
+.field-input:focus{border-color:var(--cy);}
+.field-input.highlight{border-color:rgba(224,32,32,.5);background:rgba(224,32,32,.04);}
+.field-row-2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.input-unit{position:relative;}
+.input-unit .field-input{padding-right:40px;}
+.input-unit-label{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:11px;font-family:var(--mono);color:var(--t2);pointer-events:none;}
+.ronda-obs{width:100%;min-height:80px;background:var(--s2);border:1px solid var(--b1);border-radius:8px;padding:11px 14px;font-size:14px;font-family:var(--font);color:var(--t0);outline:none;resize:vertical;transition:border-color .15s;}
+.ronda-obs:focus{border-color:var(--cy);}
+.ronda-submit-area{background:var(--s1);border-top:1px solid var(--b0);padding:14px 16px;position:sticky;bottom:0;margin:-12px -16px 0;}
+.caseta-row{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;margin-bottom:12px;}
+.caseta-row::-webkit-scrollbar{height:0;}
+.caseta-chip{flex-shrink:0;padding:6px 14px;border-radius:20px;font-size:11px;font-family:var(--mono);font-weight:700;cursor:pointer;border:1px solid var(--b1);color:var(--t2);background:var(--s2);transition:all .15s;}
+.caseta-chip.active{background:rgba(255,85,0,.12);border-color:rgba(255,85,0,.4);color:var(--or);}
+.success-overlay{position:fixed;inset:0;z-index:500;background:rgba(6,13,24,.95);display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px;}
+.success-overlay.show{display:flex;}
+.success-sap{background:rgba(10,110,209,.1);border:1px solid rgba(10,110,209,.25);border-radius:10px;padding:12px 16px;text-align:center;width:85%;font-size:11px;font-family:var(--mono);color:#4A9EE0;line-height:1.8;}
+
+/* CHAT */
+.chat-tabs{display:flex;flex-shrink:0;border-bottom:1px solid var(--b0);background:var(--s1);}
+.chat-tab{flex:1;padding:12px 8px;text-align:center;font-size:10px;font-family:var(--mono);color:var(--t2);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;letter-spacing:.5px;font-weight:700;}
+.chat-tab.aw{color:var(--wa);border-bottom-color:var(--wa);}
+.chat-tab.at{color:var(--tg);border-bottom-color:var(--tg);}
+.chat-tab.ah{color:var(--cy);border-bottom-color:var(--cy);}
+.chat-header{flex-shrink:0;padding:10px 14px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--b0);}
+.chat-avatar{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+.chat-online{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--gr);}
+.chat-online-dot{width:6px;height:6px;border-radius:50%;background:var(--gr);animation:pulse 1.5s infinite;}
+.chat-messages{flex:1;overflow-y:auto;padding:12px 14px;}
+.chat-messages::-webkit-scrollbar{width:3px;}.chat-messages::-webkit-scrollbar-thumb{background:var(--b1);}
+.msg{display:flex;margin-bottom:8px;}
+.msg.out{justify-content:flex-end;}
+.msg-bubble{max-width:82%;padding:9px 12px;border-radius:12px;font-size:13px;font-family:var(--font);line-height:1.5;}
+.msg.in .msg-bubble{background:var(--s2);color:var(--t0);border-bottom-left-radius:4px;}
+.msg.out .msg-bubble{background:#005C4B;color:#fff;border-bottom-right-radius:4px;}
+.msg.out.tg .msg-bubble{background:#2B5278;}
+.msg-time{font-size:9px;color:rgba(255,255,255,.35);margin-top:3px;text-align:right;font-family:var(--mono);}
+.quick-replies{display:flex;flex-wrap:wrap;gap:6px;padding:8px 14px;}
+.quick-reply{padding:7px 14px;border-radius:20px;background:rgba(255,255,255,.05);border:1px solid var(--b1);font-size:12px;font-family:var(--font);color:var(--t1);cursor:pointer;transition:all .15s;}
+.quick-reply:active{background:rgba(255,255,255,.12);}
+.chat-input-area{flex-shrink:0;padding:10px 14px;background:var(--s1);border-top:1px solid var(--b0);display:flex;gap:8px;align-items:flex-end;}
+.chat-input{flex:1;background:var(--s2);border:1px solid var(--b1);border-radius:20px;padding:9px 14px;font-size:14px;font-family:var(--font);color:var(--t0);outline:none;max-height:80px;overflow-y:auto;transition:border-color .15s;}
+.chat-input:focus{border-color:var(--cy);}
+.chat-send{width:40px;height:40px;border-radius:50%;border:none;display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;flex-shrink:0;transition:all .15s;}
+.chat-send.wa{background:var(--wa);}.chat-send.tg{background:var(--tg);}
+.chat-send:active{opacity:.75;transform:scale(.9);}
+.hist-item{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.05);}
+.hist-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;}
+.hist-title{font-size:13px;font-weight:600;margin-bottom:2px;}
+.hist-sub{font-size:10px;font-family:var(--mono);color:var(--t2);}
+.hist-time{font-size:9px;font-family:var(--mono);color:var(--t2);white-space:nowrap;}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="top-logo">EY</div>
+  <div><div class="top-title">Campo App</div><div class="top-subtitle">DIGITAL TWIN · GRANJA DEMO</div></div>
+  <div class="top-badge"><div class="top-badge-dot"></div>IoT Activo</div>
+  <div class="alert-fab" id="alert-fab" onclick="goScreen('alerts')">🔔<div class="alert-count" id="alert-count"></div></div>
+</div>
+<div class="demo-bar">⚠ DEMO — DATOS SIMULADOS · EY CREAS Capital Projects, Risk, Engineering, Analytics &amp; Solutions</div>
+
+<div class="screens">
+  <!-- HOME -->
+  <div class="screen active" id="s-home">
+    <div style="padding:12px 16px;">
+      <div class="farm-hero">
+        <div class="farm-hero-title">GRANJA DEMO — SON-03</div>
+        <div class="farm-hero-name">Demo Sector Avícola</div>
+        <div class="farm-hero-sub">178,000 aves · 14 sensores IoT activos</div>
+        <div class="farm-hero-iot"><div class="top-badge-dot"></div>Conectado · Tandem sync 30s · SAP S/4HANA</div>
+      </div>
+      <div class="kpi-grid">
+        <div class="kpi-tile"><div class="kpi-val ok" id="h-postura">82.1%</div><div class="kpi-label">POSTURA HOY</div></div>
+        <div class="kpi-tile"><div class="kpi-val ok">2.41</div><div class="kpi-label">FCR ACUM.</div></div>
+        <div class="kpi-tile"><div class="kpi-val ok" id="h-mort">14</div><div class="kpi-label">MORT./DÍA</div></div>
+        <div class="kpi-tile"><div class="kpi-val ok" id="h-temp">25.1°C</div><div class="kpi-label">TEMP CASETA</div></div>
+      </div>
+      <div class="sec-title">ESTADO MÓDULOS SAP</div>
+      <div class="card">
+        <div class="row"><span class="rk">SAP PP — Producción</span><span class="rv ok">● OK</span></div>
+        <div class="row"><span class="rk">SAP PM — Mantto.</span><span class="rv ok" id="h-sap-pm">● OK</span></div>
+        <div class="row"><span class="rk">SAP MM — Materiales</span><span class="rv ok">● OK</span></div>
+        <div class="row"><span class="rk">Autodesk Tandem</span><span class="rv ok">● LIVE</span></div>
+        <div class="row"><span class="rk">Gateway WISE-5580</span><span class="rv ok">● Online</span></div>
+      </div>
+      <div class="sec-title">ACTIVIDAD RECIENTE</div>
+      <div class="card" style="padding:8px 14px;"><div id="activity-feed"></div></div>
+      <div style="display:flex;gap:8px;margin-top:4px;margin-bottom:80px;">
+        <button class="btn ghost" style="font-size:13px;" onclick="goScreen('qr')">🔲 Escanear QR</button>
+        <button class="btn primary" style="font-size:13px;" onclick="goScreen('ronda')">📋 Iniciar Ronda</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- QR -->
+  <div class="screen flex-screen" id="s-qr" style="display:none;">
+    <div class="qr-viewfinder">
+      <div class="qr-video-bg">
+        <div class="qr-corner tl"></div><div class="qr-corner tr"></div>
+        <div class="qr-corner bl"></div><div class="qr-corner br"></div>
+        <div class="qr-scanline"></div>
+        <div style="font-size:40px;opacity:.15;">📷</div>
+        <div class="qr-status" id="qr-status">Apunta al código QR del equipo</div>
+      </div>
+    </div>
+    <button class="qr-scan-btn" onclick="simulateScan()">📷 Simular Escaneo de QR</button>
+    <div class="qr-assets-list">
+      <div class="sec-title" style="margin-top:0">O SELECCIONA UN EQUIPO</div>
+      <div id="qr-asset-list"></div>
+    </div>
+  </div>
+
+  <!-- MACHINE DETAIL -->
+  <div class="screen flex-screen" id="s-machine" style="display:none;">
+    <div class="mdet-back" onclick="goBack()"><span style="font-size:18px">‹</span> Volver</div>
+    <div class="mdet-body-wrap" id="mdet-body"></div>
+  </div>
+
+  <!-- ALERTS -->
+  <div class="screen" id="s-alerts">
+    <div style="padding:12px 16px;">
+      <div class="section-hdr">Centro de Alertas</div>
+      <div style="font-size:12px;color:var(--t2);font-family:var(--mono);margin-bottom:14px;">Granja Demo SON-03 · Toca para activar / desactivar</div>
+      <div id="alerts-list"></div>
+    </div>
+  </div>
+
+  <!-- RONDA -->
+  <div class="screen" id="s-ronda">
+    <div style="padding:12px 16px 30px;">
+      <div class="section-hdr">Ronda de Campo</div>
+      <div style="font-size:11px;color:var(--t2);font-family:var(--mono);margin:4px 0 14px;">Captura sin papel · datos a SAP en tiempo real</div>
+      <div class="ronda-progress">
+        <div style="display:flex;justify-content:space-between;font-size:11px;font-family:var(--mono);">
+          <span style="color:var(--t2)">PROGRESO</span><span id="ronda-pct" style="color:var(--or)">0%</span>
+        </div>
+        <div class="ronda-prog-bar-wrap"><div class="ronda-prog-bar" id="ronda-bar" style="width:0%"></div></div>
+        <div style="font-size:10px;color:var(--t2);font-family:var(--mono);">Caseta activa: <span id="ronda-caseta-label" style="color:var(--cy)">PP-01</span></div>
+      </div>
+      <div class="caseta-row" id="caseta-row"></div>
+      <div style="margin-bottom:14px;">
+        <div class="ronda-section-title">🐓 AVES</div>
+        <div class="field-row-2">
+          <div class="field-row"><div class="field-label">MUERTAS HOY</div><div class="input-unit"><input class="field-input" id="r-mort" type="number" placeholder="0" oninput="calcProgress()"><span class="input-unit-label">aves</span></div></div>
+          <div class="field-row"><div class="field-label">INCUBABLES</div><div class="input-unit"><input class="field-input" id="r-inc" type="number" placeholder="0" oninput="calcProgress()"><span class="input-unit-label">u</span></div></div>
+        </div>
+        <div class="field-row-2">
+          <div class="field-row"><div class="field-label">ROTOS</div><div class="input-unit"><input class="field-input" id="r-rot" type="number" placeholder="0" oninput="calcProgress()"><span class="input-unit-label">u</span></div></div>
+          <div class="field-row"><div class="field-label">SUCIOS</div><div class="input-unit"><input class="field-input" id="r-suc" type="number" placeholder="0" oninput="calcProgress()"><span class="input-unit-label">u</span></div></div>
+        </div>
+      </div>
+      <div style="margin-bottom:14px;">
+        <div class="ronda-section-title">🌡️ AMBIENTE</div>
+        <div class="field-row-2">
+          <div class="field-row"><div class="field-label">TEMPERATURA</div><div class="input-unit"><input class="field-input" id="r-temp" type="number" step="0.1" placeholder="25.1" oninput="checkT();calcProgress()"><span class="input-unit-label">°C</span></div></div>
+          <div class="field-row"><div class="field-label">HUMEDAD</div><div class="input-unit"><input class="field-input" id="r-hr" type="number" placeholder="65" oninput="calcProgress()"><span class="input-unit-label">%</span></div></div>
+        </div>
+      </div>
+      <div style="margin-bottom:14px;">
+        <div class="ronda-section-title">🍽️ CONSUMOS</div>
+        <div class="field-row-2">
+          <div class="field-row"><div class="field-label">ALIMENTO</div><div class="input-unit"><input class="field-input" id="r-ali" type="number" step="0.1" placeholder="8.7" oninput="calcProgress()"><span class="input-unit-label">t</span></div></div>
+          <div class="field-row"><div class="field-label">AGUA</div><div class="input-unit"><input class="field-input" id="r-agua" type="number" placeholder="4200" oninput="calcProgress()"><span class="input-unit-label">L</span></div></div>
+        </div>
+      </div>
+      <div style="margin-bottom:80px;">
+        <div class="ronda-section-title">📝 OBSERVACIONES</div>
+        <textarea class="ronda-obs" id="r-obs" placeholder="Ej: comportamiento inusual, equipos, bebederos..." oninput="calcProgress()"></textarea>
+      </div>
+      <div class="ronda-submit-area">
+        <button class="btn primary" onclick="submitRonda()">✓ Enviar a SAP PP + MM</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHAT -->
+  <div class="screen flex-screen" id="s-chat" style="display:none;">
+    <div class="chat-tabs">
+      <div class="chat-tab aw" id="ctab-wa" onclick="setCT('wa')">📱 WhatsApp</div>
+      <div class="chat-tab" id="ctab-tg" onclick="setCT('tg')">✈️ Telegram</div>
+      <div class="chat-tab" id="ctab-hist" onclick="setCT('hist')">📋 Historial</div>
+    </div>
+    <!-- WA -->
+    <div id="cp-wa" style="flex:1;display:flex;flex-direction:column;min-height:0;">
+      <div class="chat-header">
+        <div class="chat-avatar" style="background:#128C7E;">👨‍🌾</div>
+        <div style="flex:1;"><div style="font-size:13px;font-weight:700;">EY CREAS · Bot Granja</div><div class="chat-online"><div class="chat-online-dot"></div>en línea</div></div>
+        <button onclick="openWA()" style="background:var(--wa);border:none;color:#fff;padding:7px 12px;border-radius:8px;font-size:12px;font-weight:700;font-family:var(--font);cursor:pointer;">Abrir WA →</button>
+      </div>
+      <div class="chat-messages" id="wa-msgs"></div>
+      <div id="wa-quick" class="quick-replies"></div>
+      <div class="chat-input-area">
+        <input class="chat-input" id="wa-input" placeholder="/status /alerta /ronda /help" style="border-radius:20px;padding:9px 14px;">
+        <button class="chat-send wa" onclick="sendWA()">➤</button>
+      </div>
+    </div>
+    <!-- TG -->
+    <div id="cp-tg" style="flex:1;display:none;flex-direction:column;min-height:0;">
+      <div class="chat-header">
+        <div class="chat-avatar" style="background:#2AABEE;">🤖</div>
+        <div style="flex:1;"><div style="font-size:13px;font-weight:700;">@EYCREASDTBot</div><div style="font-size:10px;color:var(--t2);font-family:var(--mono);">Bot Telegram · IA integrada</div></div>
+      </div>
+      <div class="chat-messages" id="tg-msgs"></div>
+      <div id="tg-quick" class="quick-replies"></div>
+      <div class="chat-input-area">
+        <input class="chat-input" id="tg-input" placeholder="/start /status /alertas /resolve" style="border-radius:20px;padding:9px 14px;">
+        <button class="chat-send tg" onclick="sendTG()">➤</button>
+      </div>
+    </div>
+    <!-- HIST -->
+    <div id="cp-hist" style="flex:1;display:none;overflow-y:auto;padding:12px 16px;">
+      <div class="sec-title" style="margin-top:0">HISTORIAL DE NOTIFICACIONES</div>
+      <div id="hist-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-item active" id="nav-home" onclick="goScreen('home')"><div class="nav-icon">🏠</div><div class="nav-label">INICIO</div></div>
+  <div class="nav-item" id="nav-qr" onclick="goScreen('qr')"><div class="nav-icon">🔲</div><div class="nav-label">QR</div></div>
+  <div class="nav-item" id="nav-alerts" onclick="goScreen('alerts')"><div class="nav-icon">🚨</div><div class="nav-label">ALERTAS</div><div class="nav-notif" id="nav-alert-dot"></div></div>
+  <div class="nav-item" id="nav-ronda" onclick="goScreen('ronda')"><div class="nav-icon">📋</div><div class="nav-label">RONDA</div></div>
+  <div class="nav-item" id="nav-chat" onclick="goScreen('chat')"><div class="nav-icon">💬</div><div class="nav-label">CHAT</div><div class="nav-notif" id="nav-chat-dot"></div></div>
+</nav>
+
+<!-- SUCCESS -->
+<div class="success-overlay" id="success-ov">
+  <div style="font-size:64px;">✅</div>
+  <div style="font-size:24px;font-weight:700;letter-spacing:-.5px;">¡Ronda Enviada!</div>
+  <div style="font-size:13px;color:var(--t1);font-family:var(--mono);text-align:center;line-height:1.6;" id="succ-sub"></div>
+  <div class="success-sap" id="succ-sap"></div>
+  <button class="btn primary" style="width:85%;margin-top:8px;" onclick="document.getElementById('success-ov').classList.remove('show');goScreen('home')">Continuar</button>
+</div>
+
+<script>
+const MACHINES=[
+  {key:'fan',id:'VNT-PP04-N',name:'Ventilador Munters AXC-140',icon:'🌀',
+   tax:{l1:'Granja SON-03',l2:'PP-04 Postura',l3:'Ventilación',l4:'Ventilador Norte'},sap:'VNT-PP-04',tandem:'SON03-VNT-PP04-N',
+   iot:[{k:'Vibración X',v:'1.8 mm/s',s:'ok',p:36},{k:'RPM',v:'1,421',s:'ok',p:99},{k:'T° Cojinete',v:'52.1°C',s:'ok',p:52},{k:'Consumo',v:'2.41 kW',s:'ok',p:48}],
+   specs:[['Fabricante','Munters Corp.'],['Modelo','AXC-140 48"'],['Capacidad','45,000 m³/h'],['Motor','2.4 kW'],['Últ. Mtto.','2025-11-08'],['Próx. Mtto.','2026-09-15']],
+   pm:{order:'PM-2026-1801',status:'Preventivo programado',tech:'Juan Rodríguez',date:'2026-09-15'}},
+  {key:'chain',id:'CHN-PP03-01',name:'Alimentador Big Dutchman Champion',icon:'🍽️',
+   tax:{l1:'Granja SON-03',l2:'PP-03 Postura',l3:'Alimentación',l4:'Cadena Línea 1'},sap:'CHN-PP-03',tandem:'SON03-CHN-PP03',
+   iot:[{k:'Ciclos/día',v:'6 / 6',s:'ok',p:100},{k:'Alimento',v:'1,450 kg',s:'ok',p:73},{k:'Motor',v:'0.35 kW',s:'ok',p:95},{k:'Sensor',v:'OK',s:'ok',p:100}],
+   specs:[['Fabricante','Big Dutchman'],['Modelo','Champion'],['Capacidad','2,000 kg'],['Longitud','120 m'],['Últ. Mtto.','2026-01-15']],
+   pm:{order:'PM-2026-1756',status:'Cerrado · normal',tech:'María González',date:'2026-01-15'}},
+  {key:'env',id:'ENV-PP02-01',name:'Sensor Vaisala HMT330',icon:'🌡️',
+   tax:{l1:'Granja SON-03',l2:'PP-02 Postura',l3:'Monitoreo Ambiental',l4:'Sensor T/HR/CO₂ Z1'},sap:'ENV-PP-02',tandem:'SON03-ENV-PP02',
+   iot:[{k:'Temperatura',v:'25.1°C',s:'ok',p:50},{k:'Humedad',v:'65%HR',s:'ok',p:65},{k:'CO₂',v:'1,840 ppm',s:'ok',p:74},{k:'NH₃',v:'12 ppm',s:'ok',p:48}],
+   specs:[['Fabricante','Vaisala'],['Modelo','HMT330'],['Prec. T','±0.2°C'],['Prec. HR','±1.5%'],['Protocolo','MQTT 30s']],
+   pm:{order:'—',status:'Sin orden activa',tech:'Auto',date:'—'}},
+  {key:'setter',id:'SET-INC01-01',name:'Setter HatchTech HT-120000',icon:'🥚',
+   tax:{l1:'Granja SON-03',l2:'INC-01 Incubadora',l3:'Incubación Setter',l4:'Unidad 1'},sap:'SET-INC-01',tandem:'SON03-SET-INC01',
+   iot:[{k:'Temperatura',v:'37.8°C',s:'ok',p:75},{k:'Humedad',v:'56%HR',s:'ok',p:56},{k:'Volteo',v:'Día 9/21',s:'ok',p:43},{k:'Huevos',v:'86,400',s:'ok',p:72}],
+   specs:[['Fabricante','HatchTech'],['Modelo','HT-120000'],['Capacidad','120k huevos'],['Volteo','±45° / 2h'],['T° set','37.8°C']],
+   pm:{order:'PM-2026-1802',status:'Preventivo trim.',tech:'Carlos Ramos',date:'2026-06-10'}},
+  {key:'hammer',id:'MOL-PLT-01',name:'Molino CPM HM44',icon:'⚙️',
+   tax:{l1:'Granja SON-03',l2:'PLT-ALM Planta',l3:'Molienda',l4:'Molino Martillos'},sap:'MOL-PLT-01',tandem:'SON03-MOL-PLT01',
+   iot:[{k:'Producción',v:'18.4 t/h',s:'ok',p:92},{k:'Vibración',v:'1.2 mm/s',s:'ok',p:24},{k:'T° Motor',v:'68°C',s:'warn',p:68},{k:'Horas hoy',v:'14 h',s:'ok',p:58}],
+   specs:[['Fabricante','CPM'],['Modelo','HM44 44"×44"'],['Potencia','150 HP'],['Diseño','20 t/h']],
+   pm:{order:'PM-2026-1790',status:'Cambio martillos prog.',tech:'Juan Rodríguez',date:'2026-04-01'}},
+];
+
+const ALERT_TYPES=[
+  {id:'vib',icon:'🌀',title:'Vibración excesiva',bld:'PP-04',val:'4.71 mm/s',thr:'3.5 mm/s',order:'PM-2026-1847',tech:'Juan Rodríguez',impact:'Postura baja 10%, temperatura sube 5°C, 42 aves en riesgo.',active:false},
+  {id:'mort',icon:'💀',title:'Mortalidad excesiva',bld:'PP-02',val:'38 aves/día',thr:'28 aves/día',order:'PP-2026-0502-M',tech:'María González',impact:'FCR sube a 2.65, costo/huevo +$0.85 MXN, posible brote viral.',active:false},
+  {id:'temp',icon:'🌡️',title:'Temperatura crítica',bld:'PP-03',val:'33.8°C',thr:'30.0°C',order:'PM-2026-1851',tech:'Carlos Ramos',impact:'Estrés calórico: postura baja 18%, mortalidad potencial +3%.',active:false},
+  {id:'nh3',icon:'☁️',title:'NH₃ fuera de rango',bld:'PP-01',val:'41 ppm',thr:'25 ppm',order:'QM-2026-0312',tech:'Laura Medina',impact:'Daño ocular aves, riesgo salud operarios.',active:false},
+  {id:'silo',icon:'🌽',title:'Nivel silo crítico',bld:'SIL-01',val:'18%',thr:'20%',order:'MM-2026-4519',tech:'Sistema auto',impact:'Desabasto en ~6h, parar producción alimento.',active:false},
+];
+
+let NOTIF_HIST=[];
+let prevSc='home';let curSc='home';
+
+const ACTIVITIES=[
+  {icon:'📦',col:'rgba(10,110,209,.15)',title:'SAP MM — Consumo Auto',sub:'8.7t alimento · 42,000L agua',time:'hace 2 min'},
+  {icon:'🔗',col:'rgba(6,150,215,.12)',title:'Tandem sync',sub:'14 sensores · SON-03 OK',time:'hace 30s'},
+  {icon:'📋',col:'rgba(255,85,0,.12)',title:'Ronda diaria capturada',sub:'PP-03 · 0 anomalías',time:'hace 1h'},
+  {icon:'⚙️',col:'rgba(16,216,88,.1)',title:'PM preventivo cerrado',sub:'BOM-AGU-01 · $490 MXN',time:'hace 3h'},
+  {icon:'🥚',col:'rgba(240,200,0,.1)',title:'Traspaso huevo',sub:'5,290u → INC-01 · SAP WM',time:'hace 6h'},
+];
+
+function ts(){const n=new Date();return String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0');}
+
+function goScreen(id){
+  if(id!=='machine'){prevSc=curSc;}
+  curSc=id;
+  document.querySelectorAll('.screen').forEach(s=>{s.classList.remove('active');s.style.display='none';});
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  const s=document.getElementById('s-'+id);
+  if(!s)return;
+  const isFlex=['qr','machine','chat'].includes(id);
+  s.style.display=isFlex?'flex':'block';
+  s.classList.add('active');
+  const n=document.getElementById('nav-'+id);
+  if(n) n.classList.add('active');
+  if(id==='qr') buildAssetList();
+  if(id==='alerts') buildAlertsList();
+  if(id==='home') buildFeed();
+  if(id==='chat'){initChat();}
+  if(id==='ronda') buildCasetas();
+}
+
+function goBack(){goScreen(prevSc==='machine'?'qr':prevSc);}
+
+function buildFeed(){
+  const all=[...ACTIVITIES,...NOTIF_HIST.slice().reverse().map(n=>({icon:'🔔',col:'rgba(224,32,32,.1)',title:n.title,sub:n.sub,time:n.time}))].slice(0,6);
+  document.getElementById('activity-feed').innerHTML=all.map(a=>`<div class="activity-item"><div class="activity-icon" style="background:${a.col}">${a.icon}</div><div style="flex:1"><div class="activity-title">${a.title}</div><div class="activity-sub">${a.sub}</div></div><div class="activity-time">${a.time}</div></div>`).join('');
+}
+
+function buildAssetList(){
+  document.getElementById('qr-asset-list').innerHTML=MACHINES.map(m=>`<div class="qr-asset-row" onclick="openMachine('${m.key}')"><div class="qr-asset-icon" style="background:rgba(0,200,240,.1)">${m.icon}</div><div style="flex:1"><div class="qr-asset-id">${m.id}</div><div class="qr-asset-name">${m.name}</div><div class="qr-asset-tax">${m.tax.l2} · ${m.tax.l3}</div></div><span style="font-size:18px;color:var(--b2)">›</span></div>`).join('');
+}
+
+let scanIdx=0;
+function simulateScan(){
+  const m=MACHINES[scanIdx%MACHINES.length];scanIdx++;
+  const st=document.getElementById('qr-status');
+  st.textContent='Detectando...';
+  setTimeout(()=>{st.textContent='✅ QR: '+m.id;setTimeout(()=>openMachine(m.key),500);},700);
+}
+
+function openMachine(key){
+  const m=MACHINES.find(x=>x.key===key);if(!m)return;
+  prevSc=curSc;curSc='machine';
+  document.querySelectorAll('.screen').forEach(s=>{s.classList.remove('active');s.style.display='none';});
+  const s=document.getElementById('s-machine');
+  s.style.display='flex';s.classList.add('active');
+  document.getElementById('mdet-body').innerHTML=buildMD(m);
+}
+
+function buildMD(m){
+  const qr=makeQR(m.id);
+  const iot=m.iot.map(k=>`<div class="mdet-iot-kpi"><div class="mdet-iot-val ${k.s}">${k.v}</div><div class="mdet-iot-label">${k.k}</div><div class="mdet-iot-bar"><div class="mdet-iot-fill ${k.s}" style="width:${k.p}%"></div></div></div>`).join('');
+  const specs=m.specs.map(r=>`<div class="row"><span class="rk">${r[0]}</span><span class="rv">${r[1]}</span></div>`).join('');
+  return `<div class="mdet-hero">
+    <div class="mdet-qr-row">
+      <div>${qr}</div>
+      <div>
+        <div class="mdet-id">${m.id}</div>
+        <div class="mdet-name">${m.name}</div>
+        <div class="tax-chain">${Object.entries(m.tax).map(([k,v])=>`<div class="tax-item"><span class="tax-level">${k.replace('l','Niv.')}</span><span class="tax-sep">›</span><span class="tax-val">${v}</span></div>`).join('')}</div>
+      </div>
+    </div>
+  </div>
+  <div class="mdet-sap-row"><span class="mdet-sap-badge sap">SAP: ${m.sap}</span><span class="mdet-sap-badge tandem">Tandem: ${m.tandem}</span></div>
+  <div class="sec-title">IoT EN VIVO</div>
+  <div class="mdet-iot-grid">${iot}</div>
+  <div class="sec-title">ÚLTIMO MANTTO. SAP PM</div>
+  <div class="card"><div class="row"><span class="rk">Orden</span><span class="rv" style="color:var(--cy)">${m.pm.order}</span></div><div class="row"><span class="rk">Estado</span><span class="rv ok">${m.pm.status}</span></div><div class="row"><span class="rk">Técnico</span><span class="rv">${m.pm.tech}</span></div><div class="row"><span class="rk">Fecha</span><span class="rv">${m.pm.date}</span></div></div>
+  <div class="sec-title">FICHA TÉCNICA</div>
+  <div class="card">${specs}</div>
+  <div class="sec-title">ACCIONES RÁPIDAS</div>
+  <div class="mdet-action-grid">
+    <button class="mdet-action-btn pm" onclick="reportWA('${m.id}','${m.name}')"><div class="mdet-action-icon">🔧</div>Crear PM</button>
+    <button class="mdet-action-btn wa" onclick="reportWA('${m.id}','${m.name}')"><div class="mdet-action-icon">📲</div>Reportar WA</button>
+    <button class="mdet-action-btn sap"><div class="mdet-action-icon">📋</div>Ver SAP</button>
+    <button class="mdet-action-btn qr-act" onclick="shareQR('${m.id}')"><div class="mdet-action-icon">🔲</div>Compartir QR</button>
+  </div>
+  <div style="height:20px;"></div>`;
+}
+
+function makeQR(id){
+  let h=0;for(let i=0;i<id.length;i++)h=(h*31+id.charCodeAt(i))&0xFFFFFF;
+  const r=()=>{h=(h*1664525+1013904223)&0xFFFFFF;return(h&0xFFFF)%3;};
+  const N=13;const cells=Array.from({length:N},()=>Array.from({length:N},()=>r()<2));
+  [[0,0],[0,6],[6,0]].forEach(([fr,fc])=>{for(let r2=0;r2<7;r2++)for(let c2=0;c2<7;c2++)cells[fr+r2]&&(cells[fr+r2][fc+c2]=(r2===0||r2===6||c2===0||c2===6)||(r2>=2&&r2<=4&&c2>=2&&c2<=4));});
+  let rects='';
+  for(let r3=0;r3<N;r3++)for(let c3=0;c3<N;c3++)if(cells[r3]&&cells[r3][c3])rects+=`<rect x="${2+c3*7}" y="${2+r3*7}" width="6" height="6" fill="#E8F4FF"/>`;
+  return `<svg viewBox="0 0 95 95" width="88" height="88" xmlns="http://www.w3.org/2000/svg" style="border-radius:8px;display:block;background:#0A1420;border:1px solid rgba(255,255,255,.08)"><rect width="95" height="95" fill="#0A1420"/>${rects}</svg>`;
+}
+
+function reportWA(id,name){window.open('https://wa.me/?text='+encodeURIComponent('🔧 Reporte equipo\n\nActivo: '+name+'\nID: '+id+'\nGranja Demo SON-03\n\nSolicito revisión.\nFecha: '+new Date().toLocaleDateString('es-MX')),'_blank');}
+function shareQR(id){if(navigator.share)navigator.share({title:'QR '+id,text:'Ficha técnica: '+id,url:window.location.href+'?machine='+id});else alert('ID: '+id);}
+
+function buildAlertsList(){
+  document.getElementById('alerts-list').innerHTML='<div class="sec-title" style="margin-top:0">TOCA PARA VER DETALLE O ACTIVAR</div>'+
+  ALERT_TYPES.map(at=>`<div class="alrt-card ${at.active?'active':'inactive'}" id="ac-${at.id}" onclick="togAlrt('${at.id}')">
+    <div class="alrt-card-hdr">
+      <div class="alrt-pulse ${at.active?'':'off'}"></div>
+      <div style="flex:1"><div class="alrt-card-title">${at.icon} ${at.title}</div><div style="font-size:10px;font-family:var(--mono);color:var(--t2);">${at.bld} · ${at.active?at.order:'Normal'}</div></div>
+      <div class="alrt-card-val ${at.active?'al':'ok'}">${at.active?at.val:'✓ OK'}</div>
+      <span style="font-size:18px;color:var(--b2);margin-left:6px;">›</span>
+    </div>
+    <div class="alrt-card-body" id="ab-${at.id}">
+      ${at.active?`<div class="alrt-impact"><strong style="color:var(--re)">Impacto:</strong> ${at.impact}</div>
+        <div class="card" style="margin-bottom:10px;padding:10px 12px;">
+          <div class="row"><span class="rk">Valor actual</span><span class="rv al">${at.val}</span></div>
+          <div class="row"><span class="rk">Umbral</span><span class="rv">${at.thr}</span></div>
+          <div class="row"><span class="rk">Orden SAP</span><span class="rv" style="color:var(--cy)">${at.order}</span></div>
+          <div class="row"><span class="rk">Técnico</span><span class="rv">${at.tech}</span></div>
+        </div>
+        <div class="alrt-btn-row">
+          <button class="alrt-btn wa" onclick="event.stopPropagation();alrtWA('${at.id}')">📲 WA</button>
+          <button class="alrt-btn resolve" onclick="event.stopPropagation();resolvAlrt('${at.id}')">✓ Resolver</button>
+          <button class="alrt-btn escalate" onclick="event.stopPropagation();escalAlrt('${at.id}')">⬆ Escalar</button>
+        </div>` :
+        `<div style="padding:10px 0;font-size:12px;color:var(--t2);font-family:var(--mono);">Sin alerta activa · Toca para simular</div>
+        <div class="row"><span class="rk">Umbral</span><span class="rv ok">${at.thr}</span></div>
+        <div class="row"><span class="rk">Valor demo</span><span class="rv">${at.val}</span></div>
+        <button class="alrt-btn wa" style="margin-top:10px;width:100%;" onclick="event.stopPropagation();activAlrt('${at.id}')">⚡ Simular alerta</button>`}
+    </div>
+  </div>`).join('');
+  updateBadge();
+}
+
+function togAlrt(id){document.getElementById('ac-'+id).classList.toggle('open');}
+
+function activAlrt(id){
+  const at=ALERT_TYPES.find(x=>x.id===id);if(!at)return;
+  at.active=true;
+  addNotif('⚡ '+at.title,at.bld+' · '+at.val,ts());
+  pushWA('⚡ *ALERTA AUTOMÁTICA*\n\n'+at.icon+' '+at.title+'\n📍 '+at.bld+'\n📊 '+at.val+' (umbral: '+at.thr+')\n🔧 '+at.order+'\n👷 '+at.tech+'\n\nImpacto: '+at.impact,'in');
+  pushTG('⚡ <b>ALERTA</b>: '+at.title+'\n📍 '+at.bld+' · '+at.val+'\n🔧 '+at.order+'\nUsa /ack para confirmar');
+  document.getElementById('nav-chat-dot').classList.add('show');
+  document.getElementById('nav-alert-dot').classList.add('show');
+  buildAlertsList();
+}
+function resolvAlrt(id){
+  const at=ALERT_TYPES.find(x=>x.id===id);if(!at)return;
+  at.active=false;
+  addNotif('✅ Resuelta: '+at.title,'Orden '+at.order+' cerrada en SAP PM',ts());
+  pushWA('✅ *Alerta resuelta*\n\n'+at.icon+' '+at.title+'\nOrden '+at.order+' cerrada.\nCosto preventivo registrado en SAP CO.','in');
+  buildAlertsList();updateBadge();
+}
+function escalAlrt(id){
+  const at=ALERT_TYPES.find(x=>x.id===id);if(!at)return;
+  pushWA('⬆️ *Alerta escalada*\n\n'+at.title+'\nSupervisor notificado.\nEY CREAS gerencia avisada.','in');
+  window.open('https://wa.me/?text='+encodeURIComponent('⚠ ESCALADO: '+at.icon+' '+at.title+'\nGranja Demo · '+at.bld+'\nValor: '+at.val+'\nOrden: '+at.order),'_blank');
+}
+function alrtWA(id){
+  const at=ALERT_TYPES.find(x=>x.id===id);if(!at)return;
+  window.open('https://wa.me/?text='+encodeURIComponent('⚡ ALERTA EY CREAS\n\n'+at.icon+' '+at.title+'\nGranja Demo · '+at.bld+'\nValor: '+at.val+' (umbral: '+at.thr+')\nOrden: '+at.order+'\nTécnico: '+at.tech),'_blank');
+}
+function updateBadge(){
+  const n=ALERT_TYPES.filter(x=>x.active).length;
+  const dot=document.getElementById('nav-alert-dot');
+  const cnt=document.getElementById('alert-count');
+  if(n>0){dot.classList.add('show');cnt.style.display='flex';cnt.textContent=n;}
+  else{dot.classList.remove('show');cnt.style.display='none';}
+}
+
+// RONDA
+const CASETAS=['PP-01','PP-02','PP-03','PP-04','PP-05','CP-01','CP-02'];
+let actCaseta='PP-01';
+function buildCasetas(){
+  document.getElementById('caseta-row').innerHTML=CASETAS.map(c=>`<div class="caseta-chip ${c===actCaseta?'active':''}" onclick="setCaseta('${c}')">${c}</div>`).join('');
+  document.getElementById('ronda-caseta-label').textContent=actCaseta;
+}
+function setCaseta(c){actCaseta=c;buildCasetas();}
+function calcProgress(){
+  const f=['r-mort','r-inc','r-rot','r-suc','r-temp','r-hr','r-ali','r-agua','r-obs'];
+  const pct=Math.round((f.filter(id=>{const e=document.getElementById(id);return e&&e.value.trim()!=='';}).length/f.length)*100);
+  document.getElementById('ronda-bar').style.width=pct+'%';
+  document.getElementById('ronda-pct').textContent=pct+'%';
+}
+function checkT(){const t=parseFloat(document.getElementById('r-temp').value);const el=document.getElementById('r-temp');t>=30?el.classList.add('highlight'):el.classList.remove('highlight');}
+function submitRonda(){
+  const mort=document.getElementById('r-mort').value||'14';
+  const inc=document.getElementById('r-inc').value||'847';
+  const temp=document.getElementById('r-temp').value||'25.1';
+  const agua=document.getElementById('r-agua').value||'4200';
+  const ali=document.getElementById('r-ali').value||'8.7';
+  const obs=document.getElementById('r-obs').value;
+  const now=ts();
+  document.getElementById('succ-sub').innerHTML=`Caseta <strong>${actCaseta}</strong> · ${now}<br>Datos enviados sin papel`;
+  document.getElementById('succ-sap').innerHTML=`SAP PP — Ronda registrada<br>SAP FI-AA — Mortalidad: ${mort} aves<br>SAP MM — Agua: ${agua}L · Alimento: ${ali}t<br>Tandem — Dashboard actualizado`;
+  document.getElementById('success-ov').classList.add('show');
+  pushWA(`📋 *Ronda capturada — ${actCaseta}*\n\n🐓 Muertas: ${mort}\n🥚 Inc.: ${inc}\n🌡 Temp: ${temp}°C\n💧 Agua: ${agua}L\n🍽 Alimento: ${ali}t${obs?'\n📝 '+obs:''}\n\n✅ SAP actualizado`,'in');
+  addNotif('📋 Ronda '+actCaseta,mort+' mort · '+inc+' inc · '+temp+'°C',now);
+  ['r-mort','r-inc','r-rot','r-suc','r-temp','r-hr','r-ali','r-agua','r-obs'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  calcProgress();
+}
+
+// CHAT
+let chatInitialized=false;
+let activeChatPanel='wa';
+const WA_R={'/status':'📊 *Estado Granja Demo SON-03*\n\n✅ Postura: 82.1%\n✅ Aves: 178,000\n✅ Temp: 25.1°C\n✅ Silo: 67%\n✅ IoT: 14 sensores OK','/alerta':'🚨 Elige tipo:\n/alerta_vib — Vibración PP-04\n/alerta_mort — Mortalidad PP-02\n/alerta_temp — Temperatura PP-03','/alerta_vib':'⚡ *ALERTA*\n🌀 Vibración PP-04\nValor: 4.71mm/s · Umbral: 3.5\nOrden: PM-2026-1847\nTécnico: Juan Rodríguez','/resolver':'✅ *Resuelta*\nOrden cerrada en SAP PM.\nSistema normalizado.','/ronda':'📋 Ronda iniciada.\n/mort [n] — aves muertas\n/inc [n] — huevos\n/temp [val] — temperatura','/escalar':'⬆️ *Escalado*\nSupervisor notificado.\nEY CREAS gerencia avisada.','/help':'Comandos:\n/status /alerta /resolver\n/ronda /escalar /help','default':'Comando no reconocido. Usa /help.'};
+const TG_R={'/start':'🤖 <b>EY CREAS DT Bot</b>\nGranja Demo SON-03\n\n/status /alertas /resolve /ack /help','/status':'📊 <b>Estado</b>\n✅ Postura: 82.1%\n✅ Aves: 178k\n✅ IoT: 14 sensores\n✅ SAP: 5 módulos','/alertas':'🔔 <b>Alertas activas: '+ALERT_TYPES.filter(x=>x.active).length+'</b>','/resolve':'✅ <b>Resuelta</b>\nOrden cerrada · ROI 16×','/ack':'✅ Confirmado.','/help':'<b>Comandos:</b>\n/start /status /alertas\n/resolve /ack','default':'Usa /help.'};
+
+function initChat(){
+  if(!chatInitialized){
+    chatInitialized=true;
+    pushWA('👋 Hola! Soy el bot EY CREAS Digital Twin.\n\nGranja Demo SON-03 conectada.\n\nEscribe /help para ver comandos.','in');
+    setWAQ(['/status','/alerta','/ronda','/help']);
+    pushTG('🤖 <b>EY CREAS DT Bot</b>\nGranja Demo SON-03.\n\nEscribe /start para comenzar.');
+    setTGQ(['/start','/status','/alertas','/help']);
+  }
+  renderHist();
+}
+
+function setCT(tab){
+  activeChatPanel=tab;
+  document.querySelectorAll('.chat-tab').forEach(t=>t.className='chat-tab');
+  document.getElementById('ctab-'+tab).className='chat-tab '+(tab==='wa'?'aw':tab==='tg'?'at':'ah');
+  document.getElementById('cp-wa').style.display=tab==='wa'?'flex':'none';
+  document.getElementById('cp-tg').style.display=tab==='tg'?'flex':'none';
+  document.getElementById('cp-hist').style.display=tab==='hist'?'block':'none';
+  if(tab==='hist') renderHist();
+  if(tab!=='hist') document.getElementById('nav-chat-dot').classList.remove('show');
+}
+
+function pushWA(text,dir){
+  const c=document.getElementById('wa-msgs');if(!c)return;
+  const safe=text.replace(/</g,'&lt;').replace(/\n/g,'<br>').replace(/\*(.*?)\*/g,'<strong>$1</strong>');
+  c.innerHTML+=`<div class="msg ${dir}"><div class="msg-bubble">${safe}<div class="msg-time">${ts()} ✓✓</div></div></div>`;
+  c.scrollTop=c.scrollHeight;
+}
+function pushTG(text){
+  const c=document.getElementById('tg-msgs');if(!c)return;
+  c.innerHTML+=`<div class="msg in tg"><div class="msg-bubble">${text.replace(/\n/g,'<br>')}<div class="msg-time">${ts()}</div></div></div>`;
+  c.scrollTop=c.scrollHeight;
+}
+function setWAQ(cmds){const c=document.getElementById('wa-quick');if(c)c.innerHTML=cmds.map(cmd=>`<div class="quick-reply" onclick="waCmd('${cmd}')">${cmd}</div>`).join('');}
+function setTGQ(cmds){const c=document.getElementById('tg-quick');if(c)c.innerHTML=cmds.map(cmd=>`<div class="quick-reply" onclick="tgCmd('${cmd}')">${cmd}</div>`).join('');}
+
+function sendWA(){
+  const f=document.getElementById('wa-input');const txt=f.value.trim();if(!txt)return;
+  const c=document.getElementById('wa-msgs');
+  c.innerHTML+=`<div class="msg out"><div class="msg-bubble">${txt}<div class="msg-time">${ts()} ✓✓</div></div></div>`;
+  c.scrollTop=c.scrollHeight;
+  f.value='';
+  const resp=WA_R[txt.toLowerCase()]||WA_R['default'];
+  setTimeout(()=>{pushWA(resp,'in');setWAQ(['/status','/alerta','/resolver','/escalar']);},900);
+}
+function waCmd(cmd){document.getElementById('wa-input').value=cmd;sendWA();}
+
+function sendTG(){
+  const f=document.getElementById('tg-input');const txt=f.value.trim();if(!txt)return;
+  const c=document.getElementById('tg-msgs');
+  c.innerHTML+=`<div class="msg out tg"><div class="msg-bubble">${txt}<div class="msg-time">${ts()}</div></div></div>`;
+  c.scrollTop=c.scrollHeight;
+  f.value='';
+  const resp=TG_R[txt.toLowerCase()]||TG_R['default'];
+  setTimeout(()=>{pushTG(resp);setTGQ(['/status','/alertas','/resolve','/ack']);},700);
+}
+function tgCmd(cmd){document.getElementById('tg-input').value=cmd;sendTG();}
+
+function openWA(){window.open('https://wa.me/?text='+encodeURIComponent('Hola! Soy técnico Granja Demo SON-03 (EY CREAS Digital Twin). Estado: Postura 82.1% · SAP OK.'),'_blank');}
+
+function addNotif(title,sub,time){NOTIF_HIST.push({title,sub,time,icon:'🔔'});}
+function renderHist(){
+  const c=document.getElementById('hist-list');if(!c)return;
+  const all=[...ACTIVITIES,...NOTIF_HIST.slice().reverse()].slice(0,15);
+  c.innerHTML=all.map(n=>`<div class="hist-item"><div class="hist-icon" style="background:rgba(255,85,0,.1)">${n.icon||'📋'}</div><div style="flex:1"><div class="hist-title">${n.title}</div><div class="hist-sub">${n.sub}</div></div><div class="hist-time">${n.time}</div></div>`).join('');
+}
+
+window.addEventListener('load',()=>{
+  buildFeed();
+  const params=new URLSearchParams(window.location.search);
+  const machine=params.get('machine');
+  if(machine){const m=MACHINES.find(x=>x.id===machine||x.key===machine);if(m){goScreen('qr');setTimeout(()=>openMachine(m.key),300);}}
+  setInterval(()=>{const el=document.getElementById('h-temp');if(el)el.textContent=(24.9+Math.random()*.4).toFixed(1)+'°C';},8000);
+});
+document.querySelectorAll('.chat-input').forEach(el=>{
+  el.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();const p=this.closest('#cp-wa')?sendWA:sendTG;p();}});
+});
+</script>
+</body>
+</html>
