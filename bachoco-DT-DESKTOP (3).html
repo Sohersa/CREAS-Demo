@@ -943,7 +943,7 @@ const G={
   streams:[],pmOrders:[],chatHistory:[],
   activeBids:[],activeMach:null,
   parvada:{postura:82.1,aves:178000,mort:14,inc:5290,roto:145,sucio:82,imp:48,fcr:2.41,costo_huevo:4.2},
-  sens:{temp:25.1,vib:1.8,agua:42,silo:67},
+  sens:{temp:25.1,vib:1.8,agua:42,silo:67,hvacSupply:18.5,hvacReturn:24.8,hvacHR:56,hvacCFM:12400,incTemp:37.8,incHR:56},
   kpis:{},
 };
 Object.entries(M).forEach(([k,m])=>{G.kpis[k]={};m.kpis.forEach(kp=>{G.kpis[k][kp.id]=kp.base;});});
@@ -1364,12 +1364,28 @@ function buildCaseta(b,cx,cz,fy){
     var led2=new THREE.Mesh(new THREE.SphereGeometry(.02,5,5),new THREE.MeshStandardMaterial({color:0x00FF50,emissive:new THREE.Color(0x00FF50),emissiveIntensity:2}));led2.position.set(sx,fy+1.05,sz+.05);scene.add(led2);
   }
 
+  // === VENTILATION EXHAUST DUCT (ceiling) ===
+  var exDuctM=new THREE.MeshStandardMaterial({color:0xA8A8A0,roughness:.4,metalness:.55});
+  var exDuct=new THREE.Mesh(new THREE.BoxGeometry(b.w*.8,.28,.35),exDuctM);exDuct.position.set(cx,fy+b.h*.82,cz);scene.add(exDuct);
+  // Exhaust vents along duct
+  var ventM=new THREE.MeshStandardMaterial({color:0xC0C0B8,metalness:.4,roughness:.4});
+  var nVents=Math.floor(b.w/4);
+  for(var evi=0;evi<nVents;evi++){
+    var evx=b.x+2+evi*(b.w-4)/(nVents-1);
+    var vent2=new THREE.Mesh(new THREE.BoxGeometry(.4,.04,.3),ventM);vent2.position.set(evx,fy+b.h*.82-.16,cz);scene.add(vent2);
+  }
+  // Thermostat/controller on wall
+  var thermoM=new THREE.MeshStandardMaterial({color:0xE8E8E0,roughness:.4,metalness:.2});
+  var thermo=new THREE.Mesh(new THREE.BoxGeometry(.06,.2,.15),thermoM);thermo.position.set(b.x+b.w/2+.1,fy+b.h*.5,cz-b.d/2+.12);scene.add(thermo);
+  var tScreen=new THREE.Mesh(new THREE.BoxGeometry(.02,.1,.08),new THREE.MeshStandardMaterial({color:0x20C060,emissive:new THREE.Color(0x18A050),emissiveIntensity:.8}));
+  tScreen.position.set(b.x+b.w/2+.14,fy+b.h*.52,cz-b.d/2+.12);scene.add(tScreen);
+
   // === ELECTRICAL CONDUIT ===
   var condM2=new THREE.MeshStandardMaterial({color:0xFF5500,roughness:.4,metalness:.7,emissive:new THREE.Color(0xFF4000),emissiveIntensity:.3});
-  var cond=new THREE.Mesh(new THREE.CylinderGeometry(.04,.04,b.w*.9,8),condM2);cond.rotation.z=Math.PI/2;cond.position.set(cx,fy+b.h*.88,cz);scene.add(cond);
+  var cond=new THREE.Mesh(new THREE.CylinderGeometry(.04,.04,b.w*.9,8),condM2);cond.rotation.z=Math.PI/2;cond.position.set(cx,fy+b.h*.92,cz);scene.add(cond);
   // Junction box
   var gwM2=new THREE.MeshStandardMaterial({color:0xFF5500,roughness:.3,metalness:.6});
-  var gw=new THREE.Mesh(new THREE.BoxGeometry(.4,.4,.25),gwM2);gw.position.set(b.x+b.w*.9,fy+b.h*.88,cz);scene.add(gw);
+  var gw=new THREE.Mesh(new THREE.BoxGeometry(.4,.4,.25),gwM2);gw.position.set(b.x+b.w*.9,fy+b.h*.92,cz);scene.add(gw);
 
   // === LED LIGHTING STRIP ===
   var ledM=new THREE.MeshStandardMaterial({color:0xF8F0C0,emissive:new THREE.Color(0xFFEE80),emissiveIntensity:.6,roughness:.2});
@@ -1471,10 +1487,67 @@ function buildIncubadora(b,cx,cz,fy){
   // Overhead lamp
   var lamp=new THREE.Mesh(new THREE.CylinderGeometry(.3,.4,.15,8),new THREE.MeshStandardMaterial({color:0xD0D0C8,metalness:.5}));lamp.position.set(cx,fy+2.5,cz);scene.add(lamp);
 
-  // === HVAC DUCTS on ceiling ===
-  var ductM=new THREE.MeshStandardMaterial({color:0xC0C0B8,roughness:.5,metalness:.5});
-  var duct=new THREE.Mesh(new THREE.BoxGeometry(b.w*.8,.35,.5),ductM);duct.position.set(cx,fy+b.h-.5,cz-b.d*.15);scene.add(duct);
-  var duct2=duct.clone();duct2.position.set(cx,fy+b.h-.5,cz+b.d*.15);scene.add(duct2);
+  // === HVAC SYSTEM — detailed ducts, AHU, diffusers ===
+  var ductM=new THREE.MeshStandardMaterial({color:0xC0C0B8,roughness:.45,metalness:.55});
+  var ductAccent=new THREE.MeshStandardMaterial({color:0xA8A8A0,roughness:.4,metalness:.6});
+  // Main supply ducts (2 parallel runs along ceiling)
+  var duct1=new THREE.Mesh(new THREE.BoxGeometry(b.w*.75,.4,.55),ductM);duct1.position.set(cx,fy+b.h-.6,cz-b.d*.2);scene.add(duct1);
+  var duct2=new THREE.Mesh(new THREE.BoxGeometry(b.w*.75,.4,.55),ductM);duct2.position.set(cx,fy+b.h-.6,cz+b.d*.2);scene.add(duct2);
+  // Duct flanges/joints
+  var flangeM=new THREE.MeshStandardMaterial({color:0x909088,metalness:.65,roughness:.35});
+  for(var dj=0;dj<4;dj++){
+    var djx=b.x+2.5+dj*(b.w-5)/3;
+    [cz-b.d*.2,cz+b.d*.2].forEach(function(djz){
+      var flange=new THREE.Mesh(new THREE.BoxGeometry(.08,.45,.6),flangeM);flange.position.set(djx,fy+b.h-.6,djz);scene.add(flange);
+    });
+  }
+  // Supply diffusers hanging from ducts (rectangular with fins)
+  var diffM=new THREE.MeshStandardMaterial({color:0xE0E0D8,roughness:.4,metalness:.3});
+  var nDiff=Math.floor(b.w/3);
+  for(var di=0;di<nDiff;di++){
+    var diffX=b.x+2+di*(b.w-4)/(nDiff-1);
+    [cz-b.d*.2,cz+b.d*.2].forEach(function(diffZ){
+      // Diffuser grille
+      var diff=new THREE.Mesh(new THREE.BoxGeometry(.6,.06,.45),diffM);diff.position.set(diffX,fy+b.h-.85,diffZ);scene.add(diff);
+      // Connection neck
+      var neck=new THREE.Mesh(new THREE.BoxGeometry(.2,.15,.2),ductAccent);neck.position.set(diffX,fy+b.h-.78,diffZ);scene.add(neck);
+      // Airflow indicator (small blue glow)
+      var airGlow=new THREE.Mesh(new THREE.SphereGeometry(.08,5,5),new THREE.MeshStandardMaterial({color:0x60C0FF,emissive:new THREE.Color(0x40A0E0),emissiveIntensity:.4,transparent:true,opacity:.5}));
+      airGlow.position.set(diffX,fy+b.h-.92,diffZ);scene.add(airGlow);
+    });
+  }
+  // Return air grilles on walls (near floor)
+  var grillM=new THREE.MeshStandardMaterial({color:0xB0B0A8,metalness:.5,roughness:.4});
+  for(var gi=0;gi<3;gi++){
+    var gx=b.x+3+gi*(b.w-6)/2;
+    var grill=new THREE.Mesh(new THREE.BoxGeometry(.8,.5,.06),grillM);grill.position.set(gx,fy+.5,cz-b.d/2+.15);scene.add(grill);
+    // Grille slats
+    for(var gs=0;gs<4;gs++){
+      var slat=new THREE.Mesh(new THREE.BoxGeometry(.7,.04,.02),new THREE.MeshStandardMaterial({color:0x909088,metalness:.6}));
+      slat.position.set(gx,fy+.3+gs*.12,cz-b.d/2+.16);slat.rotation.x=.2;scene.add(slat);
+    }
+  }
+  // AHU (Air Handling Unit) — main unit inside building
+  var ahuM=new THREE.MeshStandardMaterial({color:0x3868A0,roughness:.35,metalness:.6});
+  var ahu=new THREE.Mesh(new THREE.BoxGeometry(2.2,1.8,1.4),ahuM);ahu.position.set(b.x+b.w-2.5,fy+.9,cz);scene.add(ahu);
+  // AHU control panel
+  var ahuPanel=new THREE.Mesh(new THREE.BoxGeometry(.06,.6,.8),new THREE.MeshStandardMaterial({color:0x101828,emissive:new THREE.Color(0x003090),emissiveIntensity:.4}));
+  ahuPanel.position.set(b.x+b.w-1.38,fy+1.2,cz);scene.add(ahuPanel);
+  // AHU status LED
+  var ahuLed=new THREE.Mesh(new THREE.SphereGeometry(.04,5,5),new THREE.MeshStandardMaterial({color:0x00FF50,emissive:new THREE.Color(0x00FF50),emissiveIntensity:2}));
+  ahuLed.position.set(b.x+b.w-1.37,fy+1.55,cz-.2);scene.add(ahuLed);
+  // AHU fan inside (visible through grille)
+  var ahuFan=new THREE.Mesh(new THREE.TorusGeometry(.4,.04,6,14),new THREE.MeshStandardMaterial({color:0x505058,metalness:.7}));
+  ahuFan.rotation.y=Math.PI/2;ahuFan.position.set(b.x+b.w-3.62,fy+.9,cz);scene.add(ahuFan);
+  // Duct connections from AHU to ceiling
+  var ahuDuct=new THREE.Mesh(new THREE.BoxGeometry(.45,b.h-2.3,.45),ductAccent);ahuDuct.position.set(b.x+b.w-2.5,fy+1.8+(b.h-2.3)/2,cz);scene.add(ahuDuct);
+  // Temperature/humidity sensors on ducts
+  var hvacSensM=new THREE.MeshStandardMaterial({color:0xE0E0D8,roughness:.4,metalness:.3});
+  [b.x+4,cx,b.x+b.w-4].forEach(function(sx2){
+    var sBox=new THREE.Mesh(new THREE.BoxGeometry(.15,.12,.15),hvacSensM);sBox.position.set(sx2,fy+b.h-.35,cz-b.d*.2);scene.add(sBox);
+    var sLed=new THREE.Mesh(new THREE.SphereGeometry(.025,4,4),new THREE.MeshStandardMaterial({color:0x00AAFF,emissive:new THREE.Color(0x0088DD),emissiveIntensity:1.5}));
+    sLed.position.set(sx2,fy+b.h-.28,cz-b.d*.2);scene.add(sLed);
+  });
 
   // === PIPING (hot water, cold water, HVAC) ===
   [[0xC83020,.18],[0x1860D0,.32],[0xA0A0A0,.46]].forEach(function(pc){
@@ -1672,12 +1745,18 @@ function updateSensorLabels(){
   var container=document.getElementById('slabels');if(!container)return;
   container.innerHTML='';
   var pts=[
-    {x:4+13.5,y:4.2+3.5,z:-5+4.5,label:G.alert?'⚡VNT 4.7mm/s':'💨 VNT 1.8mm/s',cls:G.alert?'al':'ok',show:true},
-    {x:-42+13.5,y:4.2+3.5,z:30+4.5,label:'🌡 25.1°C / 82.1%',cls:'ok',show:!G.alert},
-    {x:5+8,y:5.5+4,z:24+7,label:'🥚 37.8°C / 56%HR',cls:'ok',show:true},
+    {x:4+13.5,y:4.2+3.5,z:-5+4.5,label:G.alert?'⚡VNT 4.7mm/s':'💨 VNT '+G.sens.vib.toFixed(1)+'mm/s',cls:G.alert?'al':'ok',show:true},
+    {x:-42+13.5,y:4.2+3.5,z:30+4.5,label:'🌡 '+G.sens.temp.toFixed(1)+'°C / '+G.parvada.postura+'%',cls:G.sens.temp>30?'al':'ok',show:!G.alert},
+    {x:5+8,y:5.5+6,z:24+7,label:'🥚 '+G.sens.incTemp.toFixed(1)+'°C / '+G.sens.incHR+'%HR',cls:G.sens.incTemp>38.5?'al':'ok',show:true},
     {x:16+2.5,y:14+4,z:-22+2.5,label:'📦 Maíz '+G.sens.silo+'%',cls:G.sens.silo<25?'w':'ok',show:true},
     {x:32+7,y:6.5+4,z:-18+5,label:'⚙️ 18.4t/h · PDI 94.8%',cls:'ok',show:true},
     {x:2+2.5,y:17+4,z:-26+2.5,label:'💧 4.2 bar / 78%',cls:'ok',show:true},
+    // HVAC labels
+    {x:5+12,y:5.5+3,z:24+3,label:'❄️ HVAC '+G.sens.hvacSupply.toFixed(1)+'°C→'+G.sens.hvacReturn.toFixed(1)+'°C',cls:'ok',show:true},
+    {x:5+4,y:5.5+2,z:24+10,label:'💨 '+G.sens.hvacCFM+' CFM · '+G.sens.hvacHR+'%HR',cls:G.sens.hvacHR>70?'w':'ok',show:true},
+    // Caseta HVAC
+    {x:-42+13.5,y:4.2+2,z:6+4.5,label:'🌬️ PP-01 '+G.sens.temp.toFixed(1)+'°C · 65%HR',cls:'ok',show:true},
+    {x:4+13.5,y:4.2+2,z:8+4.5,label:'🌬️ PP-05 '+G.sens.temp.toFixed(1)+'°C · 64%HR',cls:'ok',show:true},
   ];
   pts.forEach(function(sp){
     if(!sp.show)return;
@@ -2255,6 +2334,13 @@ setInterval(function(){
   if(!G.alert){G.sens.temp=parseFloat((25.1+(Math.random()-.5)*.6).toFixed(1));G.sens.vib=parseFloat((1.8+(Math.random()-.5)*.2).toFixed(2));G.sens.agua=parseFloat((42+(Math.random()-.5)*1.5).toFixed(1));}
   G.sens.silo=Math.max(20,Math.min(90,(G.sens.silo+(Math.random()-.5)*.3)|0));
   G.parvada.inc=Math.round(5290+(Math.random()-.5)*65);
+  // HVAC real-time data
+  G.sens.hvacSupply=parseFloat((18.5+(Math.random()-.5)*.4).toFixed(1));
+  G.sens.hvacReturn=parseFloat((24.8+(Math.random()-.5)*.6).toFixed(1));
+  G.sens.hvacHR=Math.round(56+(Math.random()-.5)*3);
+  G.sens.hvacCFM=Math.round(12400+(Math.random()-.5)*200);
+  G.sens.incTemp=parseFloat((37.8+(Math.random()-.5)*.15).toFixed(1));
+  G.sens.incHR=Math.round(56+(Math.random()-.5)*2);
   Object.keys(M).forEach(function(mk){M[mk].kpis.forEach(function(k){
     if(G.alert&&mk==='fan'&&k.id==='vib'){G.kpis[mk][k.id]=4.7+(Math.random()-.5)*.14;return;}
     if(G.alert&&mk==='fan'&&k.id==='rpm'){G.kpis[mk][k.id]=1380+(Math.random()-.5)*8;return;}
