@@ -82,7 +82,7 @@ html,body{height:100%;width:100%;overflow:hidden;background:var(--bg);color:var(
 
 /* ═══ CANVAS CENTER ════════════════════════════════ */
 .canvas-wrap{grid-column:2;position:relative;overflow:hidden;}
-#cv{display:block;width:100%;height:100%;}
+#cv{display:block;width:100%;height:100%;touch-action:none;}
 #slabels{position:absolute;inset:0;pointer-events:none;z-index:5;}
 .slbl{position:absolute;font-family:'IBM Plex Mono',monospace;font-size:9px;white-space:nowrap;padding:2px 8px;border-radius:3px;border:1px solid;background:rgba(6,13,24,.93);transform:translate(-50%,-130%);pointer-events:none;}
 
@@ -635,6 +635,120 @@ html,body{height:100%;width:100%;overflow:hidden;background:var(--bg);color:var(
 .qr-iot-label{font-size:8px;color:rgba(255,255,255,.4);font-family:'IBM Plex Mono',monospace;margin-top:2px;}
 .qr-open-mob-btn{width:100%;padding:10px;background:rgba(16,184,72,.1);border:1px solid rgba(16,184,72,.3);border-radius:7px;color:#10B848;font-family:'Barlow',sans-serif;font-weight:700;font-size:12px;cursor:pointer;margin-top:10px;transition:all .15s;}
 .qr-open-mob-btn:hover{background:rgba(16,184,72,.2);}
+
+/* ═══════════════════════════════════════════════════ */
+/* RESPONSIVE — MOBILE NAV & DRAWER ELEMENTS          */
+/* ═══════════════════════════════════════════════════ */
+.mobile-menu-btn{display:none;background:none;border:1px solid var(--b1);color:var(--t0);font-size:20px;padding:4px 10px;border-radius:6px;cursor:pointer;flex-shrink:0;}
+.mobile-nav{display:none;position:fixed;bottom:0;left:0;right:0;height:58px;background:rgba(6,13,24,.97);backdrop-filter:blur(16px);border-top:1px solid var(--b0);z-index:70;align-items:center;justify-content:space-around;padding:0 8px;}
+.mobile-nav button{background:none;border:none;color:var(--t1);font-size:10px;font-family:'Barlow',sans-serif;font-weight:600;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 12px;border-radius:8px;transition:all .15s;}
+.mobile-nav button .mn-icon{font-size:20px;}
+.mobile-nav button.active{color:var(--or);background:rgba(255,85,0,.08);}
+.drawer-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:75;}
+.drawer-backdrop.open{display:block;}
+
+/* ═══════════════════════════════════════════════════ */
+/* TABLET (max-width: 1024px)                         */
+/* ═══════════════════════════════════════════════════ */
+@media(max-width:1024px){
+  :root{--sidebar:260px;}
+  .tb-areas{overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;}
+  .tb-areas::-webkit-scrollbar{display:none;}
+  .ta-btn{font-size:10px;padding:5px 10px;white-space:nowrap;}
+  .fleg-overlay,.hotkeys-hint{display:none!important;}
+}
+
+/* ═══════════════════════════════════════════════════ */
+/* MOBILE (max-width: 768px)                          */
+/* ═══════════════════════════════════════════════════ */
+@media(max-width:768px){
+  :root{--sidebar:85vw;--topbar:48px;}
+
+  /* Topbar */
+  .topbar{padding:0 10px;gap:6px;}
+  .tb-brand{padding:0 8px;}
+  .tb-ey{font-size:12px;padding:4px 8px;}
+  .tb-title{font-size:12px;}
+  .tb-sub{display:none;}
+  .tb-areas{display:none;}
+  .tb-right{padding:0 4px;gap:6px;}
+  .tb-alert-btn{font-size:10px;padding:6px 10px;}
+  .mobile-menu-btn{display:flex;align-items:center;justify-content:center;}
+  #mobile-badge{font-size:8px!important;padding:3px 6px!important;}
+
+  /* Layout: single column, canvas fills screen */
+  .layout{display:block!important;padding-bottom:58px;position:static!important;}
+  .canvas-wrap{position:fixed!important;top:var(--topbar);left:0;right:0;bottom:58px;}
+  .sidebar-left,.sidebar-right{
+    display:none!important;position:fixed!important;top:var(--topbar)!important;bottom:58px!important;
+    width:85vw!important;max-width:340px!important;z-index:80!important;
+    overflow-y:auto!important;box-shadow:4px 0 24px rgba(0,0,0,.5)!important;background:var(--s1)!important;
+  }
+  .sidebar-left{left:0!important;}
+  .sidebar-right{right:0!important;}
+  .sidebar-left.open,.sidebar-right.open{display:flex!important;flex-direction:column!important;}
+
+  /* Canvas */
+  .canvas-wrap{grid-column:1;}
+
+  /* Hide canvas overlays on mobile */
+  .fleg-overlay,.hotkeys-hint{display:none!important;}
+  .iot-top-bar{flex-wrap:wrap;gap:4px;top:6px;}
+  .iot-chip{padding:4px 8px;font-size:9px;}
+  .iot-cv,.iot-cl{font-size:9px;}
+
+  /* Mobile nav bar */
+  .mobile-nav{display:flex;}
+
+  /* Toast */
+  .toast{min-width:0;width:92vw;max-width:92vw;left:4vw;transform:translateY(-10px);padding:8px 12px;}
+  .toast.show{transform:translateY(0);}
+  .toast-msg{font-size:11px;}
+
+  /* Demo banner — keep at bottom, single line, don't block content */
+  .demo-banner{font-size:9px;padding:3px 8px;bottom:58px;flex-wrap:nowrap;overflow:hidden;white-space:nowrap;}
+
+  /* Modals */
+  .xmodal{width:95vw!important;max-width:95vw!important;height:auto!important;max-height:85vh!important;}
+  .sap-modal{width:95vw!important;max-width:95vw!important;max-height:85vh!important;}
+  .tandem-modal{width:95vw!important;max-width:95vw!important;max-height:85vh!important;}
+  .maint-modal{width:95vw!important;max-width:95vw!important;max-height:85vh!important;}
+  .alert-center{width:95vw!important;max-width:95vw!important;max-height:85vh!important;}
+  .notif-modal{width:95vw!important;max-width:95vw!important;max-height:85vh!important;}
+  .qr-modal{width:95vw!important;max-width:95vw!important;max-height:85vh!important;}
+
+  /* Sidebar tabs */
+  .stab{padding:8px 4px;font-size:8px;}
+
+  /* Panel content adjustments */
+  .spanel{padding:10px;}
+  .kv2{font-size:18px;}
+  .mc-left .mc-val{font-size:20px;}
+  .kgrid2{gap:4px;}
+  .kcard2{padding:8px 6px;}
+
+  /* CCTV */
+  .cctv-metrics-grid{grid-template-columns:repeat(2,1fr);}
+
+  /* Chat suggestions */
+  .chat-sugs{gap:4px;}
+  .chat-sug{font-size:9px;padding:3px 8px;}
+}
+
+/* ═══════════════════════════════════════════════════ */
+/* SMALL MOBILE (max-width: 420px)                    */
+/* ═══════════════════════════════════════════════════ */
+@media(max-width:420px){
+  .tb-title{font-size:11px;}
+  .tb-ey{font-size:11px;padding:3px 7px;}
+  .mobile-nav button{font-size:9px;padding:4px 8px;}
+  .mobile-nav button .mn-icon{font-size:18px;}
+  .iot-top-bar{display:none;}
+  .kv2{font-size:16px;}
+  .mc-left .mc-val{font-size:18px;}
+  .demo-ribbon{display:none;}
+  .demo-banner{display:none;}
+}
 </style>
 </head>
 <body>
@@ -650,6 +764,7 @@ html,body{height:100%;width:100%;overflow:hidden;background:var(--bg);color:var(
 
 <!-- TOPBAR -->
 <div class="topbar">
+  <button class="mobile-menu-btn" onclick="toggleLeftDrawer()">☰</button>
   <div class="tb-brand">
     <div class="tb-ey">EY</div>
     <div>
@@ -667,6 +782,7 @@ html,body{height:100%;width:100%;overflow:hidden;background:var(--bg);color:var(
     <button class="ta-btn" data-a="agua" onclick="flyArea(this)">💧 Agua</button>
   </div>
   <div class="tb-right">
+    <div id="mobile-badge" style="display:none;align-items:center;gap:5px;font-size:9px;font-family:'IBM Plex Mono',monospace;color:#2AABEE;background:rgba(42,171,238,.08);padding:4px 10px;border-radius:4px;border:1px solid rgba(42,171,238,.2);margin-right:8px;"><div style="width:6px;height:6px;border-radius:50%;background:#2AABEE;animation:bk .7s infinite;"></div>📱 Mobile conectado</div>
     <div class="tb-status">
       <div class="sys-dot" id="sys-dot"></div>
       <div class="sys-badge sb-ok" id="sys-badge">SISTEMA OK</div>
@@ -1207,6 +1323,27 @@ function setupInput(){
     prev={x:e.clientX,y:e.clientY};syncCam();
   });
   cv.addEventListener('wheel',function(e){if(lerp)return;sph.r=Math.max(8,Math.min(145,sph.r+e.deltaY*.04));syncCam();e.preventDefault();},{passive:false});
+  // Touch events for mobile 3D control
+  var touchPrev=null,touchDist=0;
+  cv.addEventListener('touchstart',function(e){
+    if(e.touches.length===1){touchPrev={x:e.touches[0].clientX,y:e.touches[0].clientY};}
+    if(e.touches.length===2){var dx=e.touches[0].clientX-e.touches[1].clientX,dy=e.touches[0].clientY-e.touches[1].clientY;touchDist=Math.sqrt(dx*dx+dy*dy);}
+  },{passive:true});
+  cv.addEventListener('touchmove',function(e){
+    e.preventDefault();
+    if(e.touches.length===1&&touchPrev&&!lerp){
+      var dx=e.touches[0].clientX-touchPrev.x,dy=e.touches[0].clientY-touchPrev.y;
+      sph.t-=dx*.005;sph.p=Math.max(.1,Math.min(Math.PI/2.1,sph.p+dy*.004));
+      touchPrev={x:e.touches[0].clientX,y:e.touches[0].clientY};syncCam();
+    }
+    if(e.touches.length===2){
+      var dx2=e.touches[0].clientX-e.touches[1].clientX,dy2=e.touches[0].clientY-e.touches[1].clientY;
+      var newDist=Math.sqrt(dx2*dx2+dy2*dy2);
+      if(touchDist>0){sph.r=Math.max(8,Math.min(145,sph.r-(newDist-touchDist)*.15));syncCam();}
+      touchDist=newDist;
+    }
+  },{passive:false});
+  cv.addEventListener('touchend',function(){touchPrev=null;touchDist=0;},{passive:true});
   // Click → building
   cv.addEventListener('click',function(e){
     if(lerp)return;
@@ -2386,7 +2523,7 @@ function renderNotifModal(){
       '<div class="tg-chat">';
     tgMessages.forEach(function(m){html+='<div class="tg-msg '+(m.dir==='out'?'out':'in')+'"><div class="tg-bubble">'+m.text.split('\n').join('<br>').replace(/<b>/g,'<strong>').replace(/<\/b>/g,'<\/strong>')+'</div></div>';});
     html+='</div></div>'+
-      '<button class="send-notif-btn tg" onclick="showTelegramInfo()">✈️ Conectar bot Telegram</button>';
+      '<button class="send-notif-btn tg" onclick="sendRealTG(\''+at.id+'\')">📲 Enviar alerta por Telegram</button>';
   } else {
     html+='<div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:12px 14px;font-family:Barlow,sans-serif;font-size:12px;color:rgba(255,255,255,.7)">'+
       '<div style="font-size:10px;color:rgba(255,255,255,.4);font-family:IBM Plex Mono,monospace;margin-bottom:8px">VISTA PREVIA EMAIL</div>'+
@@ -2424,6 +2561,11 @@ function sendRealWA(alertId){
   var at=ALERT_TYPES.find(function(x){return x.id===alertId;})||ALERT_TYPES[0];
   var msg='⚡ ALERTA EY CREAS Digital Twin\n\n'+at.icon+' '+at.title+'\nGranja Demo · '+at.building+'\nValor: '+at.alertVal+' '+at.unit+'\nUmbral: '+at.threshold+' '+at.unit+'\nOrden SAP: '+at.detail.order+'\nTécnico: '+at.detail.technician+'\n\nImpacto: '+at.impact;
   window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
+}
+function sendRealTG(alertId){
+  var at=ALERT_TYPES.find(function(x){return x.id===alertId;})||ALERT_TYPES[0];
+  var msg='⚡ ALERTA EY CREAS Digital Twin\n\n'+at.icon+' '+at.title+'\nGranja Demo · '+at.building+'\nValor: '+at.alertVal+' '+at.unit+'\nUmbral: '+at.threshold+' '+at.unit+'\nOrden SAP: '+at.detail.order+'\nTécnico: '+at.detail.technician+'\n\nImpacto: '+at.impact;
+  sendTelegramAlertDesktop(msg);
 }
 
 // ═══════════════════════════════════════════════════
@@ -2533,11 +2675,119 @@ function generateQRSVG(id){
     '<rect width="140" height="140" fill="#07101A"/>'+rects+'</svg>';
 }
 
+// ═══════════════════════════════════════════════════
+// BROADCAST CHANNEL — Desktop ← Mobile
+// ═══════════════════════════════════════════════════
+var dtChannel=new BroadcastChannel('creas-dt');
+var mobileConnected=false;
+
+dtChannel.onmessage=function(e){
+  var msg=e.data;if(!msg||msg.src==='desktop')return;
+
+  if(msg.type==='ping'){mobileConnected=true;dtChannel.postMessage({type:'pong',src:'desktop'});updateMobileBadge();}
+  if(msg.type==='pong'){mobileConnected=true;updateMobileBadge();}
+
+  if(msg.type==='ronda'&&msg.data){
+    var d=msg.data;
+    // Update parvada with field data
+    G.parvada.mort=parseInt(d.mort)||G.parvada.mort;
+    G.parvada.inc=parseInt(d.inc)||G.parvada.inc;
+    G.sens.temp=parseFloat(d.temp)||G.sens.temp;
+    G.sens.agua=parseFloat(d.agua)/100||G.sens.agua;
+    // Log to streams
+    addS('MOBILE','s','📋 Ronda '+d.caseta+' — Mort: '+d.mort+' · Inc: '+d.inc+' · '+d.temp+'°C','ok');
+    addS('SAP-PP','p','Ronda campo registrada desde app mobile','ok');
+    // Toast notification
+    showToast({c:'iot',src:'📱 MOBILE · RONDA CAPTURADA',msg:'Caseta '+d.caseta+' — datos actualizados en tiempo real',val:'Mort: '+d.mort+' · Temp: '+d.temp+'°C · Agua: '+d.agua+'L'});
+    updateHud();renderLeftPanel();
+  }
+
+  if(msg.type==='alert'&&msg.data){
+    var aId=msg.data.id;
+    // Map mobile alert IDs to desktop alert IDs
+    if(ALERT_TYPES.find(function(x){return x.id===aId;})){
+      if(G_ALERTS.indexOf(aId)===-1){
+        toggleAlertType(aId);
+        addS('MOBILE','al','📱 Alerta activada desde campo: '+msg.data.title,'al');
+        showToast({c:'sap',src:'📱 MOBILE · ALERTA CAMPO',msg:msg.data.title+' activada por técnico',val:msg.data.val+' > umbral '+msg.data.thr});
+      }
+    }
+  }
+
+  if(msg.type==='resolve'&&msg.data){
+    var rId=msg.data.id;
+    if(G_ALERTS.indexOf(rId)>-1){
+      resolveAlert(rId);
+      addS('MOBILE','ok','📱 Alerta '+rId.toUpperCase()+' resuelta desde campo','ok');
+      showToast({c:'sap',src:'📱 MOBILE · RESUELTA',msg:'Alerta '+rId.toUpperCase()+' cerrada por técnico en campo',val:'SAP PM orden cerrada'});
+    }
+  }
+};
+
+function updateMobileBadge(){
+  var el=document.getElementById('mobile-badge');
+  if(el){el.style.display=mobileConnected?'flex':'none';}
+}
+
+// Heartbeat
+setInterval(function(){dtChannel.postMessage({type:'ping',src:'desktop'});},5000);
+
+// ═══════════════════════════════════════════════════
+// TELEGRAM DEEP LINKS (Desktop)
+// ═══════════════════════════════════════════════════
+function sendTelegramAlertDesktop(text){
+  var url='https://t.me/share/url?url='+encodeURIComponent('https://creas-demo.netlify.app')+'&text='+encodeURIComponent(text);
+  window.open(url,'_blank');
+}
+
+// ═══════════════════════════════════════════════════
+// MOBILE RESPONSIVE — Drawer Toggles
+// ═══════════════════════════════════════════════════
+function setMobileActive(btn){
+  var nav=document.getElementById('mobile-nav');
+  if(nav){nav.querySelectorAll('button').forEach(function(b){b.classList.remove('active');});}
+  if(btn)btn.classList.add('active');
+}
+function toggleLeftDrawer(btn){
+  var sl=document.querySelector('.sidebar-left');
+  var sr=document.querySelector('.sidebar-right');
+  var bk=document.getElementById('drawer-backdrop');
+  if(sr)sr.classList.remove('open');
+  if(sl){
+    var isOpen=sl.classList.toggle('open');
+    if(bk){bk.classList.toggle('open',isOpen);}
+    if(isOpen&&btn)setMobileActive(btn);
+  }
+}
+function toggleRightDrawer(btn){
+  var sl=document.querySelector('.sidebar-left');
+  var sr=document.querySelector('.sidebar-right');
+  var bk=document.getElementById('drawer-backdrop');
+  if(sl)sl.classList.remove('open');
+  if(sr){
+    var isOpen=sr.classList.toggle('open');
+    if(bk){bk.classList.toggle('open',isOpen);}
+    if(isOpen&&btn)setMobileActive(btn);
+  }
+}
+function closeDrawers(){
+  var sl=document.querySelector('.sidebar-left');
+  var sr=document.querySelector('.sidebar-right');
+  var bk=document.getElementById('drawer-backdrop');
+  if(sl)sl.classList.remove('open');
+  if(sr)sr.classList.remove('open');
+  if(bk)bk.classList.remove('open');
+}
+function mobileShow3D(btn){closeDrawers();setMobileActive(btn);}
+function mobileAlerts(btn){closeDrawers();openAlertCenter();setMobileActive(btn);}
+
 window.addEventListener('load',function(){
   try{initThree();}catch(e){console.error('3D error:',e);}
   renderLeftPanel();
   renderRightPanel();
   updateHud();
+  // Initial ping
+  dtChannel.postMessage({type:'ping',src:'desktop'});
 });
 </script>
 
@@ -2685,6 +2935,17 @@ window.addEventListener('load',function(){
     </div>
     <div class="qr-body" id="qr-body"></div>
   </div>
+</div>
+
+<!-- MOBILE DRAWER BACKDROP -->
+<div class="drawer-backdrop" id="drawer-backdrop" onclick="closeDrawers()"></div>
+
+<!-- MOBILE BOTTOM NAV -->
+<div class="mobile-nav" id="mobile-nav">
+  <button class="active" onclick="mobileShow3D(this)"><span class="mn-icon">🏭</span>3D</button>
+  <button onclick="toggleLeftDrawer(this)"><span class="mn-icon">📊</span>Panel</button>
+  <button onclick="mobileAlerts(this)"><span class="mn-icon">⚡</span>Alertas</button>
+  <button onclick="toggleRightDrawer(this)"><span class="mn-icon">💬</span>Chat</button>
 </div>
 
 </body>

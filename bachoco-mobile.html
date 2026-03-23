@@ -218,6 +218,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--t0);font-
   <div class="top-logo">EY</div>
   <div><div class="top-title">Campo App</div><div class="top-subtitle">DIGITAL TWIN · GRANJA DEMO</div></div>
   <div class="top-badge"><div class="top-badge-dot"></div>IoT Activo</div>
+  <div id="conn-badge" style="display:none;align-items:center;gap:4px;font-size:9px;font-family:var(--mono);color:#2AABEE;background:rgba(42,171,238,.1);padding:3px 8px;border-radius:4px;border:1px solid rgba(42,171,238,.25);"><div style="width:6px;height:6px;border-radius:50%;background:#2AABEE;"></div>Desktop</div>
   <div class="alert-fab" id="alert-fab" onclick="goScreen('alerts')">🔔<div class="alert-count" id="alert-count"></div></div>
 </div>
 <div class="demo-bar">⚠ DEMO — DATOS SIMULADOS · EY CREAS Capital Projects, Risk, Engineering, Analytics &amp; Solutions</div>
@@ -558,6 +559,7 @@ function buildAlertsList(){
           <button class="alrt-btn wa" onclick="event.stopPropagation();alrtWA('${at.id}')">📲 WA</button>
           <button class="alrt-btn resolve" onclick="event.stopPropagation();resolvAlrt('${at.id}')">✓ Resolver</button>
           <button class="alrt-btn escalate" onclick="event.stopPropagation();escalAlrt('${at.id}')">⬆ Escalar</button>
+          <button class="alrt-btn" style="background:rgba(42,171,238,.15);color:#2AABEE;border-color:rgba(42,171,238,.3);" onclick="event.stopPropagation();sendTelegramAlert('⚡ ALERTA EY CREAS\\n${at.icon} ${at.title}\\n📍 ${at.bld}\\nValor: ${at.val} (umbral: ${at.thr})\\n🔧 ${at.order}')">📲 TG</button>
         </div>` :
         `<div style="padding:10px 0;font-size:12px;color:var(--t2);font-family:var(--mono);">Sin alerta activa · Toca para simular</div>
         <div class="row"><span class="rk">Umbral</span><span class="rv ok">${at.thr}</span></div>
@@ -579,6 +581,8 @@ function activAlrt(id){
   document.getElementById('nav-chat-dot').classList.add('show');
   document.getElementById('nav-alert-dot').classList.add('show');
   buildAlertsList();
+  // Broadcast to Desktop
+  dtSend('alert',{id:at.id,title:at.title,val:at.val,thr:at.thr,status:'active'});
 }
 function resolvAlrt(id){
   const at=ALERT_TYPES.find(x=>x.id===id);if(!at)return;
@@ -586,6 +590,8 @@ function resolvAlrt(id){
   addNotif('✅ Resuelta: '+at.title,'Orden '+at.order+' cerrada en SAP PM',ts());
   pushWA('✅ *Alerta resuelta*\n\n'+at.icon+' '+at.title+'\nOrden '+at.order+' cerrada.\nCosto preventivo registrado en SAP CO.','in');
   buildAlertsList();updateBadge();
+  // Broadcast to Desktop
+  dtSend('resolve',{id:at.id});
 }
 function escalAlrt(id){
   const at=ALERT_TYPES.find(x=>x.id===id);if(!at)return;
@@ -628,10 +634,12 @@ function submitRonda(){
   const obs=document.getElementById('r-obs').value;
   const now=ts();
   document.getElementById('succ-sub').innerHTML=`Caseta <strong>${actCaseta}</strong> · ${now}<br>Datos enviados sin papel`;
-  document.getElementById('succ-sap').innerHTML=`SAP PP — Ronda registrada<br>SAP FI-AA — Mortalidad: ${mort} aves<br>SAP MM — Agua: ${agua}L · Alimento: ${ali}t<br>Tandem — Dashboard actualizado`;
+  document.getElementById('succ-sap').innerHTML=`SAP PP — Ronda registrada<br>SAP FI-AA — Mortalidad: ${mort} aves<br>SAP MM — Agua: ${agua}L · Alimento: ${ali}t<br>Tandem — Dashboard actualizado<br><br><button onclick="sendTelegramAlert('📋 Ronda ${actCaseta}\\n🐓 Mort: ${mort}\\n🥚 Inc: ${inc}\\n🌡 ${temp}°C\\n💧 ${agua}L\\n🍽 ${ali}t')" style="width:100%;padding:10px;background:rgba(42,171,238,.15);border:1px solid rgba(42,171,238,.4);border-radius:8px;color:#2AABEE;font-weight:700;font-size:12px;cursor:pointer;font-family:var(--font);margin-top:4px">📲 Enviar a Telegram</button>`;
   document.getElementById('success-ov').classList.add('show');
   pushWA(`📋 *Ronda capturada — ${actCaseta}*\n\n🐓 Muertas: ${mort}\n🥚 Inc.: ${inc}\n🌡 Temp: ${temp}°C\n💧 Agua: ${agua}L\n🍽 Alimento: ${ali}t${obs?'\n📝 '+obs:''}\n\n✅ SAP actualizado`,'in');
   addNotif('📋 Ronda '+actCaseta,mort+' mort · '+inc+' inc · '+temp+'°C',now);
+  // Broadcast to Desktop
+  dtSend('ronda',{caseta:actCaseta,mort,inc,temp,agua,ali,obs:obs||'',timestamp:now});
   ['r-mort','r-inc','r-rot','r-suc','r-temp','r-hr','r-ali','r-agua','r-obs'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
   calcProgress();
 }
@@ -709,12 +717,43 @@ function renderHist(){
   c.innerHTML=all.map(n=>`<div class="hist-item"><div class="hist-icon" style="background:rgba(255,85,0,.1)">${n.icon||'📋'}</div><div style="flex:1"><div class="hist-title">${n.title}</div><div class="hist-sub">${n.sub}</div></div><div class="hist-time">${n.time}</div></div>`).join('');
 }
 
+// ═══════════════════════════════════════════════════
+// BROADCAST CHANNEL — Mobile → Desktop
+// ═══════════════════════════════════════════════════
+const dtChannel=new BroadcastChannel('creas-dt');
+let desktopConnected=false;
+
+function dtSend(type,data){
+  dtChannel.postMessage({type,data,src:'mobile',ts:Date.now()});
+}
+dtChannel.onmessage=function(e){
+  const msg=e.data;if(!msg||msg.src==='mobile')return;
+  if(msg.type==='ping'){desktopConnected=true;dtChannel.postMessage({type:'pong',src:'mobile'});updateConnBadge();}
+  if(msg.type==='pong'){desktopConnected=true;updateConnBadge();}
+};
+function updateConnBadge(){
+  let el=document.getElementById('conn-badge');
+  if(el)el.style.display=desktopConnected?'flex':'none';
+}
+// Heartbeat
+setInterval(()=>{dtChannel.postMessage({type:'ping',src:'mobile'});},5000);
+
+// ═══════════════════════════════════════════════════
+// TELEGRAM DEEP LINKS
+// ═══════════════════════════════════════════════════
+function sendTelegramAlert(text){
+  const url='https://t.me/share/url?url='+encodeURIComponent('https://creas-demo.netlify.app')+'&text='+encodeURIComponent(text);
+  window.open(url,'_blank');
+}
+
 window.addEventListener('load',()=>{
   buildFeed();
   const params=new URLSearchParams(window.location.search);
   const machine=params.get('machine');
   if(machine){const m=MACHINES.find(x=>x.id===machine||x.key===machine);if(m){goScreen('qr');setTimeout(()=>openMachine(m.key),300);}}
   setInterval(()=>{const el=document.getElementById('h-temp');if(el)el.textContent=(24.9+Math.random()*.4).toFixed(1)+'°C';},8000);
+  // Initial ping
+  dtChannel.postMessage({type:'ping',src:'mobile'});
 });
 document.querySelectorAll('.chat-input').forEach(el=>{
   el.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();const p=this.closest('#cp-wa')?sendWA:sendTG;p();}});

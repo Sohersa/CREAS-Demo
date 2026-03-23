@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>EY CREAS Demo</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{--bg:#060D18;--s1:#0A1420;--or:#FF5500;--cy:#00C8F0;--gr:#10D858;--t0:#E8F4FF;--t1:#7AAAC8;--t2:#3A607A;}
+html,body{height:100%;background:var(--bg);color:var(--t0);font-family:'Space Grotesk',sans-serif;}
+body{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;text-align:center;}
+.logo{width:64px;height:64px;background:var(--or);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:900;color:#fff;margin:0 auto 20px;letter-spacing:-1px;}
+h1{font-size:28px;font-weight:700;letter-spacing:-.5px;margin-bottom:6px;}
+.sub{font-size:13px;color:var(--t1);margin-bottom:40px;}
+.cards{display:flex;gap:20px;flex-wrap:wrap;justify-content:center;max-width:700px;margin-bottom:40px;}
+.card{flex:1;min-width:260px;max-width:320px;background:var(--s1);border:1px solid rgba(255,255,255,.06);border-radius:14px;padding:28px 24px;text-align:left;transition:border-color .2s,transform .2s;cursor:pointer;text-decoration:none;color:inherit;display:block;}
+.card:hover{border-color:rgba(255,85,0,.3);transform:translateY(-3px);}
+.card-icon{font-size:36px;margin-bottom:14px;}
+.card-title{font-size:18px;font-weight:700;margin-bottom:6px;}
+.card-desc{font-size:12px;color:var(--t1);line-height:1.5;}
+.card-tag{display:inline-block;font-size:9px;font-weight:700;letter-spacing:1px;padding:3px 8px;border-radius:4px;margin-top:14px;}
+.tag-mobile{background:rgba(42,171,238,.1);color:#2AABEE;border:1px solid rgba(42,171,238,.2);}
+.tag-desktop{background:rgba(255,85,0,.1);color:var(--or);border:1px solid rgba(255,85,0,.2);}
+.hint{max-width:500px;background:rgba(16,216,88,.06);border:1px solid rgba(16,216,88,.15);border-radius:10px;padding:14px 20px;font-size:12px;color:var(--gr);line-height:1.6;}
+.hint strong{color:#fff;}
+.footer{margin-top:40px;font-size:10px;color:var(--t2);letter-spacing:.5px;}
+</style>
+</head>
+<body>
+<div class="logo">EY</div>
+<h1>Digital Twin Demo</h1>
+<div class="sub">CREAS &middot; Capital Projects, Risk, Engineering, Analytics &amp; Solutions</div>
+
+<div class="cards">
+  <a class="card" href="demo-desktop.html" target="_blank">
+    <div class="card-icon">🖥</div>
+    <div class="card-title">Dashboard Desktop</div>
+    <div class="card-desc">Vista 3D de la granja, monitoreo IoT en tiempo real, integraciones SAP, CCTV con IA, simulaciones y analytics.</div>
+    <div class="card-tag tag-desktop">SUPERVISOR / GERENCIA</div>
+  </a>
+  <a class="card" href="demo-mobile.html" target="_blank">
+    <div class="card-icon">📱</div>
+    <div class="card-title">App Mobile</div>
+    <div class="card-desc">Rondas de campo, escaneo QR de activos, alertas operativas, chat con equipo y notificaciones Telegram.</div>
+    <div class="card-tag tag-mobile">TECNICO DE CAMPO</div>
+  </a>
+</div>
+
+<div class="hint">
+  <strong>Conexion en tiempo real:</strong> Abre ambas aplicaciones en pestanas separadas del mismo navegador. Los datos capturados en Mobile (rondas, alertas) apareceran automaticamente en el Dashboard Desktop.
+</div>
+
+<div class="footer">EY CREAS &middot; DEMO &middot; DATOS SIMULADOS</div>
+</body>
+</html>
