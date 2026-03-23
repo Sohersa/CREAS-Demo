@@ -1003,48 +1003,265 @@ function buildScene(){
   sun.shadow.mapSize.set(2048,2048);sun.shadow.bias=-.0008;scene.add(sun);
   const fill=new THREE.DirectionalLight(0xB0C8E8,.55);fill.position.set(-30,22,-22);scene.add(fill);
   scene.add(new THREE.HemisphereLight(0x90C0F0,0x58902A,.6));
-  // Ground
-  const gnd=new THREE.Mesh(new THREE.PlaneGeometry(300,300),new THREE.MeshStandardMaterial({color:0x5A8A2A,roughness:1}));
+  // Ground — varied grass
+  var gnd=new THREE.Mesh(new THREE.PlaneGeometry(300,300),new THREE.MeshStandardMaterial({color:0x4A7A22,roughness:1}));
   gnd.rotation.x=-Math.PI/2;gnd.receiveShadow=true;scene.add(gnd);
-  // Roads
-  const rm=new THREE.MeshStandardMaterial({color:0x989080,roughness:.9});
-  [[-5,.02,-18,6,.06,90],[-26,.02,2,64,.04,5],[-26,.02,17,64,.04,5],[-26,.02,-12,64,.04,5],[2,.02,-12,4,.04,70]].forEach(function(d){
-    var m=new THREE.Mesh(new THREE.BoxGeometry(d[3],d[4],d[5]),rm);m.position.set(d[0]+d[3]/2,d[1]+d[4]/2,d[2]+d[5]/2);m.receiveShadow=true;scene.add(m);
+  // Grass patches for variation
+  var patchM=new THREE.MeshStandardMaterial({color:0x5C9030,roughness:1});
+  [[-30,0,-10,40,25],[-10,0,15,50,30],[20,0,-5,35,20],[-45,0,25,20,18],[15,0,30,25,15]].forEach(function(p){
+    var patch=new THREE.Mesh(new THREE.PlaneGeometry(p[3],p[4]),patchM);patch.rotation.x=-Math.PI/2;patch.position.set(p[0],.01,p[2]);scene.add(patch);
   });
+  // Dirt area around buildings
+  var dirtM=new THREE.MeshStandardMaterial({color:0x8B7D5A,roughness:.95});
+  [[-55,.015,-20,30,55],[-2,.015,-10,18,50],[25,.015,-25,25,25],[25,.015,-5,22,18]].forEach(function(d){
+    var dirt=new THREE.Mesh(new THREE.PlaneGeometry(d[3],d[4]),dirtM);dirt.rotation.x=-Math.PI/2;dirt.position.set(d[0],d[1],d[2]);scene.add(dirt);
+  });
+  // Roads — wider and better defined
+  var rm=new THREE.MeshStandardMaterial({color:0x807868,roughness:.85});
+  var roadEdgeM=new THREE.MeshStandardMaterial({color:0x605848,roughness:.9});
+  [[-5,.03,-18,7,.08,95],[-28,.03,2,68,.08,6],[-28,.03,17,68,.08,6],[-28,.03,-12,68,.08,6],[2,.03,-12,5,.08,75],[15,.03,-30,30,.08,5]].forEach(function(d){
+    var m=new THREE.Mesh(new THREE.BoxGeometry(d[3],d[4],d[5]),rm);m.position.set(d[0]+d[3]/2,d[1]+d[4]/2,d[2]+d[5]/2);m.receiveShadow=true;scene.add(m);
+    // Road edges
+    var e1=new THREE.Mesh(new THREE.BoxGeometry(d[3]+.3,.02,d[5]+.3),roadEdgeM);e1.position.set(d[0]+d[3]/2,.015,d[2]+d[5]/2);scene.add(e1);
+  });
+  // Parking area near biosecurity
+  var parkM=new THREE.Mesh(new THREE.PlaneGeometry(12,10),new THREE.MeshStandardMaterial({color:0x707060,roughness:.9}));
+  parkM.rotation.x=-Math.PI/2;parkM.position.set(-18,.02,-32);scene.add(parkM);
+  // Perimeter fence
+  buildFence();
+  // Trees
+  buildTrees();
+  // Build all buildings
   BLDS.forEach(buildBuilding);
+  // Physical pipes between buildings
+  buildPipes();
+}
+
+function buildFence(){
+  var postM=new THREE.MeshStandardMaterial({color:0x888880,metalness:.6,roughness:.4});
+  var wireM=new THREE.MeshStandardMaterial({color:0xA0A098,metalness:.7,roughness:.3});
+  var pts=[[-58,-38],[-58,42],[48,42],[48,-38]];
+  for(var i=0;i<pts.length;i++){
+    var p1=pts[i],p2=pts[(i+1)%pts.length];
+    var dx=p2[0]-p1[0],dz=p2[1]-p1[1];
+    var dist=Math.sqrt(dx*dx+dz*dz);var nPosts=Math.floor(dist/8);
+    for(var j=0;j<=nPosts;j++){
+      var t=j/nPosts;var px=p1[0]+dx*t,pz=p1[1]+dz*t;
+      var post=new THREE.Mesh(new THREE.CylinderGeometry(.06,.06,2.5,6),postM);
+      post.position.set(px,1.25,pz);post.castShadow=true;scene.add(post);
+      var cap=new THREE.Mesh(new THREE.SphereGeometry(.08,6,4),postM);
+      cap.position.set(px,2.5,pz);scene.add(cap);
+    }
+    // Horizontal wires
+    for(var h=0;h<3;h++){
+      var wy=.6+h*.8;
+      var wire=new THREE.Mesh(new THREE.CylinderGeometry(.015,.015,dist,4),wireM);
+      wire.position.set(p1[0]+dx/2,wy,p1[1]+dz/2);
+      wire.rotation.y=-Math.atan2(dz,dx)+Math.PI/2;wire.rotation.x=Math.PI/2;
+      // Use box instead for reliability
+      var ang=Math.atan2(dx,dz);
+      var w2=new THREE.Mesh(new THREE.BoxGeometry(.02,.02,dist),wireM);
+      w2.position.set(p1[0]+dx/2,wy,p1[1]+dz/2);w2.rotation.y=ang;scene.add(w2);
+    }
+  }
+  // Gate at biosecurity
+  var gateM=new THREE.MeshStandardMaterial({color:0xCC3020,metalness:.5,roughness:.4});
+  var gate=new THREE.Mesh(new THREE.BoxGeometry(6,.15,3),gateM);gate.position.set(-12,1.5,-38);scene.add(gate);
+  var gatePost1=new THREE.Mesh(new THREE.CylinderGeometry(.1,.1,3.2,8),new THREE.MeshStandardMaterial({color:0xDD4030,metalness:.6}));
+  gatePost1.position.set(-15,1.6,-38);scene.add(gatePost1);
+  var gatePost2=gatePost1.clone();gatePost2.position.set(-9,1.6,-38);scene.add(gatePost2);
+}
+
+function buildTrees(){
+  var trunkM=new THREE.MeshStandardMaterial({color:0x5A3A1A,roughness:.9});
+  var leafM1=new THREE.MeshStandardMaterial({color:0x2A6818,roughness:.8});
+  var leafM2=new THREE.MeshStandardMaterial({color:0x3A7828,roughness:.8});
+  var trees=[[-56,-35],[-56,-20],[-56,-5],[-56,10],[-56,25],[-56,38],[-40,40],[0,40],[20,40],[38,40],[46,-35],[46,-15],[46,5],[46,25],[46,38],[-30,-36],[-45,40],[10,-36],[30,-36]];
+  trees.forEach(function(t){
+    var h=3+Math.random()*3;var r=1.5+Math.random()*1.5;
+    var trunk=new THREE.Mesh(new THREE.CylinderGeometry(.15,.25,h*.4,6),trunkM);
+    trunk.position.set(t[0],h*.2,t[1]);trunk.castShadow=true;scene.add(trunk);
+    var lm=Math.random()>.5?leafM1:leafM2;
+    var crown=new THREE.Mesh(new THREE.SphereGeometry(r,8,6),lm);
+    crown.position.set(t[0],h*.55,t[1]);crown.castShadow=true;scene.add(crown);
+    // Second smaller sphere for natural look
+    var c2=new THREE.Mesh(new THREE.SphereGeometry(r*.7,7,5),lm);
+    c2.position.set(t[0]+r*.3,h*.7,t[1]+r*.2);scene.add(c2);
+  });
+}
+
+function buildPipes(){
+  var waterPipeM=new THREE.MeshStandardMaterial({color:0x2070C0,metalness:.7,roughness:.2});
+  var feedPipeM=new THREE.MeshStandardMaterial({color:0xC08020,metalness:.6,roughness:.3});
+  var eggPipeM=new THREE.MeshStandardMaterial({color:0xC0A040,metalness:.5,roughness:.3});
+  var supportM=new THREE.MeshStandardMaterial({color:0x606058,metalness:.5,roughness:.5});
+  // Water from AGU-01 to poultry houses
+  var aguCx=2+2.5,aguCz=-26+2.5;
+  BLDS.forEach(function(b){
+    if(!b.id.startsWith('PP')&&!b.id.startsWith('CP')&&b.id!=='INC-01')return;
+    var bcx=b.x+b.w/2,bcz=b.z+b.d/2;
+    buildPipeLine(aguCx,1.8,aguCz,bcx,1.8,bcz,waterPipeM,supportM,.06);
+  });
+  // Feed from PLT-ALM to houses
+  var pltCx=32+7,pltCz=-18+5;
+  BLDS.forEach(function(b){
+    if(!b.id.startsWith('PP')&&!b.id.startsWith('CP'))return;
+    var bcx=b.x+b.w/2,bcz=b.z+b.d/2;
+    buildPipeLine(pltCx,2.2,pltCz,bcx,2.2,bcz,feedPipeM,supportM,.055);
+  });
+  // Egg from postura to INC-01
+  var incCx=5+8,incCz=24+7;
+  BLDS.forEach(function(b){
+    if(!b.id.startsWith('PP'))return;
+    var bcx=b.x+b.w/2,bcz=b.z+b.d/2;
+    buildPipeLine(bcx,2.5,bcz,incCx,2.5,incCz,eggPipeM,supportM,.05);
+  });
+}
+
+function buildPipeLine(x1,y1,z1,x2,y2,z2,pipeM,supportM,radius){
+  var dx=x2-x1,dy=y2-y1,dz=z2-z1;
+  var dist=Math.sqrt(dx*dx+dy*dy+dz*dz);
+  // Pipe body
+  var pipe=new THREE.Mesh(new THREE.CylinderGeometry(radius,radius,dist,6),pipeM);
+  pipe.position.set(x1+dx/2,y1+dy/2,z1+dz/2);
+  pipe.lookAt(new THREE.Vector3(x2,y2,z2));pipe.rotateX(Math.PI/2);
+  scene.add(pipe);
+  // Supports every 12 units
+  var nSupports=Math.max(1,Math.floor(dist/12));
+  for(var i=1;i<nSupports;i++){
+    var t=i/nSupports;
+    var sx=x1+dx*t,sy=y1+dy*t,sz=z1+dz*t;
+    var sup=new THREE.Mesh(new THREE.CylinderGeometry(.03,.04,sy,6),supportM);
+    sup.position.set(sx,sy/2,sz);scene.add(sup);
+  }
 }
 
 function buildBuilding(b){
   var cx=b.x+b.w/2,cz=b.z+b.d/2;
-  var fnd=new THREE.Mesh(new THREE.BoxGeometry(b.w+.8,.4,b.d+.8),new THREE.MeshStandardMaterial({color:0x787068,roughness:.9}));
-  fnd.position.set(cx,.2,cz);fnd.receiveShadow=true;scene.add(fnd);
-  var wc=new THREE.Color(b.col);
-  var wm=new THREE.MeshStandardMaterial({color:wc,roughness:.5,metalness:.06});
-  var rm2=new THREE.MeshStandardMaterial({color:0x282820,roughness:.9});
+  // Foundation
+  var fnd=new THREE.Mesh(new THREE.BoxGeometry(b.w+1.2,.5,b.d+1.2),new THREE.MeshStandardMaterial({color:0x787068,roughness:.85}));
+  fnd.position.set(cx,.25,cz);fnd.receiveShadow=true;scene.add(fnd);
+  var isConc=(b.id==='INC-01'||b.id==='ALM-INS'||b.id==='BIO');
+  var wallOpacity=isConc?.55:.3;
+  var wallColor=isConc?0xD8D4CC:0xB8B8B0;
+  var wm=new THREE.MeshStandardMaterial({color:wallColor,roughness:isConc?.6:.35,metalness:isConc?.05:.55,transparent:true,opacity:wallOpacity,side:THREE.DoubleSide});
+  var roofM=new THREE.MeshStandardMaterial({color:0x5A5A58,roughness:.45,metalness:.65,transparent:true,opacity:.25});
   var colm=new THREE.MeshStandardMaterial({color:0x585048,metalness:.5,roughness:.5});
 
   if(b.cyl){
-    var cyl=new THREE.Mesh(new THREE.CylinderGeometry(b.w*.42,b.w*.46,b.h,16),wm);
-    cyl.position.set(cx,b.h/2+.4,cz);cyl.castShadow=true;cyl.userData.bid=b.id;scene.add(cyl);bMeshes[b.id]=cyl;
-    var cone=new THREE.Mesh(new THREE.ConeGeometry(b.w*.47,b.h*.22,16),rm2);cone.position.set(cx,b.h+.4+b.h*.11,cz);scene.add(cone);
-    for(var ri=0;ri<5;ri++){var rng=new THREE.Mesh(new THREE.TorusGeometry(b.w*.43,0.04,4,16),new THREE.MeshStandardMaterial({color:0x888068,metalness:.4}));rng.rotation.x=Math.PI/2;rng.position.set(cx,ri*b.h*.18+.5,cz);scene.add(rng);}
-    var lm=new THREE.MeshStandardMaterial({color:0x505040,metalness:.7,roughness:.4});
-    for(var ri2=1;ri2<b.h-.4;ri2+=.75){var rg=new THREE.Mesh(new THREE.BoxGeometry(.04,.04,b.w*.43*2+.1),lm);rg.position.set(cx+b.w*.47,ri2+.4,cz);scene.add(rg);}
+    // SILO — improved with bottom cone, platform, ladder
+    var cylM=new THREE.MeshStandardMaterial({color:0xC0B898,roughness:.3,metalness:.7});
+    var cyl=new THREE.Mesh(new THREE.CylinderGeometry(b.w*.42,b.w*.44,b.h*.7,20),cylM);
+    cyl.position.set(cx,b.h*.35+.5+b.h*.15,cz);cyl.castShadow=true;cyl.userData.bid=b.id;scene.add(cyl);bMeshes[b.id]=cyl;
+    // Top cone
+    var cone=new THREE.Mesh(new THREE.ConeGeometry(b.w*.44,b.h*.18,20),new THREE.MeshStandardMaterial({color:0x909088,metalness:.6,roughness:.35}));
+    cone.position.set(cx,b.h*.7+.5+b.h*.15+b.h*.09,cz);scene.add(cone);
+    // Top cap/vent
+    var vent=new THREE.Mesh(new THREE.CylinderGeometry(.15,.15,.6,8),new THREE.MeshStandardMaterial({color:0x606058,metalness:.7}));
+    vent.position.set(cx,b.h*.7+.5+b.h*.15+b.h*.18+.3,cz);scene.add(vent);
+    // Bottom discharge cone
+    var botCone=new THREE.Mesh(new THREE.ConeGeometry(b.w*.44,b.h*.22,20),cylM);
+    botCone.position.set(cx,.5+b.h*.11,cz);botCone.rotation.x=Math.PI;scene.add(botCone);
+    // Discharge auger
+    var auger=new THREE.Mesh(new THREE.CylinderGeometry(.08,.08,2.5,6),new THREE.MeshStandardMaterial({color:0x707060,metalness:.7}));
+    auger.rotation.z=Math.PI/4;auger.position.set(cx+1.2,.8,cz);scene.add(auger);
+    // Rings/bands
+    for(var ri=0;ri<6;ri++){var rng=new THREE.Mesh(new THREE.TorusGeometry(b.w*.43,.05,4,20),new THREE.MeshStandardMaterial({color:0x888078,metalness:.5}));rng.rotation.x=Math.PI/2;rng.position.set(cx,.5+b.h*.15+ri*b.h*.1,cz);scene.add(rng);}
+    // Ladder
+    var ladM=new THREE.MeshStandardMaterial({color:0x707068,metalness:.6,roughness:.4});
+    var lRail1=new THREE.Mesh(new THREE.BoxGeometry(.04,b.h*.9,.04),ladM);lRail1.position.set(cx+b.w*.46,b.h*.45+.5,cz-.2);scene.add(lRail1);
+    var lRail2=lRail1.clone();lRail2.position.set(cx+b.w*.46,b.h*.45+.5,cz+.2);scene.add(lRail2);
+    for(var rs=0;rs<Math.floor(b.h/1);rs++){var rung=new THREE.Mesh(new THREE.BoxGeometry(.04,.04,.44),ladM);rung.position.set(cx+b.w*.46,.8+rs*1,cz);scene.add(rung);}
+    // Platform at top
+    var platM=new THREE.MeshStandardMaterial({color:0x606058,metalness:.6,roughness:.4});
+    var plat=new THREE.Mesh(new THREE.TorusGeometry(b.w*.48,.08,4,20),platM);
+    plat.rotation.x=Math.PI/2;plat.position.set(cx,b.h*.7+.5+b.h*.14,cz);scene.add(plat);
+    // Support legs (4)
+    var legM=new THREE.MeshStandardMaterial({color:0x505048,metalness:.6,roughness:.4});
+    for(var li=0;li<4;li++){var ang=li*Math.PI/2+Math.PI/4;
+      var lx=cx+Math.sin(ang)*b.w*.35,lz=cz+Math.cos(ang)*b.w*.35;
+      var leg=new THREE.Mesh(new THREE.BoxGeometry(.18,.18,b.h*.15+.5),legM);
+      leg.position.set(lx,(b.h*.15+.5)/2,lz);scene.add(leg);
+    }
   } else {
-    var hy=b.h/2+.4,wt=.22;
+    // RECTANGULAR BUILDING — corrugated walls + gable roof
+    var hy=b.h/2+.5,wt=.2;
+    // Walls — corrugated effect: vertical strips for metallic sheet look
     var wallDefs=[[cx,hy,cz+b.d/2,b.w,b.h,wt],[cx,hy,cz-b.d/2,b.w,b.h,wt],[cx-b.w/2,hy,cz,wt,b.h,b.d],[cx+b.w/2,hy,cz,wt,b.h,b.d]];
     wallDefs.forEach(function(wd,wi){
-      var wall=new THREE.Mesh(new THREE.BoxGeometry(wd[3],wd[4],wd[5]),wm);wall.position.set(wd[0],wd[1],wd[2]);wall.castShadow=true;wall.receiveShadow=true;wall.userData.bid=b.id;scene.add(wall);
+      var wall=new THREE.Mesh(new THREE.BoxGeometry(wd[3],wd[4],wd[5]),wm);
+      wall.position.set(wd[0],wd[1],wd[2]);wall.castShadow=true;wall.receiveShadow=true;wall.userData.bid=b.id;scene.add(wall);
       if(!bMeshes[b.id])bMeshes[b.id]=wall;
+      // Corrugated strips on long walls
+      if(!isConc){
+        var isLong=(wi<2);var stripLen=isLong?wd[3]:wd[5];var nStrips=Math.floor(stripLen/.8);
+        var stripM=new THREE.MeshStandardMaterial({color:0xCCC8C0,metalness:.7,roughness:.25,transparent:true,opacity:wallOpacity*.9});
+        for(var si=0;si<nStrips;si++){
+          var sOff=si*.8-stripLen/2+.4;
+          var strip=new THREE.Mesh(new THREE.BoxGeometry(isLong?.7:.03,b.h*.85,isLong?.03:.7),stripM);
+          strip.position.set(wd[0]+(isLong?sOff:0),wd[1],wd[2]+(isLong?0:sOff));scene.add(strip);
+        }
+      }
+      // Door on one short wall
+      if(wi===3){
+        var doorM=new THREE.MeshStandardMaterial({color:0x404038,metalness:.4,roughness:.5});
+        var door=new THREE.Mesh(new THREE.BoxGeometry(.25,2.2,1.4),doorM);
+        door.position.set(wd[0]+.05,1.6,cz);scene.add(door);
+      }
     });
-    [[cx,b.h+.4+.12,cz+b.d/2,b.w+.1,.22,.28],[cx,b.h+.4+.12,cz-b.d/2,b.w+.1,.22,.28],[cx-b.w/2,b.h+.4+.12,cz,.28,.22,b.d+.1],[cx+b.w/2,b.h+.4+.12,cz,.28,.22,b.d+.1]].forEach(function(c){var cc=new THREE.Mesh(new THREE.BoxGeometry(c[3],c[4],c[5]),rm2);cc.position.set(c[0],c[1],c[2]);scene.add(cc);});
-    var fl=new THREE.Mesh(new THREE.BoxGeometry(b.w-.4,.09,b.d-.4),new THREE.MeshStandardMaterial({color:0x222018,roughness:.95}));fl.position.set(cx,.44,cz);fl.receiveShadow=true;scene.add(fl);
-    var nc=Math.max(2,Math.floor(b.w/8));
-    for(var ci=0;ci<nc;ci++){var colx=b.x+b.w*.1+ci*(b.w*.8/(nc-1));[[cz+b.d/2-.15],[cz-b.d/2+.15]].forEach(function(colz){var col2=new THREE.Mesh(new THREE.BoxGeometry(.22,b.h,.22),colm);col2.position.set(colx,b.h/2+.4,colz[0]);col2.castShadow=true;scene.add(col2);});}
+    // GABLE ROOF — two angled planes
+    var roofPitch=b.h*.25;var roofOverhang=.6;
+    // Left slope
+    var roofLen=Math.sqrt(Math.pow(b.d/2+roofOverhang,2)+roofPitch*roofPitch);
+    var roofAngle=Math.atan2(roofPitch,b.d/2+roofOverhang);
+    var r1=new THREE.Mesh(new THREE.BoxGeometry(b.w+roofOverhang*2,.08,roofLen),roofM);
+    r1.position.set(cx,b.h+.5+roofPitch/2,cz-b.d/4+.1);r1.rotation.x=roofAngle;scene.add(r1);
+    var r2=new THREE.Mesh(new THREE.BoxGeometry(b.w+roofOverhang*2,.08,roofLen),roofM);
+    r2.position.set(cx,b.h+.5+roofPitch/2,cz+b.d/4-.1);r2.rotation.x=-roofAngle;scene.add(r2);
+    // Ridge beam
+    var ridgeM=new THREE.MeshStandardMaterial({color:0x484848,metalness:.7,roughness:.3});
+    var ridge=new THREE.Mesh(new THREE.BoxGeometry(b.w+roofOverhang*2,.12,.12),ridgeM);
+    ridge.position.set(cx,b.h+.5+roofPitch,cz);scene.add(ridge);
+    // Gable end triangles (simplified as thin walls)
+    var gableM=new THREE.MeshStandardMaterial({color:wallColor,roughness:.5,metalness:.3,transparent:true,opacity:wallOpacity});
+    // Eave trim
+    var eaveM=new THREE.MeshStandardMaterial({color:0x505048,metalness:.6,roughness:.4});
+    [[cx,b.h+.5,cz+b.d/2,b.w+roofOverhang*2,.1,.15],[cx,b.h+.5,cz-b.d/2,b.w+roofOverhang*2,.1,.15]].forEach(function(e){
+      var eave=new THREE.Mesh(new THREE.BoxGeometry(e[3],e[4],e[5]),eaveM);eave.position.set(e[0],e[1],e[2]);scene.add(eave);
+    });
+    // Floor
+    var fl=new THREE.Mesh(new THREE.BoxGeometry(b.w-.4,.09,b.d-.4),new THREE.MeshStandardMaterial({color:0x2A2820,roughness:.95}));
+    fl.position.set(cx,.54,cz);fl.receiveShadow=true;scene.add(fl);
+    // Structural columns
+    var nc=Math.max(2,Math.floor(b.w/7));
+    for(var ci=0;ci<nc;ci++){var colx=b.x+b.w*.08+ci*(b.w*.84/(nc-1));
+      [[cz+b.d/2-.12],[cz-b.d/2+.12]].forEach(function(colz){
+        var col2=new THREE.Mesh(new THREE.BoxGeometry(.18,b.h+.5,.18),colm);col2.position.set(colx,(b.h+.5)/2+.25,colz[0]);col2.castShadow=true;scene.add(col2);
+      });
+    }
+    // External fans on long walls (postura/crianza only)
+    if(b.area==='postura'||b.area==='crianza'){
+      var nExtFans=Math.max(2,Math.floor(b.w/7));
+      for(var efi=0;efi<nExtFans;efi++){
+        var efx=b.x+b.w*.12+efi*(b.w*.76/(nExtFans-1));
+        buildFanUnit(efx,b.h*.6+.5,cz+b.d/2+.25,b.id,'fan');
+      }
+    }
+    // External AC units (incubadora)
+    if(b.id==='INC-01'){
+      for(var ac=0;ac<3;ac++){
+        var acM=new THREE.MeshStandardMaterial({color:0xD0D0C8,roughness:.5,metalness:.4});
+        var acUnit=new THREE.Mesh(new THREE.BoxGeometry(1.2,.8,.5),acM);
+        acUnit.position.set(b.x+3+ac*4.5,b.h*.4+.5,cz-b.d/2-.35);scene.add(acUnit);
+        var acFan=new THREE.Mesh(new THREE.TorusGeometry(.25,.03,6,12),new THREE.MeshStandardMaterial({color:0x808078,metalness:.6}));
+        acFan.rotation.x=Math.PI/2;acFan.position.set(b.x+3+ac*4.5,b.h*.4+.5,cz-b.d/2-.6);scene.add(acFan);
+      }
+    }
     buildInterior(b,cx,cz);
   }
-  var grm=new THREE.MeshBasicMaterial({color:0xFF2020,transparent:true,opacity:0,side:THREE.DoubleSide});
-  var gr=new THREE.Mesh(new THREE.RingGeometry(Math.max(b.w,b.d)*.57,Math.max(b.w,b.d)*.64,24),grm);
+  // Glow ring
+  var grm2=new THREE.MeshBasicMaterial({color:0xFF2020,transparent:true,opacity:0,side:THREE.DoubleSide});
+  var gr=new THREE.Mesh(new THREE.RingGeometry(Math.max(b.w,b.d)*.57,Math.max(b.w,b.d)*.64,24),grm2);
   gr.rotation.x=-Math.PI/2;gr.position.set(cx,.42,cz);gr.userData.bid=b.id;scene.add(gr);bGlows[b.id]=gr;
   buildLabel(b,cx,cz);
 }
@@ -1057,67 +1274,130 @@ function buildInterior(b,cx,cz){
 }
 
 function buildCaseta(b,cx,cz,fy){
-  var nf=Math.max(2,Math.floor(b.w/9));
-  for(var fi=0;fi<nf;fi++){buildFanUnit(b.x+b.w*.14+fi*(b.w*.72/(nf-1)),fy+b.h*.76,cz+b.d/2+.1,b.id,'fan');}
-  var vm=new THREE.MeshStandardMaterial({color:0x607888,transparent:true,opacity:.35,roughness:.1,metalness:.8});
-  var nv=Math.max(3,Math.floor(b.w/5));
-  for(var vi=0;vi<nv;vi++){var vx=b.x+b.w*.1+vi*(b.w*.8/(nv-1));[cz+b.d/2+.14,cz-b.d/2-.14].forEach(function(vz){var vf=new THREE.MeshStandardMaterial({color:0x484840,metalness:.6,roughness:.5});var frame=new THREE.Mesh(new THREE.BoxGeometry(2.0,.72,.05),vf);frame.position.set(vx+1.0,fy+b.h*.63,vz);scene.add(frame);var vw=new THREE.Mesh(new THREE.BoxGeometry(1.82,.55,.04),vm);vw.position.set(vx+.91,fy+b.h*.63,vz);scene.add(vw);for(var ls=0;ls<4;ls++){var sl=new THREE.Mesh(new THREE.BoxGeometry(1.8,.04,.08),new THREE.MeshStandardMaterial({color:0x787868,metalness:.5}));sl.position.set(vx+.9,fy+b.h*.58+ls*.12,vz);sl.rotation.x=.25;scene.add(sl);}});}
-  var canM=new THREE.MeshStandardMaterial({color:0x8A8870,metalness:.65,roughness:.35});
-  [-b.d*.22,b.d*.22].forEach(function(zo){
-    var bot=new THREE.Mesh(new THREE.BoxGeometry(b.w*.9,.14,.22),canM);bot.position.set(cx,fy+.18,cz+zo);scene.add(bot);
-    var sw1=new THREE.Mesh(new THREE.BoxGeometry(b.w*.9,.12,.04),canM);sw1.position.set(cx,fy+.26,cz+zo-.11);scene.add(sw1);
-    var sw2=new THREE.Mesh(new THREE.BoxGeometry(b.w*.9,.12,.04),canM);sw2.position.set(cx,fy+.26,cz+zo+.11);scene.add(sw2);
-    var feedM=new THREE.MeshStandardMaterial({color:0xC8A830,roughness:1});
-    var feed=new THREE.Mesh(new THREE.BoxGeometry(b.w*.88,.05,.18),feedM);feed.position.set(cx,fy+.19,cz+zo);scene.add(feed);
-    var hopM=new THREE.MeshStandardMaterial({color:0x706018,roughness:.4,metalness:.4});
-    var hop=new THREE.Mesh(new THREE.CylinderGeometry(.55,.12,.9,8,1,true),hopM);hop.position.set(b.x+2,fy+1.05,cz+zo);hop.userData={machineKey:'chain',bid:b.id};allClickable.push(hop);scene.add(hop);
-    var hcap=new THREE.Mesh(new THREE.CylinderGeometry(.55,.55,.1,8),hopM);hcap.position.set(b.x+2,fy+1.5,cz+zo);scene.add(hcap);
-    var drvM=new THREE.MeshStandardMaterial({color:0x2A3848,roughness:.4,metalness:.7});
-    var drv=new THREE.Mesh(new THREE.BoxGeometry(.42,.38,.3),drvM);drv.position.set(b.x+b.w-.9,fy+.44,cz+zo);scene.add(drv);
-    var linkM=new THREE.MeshStandardMaterial({color:0xB0B090,metalness:.8,roughness:.3});
-    for(var ci2=0;ci2<Math.floor(b.w*.88/.55);ci2++){var lnk=new THREE.Mesh(new THREE.BoxGeometry(.06,.04,.18),linkM);lnk.position.set(b.x+.6+ci2*.55,fy+.25,cz+zo);scene.add(lnk);}
-    var wireM=new THREE.MeshStandardMaterial({color:0x707060,metalness:.8});
-    for(var wi2=0;wi2<Math.floor(b.w/3);wi2++){var wire=new THREE.Mesh(new THREE.CylinderGeometry(.006,.006,b.h*.55,4),wireM);wire.position.set(b.x+1.5+wi2*3,fy+b.h*.63,cz+zo);scene.add(wire);}
+  fy=.54;
+  // === FEED LINES (CHAIN FEEDERS) — 3 parallel lines ===
+  var canM=new THREE.MeshStandardMaterial({color:0x8A8878,metalness:.65,roughness:.35});
+  var feedM=new THREE.MeshStandardMaterial({color:0xC8A830,roughness:1});
+  var hopM=new THREE.MeshStandardMaterial({color:0x706820,roughness:.4,metalness:.4});
+  var drvM=new THREE.MeshStandardMaterial({color:0x2A3848,roughness:.4,metalness:.7});
+  var linkM=new THREE.MeshStandardMaterial({color:0xB0B090,metalness:.8,roughness:.3});
+  var feedZones=[-b.d*.3,0,b.d*.3];
+  feedZones.forEach(function(zo,idx){
+    // Trough
+    var bot=new THREE.Mesh(new THREE.BoxGeometry(b.w*.88,.1,.2),canM);bot.position.set(cx,fy+.16,cz+zo);scene.add(bot);
+    var sw1=new THREE.Mesh(new THREE.BoxGeometry(b.w*.88,.1,.03),canM);sw1.position.set(cx,fy+.22,cz+zo-.1);scene.add(sw1);
+    var sw2=sw1.clone();sw2.position.set(cx,fy+.22,cz+zo+.1);scene.add(sw2);
+    // Feed inside trough
+    var fd=new THREE.Mesh(new THREE.BoxGeometry(b.w*.85,.04,.16),feedM);fd.position.set(cx,fy+.17,cz+zo);scene.add(fd);
+    // Hopper at start
+    var hop=new THREE.Mesh(new THREE.CylinderGeometry(.5,.1,.85,8,1,true),hopM);hop.position.set(b.x+1.8,fy+.95,cz+zo);hop.userData={machineKey:'chain',bid:b.id};allClickable.push(hop);scene.add(hop);
+    var hcap=new THREE.Mesh(new THREE.CylinderGeometry(.5,.5,.08,8),hopM);hcap.position.set(b.x+1.8,fy+1.38,cz+zo);scene.add(hcap);
+    // Drive motor at end
+    var drv=new THREE.Mesh(new THREE.BoxGeometry(.38,.34,.28),drvM);drv.position.set(b.x+b.w-.8,fy+.4,cz+zo);scene.add(drv);
+    // Chain links
+    for(var ci2=0;ci2<Math.floor(b.w*.85/.6);ci2++){var lnk=new THREE.Mesh(new THREE.BoxGeometry(.05,.03,.16),linkM);lnk.position.set(b.x+.6+ci2*.6,fy+.22,cz+zo);scene.add(lnk);}
   });
+
+  // === NESTING BOXES (postura only) ===
+  if(b.area==='postura'){
+    var nestM=new THREE.MeshStandardMaterial({color:0x8B6B3A,roughness:.8});
+    var nestPadM=new THREE.MeshStandardMaterial({color:0xC8B870,roughness:1});
+    [cz-b.d*.42,cz+b.d*.42].forEach(function(nz){
+      var nNests=Math.floor(b.w/1.2);
+      for(var ni=0;ni<nNests;ni++){
+        var nx=b.x+.8+ni*1.1;
+        var nest=new THREE.Mesh(new THREE.BoxGeometry(.9,.5,.45),nestM);nest.position.set(nx,fy+.45,nz);scene.add(nest);
+        var pad=new THREE.Mesh(new THREE.BoxGeometry(.8,.04,.38),nestPadM);pad.position.set(nx,fy+.22,nz);scene.add(pad);
+      }
+      // Egg collection belt under nests
+      var beltM=new THREE.MeshStandardMaterial({color:0x404040,roughness:.7,metalness:.3});
+      var belt=new THREE.Mesh(new THREE.BoxGeometry(b.w*.9,.04,.35),beltM);belt.position.set(cx,fy+.08,nz);scene.add(belt);
+      // Belt rollers
+      var rollM=new THREE.MeshStandardMaterial({color:0x606058,metalness:.7});
+      for(var ri=0;ri<4;ri++){var roll=new THREE.Mesh(new THREE.CylinderGeometry(.04,.04,.4,6),rollM);roll.rotation.x=Math.PI/2;roll.position.set(b.x+2+ri*(b.w-4)/3,fy+.06,nz);scene.add(roll);}
+    });
+  }
+
+  // === WATER LINES (NIPPLE DRINKERS) — 2 lines ===
   var pipM=new THREE.MeshStandardMaterial({color:0x1565C0,metalness:.7,roughness:.2});
   var nipM2=new THREE.MeshStandardMaterial({color:0x90B8CC,metalness:.85,roughness:.15});
-  var drpM=new THREE.MeshStandardMaterial({color:0x40B0F8,transparent:true,opacity:.85,roughness:.05});
-  [{z:cz+b.d*.32,h:fy+.46},{z:cz+b.d*.44,h:fy+.62}].forEach(function(pl){
-    var pp=new THREE.Mesh(new THREE.CylinderGeometry(.032,.032,b.w*.9,8),pipM);pp.rotation.z=Math.PI/2;pp.position.set(cx,pl.h,pl.z);pp.userData={machineKey:'nipple',bid:b.id};allClickable.push(pp);scene.add(pp);
-    var reg=new THREE.Mesh(new THREE.BoxGeometry(.24,.22,.18),new THREE.MeshStandardMaterial({color:0x2055A0,roughness:.4,metalness:.6}));reg.position.set(b.x+.55,pl.h,pl.z);scene.add(reg);
-    var nn=Math.floor(b.w*.84/.25);
-    for(var ni=0;ni<nn;ni++){var nx=b.x+.9+ni*.25;var stem=new THREE.Mesh(new THREE.CylinderGeometry(.02,.02,.26,6),nipM2);stem.position.set(nx,pl.h-.2,pl.z);scene.add(stem);var drp=new THREE.Mesh(new THREE.SphereGeometry(.028,5,5),drpM);drp.position.set(nx,pl.h-.36,pl.z);scene.add(drp);}
+  var drpM=new THREE.MeshStandardMaterial({color:0x40B0F8,transparent:true,opacity:.8,roughness:.05});
+  [{z:cz-b.d*.15,h:fy+.5},{z:cz+b.d*.15,h:fy+.5}].forEach(function(pl){
+    var pp=new THREE.Mesh(new THREE.CylinderGeometry(.028,.028,b.w*.88,8),pipM);pp.rotation.z=Math.PI/2;pp.position.set(cx,pl.h,pl.z);pp.userData={machineKey:'nipple',bid:b.id};allClickable.push(pp);scene.add(pp);
+    // Pressure regulator
+    var reg=new THREE.Mesh(new THREE.BoxGeometry(.2,.18,.15),new THREE.MeshStandardMaterial({color:0x2055A0,roughness:.4,metalness:.6}));reg.position.set(b.x+.5,pl.h,pl.z);scene.add(reg);
+    // Nipples
+    var nn=Math.floor(b.w*.82/.3);
+    for(var ni=0;ni<nn;ni++){var nx=b.x+.9+ni*.3;var stem=new THREE.Mesh(new THREE.CylinderGeometry(.015,.015,.2,5),nipM2);stem.position.set(nx,pl.h-.16,pl.z);scene.add(stem);
+      if(ni%3===0){var drp=new THREE.Mesh(new THREE.SphereGeometry(.022,4,4),drpM);drp.position.set(nx,pl.h-.28,pl.z);scene.add(drp);}
+    }
   });
+
+  // === BROODERS (heat lamps) ===
   var brM=new THREE.MeshStandardMaterial({color:0xC84018,roughness:.4});
-  var glM=new THREE.MeshStandardMaterial({color:0xFF6010,emissive:new THREE.Color(0xFF5000),emissiveIntensity:1.4,transparent:true,opacity:.75});
-  var nb=Math.max(2,Math.floor(b.w/10));
+  var glM=new THREE.MeshStandardMaterial({color:0xFF6010,emissive:new THREE.Color(0xFF5000),emissiveIntensity:1.2,transparent:true,opacity:.7});
+  var nb=Math.max(2,Math.floor(b.w/8));
   for(var bi=0;bi<nb;bi++){
-    var bx=b.x+b.w*.18+bi*(b.w*.64/(nb-1));var bh2=fy+b.h*.48;
-    var wir=new THREE.Mesh(new THREE.CylinderGeometry(.01,.01,b.h*.44,4),new THREE.MeshStandardMaterial({color:0x505040,metalness:.8}));wir.position.set(bx,fy+b.h*.7,cz);scene.add(wir);
-    var refl=new THREE.Mesh(new THREE.CylinderGeometry(.74,.68,.15,14),brM);refl.position.set(bx,bh2,cz);refl.userData={machineKey:'brooder',bid:b.id};allClickable.push(refl);scene.add(refl);
-    var gring=new THREE.Mesh(new THREE.TorusGeometry(.52,.055,8,20),glM);gring.position.set(bx,bh2-.09,cz);scene.add(gring);
-    var ctr=new THREE.Mesh(new THREE.CylinderGeometry(.2,.2,.04,10),new THREE.MeshStandardMaterial({color:0xFF8020,emissive:new THREE.Color(0xFF6010),emissiveIntensity:.9,transparent:true,opacity:.75}));ctr.position.set(bx,bh2-.09,cz);scene.add(ctr);
-    var gsp=new THREE.Mesh(new THREE.CylinderGeometry(.024,.024,1.8,6),new THREE.MeshStandardMaterial({color:0xB09028,metalness:.7}));gsp.rotation.z=Math.PI/2;gsp.position.set(bx,bh2+.04,cz);scene.add(gsp);
+    var bx=b.x+b.w*.15+bi*(b.w*.7/(nb-1));var bh2=fy+b.h*.52;
+    // Suspension wire
+    var wir=new THREE.Mesh(new THREE.CylinderGeometry(.008,.008,b.h*.4,4),new THREE.MeshStandardMaterial({color:0x505040,metalness:.8}));wir.position.set(bx,fy+b.h*.72,cz);scene.add(wir);
+    // Reflector disc
+    var refl=new THREE.Mesh(new THREE.CylinderGeometry(.7,.65,.12,14),brM);refl.position.set(bx,bh2,cz);refl.userData={machineKey:'brooder',bid:b.id};allClickable.push(refl);scene.add(refl);
+    // Glow ring
+    var gring=new THREE.Mesh(new THREE.TorusGeometry(.48,.05,8,18),glM);gring.position.set(bx,bh2-.08,cz);scene.add(gring);
+    // Center element
+    var ctr=new THREE.Mesh(new THREE.CylinderGeometry(.18,.18,.04,10),new THREE.MeshStandardMaterial({color:0xFF8020,emissive:new THREE.Color(0xFF6010),emissiveIntensity:.8,transparent:true,opacity:.7}));ctr.position.set(bx,bh2-.08,cz);scene.add(ctr);
+    // Gas supply pipe
+    var gsp=new THREE.Mesh(new THREE.CylinderGeometry(.02,.02,1.6,6),new THREE.MeshStandardMaterial({color:0xB09028,metalness:.7}));gsp.rotation.z=Math.PI/2;gsp.position.set(bx,bh2+.04,cz);scene.add(gsp);
   }
-  var sM2=new THREE.MeshStandardMaterial({color:0x10C040,emissive:new THREE.Color(0x10D040),emissiveIntensity:.9,roughness:.2});
+
+  // === ENVIRONMENTAL SENSORS ===
+  var sM2=new THREE.MeshStandardMaterial({color:0xE8E8E0,roughness:.4,metalness:.2});
   var sPostM=new THREE.MeshStandardMaterial({color:0x606050,roughness:.7,metalness:.3});
-  for(var si=0;si<3;si++){
-    var sx=b.x+b.w*.15+si*(b.w*.7/2);var sz=cz-b.d*.42;
-    var post=new THREE.Mesh(new THREE.CylinderGeometry(.024,.024,1.0,6),sPostM);post.position.set(sx,fy+.78,sz);scene.add(post);
-    var probe=new THREE.Mesh(new THREE.CylinderGeometry(.03,.024,.2,8),sM2);probe.position.set(sx,fy+1.28,sz);probe.userData={machineKey:'env',bid:b.id};allClickable.push(probe);scene.add(probe);
-    var led2=new THREE.Mesh(new THREE.SphereGeometry(.025,5,5),new THREE.MeshStandardMaterial({color:0x00FF50,emissive:new THREE.Color(0x00FF50),emissiveIntensity:2}));led2.position.set(sx,fy+1.1,sz+.05);scene.add(led2);
+  for(var si=0;si<4;si++){
+    var sx=b.x+b.w*.12+si*(b.w*.76/3);var sz=cz-b.d*.42;
+    // Mount post
+    var post=new THREE.Mesh(new THREE.CylinderGeometry(.02,.02,.9,6),sPostM);post.position.set(sx,fy+.7,sz);scene.add(post);
+    // Sensor housing
+    var probe=new THREE.Mesh(new THREE.BoxGeometry(.12,.15,.08),sM2);probe.position.set(sx,fy+1.18,sz);probe.userData={machineKey:'env',bid:b.id};allClickable.push(probe);scene.add(probe);
+    // LED indicator
+    var led2=new THREE.Mesh(new THREE.SphereGeometry(.02,5,5),new THREE.MeshStandardMaterial({color:0x00FF50,emissive:new THREE.Color(0x00FF50),emissiveIntensity:2}));led2.position.set(sx,fy+1.05,sz+.05);scene.add(led2);
   }
-  var condM2=new THREE.MeshStandardMaterial({color:0xFF5500,roughness:.4,metalness:.7,emissive:new THREE.Color(0xFF4000),emissiveIntensity:.4});
-  var cond=new THREE.Mesh(new THREE.CylinderGeometry(.048,.048,b.w*.92,8),condM2);cond.rotation.z=Math.PI/2;cond.position.set(cx,fy+b.h*.9,cz);scene.add(cond);
-  var gwM=new THREE.MeshStandardMaterial({color:0xFF5500,roughness:.3,metalness:.6});
-  var gw=new THREE.Mesh(new THREE.BoxGeometry(.48,.48,.3),gwM);gw.position.set(b.x+b.w*.91,fy+b.h*.9,cz);scene.add(gw);
-  var ledM=new THREE.MeshStandardMaterial({color:0xF8F0C0,emissive:new THREE.Color(0xFFEE80),emissiveIntensity:.7,roughness:.2});
-  var lstrip=new THREE.Mesh(new THREE.BoxGeometry(b.w*.88,.05,.2),ledM);lstrip.position.set(cx,fy+b.h*.91,cz-b.d*.08);scene.add(lstrip);
+
+  // === ELECTRICAL CONDUIT ===
+  var condM2=new THREE.MeshStandardMaterial({color:0xFF5500,roughness:.4,metalness:.7,emissive:new THREE.Color(0xFF4000),emissiveIntensity:.3});
+  var cond=new THREE.Mesh(new THREE.CylinderGeometry(.04,.04,b.w*.9,8),condM2);cond.rotation.z=Math.PI/2;cond.position.set(cx,fy+b.h*.88,cz);scene.add(cond);
+  // Junction box
+  var gwM2=new THREE.MeshStandardMaterial({color:0xFF5500,roughness:.3,metalness:.6});
+  var gw=new THREE.Mesh(new THREE.BoxGeometry(.4,.4,.25),gwM2);gw.position.set(b.x+b.w*.9,fy+b.h*.88,cz);scene.add(gw);
+
+  // === LED LIGHTING STRIP ===
+  var ledM=new THREE.MeshStandardMaterial({color:0xF8F0C0,emissive:new THREE.Color(0xFFEE80),emissiveIntensity:.6,roughness:.2});
+  var lstrip=new THREE.Mesh(new THREE.BoxGeometry(b.w*.86,.04,.15),ledM);lstrip.position.set(cx,fy+b.h*.9,cz-b.d*.08);scene.add(lstrip);
+  var lstrip2=lstrip.clone();lstrip2.position.set(cx,fy+b.h*.9,cz+b.d*.08);scene.add(lstrip2);
+
+  // === CURTAIN INLETS on side walls ===
+  var curtainM=new THREE.MeshStandardMaterial({color:0x4080A0,transparent:true,opacity:.2,roughness:.3,side:THREE.DoubleSide});
+  var nCurt=Math.floor(b.w/4);
+  for(var ci=0;ci<nCurt;ci++){
+    var curtX=b.x+2+ci*(b.w-4)/(nCurt-1);
+    [cz-b.d/2+.05,cz+b.d/2-.05].forEach(function(curtZ){
+      var curtain=new THREE.Mesh(new THREE.BoxGeometry(1.5,b.h*.5,.02),curtainM);curtain.position.set(curtX,fy+b.h*.35,curtZ);scene.add(curtain);
+    });
+  }
+
+  // === BIRDS ===
   if(b.aves>0){
-    var birdM=new THREE.MeshStandardMaterial({color:0xECC020,roughness:1});
-    var birdG=new THREE.SphereGeometry(.12,5,4);
-    var nb2=Math.min(60,Math.floor(b.aves/400));
-    for(var bi2=0;bi2<nb2;bi2++){var bird=new THREE.Mesh(birdG,birdM);bird.scale.set(1,.66,1.35);bird.position.set(b.x+.8+Math.random()*(b.w-1.6),fy+.12,cz-b.d*.38+Math.random()*b.d*.76);bird.rotation.y=Math.random()*Math.PI*2;scene.add(bird);}
+    var birdM1=new THREE.MeshStandardMaterial({color:0xECC020,roughness:1});
+    var birdM2=new THREE.MeshStandardMaterial({color:0xE8E0D0,roughness:1});
+    var birdG=new THREE.SphereGeometry(.1,5,4);
+    var nb2=Math.min(80,Math.floor(b.aves/350));
+    for(var bi2=0;bi2<nb2;bi2++){
+      var bm=Math.random()>.4?birdM1:birdM2;
+      var bird=new THREE.Mesh(birdG,bm);bird.scale.set(1,.6,1.3);
+      bird.position.set(b.x+.8+Math.random()*(b.w-1.6),fy+.1,cz-b.d*.36+Math.random()*b.d*.72);
+      bird.rotation.y=Math.random()*Math.PI*2;scene.add(bird);
+    }
   }
 }
 
@@ -1140,61 +1420,165 @@ function buildFanUnit(x,y,z,bid,mk){
 }
 
 function buildIncubadora(b,cx,cz,fy){
-  var cabM=new THREE.MeshStandardMaterial({color:0xECE8E0,roughness:.38,metalness:.08});
-  var dM2=new THREE.MeshStandardMaterial({color:0xD8D4CC,roughness:.28,metalness:.15});
-  var winM=new THREE.MeshStandardMaterial({color:0x8AB8D8,transparent:true,opacity:.42,roughness:.05});
+  fy=.54;
+  var cabM=new THREE.MeshStandardMaterial({color:0xECE8E0,roughness:.35,metalness:.1});
+  var dM2=new THREE.MeshStandardMaterial({color:0xD8D4CC,roughness:.25,metalness:.15});
+  var winM=new THREE.MeshStandardMaterial({color:0x8AB8D8,transparent:true,opacity:.4,roughness:.05});
   var trayM=new THREE.MeshStandardMaterial({color:0xC8C4B4,roughness:.55,metalness:.45});
   var eggM=new THREE.MeshStandardMaterial({color:0xE8D880,roughness:.9});
-  for(var ci=0;ci<3;ci++){
-    var cbx=b.x+1.5+ci*4.2;
-    var cab=new THREE.Mesh(new THREE.BoxGeometry(3.6,2.4,.98),cabM);cab.position.set(cbx+1.8,fy+1.2,cz-b.d*.28);cab.castShadow=true;cab.userData={machineKey:'setter',bid:b.id};allClickable.push(cab);scene.add(cab);
-    var door=new THREE.Mesh(new THREE.BoxGeometry(3.4,2.2,.07),dM2);door.position.set(cbx+1.8,fy+1.2,cz-b.d*.28+.52);scene.add(door);
-    var win=new THREE.Mesh(new THREE.BoxGeometry(2.9,1.5,.06),winM);win.position.set(cbx+1.8,fy+1.3,cz-b.d*.28+.53);scene.add(win);
-    for(var ti=0;ti<9;ti++){var tray=new THREE.Mesh(new THREE.BoxGeometry(3.0,.065,.7),trayM);tray.position.set(cbx+1.8,fy+.25+ti*.24,cz-b.d*.28);scene.add(tray);
-      for(var ei=0;ei<8;ei++){var egg=new THREE.Mesh(new THREE.SphereGeometry(.058,6,5),eggM);egg.scale.set(1,1.42,1);egg.position.set(cbx+.38+ei*.38,fy+.35+ti*.24,cz-b.d*.28+.06);scene.add(egg);}
+  var panelM=new THREE.MeshStandardMaterial({color:0x101828,emissive:new THREE.Color(0x002890),emissiveIntensity:.5});
+
+  // === SETTERS (4 units) ===
+  for(var ci=0;ci<4;ci++){
+    var cbx=b.x+1.2+ci*3.5;
+    var cab=new THREE.Mesh(new THREE.BoxGeometry(3.0,3.2,1.1),cabM);cab.position.set(cbx+1.5,fy+1.6,cz-b.d*.3);cab.castShadow=true;cab.userData={machineKey:'setter',bid:b.id};allClickable.push(cab);scene.add(cab);
+    // Door with window
+    var door=new THREE.Mesh(new THREE.BoxGeometry(2.8,3.0,.06),dM2);door.position.set(cbx+1.5,fy+1.6,cz-b.d*.3+.58);scene.add(door);
+    var win=new THREE.Mesh(new THREE.BoxGeometry(2.2,2.0,.05),winM);win.position.set(cbx+1.5,fy+1.7,cz-b.d*.3+.59);scene.add(win);
+    // Internal trays with eggs
+    for(var ti=0;ti<11;ti++){
+      var tray=new THREE.Mesh(new THREE.BoxGeometry(2.6,.05,.8),trayM);tray.position.set(cbx+1.5,fy+.2+ti*.28,cz-b.d*.3);scene.add(tray);
+      for(var ei=0;ei<7;ei++){var egg=new THREE.Mesh(new THREE.SphereGeometry(.05,5,4),eggM);egg.scale.set(1,1.4,1);egg.position.set(cbx+.4+ei*.35,fy+.3+ti*.28,cz-b.d*.3+.05);scene.add(egg);}
     }
-    var pan=new THREE.Mesh(new THREE.BoxGeometry(3.4,.52,.34),new THREE.MeshStandardMaterial({color:0x101828,emissive:new THREE.Color(0x002890),emissiveIntensity:.55}));pan.position.set(cbx+1.8,fy+2.55,cz-b.d*.28);scene.add(pan);
-    var sled=new THREE.Mesh(new THREE.SphereGeometry(.048,6,6),new THREE.MeshStandardMaterial({color:0x00FF50,emissive:new THREE.Color(0x00FF50),emissiveIntensity:2.2}));sled.position.set(cbx+.38,fy+2.55,cz-b.d*.28+.2);scene.add(sled);
+    // Control panel on top
+    var pan=new THREE.Mesh(new THREE.BoxGeometry(2.8,.45,.3),panelM);pan.position.set(cbx+1.5,fy+3.35,cz-b.d*.3);scene.add(pan);
+    // Status LED
+    var sled=new THREE.Mesh(new THREE.SphereGeometry(.04,5,5),new THREE.MeshStandardMaterial({color:0x00FF50,emissive:new THREE.Color(0x00FF50),emissiveIntensity:2}));sled.position.set(cbx+.5,fy+3.35,cz-b.d*.3+.18);scene.add(sled);
+    // Temperature display
+    var disp=new THREE.Mesh(new THREE.BoxGeometry(.6,.25,.02),new THREE.MeshStandardMaterial({color:0x00AA40,emissive:new THREE.Color(0x00CC50),emissiveIntensity:.8}));disp.position.set(cbx+1.8,fy+3.35,cz-b.d*.3+.16);scene.add(disp);
   }
-  var hatM=new THREE.MeshStandardMaterial({color:0xD0E8CC,roughness:.38,metalness:.08});
-  for(var ci2=0;ci2<2;ci2++){var hx=b.x+1.5+ci2*5.8;var hcab=new THREE.Mesh(new THREE.BoxGeometry(4.8,2.4,.98),hatM);hcab.position.set(hx+2.4,fy+1.2,cz+b.d*.28);hcab.castShadow=true;hcab.userData={machineKey:'hatcher',bid:b.id};allClickable.push(hcab);scene.add(hcab);for(var ti2=0;ti2<6;ti2++){var bas=new THREE.Mesh(new THREE.BoxGeometry(4.4,.07,.75),trayM);bas.position.set(hx+2.4,fy+.3+ti2*.35,cz+b.d*.28);scene.add(bas);}}
-  [[0xC83020,.18],[0x1860D0,.32],[0xA0A0A0,.46]].forEach(function(pc){var p=new THREE.Mesh(new THREE.CylinderGeometry(.068,.068,b.w*.9,8),new THREE.MeshStandardMaterial({color:pc[0],metalness:.7,roughness:.2}));p.rotation.z=Math.PI/2;p.position.set(cx,fy+.2,cz+pc[1]-b.d*.18);scene.add(p);});
-  for(var hi=0;hi<3;hi++){var hx2=b.x+b.w*.12+hi*(b.w*.76/2);var hvac=new THREE.Mesh(new THREE.BoxGeometry(2.1,.62,1.25),new THREE.MeshStandardMaterial({color:0xD8D8CC,roughness:.5,metalness:.4}));hvac.position.set(hx2+1.05,fy+b.h-.72,cz);scene.add(hvac);}
-  var ic=new THREE.Mesh(new THREE.CylinderGeometry(.046,.046,b.w*.9,8),new THREE.MeshStandardMaterial({color:0xFF5500,roughness:.4,metalness:.7,emissive:new THREE.Color(0xFF4000),emissiveIntensity:.35}));ic.rotation.z=Math.PI/2;ic.position.set(cx,fy+b.h*.88,cz);scene.add(ic);
+
+  // === HATCHERS (2 units) ===
+  var hatM=new THREE.MeshStandardMaterial({color:0xD0E8CC,roughness:.35,metalness:.1});
+  for(var ci2=0;ci2<2;ci2++){
+    var hx=b.x+1.5+ci2*6.5;
+    var hcab=new THREE.Mesh(new THREE.BoxGeometry(5.5,3.0,1.1),hatM);hcab.position.set(hx+2.75,fy+1.5,cz+b.d*.3);hcab.castShadow=true;hcab.userData={machineKey:'hatcher',bid:b.id};allClickable.push(hcab);scene.add(hcab);
+    for(var ti2=0;ti2<8;ti2++){var bas=new THREE.Mesh(new THREE.BoxGeometry(5.0,.06,.85),trayM);bas.position.set(hx+2.75,fy+.25+ti2*.33,cz+b.d*.3);scene.add(bas);}
+    var hpan=new THREE.Mesh(new THREE.BoxGeometry(5.3,.4,.3),panelM);hpan.position.set(hx+2.75,fy+3.15,cz+b.d*.3);scene.add(hpan);
+  }
+
+  // === CANDLING/CLASSIFICATION TABLE ===
+  var tableM=new THREE.MeshStandardMaterial({color:0xC0C0B8,metalness:.5,roughness:.4});
+  var table=new THREE.Mesh(new THREE.BoxGeometry(6,.08,1.5),tableM);table.position.set(cx,fy+1.0,cz);scene.add(table);
+  // Table legs
+  var tlegM=new THREE.MeshStandardMaterial({color:0x505048,metalness:.6});
+  [[-3,-.7],[3,-.7],[-3,.7],[3,.7]].forEach(function(l){
+    var leg=new THREE.Mesh(new THREE.CylinderGeometry(.04,.04,1,6),tlegM);leg.position.set(cx+l[0],fy+.5,cz+l[1]);scene.add(leg);
+  });
+  // Candling light
+  var candleM=new THREE.MeshStandardMaterial({color:0xFFEE60,emissive:new THREE.Color(0xFFDD30),emissiveIntensity:.9,transparent:true,opacity:.8});
+  var candle=new THREE.Mesh(new THREE.BoxGeometry(1.5,.06,.8),candleM);candle.position.set(cx-1,fy+1.06,cz);scene.add(candle);
+  // Overhead lamp
+  var lamp=new THREE.Mesh(new THREE.CylinderGeometry(.3,.4,.15,8),new THREE.MeshStandardMaterial({color:0xD0D0C8,metalness:.5}));lamp.position.set(cx,fy+2.5,cz);scene.add(lamp);
+
+  // === HVAC DUCTS on ceiling ===
+  var ductM=new THREE.MeshStandardMaterial({color:0xC0C0B8,roughness:.5,metalness:.5});
+  var duct=new THREE.Mesh(new THREE.BoxGeometry(b.w*.8,.35,.5),ductM);duct.position.set(cx,fy+b.h-.5,cz-b.d*.15);scene.add(duct);
+  var duct2=duct.clone();duct2.position.set(cx,fy+b.h-.5,cz+b.d*.15);scene.add(duct2);
+
+  // === PIPING (hot water, cold water, HVAC) ===
+  [[0xC83020,.18],[0x1860D0,.32],[0xA0A0A0,.46]].forEach(function(pc){
+    var p=new THREE.Mesh(new THREE.CylinderGeometry(.06,.06,b.w*.88,8),new THREE.MeshStandardMaterial({color:pc[0],metalness:.7,roughness:.2}));
+    p.rotation.z=Math.PI/2;p.position.set(cx,fy+.18,cz+pc[1]-b.d*.18);scene.add(p);
+  });
+
+  // === ELECTRICAL CONDUIT ===
+  var ic=new THREE.Mesh(new THREE.CylinderGeometry(.04,.04,b.w*.88,8),new THREE.MeshStandardMaterial({color:0xFF5500,roughness:.4,metalness:.7,emissive:new THREE.Color(0xFF4000),emissiveIntensity:.3}));
+  ic.rotation.z=Math.PI/2;ic.position.set(cx,fy+b.h*.88,cz);scene.add(ic);
 }
 
 function buildPlanta(b,cx,cz,fy){
+  fy=.54;
   var stM=new THREE.MeshStandardMaterial({color:0x666666,roughness:.38,metalness:.76});
   var dkM=new THREE.MeshStandardMaterial({color:0x282828,roughness:.58,metalness:.7});
-  var mx=b.x+3;
-  var mTop=new THREE.Mesh(new THREE.CylinderGeometry(.86,.78,2.0,14),new THREE.MeshStandardMaterial({color:0x585860,roughness:.38,metalness:.76}));mTop.position.set(mx,fy+1.8,cz-b.d*.25);mTop.castShadow=true;mTop.userData={machineKey:'hammer',bid:b.id};allClickable.push(mTop);scene.add(mTop);
-  var mBot=new THREE.Mesh(new THREE.CylinderGeometry(.78,.42,1.3,14),new THREE.MeshStandardMaterial({color:0x505058,roughness:.4,metalness:.74}));mBot.position.set(mx,fy+.85,cz-b.d*.25);scene.add(mBot);
-  var mFeed=new THREE.Mesh(new THREE.CylinderGeometry(.13,.13,1.0,8),stM);mFeed.position.set(mx,fy+3.7,cz-b.d*.25);scene.add(mFeed);
-  var mHop=new THREE.Mesh(new THREE.BoxGeometry(.58,.72,.58),dkM);mHop.position.set(mx,fy+3.15,cz-b.d*.25);scene.add(mHop);
-  var mMot=new THREE.Mesh(new THREE.CylinderGeometry(.28,.28,.82,10),new THREE.MeshStandardMaterial({color:0x1A2840,metalness:.86,roughness:.18}));mMot.rotation.z=Math.PI/2;mMot.position.set(mx+1.4,fy+1.8,cz-b.d*.25);scene.add(mMot);
-  var pul=new THREE.Mesh(new THREE.CylinderGeometry(.38,.38,.14,14),new THREE.MeshStandardMaterial({color:0x282828,roughness:.4,metalness:.8}));pul.rotation.z=Math.PI/2;pul.position.set(mx+.78,fy+1.8,cz-b.d*.25);scene.add(pul);
-  var vs2=new THREE.Mesh(new THREE.SphereGeometry(.055,6,6),new THREE.MeshStandardMaterial({color:0xFF3030,emissive:new THREE.Color(0xFF2020),emissiveIntensity:1.2}));vs2.position.set(mx+.9,fy+1.8,cz-b.d*.25+.95);scene.add(vs2);
-  var dsx=b.x+5.5;
-  var hopCols=[0x5540A0,0x4060B0,0x40A040,0xC0A020,0xA04040];
-  for(var di=0;di<5;di++){var dx=dsx+di*1.12;var dhM=new THREE.MeshStandardMaterial({color:hopCols[di],roughness:.4,metalness:.5});var dhop=new THREE.Mesh(new THREE.CylinderGeometry(.38,.08,.72,8,1,true),dhM);dhop.position.set(dx,fy+1.15,cz);scene.add(dhop);var dcap=new THREE.Mesh(new THREE.CylinderGeometry(.38,.38,.08,8),new THREE.MeshStandardMaterial({color:0x484848,metalness:.6}));dcap.position.set(dx,fy+1.51,cz);scene.add(dcap);var dleg=new THREE.Mesh(new THREE.CylinderGeometry(.04,.04,.62,6),stM);dleg.position.set(dx,fy+.48,cz);scene.add(dleg);}
-  var dPlt=new THREE.Mesh(new THREE.BoxGeometry(5.6,.09,1.1),new THREE.MeshStandardMaterial({color:0xB0B0A0,metalness:.82,roughness:.18}));dPlt.position.set(dsx+2.2,fy+.22,cz);scene.add(dPlt);
-  var mxX=cx;
-  var drum=new THREE.Mesh(new THREE.CylinderGeometry(1.1,1.1,4.4,14),new THREE.MeshStandardMaterial({color:0x2A4820,roughness:.38,metalness:.52}));drum.rotation.z=Math.PI/2;drum.position.set(mxX,fy+1.1,cz);drum.castShadow=true;drum.userData={machineKey:'mixer',bid:b.id};allClickable.push(drum);scene.add(drum);
-  [-1,1].forEach(function(side){var cap=new THREE.Mesh(new THREE.CylinderGeometry(1.1,1.1,.15,14),dkM);cap.rotation.z=Math.PI/2;cap.position.set(mxX+side*2.28,fy+1.1,cz);scene.add(cap);});
-  var mxMot2=new THREE.Mesh(new THREE.CylinderGeometry(.22,.22,.6,8),dkM);mxMot2.rotation.z=Math.PI/2;mxMot2.position.set(mxX-2.6,fy+1.1,cz);scene.add(mxMot2);
-  var pelX=b.x+b.w-5.5;
-  var pelM3=new THREE.MeshStandardMaterial({color:0x6A5018,roughness:.36,metalness:.54});
-  var pBody=new THREE.Mesh(new THREE.BoxGeometry(1.6,3.4,1.25),pelM3);pBody.position.set(pelX,fy+1.7,cz+b.d*.2);pBody.castShadow=true;pBody.userData={machineKey:'pelletizer',bid:b.id};allClickable.push(pBody);scene.add(pBody);
-  var cond4=new THREE.Mesh(new THREE.CylinderGeometry(.55,.55,1.15,12),new THREE.MeshStandardMaterial({color:0x2A6040,roughness:.36,metalness:.52}));cond4.rotation.z=Math.PI/2;cond4.position.set(pelX,fy+3.6,cz+b.d*.2);scene.add(cond4);
-  var die2=new THREE.Mesh(new THREE.CylinderGeometry(.52,.52,.16,16),new THREE.MeshStandardMaterial({color:0x909080,metalness:.86,roughness:.12}));die2.rotation.x=Math.PI/2;die2.position.set(pelX,fy+1.7,cz+b.d*.2+.69);scene.add(die2);
-  var pMot=new THREE.Mesh(new THREE.CylinderGeometry(.28,.28,.85,8),dkM);pMot.rotation.z=Math.PI/2;pMot.position.set(pelX-1.25,fy+1.7,cz+b.d*.2);scene.add(pMot);
-  var elevX=b.x+b.w-1.7;
-  var elevBody=new THREE.Mesh(new THREE.BoxGeometry(.65,6.2,.65),stM);elevBody.position.set(elevX,fy+3.1,cz-b.d*.28);elevBody.castShadow=true;scene.add(elevBody);
-  var elevH=new THREE.Mesh(new THREE.BoxGeometry(.92,.75,.92),dkM);elevH.position.set(elevX,fy+6.3,cz-b.d*.28);scene.add(elevH);
+  var motM=new THREE.MeshStandardMaterial({color:0x1A2840,metalness:.86,roughness:.18});
+
+  // === 1. GRAIN RECEPTION HOPPER ===
+  var recX=b.x+1.5;
+  var recHopM=new THREE.MeshStandardMaterial({color:0x706820,roughness:.4,metalness:.5});
+  var recHop=new THREE.Mesh(new THREE.CylinderGeometry(.8,.2,1.2,8,1,true),recHopM);recHop.position.set(recX,fy+1.2,cz-b.d*.3);scene.add(recHop);
+  var recRim=new THREE.Mesh(new THREE.TorusGeometry(.8,.06,4,10),recHopM);recRim.rotation.x=Math.PI/2;recRim.position.set(recX,fy+1.8,cz-b.d*.3);scene.add(recRim);
+  // Ramp
+  var rampM=new THREE.MeshStandardMaterial({color:0x808070,metalness:.6,roughness:.4});
+  var ramp=new THREE.Mesh(new THREE.BoxGeometry(2,.06,.8),rampM);ramp.position.set(recX-1.2,fy+.9,cz-b.d*.3);ramp.rotation.z=.3;scene.add(ramp);
+
+  // === 2. BUCKET ELEVATOR ===
+  var elevX=b.x+3.5;
+  var elevBody=new THREE.Mesh(new THREE.BoxGeometry(.6,b.h-.5,.6),stM);elevBody.position.set(elevX,fy+(b.h-.5)/2+.25,cz-b.d*.28);elevBody.castShadow=true;scene.add(elevBody);
+  var elevH=new THREE.Mesh(new THREE.BoxGeometry(.85,.65,.85),dkM);elevH.position.set(elevX,fy+b.h-.15,cz-b.d*.28);scene.add(elevH);
   var bktM=new THREE.MeshStandardMaterial({color:0xD4A820,roughness:.48,metalness:.34});
-  for(var ci3=0;ci3<5;ci3++){var bkt=new THREE.Mesh(new THREE.BoxGeometry(.28,.19,.3),bktM);bkt.position.set(elevX+.46,fy+.95+ci3*1.06,cz-b.d*.28);scene.add(bkt);}
-  var cPipe=new THREE.Mesh(new THREE.CylinderGeometry(.1,.1,b.w*.74,8),stM);cPipe.rotation.z=Math.PI/2;cPipe.position.set(cx,fy+b.h*.88,cz);scene.add(cPipe);
-  var ic2=new THREE.Mesh(new THREE.CylinderGeometry(.046,.046,b.w*.9,8),new THREE.MeshStandardMaterial({color:0xFF5500,roughness:.4,metalness:.7,emissive:new THREE.Color(0xFF4000),emissiveIntensity:.35}));ic2.rotation.z=Math.PI/2;ic2.position.set(cx,fy+b.h*.92,cz);scene.add(ic2);
+  for(var ci3=0;ci3<6;ci3++){var bkt=new THREE.Mesh(new THREE.BoxGeometry(.25,.16,.28),bktM);bkt.position.set(elevX+.42,fy+.6+ci3*.85,cz-b.d*.28);scene.add(bkt);}
+
+  // === 3. HAMMER MILL ===
+  var mx=b.x+5.5;
+  var mTop=new THREE.Mesh(new THREE.CylinderGeometry(.8,.72,1.8,14),new THREE.MeshStandardMaterial({color:0x4858A0,roughness:.35,metalness:.75}));
+  mTop.position.set(mx,fy+1.7,cz-b.d*.2);mTop.castShadow=true;mTop.userData={machineKey:'hammer',bid:b.id};allClickable.push(mTop);scene.add(mTop);
+  var mBot=new THREE.Mesh(new THREE.CylinderGeometry(.72,.35,1.1,14),new THREE.MeshStandardMaterial({color:0x3848A0,roughness:.4,metalness:.7}));
+  mBot.position.set(mx,fy+.8,cz-b.d*.2);scene.add(mBot);
+  // Input chute
+  var mChute=new THREE.Mesh(new THREE.BoxGeometry(.5,.6,.5),dkM);mChute.position.set(mx,fy+2.9,cz-b.d*.2);scene.add(mChute);
+  // Motor
+  var mMot=new THREE.Mesh(new THREE.CylinderGeometry(.25,.25,.75,10),motM);mMot.rotation.z=Math.PI/2;mMot.position.set(mx+1.3,fy+1.7,cz-b.d*.2);scene.add(mMot);
+  // Belt/pulley
+  var pul=new THREE.Mesh(new THREE.CylinderGeometry(.35,.35,.12,14),dkM);pul.rotation.z=Math.PI/2;pul.position.set(mx+.72,fy+1.7,cz-b.d*.2);scene.add(pul);
+  // Vibration LED
+  var vs2=new THREE.Mesh(new THREE.SphereGeometry(.05,6,6),new THREE.MeshStandardMaterial({color:0xFF3030,emissive:new THREE.Color(0xFF2020),emissiveIntensity:1}));vs2.position.set(mx+.8,fy+1.7,cz-b.d*.2+.85);scene.add(vs2);
+
+  // === 4. DOSING HOPPERS (5 ingredients) ===
+  var dsx=b.x+8;
+  var hopCols=[0x5540A0,0x4060B0,0x40A040,0xC0A020,0xA04040];
+  var hopLabels=['Maiz','Soya','Premezcla','Calcio','Fosforo'];
+  for(var di=0;di<5;di++){
+    var dx=dsx+di*1.05;
+    var dhM=new THREE.MeshStandardMaterial({color:hopCols[di],roughness:.4,metalness:.5});
+    var dhop=new THREE.Mesh(new THREE.CylinderGeometry(.35,.08,.65,8,1,true),dhM);dhop.position.set(dx,fy+1.1,cz+b.d*.05);scene.add(dhop);
+    var dcap=new THREE.Mesh(new THREE.CylinderGeometry(.35,.35,.07,8),new THREE.MeshStandardMaterial({color:0x484848,metalness:.6}));dcap.position.set(dx,fy+1.43,cz+b.d*.05);scene.add(dcap);
+    var dleg=new THREE.Mesh(new THREE.CylinderGeometry(.03,.03,.55,6),stM);dleg.position.set(dx,fy+.45,cz+b.d*.05);scene.add(dleg);
+  }
+  // Dosing platform
+  var dPlt=new THREE.Mesh(new THREE.BoxGeometry(5.2,.07,1.0),new THREE.MeshStandardMaterial({color:0xB0B0A0,metalness:.8,roughness:.2}));dPlt.position.set(dsx+2.1,fy+.2,cz+b.d*.05);scene.add(dPlt);
+
+  // === 5. PADDLE MIXER ===
+  var mxX=cx+1;
+  var drum=new THREE.Mesh(new THREE.CylinderGeometry(1.0,1.0,4.0,14),new THREE.MeshStandardMaterial({color:0x2A5828,roughness:.35,metalness:.55}));
+  drum.rotation.z=Math.PI/2;drum.position.set(mxX,fy+1.0,cz+b.d*.05);drum.castShadow=true;drum.userData={machineKey:'mixer',bid:b.id};allClickable.push(drum);scene.add(drum);
+  [-1,1].forEach(function(side){var cap=new THREE.Mesh(new THREE.CylinderGeometry(1.0,1.0,.12,14),dkM);cap.rotation.z=Math.PI/2;cap.position.set(mxX+side*2.06,fy+1.0,cz+b.d*.05);scene.add(cap);});
+  var mxMot=new THREE.Mesh(new THREE.CylinderGeometry(.2,.2,.5,8),motM);mxMot.rotation.z=Math.PI/2;mxMot.position.set(mxX-2.4,fy+1.0,cz+b.d*.05);scene.add(mxMot);
+  // Mixer inlet
+  var mxInlet=new THREE.Mesh(new THREE.BoxGeometry(.4,.5,.4),stM);mxInlet.position.set(mxX,fy+2.05,cz+b.d*.05);scene.add(mxInlet);
+
+  // === 6. PELLETIZER ===
+  var pelX=b.x+b.w-4;
+  var pelM3=new THREE.MeshStandardMaterial({color:0x6A5018,roughness:.35,metalness:.55});
+  var pBody=new THREE.Mesh(new THREE.BoxGeometry(1.5,3.0,1.2),pelM3);pBody.position.set(pelX,fy+1.5,cz+b.d*.2);pBody.castShadow=true;pBody.userData={machineKey:'pelletizer',bid:b.id};allClickable.push(pBody);scene.add(pBody);
+  // Conditioner on top
+  var cond4=new THREE.Mesh(new THREE.CylinderGeometry(.5,.5,1.0,12),new THREE.MeshStandardMaterial({color:0x2A6040,roughness:.35,metalness:.55}));cond4.rotation.z=Math.PI/2;cond4.position.set(pelX,fy+3.2,cz+b.d*.2);scene.add(cond4);
+  // Die ring
+  var die2=new THREE.Mesh(new THREE.CylinderGeometry(.48,.48,.14,16),new THREE.MeshStandardMaterial({color:0x909080,metalness:.85,roughness:.1}));die2.rotation.x=Math.PI/2;die2.position.set(pelX,fy+1.5,cz+b.d*.2+.65);scene.add(die2);
+  // Motor
+  var pMot=new THREE.Mesh(new THREE.CylinderGeometry(.25,.25,.75,8),motM);pMot.rotation.z=Math.PI/2;pMot.position.set(pelX-1.15,fy+1.5,cz+b.d*.2);scene.add(pMot);
+
+  // === 7. COOLER ===
+  var coolX=b.x+b.w-1.8;
+  var coolM=new THREE.MeshStandardMaterial({color:0x7090A0,roughness:.4,metalness:.5});
+  var cooler=new THREE.Mesh(new THREE.BoxGeometry(1.4,2.0,1.2),coolM);cooler.position.set(coolX,fy+1.0,cz-b.d*.15);scene.add(cooler);
+  // Cooler fan
+  var cFan=new THREE.Mesh(new THREE.TorusGeometry(.35,.04,6,12),new THREE.MeshStandardMaterial({color:0x606058,metalness:.6}));
+  cFan.rotation.y=Math.PI/2;cFan.position.set(coolX+.72,fy+1.2,cz-b.d*.15);scene.add(cFan);
+
+  // === CONVEYORS connecting stages ===
+  var convM=new THREE.MeshStandardMaterial({color:0x707068,metalness:.6,roughness:.35});
+  // Elevator to hammer mill
+  var cv1=new THREE.Mesh(new THREE.BoxGeometry(2,.12,.25),convM);cv1.position.set(b.x+4.5,fy+b.h-.8,cz-b.d*.24);cv1.rotation.z=-.15;scene.add(cv1);
+  // Hammer to dosers
+  var cv2=new THREE.Mesh(new THREE.BoxGeometry(2.5,.12,.25),convM);cv2.position.set(b.x+6.8,fy+.4,cz-b.d*.05);scene.add(cv2);
+  // Mixer to pelletizer
+  var cv3=new THREE.Mesh(new THREE.BoxGeometry(2,.12,.25),convM);cv3.position.set(pelX-2,fy+.4,cz+b.d*.12);scene.add(cv3);
+
+  // === ELECTRICAL & PNEUMATIC ===
+  var cPipe=new THREE.Mesh(new THREE.CylinderGeometry(.08,.08,b.w*.72,8),stM);cPipe.rotation.z=Math.PI/2;cPipe.position.set(cx,fy+b.h*.85,cz);scene.add(cPipe);
+  var ic2=new THREE.Mesh(new THREE.CylinderGeometry(.04,.04,b.w*.88,8),new THREE.MeshStandardMaterial({color:0xFF5500,roughness:.4,metalness:.7,emissive:new THREE.Color(0xFF4000),emissiveIntensity:.3}));
+  ic2.rotation.z=Math.PI/2;ic2.position.set(cx,fy+b.h*.9,cz);scene.add(ic2);
 }
 
 function buildLabel(b,cx,cz){
