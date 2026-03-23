@@ -292,20 +292,90 @@ table.rh-table tr:hover td { background: rgba(255,255,255,.02); }
 .photo-add-icon { font-size: 32px; color: var(--muted); }
 .photo-add-text { font-size: 11px; color: var(--dim); }
 
-/* ===== PRINT ===== */
+/* ===== PRINT REPORT ===== */
+#print-report { display: none; }
 @media print {
-  body { background: white !important; color: black !important; font-size: 10pt !important; }
-  .wizard-header, .tab-bar, .wizard-sidebar, .btn, .no-print, #toast-container { display: none !important; }
-  .section { display: block !important; page-break-inside: avoid; padding: 0 !important; }
-  .card { border: 1px solid #ccc !important; background: white !important; break-inside: avoid; }
-  .val-box { background: #f5f5f5 !important; border: 1px solid #999 !important; }
-  .val-box .vb-value { color: #333 !important; }
-  input, select, textarea { border: 1px solid #999 !important; background: white !important; color: black !important; }
-  .wizard-body { display: block !important; }
-  .wizard-main { max-width: 100% !important; padding: 0 !important; }
-  .print-header { display: block !important; text-align: center; margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 10px; }
-  .print-header h1 { font-size: 18pt; }
-  .print-footer { display: block !important; text-align: center; margin-top: 20px; border-top: 1px solid #999; padding-top: 10px; font-size: 9pt; color: #666; }
+  body { background: white !important; color: #1a1a1a !important; font-size: 10pt !important; font-family: 'Outfit', Arial, sans-serif !important; }
+  #view-landing, #view-auth, #view-dashboard, #view-wizard, #toast-container { display: none !important; }
+  #print-report { display: block !important; padding: 0; margin: 0; }
+  #print-report * { color-adjust: exact !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  .pr-page { page-break-after: always; padding: 15mm 18mm; min-height: 100vh; position: relative; }
+  .pr-page:last-child { page-break-after: auto; }
+  /* Cover */
+  .pr-cover { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; border: 3px solid #0f3d3e; padding: 60px 40px; min-height: 90vh; }
+  .pr-cover-logo { width: 80px; margin-bottom: 20px; }
+  .pr-cover h1 { font-size: 28pt; font-weight: 800; color: #0f3d3e; margin-bottom: 6px; letter-spacing: -0.02em; }
+  .pr-cover h2 { font-size: 14pt; color: #b8860b; font-weight: 600; margin-bottom: 40px; letter-spacing: 0.15em; text-transform: uppercase; }
+  .pr-cover-line { width: 120px; height: 3px; background: linear-gradient(90deg, #0f3d3e, #b8860b); margin: 0 auto 30px; }
+  .pr-cover-info { text-align: left; width: 100%; max-width: 500px; margin: 0 auto; }
+  .pr-cover-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #e0e0e0; font-size: 10pt; }
+  .pr-cover-row .label { color: #666; font-weight: 500; }
+  .pr-cover-row .val { font-weight: 700; color: #1a1a1a; font-family: 'JetBrains Mono', monospace; }
+  .pr-cover-valor { margin-top: 40px; padding: 20px; border: 2px solid #b8860b; border-radius: 8px; background: #fdf8ef; }
+  .pr-cover-valor .cv-label { font-size: 9pt; color: #666; letter-spacing: 0.15em; text-transform: uppercase; text-align: center; }
+  .pr-cover-valor .cv-amount { font-size: 24pt; font-weight: 800; color: #0f3d3e; text-align: center; font-family: 'JetBrains Mono', monospace; margin: 6px 0; }
+  .pr-cover-valor .cv-letras { font-size: 9pt; color: #555; text-align: center; font-style: italic; }
+  .pr-cover-footer { margin-top: auto; padding-top: 30px; font-size: 8pt; color: #999; }
+  /* Page header/footer */
+  .pr-hdr { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0f3d3e; padding-bottom: 8px; margin-bottom: 20px; }
+  .pr-hdr-left { display: flex; align-items: center; gap: 8px; }
+  .pr-hdr-logo { width: 24px; height: 24px; }
+  .pr-hdr-brand { font-weight: 700; font-size: 10pt; color: #0f3d3e; }
+  .pr-hdr-right { text-align: right; font-size: 8pt; color: #666; font-family: 'JetBrains Mono', monospace; }
+  .pr-ftr { position: absolute; bottom: 15mm; left: 18mm; right: 18mm; border-top: 1px solid #ccc; padding-top: 6px; display: flex; justify-content: space-between; font-size: 7pt; color: #999; }
+  /* Section titles */
+  .pr-title { font-size: 13pt; font-weight: 700; color: #0f3d3e; border-bottom: 2px solid #e8e8e8; padding-bottom: 6px; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+  .pr-title-num { display: inline-flex; width: 22px; height: 22px; border-radius: 50%; background: #0f3d3e; color: white; font-size: 10pt; align-items: center; justify-content: center; font-weight: 700; }
+  .pr-subtitle { font-size: 10pt; font-weight: 700; color: #333; margin: 12px 0 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+  /* Tables */
+  .pr-table { width: 100%; border-collapse: collapse; font-size: 9pt; margin: 8px 0 14px; }
+  .pr-table th { background: #0f3d3e; color: white; padding: 6px 10px; text-align: left; font-size: 8pt; letter-spacing: 0.04em; text-transform: uppercase; font-weight: 600; }
+  .pr-table td { padding: 5px 10px; border-bottom: 1px solid #e0e0e0; }
+  .pr-table tr:nth-child(even) td { background: #f9f9f9; }
+  .pr-table .mono { font-family: 'JetBrains Mono', monospace; }
+  .pr-table .right { text-align: right; }
+  .pr-table .bold { font-weight: 700; }
+  .pr-table .accent { color: #0f3d3e; font-weight: 700; }
+  .pr-table .total-row td { border-top: 2px solid #0f3d3e; font-weight: 700; background: #f0f7f7 !important; }
+  /* Data grid */
+  .pr-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 24px; font-size: 9pt; margin: 6px 0 12px; }
+  .pr-grid3 { grid-template-columns: 1fr 1fr 1fr; }
+  .pr-field { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px dotted #ddd; }
+  .pr-field .pf-label { color: #666; }
+  .pr-field .pf-val { font-weight: 600; font-family: 'JetBrains Mono', monospace; color: #1a1a1a; }
+  /* Value highlight */
+  .pr-valor-box { border: 2px solid #0f3d3e; border-radius: 6px; padding: 12px; text-align: center; margin: 12px 0; background: #f0f7f7; }
+  .pr-valor-box .pvb-label { font-size: 8pt; color: #666; letter-spacing: 0.12em; text-transform: uppercase; }
+  .pr-valor-box .pvb-value { font-size: 16pt; font-weight: 800; color: #0f3d3e; font-family: 'JetBrains Mono', monospace; }
+  .pr-valor-box.gold { border-color: #b8860b; background: #fdf8ef; }
+  .pr-valor-box.gold .pvb-value { color: #8b6914; }
+  /* Enfoques summary */
+  .pr-enfoques { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin: 12px 0; }
+  .pr-enfoque-card { border: 1px solid #ddd; border-radius: 6px; padding: 12px; text-align: center; }
+  .pr-enfoque-card.selected { border: 2px solid #0f3d3e; background: #f0f7f7; }
+  .pr-enfoque-card .pe-label { font-size: 8pt; color: #666; text-transform: uppercase; letter-spacing: 0.08em; }
+  .pr-enfoque-card .pe-val { font-size: 12pt; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: #333; margin-top: 4px; }
+  .pr-enfoque-card.selected .pe-val { color: #0f3d3e; }
+  /* Map */
+  .pr-map { width: 100%; height: 200px; border: 1px solid #ddd; border-radius: 6px; margin: 8px 0; }
+  /* Checklist */
+  .pr-checks { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px 16px; font-size: 9pt; margin: 6px 0; }
+  .pr-check { display: flex; align-items: center; gap: 4px; padding: 2px 0; }
+  .pr-check-icon { font-size: 10pt; }
+  /* Signature */
+  .pr-signature { margin-top: 40px; text-align: center; }
+  .pr-sig-line { width: 250px; border-bottom: 1px solid #333; margin: 40px auto 6px; }
+  .pr-sig-name { font-weight: 700; font-size: 10pt; }
+  .pr-sig-ced { font-size: 8pt; color: #666; }
+  /* Colindancias */
+  .pr-colind { border: 1px solid #ddd; border-radius: 6px; padding: 10px; margin: 8px 0; font-size: 9pt; }
+  .pr-colind-row { display: flex; gap: 8px; padding: 3px 0; border-bottom: 1px dotted #eee; }
+  .pr-colind-dir { font-weight: 700; color: #0f3d3e; min-width: 70px; }
+  /* Photos in print */
+  .pr-photos { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .pr-photo { border: 1px solid #ddd; border-radius: 6px; overflow: hidden; }
+  .pr-photo img { width: 100%; height: 180px; object-fit: cover; }
+  .pr-photo-cap { font-size: 8pt; color: #666; padding: 4px 8px; text-align: center; }
 }
 .print-header, .print-footer { display: none; }
 
@@ -583,6 +653,13 @@ table.rh-table tr:hover td { background: rgba(255,255,255,.02); }
           <div class="field"><label>Clave Catastral</label><input id="claveCatastral" placeholder="Clave catastral"></div>
           <div class="field"><label>Cuenta Predial</label><input id="cuentaPredial" placeholder="Cuenta predial"></div>
         </div>
+        <div style="margin-top:8px;">
+          <label style="color:var(--teal);font-size:11px;text-transform:none;letter-spacing:0;">UBICACION EN MAPA</label>
+          <button class="btn btn-outline btn-sm no-print" onclick="updateMap()" style="margin-left:8px;font-size:10px;">Actualizar Mapa</button>
+          <div id="map-container" style="margin-top:6px;border-radius:8px;overflow:hidden;border:1px solid var(--border);height:220px;background:var(--card);">
+            <iframe id="map-iframe" width="100%" height="220" style="border:0;" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="about:blank"></iframe>
+          </div>
+        </div>
       </div>
       <div class="card">
         <h3><span class="icon">&#127961;</span> Caracteristicas Urbanas</h3>
@@ -778,7 +855,10 @@ table.rh-table tr:hover td { background: rgba(255,255,255,.02); }
   </div>
 
   <div id="comparables-container"></div>
-  <button class="btn btn-outline no-print" onclick="addComparable()" style="margin-bottom:16px;">+ Agregar comparable</button>
+  <div style="display:flex;gap:10px;margin-bottom:16px;" class="no-print">
+    <button class="btn btn-outline" onclick="addComparable()">+ Agregar comparable</button>
+    <button class="btn btn-primary" onclick="aiSuggestFactors()" style="gap:6px;">&#129302; IA: Sugerir Factores</button>
+  </div>
 
   <div class="card">
     <h3><span class="icon">&#128202;</span> Resultado de Homologacion</h3>
@@ -928,10 +1008,20 @@ table.rh-table tr:hover td { background: rgba(255,255,255,.02); }
   <div class="card no-print">
     <h3><span class="icon">&#128196;</span> Acciones</h3>
     <div class="row r3">
-      <button class="btn btn-gold" onclick="window.print()" style="width:100%;justify-content:center;">Imprimir / PDF</button>
+      <button class="btn btn-gold" onclick="generatePrintReport()" style="width:100%;justify-content:center;">Generar Reporte PDF</button>
       <button class="btn btn-outline" onclick="exportJSON()" style="width:100%;justify-content:center;">Exportar JSON</button>
       <button class="btn btn-outline" onclick="copyValues()" style="width:100%;justify-content:center;">Copiar Valores</button>
     </div>
+  </div>
+
+  <div class="card no-print">
+    <h3><span class="icon">&#129302;</span> Asistente IA — Analisis Inteligente</h3>
+    <div class="tip"><strong>Inteligencia Artificial:</strong> Genera justificaciones, analiza consistencia y obtiene recomendaciones basadas en los datos del avaluo.</div>
+    <div class="row r2">
+      <button class="btn btn-primary" onclick="aiGenerateJustification()" style="width:100%;justify-content:center;">Generar Justificacion con IA</button>
+      <button class="btn btn-outline" onclick="aiAnalyzeConsistency()" style="width:100%;justify-content:center;">Analizar Consistencia</button>
+    </div>
+    <div id="ai-result" style="margin-top:12px;display:none;" class="card" style="background:var(--panel);"></div>
   </div>
 </div>
 
@@ -982,6 +1072,11 @@ table.rh-table tr:hover td { background: rgba(255,255,255,.02); }
     <p>AVALUO INMOBILIARIO COMERCIAL — Spadiko Avaluos</p>
   </div>
 </div>
+
+<!-- ============================================================ -->
+<!-- PRINT REPORT (generated dynamically, hidden on screen)       -->
+<!-- ============================================================ -->
+<div id="print-report"></div>
 
 <!-- ============================================================ -->
 <!-- JAVASCRIPT                                                    -->
@@ -2072,6 +2167,496 @@ function init() {
 
   // Update save indicator periodically
   setInterval(updateSaveIndicator, 10000);
+}
+
+// ============================================
+// GOOGLE MAPS
+// ============================================
+function updateMap() {
+  const calle=document.getElementById('calleExt')?.value||'';
+  const num=document.getElementById('noExt')?.value||'';
+  const col=document.getElementById('colonia')?.value||'';
+  const mun=document.getElementById('municipio')?.value||'';
+  const est=document.getElementById('estado')?.value||'';
+  const q=encodeURIComponent(`${calle} ${num}, ${col}, ${mun}, ${est}, Mexico`);
+  const iframe=document.getElementById('map-iframe');
+  if(iframe && q.trim()) {
+    iframe.src=`https://www.google.com/maps?q=${q}&output=embed`;
+  }
+}
+
+// ============================================
+// PRINT REPORT GENERATOR
+// ============================================
+function generatePrintReport() {
+  calcConclusion();
+  const d = collectFormData();
+  const user = currentUser || {};
+  const fecha = d.fecha ? new Date(d.fecha+'T12:00').toLocaleDateString('es-MX',{day:'2-digit',month:'long',year:'numeric'}) : '';
+  const calle=d.calleExt||''; const noE=d.noExt||''; const col=d.colonia||''; const mun=d.municipio||''; const est=d.estado||'';
+  const dir = `${calle} ${noE}, ${col}, ${mun}, ${est}`.replace(/^[\s,]+|[\s,]+$/g,'');
+  const mapQ = encodeURIComponent(`${calle} ${noE}, ${col}, ${mun}, ${est}, Mexico`);
+
+  // Servicios
+  const svcs = [
+    ['svcAgua','Agua Potable'],['svcDrenaje','Drenaje'],['svcElec','Electrificacion'],
+    ['svcAlumbrado','Alumbrado'],['svcTelefonia','Telefonia'],['svcGas','Gas Natural']
+  ];
+  const svcsHtml = svcs.map(([id,label])=>{
+    const checked = document.getElementById(id)?.checked;
+    return `<div class="pr-check"><span class="pr-check-icon">${checked?'&#9745;':'&#9744;'}</span> ${label}</div>`;
+  }).join('');
+
+  // Bloques table
+  const tipos=['I','II','III','IV','V','VI','VII'];
+  let bloquesRows=''; let totalSup=0; let totalVal=0;
+  (d.bloques||[]).forEach((b,i)=>{
+    const fed=calcFed(b.edad,b.estado,b.vp);
+    const vnr=b.vrn*fed; const val=b.sup*vnr;
+    totalSup+=b.sup; totalVal+=val;
+    bloquesRows+=`<tr><td>Tipo ${tipos[i]||i+1}</td><td>${b.dest}</td><td class="mono right">${b.sup.toFixed(2)}</td><td class="mono right">${fmtMXN(b.vrn)}</td><td class="mono right">${b.edad}</td><td>${b.estado}</td><td class="mono right accent">${fed.toFixed(4)}</td><td class="mono right">${fmtMXN(vnr)}</td><td class="mono right bold accent">${fmtMXN(val)}</td></tr>`;
+  });
+  bloquesRows+=`<tr class="total-row"><td colspan="2">TOTAL</td><td class="mono right">${totalSup.toFixed(2)}</td><td colspan="4"></td><td></td><td class="mono right accent">${fmtMXN(totalVal)}</td></tr>`;
+
+  // Comparables table
+  let compsRows='';
+  (d.comparables||[]).forEach((c,i)=>{
+    const sup=c.supT||c.supC||1;
+    const pm2=sup>0?c.precio/sup:0;
+    const fre=c.fzo*c.fub*c.fsup*c.ftopo*c.fedad*c.fotro*c.fneg;
+    const vh=pm2*fre;
+    compsRows+=`<tr><td>${i+1}</td><td style="font-size:8pt;max-width:140px;">${c.ubic}</td><td class="mono right">${(c.supT||c.supC).toFixed(0)}</td><td class="mono right">${fmtMXN(c.precio)}</td><td class="mono right">${fmtMXN(pm2)}</td><td class="mono right">${fre.toFixed(4)}</td><td class="mono right bold accent">${fmtMXN(vh)}</td></tr>`;
+  });
+
+  // Scoring table
+  let scoringRows='';
+  SCORING.forEach((s,row)=>{
+    scoringRows+=`<tr><td style="text-align:left;font-size:8pt;">${s.criterio}</td>`;
+    s.opciones.forEach((op,col)=>{
+      const sel=scoringSelections[row]===col;
+      scoringRows+=`<td style="${sel?'background:#e0f2f1;font-weight:700;color:#0f3d3e;':''}">${op}</td>`;
+    });
+    scoringRows+='</tr>';
+  });
+
+  // Photos
+  let photosHtml='';
+  photos.filter(p=>p).forEach((p,i)=>{
+    photosHtml+=`<div class="pr-photo"><img src="${p.src}" alt="Foto ${i+1}"><div class="pr-photo-cap">Foto ${i+1}</div></div>`;
+  });
+
+  const fisico=window._valorFisico||0;
+  const mercado=window._valorMercado||0;
+  const rentas=window._valorRentas||0;
+  const comercial=window._valorFinal||0;
+  const letras=numToWords(comercial)+' PESOS 00/100 M.N.';
+  const enfoque=document.getElementById('enfoqueAplicar')?.value||'mercado';
+  const enfoqueLabel={fisico:'Enfoque Fisico',rentas:'Capitalizacion de Rentas',mercado:'Comparacion de Mercado',promedio:'Promedio Ponderado'}[enfoque]||'Mercado';
+  const redondeo=parseInt(document.getElementById('redondeo')?.value)||10000;
+
+  const logoSvg=`<svg width="40" height="40" viewBox="0 0 120 120" fill="none"><polygon points="60,5 110,30 110,90 60,115 10,90 10,30" fill="none" stroke="#0f3d3e" stroke-width="3"/><path d="M45,80 L45,50 L60,38 L75,50 L75,80" fill="none" stroke="#b8860b" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><rect x="53" y="65" width="14" height="15" rx="2" fill="none" stroke="#b8860b" stroke-width="2"/></svg>`;
+  const logoSmall=`<svg class="pr-hdr-logo" viewBox="0 0 120 120" fill="none"><polygon points="60,5 110,30 110,90 60,115 10,90 10,30" fill="none" stroke="#0f3d3e" stroke-width="4"/><path d="M45,80 L45,50 L60,38 L75,50 L75,80" fill="none" stroke="#b8860b" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+
+  function pageHdr(pageNum, totalPages) {
+    return `<div class="pr-hdr"><div class="pr-hdr-left">${logoSmall}<span class="pr-hdr-brand">Spadiko Avaluos</span></div><div class="pr-hdr-right">Avaluo No. ${d.noAvaluo||'—'}<br>Hoja ${pageNum} de ${totalPages} | ${fecha}</div></div>`;
+  }
+  function pageFtr(pageNum, totalPages) {
+    return `<div class="pr-ftr"><span>AVALUO INMOBILIARIO COMERCIAL</span><span>Spadiko Avaluos — Plataforma de Valuacion Inteligente</span><span>Pag. ${pageNum}/${totalPages}</span></div>`;
+  }
+
+  const totalPages = 7 + (photosHtml?1:0);
+
+  const report = `
+<!-- PAGE 1: CARATULA -->
+<div class="pr-page">
+  <div class="pr-cover">
+    ${logoSvg}
+    <h1>Spadiko Avaluos</h1>
+    <h2>Avaluo Inmobiliario Comercial</h2>
+    <div class="pr-cover-line"></div>
+    <div class="pr-cover-info">
+      <div class="pr-cover-row"><span class="label">No. de Avaluo</span><span class="val">${d.noAvaluo||'—'}</span></div>
+      <div class="pr-cover-row"><span class="label">Fecha</span><span class="val">${fecha}</span></div>
+      <div class="pr-cover-row"><span class="label">Tipo de Inmueble</span><span class="val">${d.tipoInmueble||'—'}</span></div>
+      <div class="pr-cover-row"><span class="label">Propietario</span><span class="val">${d.propietario||'—'}</span></div>
+      <div class="pr-cover-row"><span class="label">Ubicacion</span><span class="val">${dir||'—'}</span></div>
+      <div class="pr-cover-row"><span class="label">Proposito</span><span class="val">${d.proposito||'—'}</span></div>
+      <div class="pr-cover-row"><span class="label">Valuador</span><span class="val">${user.name||'—'}</span></div>
+      <div class="pr-cover-row"><span class="label">Cedula Federal</span><span class="val">${user.cedFed||'—'}</span></div>
+    </div>
+    <div class="pr-cover-valor">
+      <div class="cv-label">VALOR COMERCIAL CONCLUIDO</div>
+      <div class="cv-amount">${fmtMXN0(comercial)}</div>
+      <div class="cv-letras">(${letras})</div>
+    </div>
+    <div class="pr-cover-footer">Conforme a normas SHF y criterios valuatorios generalmente aceptados</div>
+  </div>
+</div>
+
+<!-- PAGE 2: DATOS GENERALES -->
+<div class="pr-page">
+  ${pageHdr(2, totalPages)}
+  <div class="pr-title"><span class="pr-title-num">1</span> Datos Generales del Avaluo</div>
+
+  <div class="pr-subtitle">Datos del Propietario y Solicitante</div>
+  <div class="pr-grid">
+    <div class="pr-field"><span class="pf-label">Propietario</span><span class="pf-val">${d.propietario||'—'}</span></div>
+    <div class="pr-field"><span class="pf-label">Solicitante</span><span class="pf-val">${d.solicitante||'—'}</span></div>
+    <div class="pr-field"><span class="pf-label">Rep. Legal</span><span class="pf-val">${d.repLegal||'No Aplica'}</span></div>
+    <div class="pr-field"><span class="pf-label">Regimen</span><span class="pf-val">${d.regimen||'—'}</span></div>
+  </div>
+
+  <div class="pr-subtitle">Ubicacion del Inmueble</div>
+  <div class="pr-grid">
+    <div class="pr-field"><span class="pf-label">Direccion</span><span class="pf-val">${dir}</span></div>
+    <div class="pr-field"><span class="pf-label">C.P.</span><span class="pf-val">${d.cp||'—'}</span></div>
+    <div class="pr-field"><span class="pf-label">Coord. UTM X</span><span class="pf-val">${d.utmX||'—'}</span></div>
+    <div class="pr-field"><span class="pf-label">Coord. UTM Y</span><span class="pf-val">${d.utmY||'—'}</span></div>
+    <div class="pr-field"><span class="pf-label">Altitud</span><span class="pf-val">${d.altitud||'—'} m.s.n.m.</span></div>
+    <div class="pr-field"><span class="pf-label">Clave Catastral</span><span class="pf-val">${d.claveCatastral||'—'}</span></div>
+  </div>
+
+  <div class="pr-subtitle">Ubicacion en Mapa</div>
+  <iframe class="pr-map" src="https://www.google.com/maps?q=${mapQ}&output=embed" loading="lazy"></iframe>
+
+  <div class="pr-subtitle">Caracteristicas Urbanas</div>
+  <div class="pr-grid">
+    <div class="pr-field"><span class="pf-label">Clasificacion</span><span class="pf-val">${d.clasificacionZona||'—'}</span></div>
+    <div class="pr-field"><span class="pf-label">Uso de Suelo</span><span class="pf-val">${d.usoSuelo||'—'}</span></div>
+    <div class="pr-field"><span class="pf-label">Estrato</span><span class="pf-val">${d.estratoSocio||'—'}</span></div>
+    <div class="pr-field"><span class="pf-label">Vialidades</span><span class="pf-val">${d.vialidades||'—'}</span></div>
+  </div>
+  <div class="pr-subtitle">Servicios</div>
+  <div class="pr-checks">${svcsHtml}</div>
+
+  ${pageFtr(2, totalPages)}
+</div>
+
+<!-- PAGE 3: TERRENO -->
+<div class="pr-page">
+  ${pageHdr(3, totalPages)}
+  <div class="pr-title"><span class="pr-title-num">2</span> Informacion del Terreno</div>
+
+  <div class="pr-grid">
+    <div class="pr-field"><span class="pf-label">Sup. Levantamiento</span><span class="pf-val">${d.supLevantamiento||0} m2</span></div>
+    <div class="pr-field"><span class="pf-label">Sup. Escrituras</span><span class="pf-val">${d.supEscrituras||0} m2</span></div>
+    <div class="pr-field"><span class="pf-label">Sup. Construccion</span><span class="pf-val">${d.supConst||0} m2</span></div>
+    <div class="pr-field"><span class="pf-label">Lote Promedio Zona</span><span class="pf-val">${d.lotePromedio||0} m2</span></div>
+    <div class="pr-field"><span class="pf-label">Topografia</span><span class="pf-val">${d.topografia||'—'}</span></div>
+    <div class="pr-field"><span class="pf-label">Forma</span><span class="pf-val">${d.forma||'—'}</span></div>
+    <div class="pr-field"><span class="pf-label">No. Frentes</span><span class="pf-val">${d.numFreentes||1}</span></div>
+    <div class="pr-field"><span class="pf-label">CUS / COS</span><span class="pf-val">${d.cus||'—'} / ${d.cos||'—'}</span></div>
+  </div>
+
+  <div class="pr-subtitle">Colindancias</div>
+  <div class="pr-colind">
+    <div class="pr-colind-row"><span class="pr-colind-dir">Norte:</span><span>${d.colNorte||'—'}</span></div>
+    <div class="pr-colind-row"><span class="pr-colind-dir">Sur:</span><span>${d.colSur||'—'}</span></div>
+    <div class="pr-colind-row"><span class="pr-colind-dir">Oriente:</span><span>${d.colOriente||'—'}</span></div>
+    <div class="pr-colind-row"><span class="pr-colind-dir">Poniente:</span><span>${d.colPoniente||'—'}</span></div>
+  </div>
+  <div style="font-size:8pt;color:#666;margin-top:4px;">${d.escritura||''}</div>
+
+  <div class="pr-subtitle">Valor del Terreno — Enfoque Fisico</div>
+  <table class="pr-table">
+    <thead><tr><th>Factor</th><th>Fzo</th><th>Fub</th><th>Fesq</th><th>FFr</th><th>FFo</th><th>FSup</th><th>Fi</th><th>Fep</th><th>Fneg</th><th>Indiviso</th></tr></thead>
+    <tbody><tr><td class="bold">Valor</td><td class="mono">${d.fzo}</td><td class="mono">${d.fub}</td><td class="mono">${d.fesq}</td><td class="mono">${d.ffr}</td><td class="mono">${d.ffo}</td><td class="mono">${d.fsup}</td><td class="mono">${d.fi}</td><td class="mono">${d.fep}</td><td class="mono">${d.fneg}</td><td class="mono">${d.indiviso}</td></tr></tbody>
+  </table>
+  <div class="pr-grid pr-grid3">
+    <div class="pr-field"><span class="pf-label">Valor de Calle</span><span class="pf-val">${fmtMXN(parseFloat(d.valorCalle)||0)}/m2</span></div>
+    <div class="pr-field"><span class="pf-label">Factor Resultante</span><span class="pf-val">${document.getElementById('fre-display')?.textContent||'—'}</span></div>
+    <div class="pr-field"><span class="pf-label">V.U. Resultante</span><span class="pf-val">${document.getElementById('vu-display')?.textContent||'—'}</span></div>
+  </div>
+  <div class="pr-valor-box">
+    <div class="pvb-label">SUBTOTAL (A) — VALOR DEL TERRENO</div>
+    <div class="pvb-value">${fmtMXN(window._valorTerreno||0)}</div>
+  </div>
+
+  ${pageFtr(3, totalPages)}
+</div>
+
+<!-- PAGE 4: CONSTRUCCION -->
+<div class="pr-page">
+  ${pageHdr(4, totalPages)}
+  <div class="pr-title"><span class="pr-title-num">3</span> Construccion — Avaluo Fisico</div>
+
+  <table class="pr-table">
+    <thead><tr><th>Tipo</th><th>Destino</th><th>Sup. m2</th><th>VRN $/m2</th><th>Edad</th><th>Estado</th><th>Fed</th><th>VNR $/m2</th><th>Valor Parcial</th></tr></thead>
+    <tbody>${bloquesRows}</tbody>
+  </table>
+
+  ${d.descObraNegra||d.descRevestimientos?`
+  <div class="pr-subtitle">Descripcion General del Inmueble</div>
+  <div class="pr-grid">
+    ${d.descObraNegra?`<div class="pr-field" style="grid-column:1/-1;flex-direction:column;"><span class="pf-label">Obra Negra</span><span style="font-size:9pt;margin-top:2px;">${d.descObraNegra}</span></div>`:''}
+    ${d.descRevestimientos?`<div class="pr-field" style="grid-column:1/-1;flex-direction:column;"><span class="pf-label">Revestimientos</span><span style="font-size:9pt;margin-top:2px;">${d.descRevestimientos}</span></div>`:''}
+    ${d.descCarpinteria?`<div class="pr-field" style="grid-column:1/-1;flex-direction:column;"><span class="pf-label">Carpinteria</span><span style="font-size:9pt;margin-top:2px;">${d.descCarpinteria}</span></div>`:''}
+  </div>`:''}
+
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:14px;">
+    <div class="pr-valor-box"><div class="pvb-label">SUBTOTAL (A) TERRENO</div><div class="pvb-value" style="font-size:13pt;">${fmtMXN(window._valorTerreno||0)}</div></div>
+    <div class="pr-valor-box"><div class="pvb-label">SUBTOTAL (B) CONSTRUCCION</div><div class="pvb-value" style="font-size:13pt;">${fmtMXN(window._valorConstruccion||0)}</div></div>
+    <div class="pr-valor-box"><div class="pvb-label">SUBTOTAL (C) INSTALACIONES</div><div class="pvb-value" style="font-size:13pt;">${fmtMXN(window._valorInstalaciones||0)}</div></div>
+  </div>
+  <div class="pr-valor-box gold" style="margin-top:12px;">
+    <div class="pvb-label">VALOR FISICO O DIRECTO TOTAL (A + B + C)</div>
+    <div class="pvb-value">${fmtMXN(fisico)}</div>
+  </div>
+
+  ${pageFtr(4, totalPages)}
+</div>
+
+<!-- PAGE 5: ESTUDIO DE MERCADO -->
+<div class="pr-page">
+  ${pageHdr(5, totalPages)}
+  <div class="pr-title"><span class="pr-title-num">4</span> Investigacion y Estudio de Mercado</div>
+
+  <table class="pr-table">
+    <thead><tr><th>#</th><th>Ubicacion</th><th>Sup. m2</th><th>Precio</th><th>$/m2</th><th>FRe</th><th>Valor Hom.</th></tr></thead>
+    <tbody>${compsRows}</tbody>
+  </table>
+
+  <div class="pr-grid">
+    <div class="pr-field"><span class="pf-label">V.U. Terreno Hom.</span><span class="pf-val">${document.getElementById('vm2TerrHom')?.value||'—'} $/m2</span></div>
+    <div class="pr-field"><span class="pf-label">V.U. Construccion</span><span class="pf-val">${d.vm2ConstHom||'—'} $/m2</span></div>
+    <div class="pr-field"><span class="pf-label">Sup. Terreno Sujeto</span><span class="pf-val">${d.mktSupTerreno||'—'} m2</span></div>
+    <div class="pr-field"><span class="pf-label">Sup. Const. Sujeto</span><span class="pf-val">${d.mktSupConst||'—'} m2</span></div>
+  </div>
+
+  <div class="pr-valor-box" style="margin-top:12px;">
+    <div class="pvb-label">VALOR POR COMPARACION DE MERCADO</div>
+    <div class="pvb-value">${fmtMXN(mercado)}</div>
+  </div>
+
+  ${pageFtr(5, totalPages)}
+</div>
+
+<!-- PAGE 6: CAPITALIZACION DE RENTAS -->
+<div class="pr-page">
+  ${pageHdr(6, totalPages)}
+  <div class="pr-title"><span class="pr-title-num">5</span> Capitalizacion de Rentas</div>
+
+  <div class="pr-grid">
+    <div class="pr-field"><span class="pf-label">Renta Bruta Mensual</span><span class="pf-val">${document.getElementById('rentaBruta-display')?.textContent||'$0'}</span></div>
+    <div class="pr-field"><span class="pf-label">Total Deducciones</span><span class="pf-val">${document.getElementById('totalDed-display')?.textContent||'0%'}</span></div>
+    <div class="pr-field"><span class="pf-label">Renta Neta Mensual</span><span class="pf-val">${document.getElementById('rentaNeta-display')?.textContent||'$0'}</span></div>
+    <div class="pr-field"><span class="pf-label">Renta Neta Anual</span><span class="pf-val">${document.getElementById('rentaNetaAnual-display')?.textContent||'$0'}</span></div>
+  </div>
+
+  <div class="pr-subtitle">Tabla de Scoring — Tasa de Capitalizacion</div>
+  <table class="pr-table">
+    <thead><tr><th style="text-align:left;">Criterio</th><th>0.07</th><th>0.08</th><th>0.09</th><th>0.10</th><th>0.11</th><th>0.12</th></tr></thead>
+    <tbody>${scoringRows}</tbody>
+  </table>
+
+  <div class="pr-grid">
+    <div class="pr-field"><span class="pf-label">Tasa de Capitalizacion</span><span class="pf-val" style="color:#b8860b;font-size:12pt;">${document.getElementById('tasaCap-display')?.textContent||'—'}</span></div>
+  </div>
+
+  <div class="pr-valor-box" style="margin-top:12px;">
+    <div class="pvb-label">VALOR POR CAPITALIZACION DE RENTAS</div>
+    <div class="pvb-value">${fmtMXN(rentas)}</div>
+  </div>
+
+  ${pageFtr(6, totalPages)}
+</div>
+
+<!-- PAGE 7: CONCLUSION -->
+<div class="pr-page">
+  ${pageHdr(7, totalPages)}
+  <div class="pr-title"><span class="pr-title-num">6</span> Conclusion de Valor</div>
+
+  <div class="pr-subtitle">Resumen de los Tres Enfoques de Valuacion</div>
+  <div class="pr-enfoques">
+    <div class="pr-enfoque-card ${enfoque==='fisico'?'selected':''}"><div class="pe-label">Enfoque Fisico</div><div class="pe-val">${fmtMXN0(Math.round(fisico))}</div></div>
+    <div class="pr-enfoque-card ${enfoque==='mercado'?'selected':''}"><div class="pe-label">Comparacion Mercado</div><div class="pe-val">${fmtMXN0(Math.round(mercado))}</div></div>
+    <div class="pr-enfoque-card ${enfoque==='rentas'?'selected':''}"><div class="pe-label">Cap. Rentas</div><div class="pe-val">${fmtMXN0(Math.round(rentas))}</div></div>
+  </div>
+
+  <div class="pr-grid">
+    <div class="pr-field"><span class="pf-label">Enfoque Aplicado</span><span class="pf-val">${enfoqueLabel}</span></div>
+    <div class="pr-field"><span class="pf-label">Redondeo</span><span class="pf-val">${fmtMXN0(redondeo)}</span></div>
+  </div>
+
+  <div class="pr-cover-valor" style="margin:16px 0;">
+    <div class="cv-label">VALOR COMERCIAL DEL INMUEBLE</div>
+    <div class="cv-amount">${fmtMXN0(comercial)}</div>
+    <div class="cv-letras">(${letras})</div>
+  </div>
+
+  <div class="pr-subtitle">Justificacion</div>
+  <div style="font-size:9pt;line-height:1.6;color:#333;margin-bottom:16px;">${d.justificacion||'—'}</div>
+
+  <div class="pr-subtitle">Rango de Negociacion</div>
+  <div class="pr-grid pr-grid3" style="grid-template-columns:1fr 1fr 1fr 1fr;">
+    <div class="pr-field"><span class="pf-label">Ideal Vendedor</span><span class="pf-val">${fmtMXN0(Math.round(comercial*1.1/redondeo)*redondeo)}</span></div>
+    <div class="pr-field"><span class="pf-label">Valor Maximo</span><span class="pf-val">${fmtMXN0(comercial)}</span></div>
+    <div class="pr-field"><span class="pf-label">Valor Minimo</span><span class="pf-val">${fmtMXN0(Math.round(comercial*0.85/redondeo)*redondeo)}</span></div>
+    <div class="pr-field"><span class="pf-label">Ideal Comprador</span><span class="pf-val">${fmtMXN0(Math.round(comercial*0.80/redondeo)*redondeo)}</span></div>
+  </div>
+
+  <div class="pr-subtitle">Datos del Valuador</div>
+  <div class="pr-grid">
+    <div class="pr-field"><span class="pf-label">Nombre</span><span class="pf-val">${user.name||'—'}</span></div>
+    <div class="pr-field"><span class="pf-label">Cedula Federal</span><span class="pf-val">${user.cedFed||'—'}</span></div>
+    <div class="pr-field"><span class="pf-label">Cedula Estatal</span><span class="pf-val">${user.cedEst||'—'}</span></div>
+    <div class="pr-field"><span class="pf-label">Especialidad</span><span class="pf-val">${user.especialidad||'—'}</span></div>
+  </div>
+
+  <div class="pr-signature">
+    <div class="pr-sig-line"></div>
+    <div class="pr-sig-name">${user.name||'Valuador'}</div>
+    <div class="pr-sig-ced">Ced. Fed. ${user.cedFed||'—'} | Ced. Est. ${user.cedEst||'—'}</div>
+    <div style="font-size:8pt;color:#999;margin-top:4px;">Fecha: ${fecha}</div>
+  </div>
+
+  ${pageFtr(7, totalPages)}
+</div>
+
+${photosHtml?`
+<!-- PAGE 8: FOTOS -->
+<div class="pr-page">
+  ${pageHdr(8, totalPages)}
+  <div class="pr-title"><span class="pr-title-num">&#128247;</span> Registro Fotografico del Inmueble</div>
+  <div class="pr-photos">${photosHtml}</div>
+  ${pageFtr(8, totalPages)}
+</div>`:''}
+`;
+
+  document.getElementById('print-report').innerHTML = report;
+  setTimeout(()=>window.print(), 300);
+}
+
+// ============================================
+// AI FEATURES
+// ============================================
+function aiGenerateJustification() {
+  const fisico=window._valorFisico||0, mercado=window._valorMercado||0, rentas=window._valorRentas||0;
+  const enfoque=document.getElementById('enfoqueAplicar')?.value||'mercado';
+  const tipo=document.getElementById('tipoInmueble')?.value||'inmueble';
+  const zona=document.getElementById('clasificacionZona')?.value||'la zona';
+  const mun=document.getElementById('municipio')?.value||'';
+  const numComps=comparables.length;
+  const diffPct = fisico>0 ? Math.round(Math.abs(mercado-fisico)/fisico*100) : 0;
+
+  const enfoqueTexts = {
+    mercado: `De acuerdo a las caracteristicas del ${tipo.toLowerCase()} sujeto, a la investigacion exhaustiva realizada en la zona ${zona.toLowerCase()} de ${mun}, y al analisis comparativo de ${numComps} ofertas de mercado debidamente homologadas, se concluye que el enfoque de Comparacion de Mercado es el mas representativo del valor actual del inmueble. Los ${numComps} comparables analizados fueron homologados mediante factores de zona, ubicacion, superficie, topografia y negociacion, obteniendo un valor unitario de terreno congruente con los valores de la zona. El valor fisico (${fmtMXN0(Math.round(fisico))}) ${diffPct<=15?'es consistente':'presenta una diferencia del '+diffPct+'%'} respecto al valor de mercado (${fmtMXN0(Math.round(mercado))}), lo cual ${diffPct<=15?'refuerza la confiabilidad del analisis':'se explica por las condiciones especificas de oferta y demanda en la zona'}. La capitalizacion de rentas (${fmtMXN0(Math.round(rentas))}) se presenta como referencia complementaria. Por lo anterior, se adopta el enfoque de mercado como valor comercial concluido.`,
+    fisico: `Considerando que el ${tipo.toLowerCase()} sujeto se ubica en zona ${zona.toLowerCase()} de ${mun}, donde la informacion de mercado es limitada, se determina que el enfoque Fisico o Directo es el mas representativo. Se aplico la metodologia Ross-Heidecke para la depreciacion de las construcciones, considerando edad, vida util probable y estado de conservacion. El valor del terreno se determino con base en el valor de calle investigado y factores de eficiencia aplicables. El valor fisico total (${fmtMXN0(Math.round(fisico))}) refleja adecuadamente las condiciones del inmueble.`,
+    rentas: `Con base en el analisis de la productividad del ${tipo.toLowerCase()} sujeto ubicado en zona ${zona.toLowerCase()} de ${mun}, y considerando la investigacion de rentas en la zona, se concluye que el enfoque de Capitalizacion de Rentas es el mas representativo. Se aplicaron las deducciones normativas por vacios, predial, mantenimiento, administracion e ISR, y la tasa de capitalizacion se determino mediante la tabla de scoring SHF de 7 criterios. El valor por capitalizacion (${fmtMXN0(Math.round(rentas))}) refleja el potencial productivo del inmueble.`,
+    promedio: `Tras analizar los tres enfoques de valuacion para el ${tipo.toLowerCase()} ubicado en ${mun}, se determina utilizar el promedio ponderado. El enfoque fisico (${fmtMXN0(Math.round(fisico))}), el de mercado (${fmtMXN0(Math.round(mercado))}) y la capitalizacion de rentas (${fmtMXN0(Math.round(rentas))}) convergen de manera consistente, lo cual brinda alta confiabilidad al valor concluido.`
+  };
+
+  const text = enfoqueTexts[enfoque] || enfoqueTexts.mercado;
+  document.getElementById('justificacion').value = text;
+  showAIResult('Justificacion generada exitosamente. Se basa en los datos reales de tu avaluo: tipo de inmueble, ubicacion, comparables analizados y consistencia entre enfoques. Revisa y ajusta segun tu criterio profesional.');
+  toast('Justificacion generada con IA');
+}
+
+function aiAnalyzeConsistency() {
+  const fisico=window._valorFisico||0, mercado=window._valorMercado||0, rentas=window._valorRentas||0;
+  const tasa=window._tasa||0;
+  let analysis = '<div style="font-size:12px;line-height:1.7;">';
+  analysis += '<strong style="color:var(--teal);font-size:13px;">&#129302; Analisis de Consistencia IA</strong><br><br>';
+
+  // 1. Cross-check values
+  if(fisico>0 && mercado>0) {
+    const diff=Math.abs(mercado-fisico)/fisico*100;
+    if(diff<=15) analysis+=`&#9989; <strong>Fisico vs Mercado:</strong> Diferencia de ${diff.toFixed(1)}% — Excelente consistencia.<br>`;
+    else if(diff<=30) analysis+=`&#9888; <strong>Fisico vs Mercado:</strong> Diferencia de ${diff.toFixed(1)}% — Aceptable pero revisar factores.<br>`;
+    else analysis+=`&#10060; <strong>Fisico vs Mercado:</strong> Diferencia de ${diff.toFixed(1)}% — Revisar. Posible error en VRN, factores de terreno o comparables.<br>`;
+  }
+
+  // 2. Tasa check
+  if(tasa>0) {
+    if(tasa>=0.07 && tasa<=0.12) analysis+=`&#9989; <strong>Tasa de capitalizacion:</strong> ${(tasa*100).toFixed(2)}% — Dentro del rango SHF (7-12%).<br>`;
+    else analysis+=`&#10060; <strong>Tasa de capitalizacion:</strong> ${(tasa*100).toFixed(2)}% — Fuera del rango SHF. Revisar scoring.<br>`;
+  }
+
+  // 3. Bloques check
+  let hasEdadIssue=false;
+  bloques.forEach(id=>{
+    const edad=parseFloat(document.getElementById('bEdad-'+id)?.value)||0;
+    const vp=parseFloat(document.getElementById('bVP-'+id)?.value)||70;
+    if(edad>vp*0.8) hasEdadIssue=true;
+  });
+  if(hasEdadIssue) analysis+=`&#9888; <strong>Bloques:</strong> Algun bloque tiene edad cercana a vida util. Valor de reposicion sera muy bajo.<br>`;
+  else if(bloques.length>0) analysis+=`&#9989; <strong>Bloques constructivos:</strong> ${bloques.length} bloques, edades dentro de rango aceptable.<br>`;
+
+  // 4. Factor check
+  let factorIssues=0;
+  for(const [f,[min,max]] of Object.entries(FACTOR_RANGES)) {
+    const v=num(f);
+    if(v<min||v>max) factorIssues++;
+  }
+  if(factorIssues>0) analysis+=`&#9888; <strong>Factores de terreno:</strong> ${factorIssues} factor(es) fuera de rango tipico.<br>`;
+  else analysis+=`&#9989; <strong>Factores de terreno:</strong> Todos dentro de rangos tipicos.<br>`;
+
+  // 5. Comparables check
+  if(comparables.length>=3) analysis+=`&#9989; <strong>Comparables:</strong> ${comparables.length} comparables — muestra adecuada.<br>`;
+  else if(comparables.length>0) analysis+=`&#9888; <strong>Comparables:</strong> Solo ${comparables.length} comparable(s). Se recomiendan minimo 3.<br>`;
+  else analysis+=`&#10060; <strong>Comparables:</strong> Sin comparables. El enfoque de mercado no es confiable.<br>`;
+
+  // 6. Rentas check
+  if(rentas>0 && mercado>0) {
+    const ratio=rentas/mercado;
+    if(ratio<0.3) analysis+=`&#9888; <strong>Rentas vs Mercado:</strong> Valor de rentas es ${Math.round(ratio*100)}% del mercado — tipico en zonas residenciales.<br>`;
+    else analysis+=`&#9989; <strong>Rentas vs Mercado:</strong> Relacion ${Math.round(ratio*100)}% — coherente.<br>`;
+  }
+
+  // Confidence score
+  let score=0;
+  if(fisico>0&&mercado>0&&Math.abs(mercado-fisico)/fisico<=0.3) score+=25;
+  if(tasa>=0.07&&tasa<=0.12) score+=15;
+  if(comparables.length>=3) score+=20;
+  if(bloques.length>0) score+=15;
+  if(factorIssues===0) score+=15;
+  if(rentas>0) score+=10;
+
+  analysis+=`<br><strong style="color:var(--gold2);">Indice de Confiabilidad: ${score}%</strong>`;
+  const bar=`<div style="height:8px;background:var(--muted);border-radius:4px;margin-top:4px;"><div style="height:100%;width:${score}%;background:${score>=70?'var(--green)':score>=50?'var(--gold)':'var(--red)'};border-radius:4px;transition:width 0.5s;"></div></div>`;
+  analysis+=bar+'</div>';
+
+  showAIResult(analysis);
+}
+
+function aiSuggestFactors() {
+  let suggestions='<div style="font-size:12px;line-height:1.7;">';
+  suggestions+='<strong style="color:var(--teal);font-size:13px;">&#129302; Sugerencias IA para Factores de Homologacion</strong><br><br>';
+
+  const supSujeto=num('mktSupTerreno')||num('supLevantamiento');
+  comparables.forEach(id=>{
+    const supT=parseFloat(document.getElementById('cSupT-'+id)?.value)||0;
+    const precio=parseFloat(document.getElementById('cPrecio-'+id)?.value)||0;
+    if(!supT||!precio) return;
+
+    suggestions+=`<strong>Comparable ${id}:</strong><br>`;
+
+    // Fsup suggestion
+    if(supSujeto>0 && supT>0) {
+      const ratio=supSujeto/supT;
+      let fsupSug=1;
+      if(ratio<0.5) fsupSug=1.15;
+      else if(ratio<0.8) fsupSug=1.05;
+      else if(ratio>2) fsupSug=0.85;
+      else if(ratio>1.3) fsupSug=0.95;
+      if(fsupSug!==1) suggestions+=`&nbsp;&nbsp;&#8226; Fsup: El sujeto (${supSujeto}m2) vs comparable (${supT}m2) sugiere Fsup ≈ ${fsupSug.toFixed(3)}<br>`;
+    }
+
+    // Fneg suggestion
+    suggestions+=`&nbsp;&nbsp;&#8226; Fneg: Si es oferta (no venta cerrada), aplicar 0.90-0.95<br>`;
+  });
+
+  suggestions+='<br><em style="color:var(--dim);">Estos son sugerencias basadas en relaciones matematicas. El criterio del valuador prevalece.</em></div>';
+
+  toast('Sugerencias generadas');
+  // Show in a temporary overlay
+  const el=document.getElementById('ai-result');
+  if(el){el.innerHTML=suggestions;el.style.display='block';el.style.background='var(--card)';el.style.border='1px solid var(--border)';el.style.borderRadius='10px';el.style.padding='16px';}
+}
+
+function showAIResult(html) {
+  const el=document.getElementById('ai-result');
+  if(el){el.innerHTML=html;el.style.display='block';el.style.background='var(--card)';el.style.border='1px solid var(--border)';el.style.borderRadius='10px';el.style.padding='16px';}
 }
 
 window.addEventListener('DOMContentLoaded', init);
