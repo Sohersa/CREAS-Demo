@@ -1,0 +1,2080 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spadiko Avaluos — Avaluos Inteligentes</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0C1520; --panel: #131F2E; --card: #1A2B3D; --card2: #1E2F42;
+  --border: rgba(45,212,191,0.12); --border2: rgba(45,212,191,0.06);
+  --teal: #2DD4BF; --teal2: #14B8A6; --gold: #C8922A; --gold2: #E5B84A; --gold3: #F0C860;
+  --red: #E05C5C; --red2: #FF6B6B; --green: #4CAF7D; --green2: #34D399;
+  --blue: #60A5FA; --purple: #A78BFA;
+  --text: #DDD8CE; --dim: #7A93AB; --muted: #3A5068; --navy: #0C1520;
+  --glass: rgba(19,31,46,0.85);
+  --mono: 'JetBrains Mono', monospace; --sans: 'Outfit', sans-serif;
+  --shadow: 0 8px 32px rgba(0,0,0,0.3);
+  --shadow-lg: 0 16px 64px rgba(0,0,0,0.4);
+  --radius: 12px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body { font-family: var(--sans); background: var(--bg); color: var(--text); min-height: 100vh; font-size: 14px; overflow-x: hidden; }
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--muted); border-radius: 3px; }
+::selection { background: rgba(45,212,191,0.3); }
+
+/* ===== ANIMATIONS ===== */
+@keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes fadeInUp { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes slideIn { from { opacity: 0; transform: translateX(-30px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(45,212,191,0.4); } 50% { box-shadow: 0 0 0 12px rgba(45,212,191,0); } }
+@keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+@keyframes countUp { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
+@keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+@keyframes glow { 0%,100% { box-shadow: 0 0 5px rgba(45,212,191,0.2); } 50% { box-shadow: 0 0 20px rgba(45,212,191,0.4); } }
+@keyframes flashGold { 0% { background: rgba(200,146,42,0.3); } 100% { background: transparent; } }
+.flash { animation: flashGold 0.6s ease-out; }
+.fade-in { animation: fadeIn 0.5s ease-out; }
+.fade-in-up { animation: fadeInUp 0.6s ease-out; }
+.slide-in { animation: slideIn 0.4s ease-out; }
+
+/* ===== INPUTS ===== */
+input, select, textarea { font-family: var(--mono); font-size: 13px; background: var(--card); border: 1px solid var(--muted); color: var(--text); border-radius: 8px; padding: 9px 12px; width: 100%; outline: none; transition: all .25s; }
+input:focus, select:focus, textarea:focus { border-color: var(--teal); box-shadow: 0 0 0 3px rgba(45,212,191,0.1); }
+input[readonly] { background: rgba(45,212,191,0.04); color: var(--teal); font-weight: 600; cursor: default; border-color: rgba(45,212,191,0.2); }
+input.warn-border { border-color: var(--gold) !important; box-shadow: 0 0 0 3px rgba(200,146,42,0.15) !important; }
+label { display: block; font-size: 11px; color: var(--dim); margin-bottom: 4px; letter-spacing: .06em; text-transform: uppercase; }
+select option { background: var(--card); }
+textarea { resize: vertical; min-height: 60px; }
+input[type="checkbox"] { width: auto; margin-right: 6px; accent-color: var(--teal); }
+
+/* ===== LAYOUT ===== */
+.field { margin-bottom: 14px; }
+.row { display: grid; gap: 12px; }
+.r2 { grid-template-columns: 1fr 1fr; }
+.r3 { grid-template-columns: 1fr 1fr 1fr; }
+.r4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+.r5 { grid-template-columns: repeat(5, 1fr); }
+.r6 { grid-template-columns: repeat(6, 1fr); }
+
+/* ===== CARDS ===== */
+.card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 16px; transition: border-color 0.3s; }
+.card:hover { border-color: rgba(45,212,191,0.2); }
+.card h3 { font-size: 12px; letter-spacing: .1em; color: var(--dim); text-transform: uppercase; margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+.card h3 .icon { font-size: 16px; }
+
+/* ===== VALUE BOXES ===== */
+.val-box { background: rgba(200,146,42,.08); border: 1px solid rgba(200,146,42,.3); border-radius: 10px; padding: 14px 18px; text-align: center; transition: all 0.3s; }
+.val-box:hover { transform: translateY(-2px); }
+.val-box .vb-label { font-size: 10px; color: var(--dim); letter-spacing: .1em; text-transform: uppercase; margin-bottom: 4px; }
+.val-box .vb-value { font-family: var(--mono); font-size: 22px; font-weight: 700; color: var(--gold2); }
+.val-box .vb-sub { font-size: 11px; color: var(--dim); margin-top: 3px; }
+.val-box.teal { background: rgba(45,212,191,.06); border-color: rgba(45,212,191,.25); }
+.val-box.teal .vb-value { color: var(--teal); }
+.val-box.green { background: rgba(76,175,125,.06); border-color: rgba(76,175,125,.25); }
+.val-box.green .vb-value { color: var(--green); }
+.val-box.big .vb-value { font-size: 32px; }
+
+/* ===== BUTTONS ===== */
+.btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer; font-family: var(--sans); font-weight: 600; font-size: 13px; transition: all .25s; text-decoration: none; }
+.btn-primary { background: linear-gradient(135deg, var(--teal), var(--teal2)); color: var(--navy); }
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(45,212,191,0.3); }
+.btn-outline { background: transparent; border: 1px solid var(--teal); color: var(--teal); }
+.btn-outline:hover { background: rgba(45,212,191,0.1); }
+.btn-gold { background: linear-gradient(135deg, var(--gold), var(--gold2)); color: var(--navy); }
+.btn-gold:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(200,146,42,0.3); }
+.btn-danger { background: rgba(224,92,92,.1); border: 1px solid rgba(224,92,92,.3); color: var(--red); }
+.btn-danger:hover { background: rgba(224,92,92,.2); }
+.btn-ghost { background: transparent; color: var(--dim); }
+.btn-ghost:hover { color: var(--text); }
+.btn-lg { padding: 14px 32px; font-size: 15px; border-radius: 10px; }
+.btn-sm { padding: 6px 12px; font-size: 11px; }
+.btn-pulse { animation: pulse 2s infinite; }
+
+/* ===== BADGES ===== */
+.badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 10px; font-family: var(--mono); font-weight: 600; }
+.badge-teal { background: rgba(45,212,191,.15); color: var(--teal); }
+.badge-gold { background: rgba(200,146,42,.15); color: var(--gold2); }
+.badge-green { background: rgba(76,175,125,.15); color: var(--green); }
+.badge-red { background: rgba(224,92,92,.15); color: var(--red); }
+
+/* ===== MISC ===== */
+.tip { background: rgba(45,212,191,.06); border: 1px solid rgba(45,212,191,.15); border-radius: 8px; padding: 10px 14px; font-size: 11px; color: var(--dim); margin-bottom: 14px; }
+.tip strong { color: var(--teal); }
+.warn { background: rgba(224,92,92,.08); border: 1px solid rgba(224,92,92,.2); border-radius: 8px; padding: 8px 12px; font-size: 11px; color: var(--red); margin-top: 6px; }
+.warn-gold { background: rgba(200,146,42,.08); border: 1px solid rgba(200,146,42,.2); border-radius: 8px; padding: 8px 12px; font-size: 11px; color: var(--gold2); margin-top: 6px; }
+.divider { border: none; border-top: 1px solid var(--border); margin: 18px 0; }
+.result-bar { background: var(--panel); border-radius: 8px; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
+.result-bar span:first-child { font-size: 11px; color: var(--dim); }
+.result-bar span:last-child { font-family: var(--mono); font-size: 14px; font-weight: 700; color: var(--teal); }
+
+/* ===== TOAST ===== */
+#toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 10000; display: flex; flex-direction: column; gap: 8px; }
+.toast { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px 20px; font-size: 13px; color: var(--text); box-shadow: var(--shadow); animation: fadeIn 0.3s ease-out; display: flex; align-items: center; gap: 8px; }
+.toast.success { border-color: rgba(76,175,125,0.4); }
+.toast.error { border-color: rgba(224,92,92,0.4); }
+
+/* ===== TOOLTIP ===== */
+.tooltip-wrap { position: relative; }
+.tooltip-icon { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; border-radius: 50%; background: var(--muted); color: var(--dim); font-size: 9px; cursor: help; margin-left: 4px; font-weight: 700; }
+.tooltip-text { display: none; position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); background: var(--card2); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; font-size: 11px; color: var(--dim); white-space: nowrap; z-index: 1000; margin-bottom: 6px; box-shadow: var(--shadow); max-width: 280px; white-space: normal; }
+.tooltip-wrap:hover .tooltip-text { display: block; }
+
+/* ========================================= */
+/* LANDING PAGE                              */
+/* ========================================= */
+#view-landing { min-height: 100vh; }
+.landing-hero { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; position: relative; overflow: hidden; padding: 40px 20px; }
+.landing-hero::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 0%, rgba(45,212,191,0.08) 0%, transparent 60%), radial-gradient(ellipse at 80% 80%, rgba(200,146,42,0.06) 0%, transparent 50%); }
+.hero-logo { width: 100px; height: 100px; margin-bottom: 24px; animation: float 4s ease-in-out infinite; position: relative; z-index: 1; }
+.hero-title { font-size: 56px; font-weight: 900; line-height: 1.1; margin-bottom: 12px; position: relative; z-index: 1; }
+.hero-title .sp1 { color: var(--teal); }
+.hero-title .sp2 { color: var(--gold2); }
+.hero-tagline { font-size: 20px; color: var(--dim); margin-bottom: 40px; font-weight: 300; letter-spacing: 0.02em; position: relative; z-index: 1; }
+.hero-btns { display: flex; gap: 16px; position: relative; z-index: 1; }
+.features-section { padding: 80px 40px; max-width: 1200px; margin: 0 auto; }
+.features-section h2 { text-align: center; font-size: 32px; font-weight: 700; margin-bottom: 12px; }
+.features-section .sub { text-align: center; color: var(--dim); margin-bottom: 48px; font-size: 16px; }
+.features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+.feature-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 32px; text-align: center; transition: all 0.3s; }
+.feature-card:hover { transform: translateY(-8px); border-color: var(--teal); box-shadow: 0 12px 40px rgba(45,212,191,0.1); }
+.feature-icon { font-size: 48px; margin-bottom: 16px; }
+.feature-card h3 { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+.feature-card p { font-size: 13px; color: var(--dim); line-height: 1.6; }
+.how-section { padding: 60px 40px; max-width: 1000px; margin: 0 auto; }
+.how-section h2 { text-align: center; font-size: 28px; font-weight: 700; margin-bottom: 48px; }
+.steps { display: flex; gap: 40px; justify-content: center; }
+.step { text-align: center; flex: 1; }
+.step-num { width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, var(--teal), var(--gold)); display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 800; color: var(--navy); margin: 0 auto 16px; }
+.step h4 { font-size: 16px; margin-bottom: 8px; }
+.step p { font-size: 12px; color: var(--dim); }
+.landing-footer { border-top: 1px solid var(--border); padding: 40px; text-align: center; color: var(--dim); font-size: 12px; }
+
+/* ========================================= */
+/* LOGIN / REGISTER                          */
+/* ========================================= */
+#view-auth { display: none; min-height: 100vh; align-items: center; justify-content: center; padding: 40px; background: radial-gradient(ellipse at 50% 50%, rgba(45,212,191,0.05) 0%, transparent 70%); }
+.auth-container { width: 100%; max-width: 440px; }
+.auth-card { background: var(--glass); backdrop-filter: blur(20px); border: 1px solid var(--border); border-radius: 20px; padding: 40px; box-shadow: var(--shadow-lg); }
+.auth-card h2 { font-size: 24px; font-weight: 700; margin-bottom: 6px; }
+.auth-card .auth-sub { color: var(--dim); font-size: 13px; margin-bottom: 28px; }
+.auth-toggle { text-align: center; margin-top: 20px; font-size: 13px; color: var(--dim); }
+.auth-toggle a { color: var(--teal); cursor: pointer; text-decoration: none; font-weight: 600; }
+
+/* ========================================= */
+/* DASHBOARD                                 */
+/* ========================================= */
+#view-dashboard { display: none; min-height: 100vh; }
+.dash-header { background: var(--panel); border-bottom: 1px solid var(--border); padding: 16px 32px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
+.dash-header .logo { display: flex; align-items: center; gap: 12px; }
+.dash-header .logo-text { font-weight: 800; font-size: 18px; }
+.dash-header .user-info { display: flex; align-items: center; gap: 16px; }
+.dash-header .user-name { font-size: 13px; color: var(--dim); }
+.dash-body { max-width: 1200px; margin: 0 auto; padding: 32px; }
+.stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 32px; }
+.stat-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; transition: all 0.3s; }
+.stat-card:hover { transform: translateY(-4px); border-color: rgba(45,212,191,0.25); }
+.stat-card .stat-label { font-size: 11px; color: var(--dim); letter-spacing: .06em; text-transform: uppercase; margin-bottom: 8px; }
+.stat-card .stat-value { font-family: var(--mono); font-size: 28px; font-weight: 700; }
+.stat-card .stat-sub { font-size: 11px; color: var(--dim); margin-top: 4px; }
+.dash-actions { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.dash-search { display: flex; gap: 12px; align-items: center; }
+.dash-search input { width: 280px; }
+.avaluo-list { display: flex; flex-direction: column; gap: 8px; }
+.avaluo-row { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 16px 20px; display: grid; grid-template-columns: 140px 1fr 200px 120px 120px 80px; gap: 16px; align-items: center; transition: all 0.2s; cursor: pointer; }
+.avaluo-row:hover { border-color: rgba(45,212,191,0.3); background: var(--card2); }
+.avaluo-row .av-num { font-family: var(--mono); font-weight: 600; color: var(--teal); font-size: 13px; }
+.avaluo-row .av-prop { font-size: 13px; }
+.avaluo-row .av-dir { font-size: 11px; color: var(--dim); }
+.avaluo-row .av-date { font-family: var(--mono); font-size: 12px; color: var(--dim); }
+.avaluo-row .av-val { font-family: var(--mono); font-weight: 700; color: var(--gold2); font-size: 14px; }
+.avaluo-row .av-actions { display: flex; gap: 6px; }
+.empty-state { text-align: center; padding: 80px 40px; color: var(--dim); }
+.empty-state .empty-icon { font-size: 64px; margin-bottom: 16px; opacity: 0.3; }
+.empty-state h3 { font-size: 20px; color: var(--text); margin-bottom: 8px; }
+.empty-state p { font-size: 14px; margin-bottom: 24px; }
+
+/* ========================================= */
+/* WIZARD                                    */
+/* ========================================= */
+#view-wizard { display: none; }
+.wizard-header { background: var(--panel); border-bottom: 1px solid var(--border); padding: 12px 24px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
+.wizard-header .logo-mini { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+.wizard-header .logo-mini span { font-weight: 700; font-size: 14px; }
+.wizard-header .save-indicator { font-family: var(--mono); font-size: 11px; color: var(--dim); display: flex; align-items: center; gap: 6px; }
+.wizard-header .save-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); }
+
+.tab-bar { display: flex; background: var(--panel); border-bottom: 1px solid var(--border); overflow-x: auto; padding: 0 24px; }
+.tab { padding: 14px 20px; cursor: pointer; font-size: 12px; letter-spacing: .04em; color: var(--dim); border-bottom: 3px solid transparent; white-space: nowrap; transition: all .2s; font-weight: 500; display: flex; align-items: center; gap: 8px; }
+.tab:hover { color: var(--text); }
+.tab.active { color: var(--teal); border-bottom-color: var(--teal); }
+.tab .tab-num { display: inline-flex; width: 22px; height: 22px; border-radius: 50%; background: var(--muted); color: var(--text); font-size: 10px; align-items: center; justify-content: center; font-weight: 700; transition: all .2s; }
+.tab.active .tab-num { background: var(--teal); color: var(--navy); }
+.tab.completed .tab-num { background: var(--green); color: white; }
+.tab .tab-check { display: none; }
+.tab.completed .tab-check { display: inline; color: var(--green); }
+
+.wizard-body { display: flex; min-height: calc(100vh - 100px); }
+.wizard-main { flex: 1; padding: 24px 32px; max-width: 960px; overflow-y: auto; }
+.section { display: none; }
+.section.active { display: block; animation: fadeIn 0.3s ease-out; }
+
+/* ===== SIDEBAR ===== */
+.wizard-sidebar { width: 300px; background: var(--panel); border-left: 1px solid var(--border); padding: 20px; position: sticky; top: 100px; height: calc(100vh - 100px); overflow-y: auto; }
+.sidebar-section { margin-bottom: 20px; }
+.sidebar-section h4 { font-size: 10px; letter-spacing: .1em; color: var(--dim); text-transform: uppercase; margin-bottom: 10px; }
+.sidebar-val { font-family: var(--mono); font-weight: 700; font-size: 14px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; }
+.sidebar-chart { margin: 12px 0; }
+.sidebar-progress { margin-bottom: 8px; }
+.sidebar-progress .sp-label { font-size: 10px; color: var(--dim); display: flex; justify-content: space-between; margin-bottom: 3px; }
+.sidebar-progress .sp-bar { height: 4px; background: var(--muted); border-radius: 2px; overflow: hidden; }
+.sidebar-progress .sp-fill { height: 100%; border-radius: 2px; background: linear-gradient(90deg, var(--teal), var(--gold)); transition: width 0.5s; }
+.sidebar-alert { background: rgba(224,92,92,.08); border: 1px solid rgba(224,92,92,.15); border-radius: 8px; padding: 8px 10px; font-size: 10px; color: var(--red2); margin-top: 6px; }
+.sidebar-alert.gold { background: rgba(200,146,42,.08); border-color: rgba(200,146,42,.15); color: var(--gold2); }
+.sidebar-commercial { background: linear-gradient(135deg, rgba(200,146,42,0.1), rgba(45,212,191,0.05)); border: 1px solid rgba(200,146,42,0.3); border-radius: 12px; padding: 16px; text-align: center; margin-top: 12px; }
+.sidebar-commercial .sc-label { font-size: 9px; color: var(--dim); letter-spacing: .1em; text-transform: uppercase; margin-bottom: 4px; }
+.sidebar-commercial .sc-value { font-family: var(--mono); font-size: 24px; font-weight: 800; color: var(--gold2); }
+
+/* ===== SPECIFIC COMPONENTS ===== */
+.block-card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin-bottom: 12px; }
+.block-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+.block-title { font-size: 13px; font-weight: 700; color: var(--text); }
+.comparable-card { border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin-bottom: 12px; background: var(--panel); }
+.comp-num { width: 28px; height: 28px; border-radius: 50%; background: var(--teal); color: var(--navy); display: inline-flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px; margin-right: 10px; flex-shrink: 0; }
+.factor-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 12px; }
+.factor-item label { font-size: 9px; text-align: center; }
+.factor-item input { font-size: 13px; text-align: center; }
+
+/* ===== TABLES ===== */
+table.rh-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+table.rh-table th { background: var(--muted); color: var(--text); padding: 7px 10px; text-align: left; font-size: 10px; letter-spacing: .04em; }
+table.rh-table td { padding: 6px 10px; border-bottom: 1px solid var(--border); font-family: var(--mono); }
+table.rh-table tr:hover td { background: rgba(255,255,255,.02); }
+.scoring-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+.scoring-table th { background: var(--muted); padding: 6px 8px; font-size: 10px; color: var(--dim); }
+.scoring-table td { padding: 5px 8px; border: 1px solid var(--border); text-align: center; font-size: 11px; cursor: pointer; transition: all 0.2s; }
+.scoring-table td:hover { background: rgba(45,212,191,.08); }
+.scoring-table td.sel { background: rgba(45,212,191,.15); color: var(--teal); font-weight: 700; border-color: rgba(45,212,191,.3); }
+
+.conclusion-box { background: linear-gradient(135deg, rgba(45,212,191,.06), rgba(200,146,42,.06)); border: 1px solid rgba(200,146,42,.3); border-radius: 16px; padding: 32px; text-align: center; margin-bottom: 20px; }
+.conclusion-val { font-family: var(--mono); font-size: 48px; font-weight: 800; color: var(--gold2); line-height: 1; }
+.conclusion-letras { font-size: 13px; color: var(--dim); margin-top: 10px; font-style: italic; }
+.conclusion-date { font-size: 11px; color: var(--muted); margin-top: 6px; font-family: var(--mono); }
+
+.summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 20px; }
+
+/* ===== CHECKBOX GROUP ===== */
+.check-group { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.check-item { display: flex; align-items: center; padding: 8px 12px; background: var(--panel); border: 1px solid var(--border); border-radius: 8px; font-size: 12px; cursor: pointer; transition: all 0.2s; }
+.check-item:hover { border-color: rgba(45,212,191,0.3); }
+.check-item.checked { background: rgba(45,212,191,0.06); border-color: rgba(45,212,191,0.3); }
+.check-item input[type="checkbox"] { cursor: pointer; }
+
+/* ===== COLLAPSIBLE ===== */
+.collapse-toggle { cursor: pointer; display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: var(--panel); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 8px; font-size: 12px; color: var(--dim); transition: all 0.2s; }
+.collapse-toggle:hover { border-color: rgba(45,212,191,0.3); color: var(--text); }
+.collapse-toggle .arrow { transition: transform 0.3s; }
+.collapse-toggle.open .arrow { transform: rotate(180deg); }
+.collapse-content { display: none; animation: fadeIn 0.3s; }
+.collapse-content.open { display: block; }
+
+/* ===== PHOTOS ===== */
+.photo-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.photo-slot { aspect-ratio: 4/3; background: var(--card); border: 2px dashed var(--muted); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-direction: column; cursor: pointer; transition: all 0.3s; overflow: hidden; position: relative; }
+.photo-slot:hover { border-color: var(--teal); }
+.photo-slot img { width: 100%; height: 100%; object-fit: cover; }
+.photo-slot .photo-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; gap: 8px; }
+.photo-slot:hover .photo-overlay { display: flex; }
+.photo-add-icon { font-size: 32px; color: var(--muted); }
+.photo-add-text { font-size: 11px; color: var(--dim); }
+
+/* ===== PRINT ===== */
+@media print {
+  body { background: white !important; color: black !important; font-size: 10pt !important; }
+  .wizard-header, .tab-bar, .wizard-sidebar, .btn, .no-print, #toast-container { display: none !important; }
+  .section { display: block !important; page-break-inside: avoid; padding: 0 !important; }
+  .card { border: 1px solid #ccc !important; background: white !important; break-inside: avoid; }
+  .val-box { background: #f5f5f5 !important; border: 1px solid #999 !important; }
+  .val-box .vb-value { color: #333 !important; }
+  input, select, textarea { border: 1px solid #999 !important; background: white !important; color: black !important; }
+  .wizard-body { display: block !important; }
+  .wizard-main { max-width: 100% !important; padding: 0 !important; }
+  .print-header { display: block !important; text-align: center; margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 10px; }
+  .print-header h1 { font-size: 18pt; }
+  .print-footer { display: block !important; text-align: center; margin-top: 20px; border-top: 1px solid #999; padding-top: 10px; font-size: 9pt; color: #666; }
+}
+.print-header, .print-footer { display: none; }
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 1024px) {
+  .wizard-sidebar { display: none; }
+  .wizard-main { max-width: 100%; }
+  .features-grid { grid-template-columns: 1fr; }
+  .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  .avaluo-row { grid-template-columns: 1fr 1fr; }
+  .hero-title { font-size: 36px; }
+  .r4, .r5, .r6 { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 640px) {
+  .r2, .r3 { grid-template-columns: 1fr; }
+  .stats-grid { grid-template-columns: 1fr; }
+  .steps { flex-direction: column; }
+  .hero-btns { flex-direction: column; }
+  .check-group { grid-template-columns: 1fr 1fr; }
+}
+
+/* ===== SVG LOGO ===== */
+.logo-svg { display: inline-block; }
+</style>
+</head>
+<body>
+
+<!-- ===== TOAST CONTAINER ===== -->
+<div id="toast-container"></div>
+
+<!-- ============================================================ -->
+<!-- VIEW: LANDING PAGE                                           -->
+<!-- ============================================================ -->
+<div id="view-landing">
+  <div class="landing-hero">
+    <svg class="hero-logo" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="logoGrad" x1="0" y1="0" x2="120" y2="120">
+          <stop offset="0%" stop-color="#2DD4BF"/>
+          <stop offset="100%" stop-color="#C8922A"/>
+        </linearGradient>
+        <linearGradient id="logoGrad2" x1="20" y1="30" x2="100" y2="90">
+          <stop offset="0%" stop-color="#E5B84A"/>
+          <stop offset="100%" stop-color="#2DD4BF"/>
+        </linearGradient>
+      </defs>
+      <!-- Hexagon -->
+      <polygon points="60,5 110,30 110,90 60,115 10,90 10,30" fill="none" stroke="url(#logoGrad)" stroke-width="3"/>
+      <polygon points="60,15 100,35 100,85 60,105 20,85 20,35" fill="rgba(45,212,191,0.05)" stroke="none"/>
+      <!-- Building/House stylized S -->
+      <path d="M45,80 L45,50 L60,38 L75,50 L75,80" fill="none" stroke="url(#logoGrad2)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+      <rect x="53" y="65" width="14" height="15" rx="2" fill="none" stroke="var(--gold2)" stroke-width="2"/>
+      <line x1="60" y1="38" x2="60" y2="28" stroke="var(--teal)" stroke-width="2" stroke-linecap="round"/>
+      <!-- S letter subtle -->
+      <path d="M50,42 C50,42 55,36 63,40 C71,44 66,50 58,52 C50,54 48,60 55,63" fill="none" stroke="rgba(229,184,74,0.3)" stroke-width="1.5" stroke-linecap="round"/>
+    </svg>
+
+    <h1 class="hero-title"><span class="sp1">Spadiko</span> <span class="sp2">Avaluos</span></h1>
+    <p class="hero-tagline">Avaluos Inteligentes. Resultados Precisos.</p>
+    <div class="hero-btns">
+      <button class="btn btn-primary btn-lg" onclick="showView('auth','login')">Iniciar Sesion</button>
+      <button class="btn btn-outline btn-lg" onclick="showView('auth','register')">Crear Cuenta</button>
+    </div>
+  </div>
+
+  <div class="features-section">
+    <h2>Tecnologia que transforma avaluos</h2>
+    <p class="sub">Todo lo que necesitas para crear avaluos inmobiliarios profesionales, en una sola plataforma.</p>
+    <div class="features-grid">
+      <div class="feature-card fade-in-up">
+        <div class="feature-icon">&#9889;</div>
+        <h3>Calculos en Tiempo Real</h3>
+        <p>Ross-Heidecke, homologacion, capitalizacion — todo se recalcula al instante. Sin errores, sin esperas.</p>
+      </div>
+      <div class="feature-card fade-in-up" style="animation-delay:.15s">
+        <div class="feature-icon">&#128196;</div>
+        <h3>PDF Profesional</h3>
+        <p>Genera reportes de avaluo con formato oficial SHF, listos para imprimir y entregar al cliente.</p>
+      </div>
+      <div class="feature-card fade-in-up" style="animation-delay:.3s">
+        <div class="feature-icon">&#128202;</div>
+        <h3>Multi-Avaluo</h3>
+        <p>Gestiona todos tus avaluos desde un dashboard central. Busca, filtra, duplica y exporta.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="how-section">
+    <h2>Como funciona</h2>
+    <div class="steps">
+      <div class="step fade-in-up">
+        <div class="step-num">1</div>
+        <h4>Captura los datos</h4>
+        <p>Wizard de 6 pasos guiado: datos generales, terreno, construccion, mercado, rentas y conclusion.</p>
+      </div>
+      <div class="step fade-in-up" style="animation-delay:.15s">
+        <div class="step-num">2</div>
+        <h4>Calculos automaticos</h4>
+        <p>Factores, depreciacion, homologacion y capitalizacion se calculan solos. Solo ingresa los datos.</p>
+      </div>
+      <div class="step fade-in-up" style="animation-delay:.3s">
+        <div class="step-num">3</div>
+        <h4>Genera tu avaluo</h4>
+        <p>Obtiene el valor comercial y genera un PDF profesional listo para entregar.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="landing-footer">
+    <p>Spadiko Avaluos &copy; 2026 — Plataforma de Valuacion Inmobiliaria Inteligente</p>
+    <p style="margin-top:4px;font-size:11px;">Conforme a normas SHF y criterios valuatorios generalmente aceptados</p>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- VIEW: AUTH (LOGIN / REGISTER)                                -->
+<!-- ============================================================ -->
+<div id="view-auth">
+  <div class="auth-container">
+    <div style="text-align:center;margin-bottom:28px;">
+      <svg width="60" height="60" viewBox="0 0 120 120" fill="none"><polygon points="60,5 110,30 110,90 60,115 10,90 10,30" fill="none" stroke="url(#logoGrad)" stroke-width="3"/><polygon points="60,15 100,35 100,85 60,105 20,85 20,35" fill="rgba(45,212,191,0.05)"/><path d="M45,80 L45,50 L60,38 L75,50 L75,80" fill="none" stroke="url(#logoGrad2)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><rect x="53" y="65" width="14" height="15" rx="2" fill="none" stroke="#E5B84A" stroke-width="2"/></svg>
+      <div style="font-weight:800;font-size:20px;margin-top:8px;"><span style="color:var(--teal)">Spadiko</span> <span style="color:var(--gold2)">Avaluos</span></div>
+    </div>
+    <!-- LOGIN FORM -->
+    <div class="auth-card" id="login-form">
+      <h2>Bienvenido de vuelta</h2>
+      <p class="auth-sub">Ingresa a tu cuenta para continuar</p>
+      <div class="field"><label>Correo electronico</label><input id="login-email" type="email" placeholder="tu@email.com"></div>
+      <div class="field"><label>Contrasena</label><input id="login-pass" type="password" placeholder="Tu contrasena"></div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:8px;" onclick="doLogin()">Iniciar Sesion</button>
+      <div class="auth-toggle">No tienes cuenta? <a onclick="toggleAuth('register')">Registrate aqui</a></div>
+    </div>
+    <!-- REGISTER FORM -->
+    <div class="auth-card" id="register-form" style="display:none;">
+      <h2>Crea tu cuenta</h2>
+      <p class="auth-sub">Registra tus datos de valuador profesional</p>
+      <div class="field"><label>Nombre completo</label><input id="reg-name" placeholder="Arq. Luis Hernandez"></div>
+      <div class="field"><label>Correo electronico</label><input id="reg-email" type="email" placeholder="tu@email.com"></div>
+      <div class="field"><label>Contrasena</label><input id="reg-pass" type="password" placeholder="Minimo 6 caracteres"></div>
+      <div class="row r2">
+        <div class="field"><label>Cedula Federal</label><input id="reg-cedFed" placeholder="12345678"></div>
+        <div class="field"><label>Cedula Estatal</label><input id="reg-cedEst" placeholder="PEJ 123456"></div>
+      </div>
+      <div class="field"><label>Especialidad</label><input id="reg-especialidad" placeholder="Bienes Inmuebles, Industrial..."></div>
+      <button class="btn btn-gold" style="width:100%;justify-content:center;margin-top:8px;" onclick="doRegister()">Crear Cuenta</button>
+      <div class="auth-toggle">Ya tienes cuenta? <a onclick="toggleAuth('login')">Inicia sesion</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- VIEW: DASHBOARD                                              -->
+<!-- ============================================================ -->
+<div id="view-dashboard">
+  <div class="dash-header">
+    <div class="logo">
+      <svg width="32" height="32" viewBox="0 0 120 120" fill="none"><polygon points="60,5 110,30 110,90 60,115 10,90 10,30" fill="none" stroke="url(#logoGrad)" stroke-width="3"/><path d="M45,80 L45,50 L60,38 L75,50 L75,80" fill="none" stroke="url(#logoGrad2)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div class="logo-text"><span style="color:var(--teal)">Spadiko</span> <span style="color:var(--gold2)">Avaluos</span></div>
+    </div>
+    <div class="user-info">
+      <span class="user-name" id="dash-user-name"></span>
+      <button class="btn btn-ghost btn-sm" onclick="doLogout()">Cerrar Sesion</button>
+    </div>
+  </div>
+  <div class="dash-body">
+    <div class="stats-grid" id="stats-grid"></div>
+    <div class="dash-actions">
+      <div class="dash-search">
+        <input id="dash-search-input" placeholder="Buscar por nombre o numero..." oninput="renderDashboard()" style="width:300px;">
+        <select id="dash-filter" onchange="renderDashboard()" style="width:160px;">
+          <option value="">Todos</option>
+          <option value="borrador">Borrador</option>
+          <option value="en_proceso">En proceso</option>
+          <option value="completado">Completado</option>
+        </select>
+      </div>
+      <button class="btn btn-primary btn-pulse" onclick="newAvaluo()">+ Nuevo Avaluo</button>
+    </div>
+    <div class="avaluo-list" id="avaluo-list"></div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- VIEW: WIZARD                                                 -->
+<!-- ============================================================ -->
+<div id="view-wizard">
+  <!-- Print Header -->
+  <div class="print-header">
+    <h1>Spadiko Avaluos — Avaluo Inmobiliario Comercial</h1>
+    <p id="print-avaluo-num"></p>
+  </div>
+
+  <div class="wizard-header no-print">
+    <div class="logo-mini" onclick="goToDashboard()">
+      <svg width="28" height="28" viewBox="0 0 120 120" fill="none"><polygon points="60,5 110,30 110,90 60,115 10,90 10,30" fill="none" stroke="url(#logoGrad)" stroke-width="3"/><path d="M45,80 L45,50 L60,38 L75,50 L75,80" fill="none" stroke="url(#logoGrad2)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span><span style="color:var(--teal)">Spadiko</span> <span style="color:var(--gold2)">Avaluos</span></span>
+    </div>
+    <div style="display:flex;align-items:center;gap:16px;">
+      <div style="font-family:var(--mono);font-size:12px;color:var(--dim);">No. <span id="hdr-num" style="color:var(--teal)">—</span></div>
+      <div class="save-indicator" id="save-indicator"><div class="save-dot"></div> Guardado</div>
+      <button class="btn btn-gold btn-sm" onclick="window.print()">Imprimir / PDF</button>
+      <button class="btn btn-outline btn-sm" onclick="goToDashboard()">Dashboard</button>
+    </div>
+  </div>
+
+  <div class="tab-bar no-print">
+    <div class="tab active" onclick="showTab(0)"><span class="tab-num">1</span>Datos Generales</div>
+    <div class="tab" onclick="showTab(1)"><span class="tab-num">2</span>Terreno</div>
+    <div class="tab" onclick="showTab(2)"><span class="tab-num">3</span>Construccion</div>
+    <div class="tab" onclick="showTab(3)"><span class="tab-num">4</span>Est. Mercado</div>
+    <div class="tab" onclick="showTab(4)"><span class="tab-num">5</span>Cap. Rentas</div>
+    <div class="tab" onclick="showTab(5)"><span class="tab-num">6</span>Conclusion</div>
+    <div class="tab" onclick="showTab(6)"><span class="tab-num">&#128247;</span>Fotos</div>
+  </div>
+
+  <div class="wizard-body">
+    <div class="wizard-main">
+
+<!-- ======= TAB 1: DATOS GENERALES ======= -->
+<div class="section active" id="sec0">
+  <div class="row r2">
+    <div>
+      <div class="card">
+        <h3><span class="icon">&#128203;</span> Identificacion del Avaluo</h3>
+        <div class="row r3">
+          <div class="field"><label>No. Avaluo</label><input id="noAvaluo" value="" placeholder="CMU-M-26-001" oninput="syncHeader()"></div>
+          <div class="field"><label>Fecha del Avaluo</label><input id="fecha" type="date" oninput="syncHeader()"></div>
+          <div class="field"><label>Hoja</label><input id="hoja" value="1 de 19"></div>
+        </div>
+        <div class="row r2">
+          <div class="field"><label>Tipo de Inmueble</label>
+            <select id="tipoInmueble"><option>Finca Urbana</option><option>Terreno Urbano</option><option>Local Comercial</option><option>Oficina</option><option>Bodega Industrial</option><option>Departamento</option><option>Casa Habitacion</option></select>
+          </div>
+          <div class="field"><label>Proposito del Avaluo</label>
+            <select id="proposito"><option>Obtener el justo valor de mercado</option><option>Garantia hipotecaria</option><option>Compraventa</option><option>Catastral / Fiscal</option><option>Judicial</option><option>Seguro</option></select>
+          </div>
+        </div>
+        <div class="field"><label>Regimen de Propiedad</label>
+          <select id="regimen"><option>Privada</option><option>Federal</option><option>Ejidal</option><option>Condominal</option><option>Comunal</option></select>
+        </div>
+      </div>
+      <div class="card">
+        <h3><span class="icon">&#128100;</span> Datos del Propietario y Solicitante</h3>
+        <div class="field"><label>Propietario del Inmueble</label><input id="propietario" placeholder="Nombre completo del propietario"></div>
+        <div class="field"><label>Domicilio del Propietario</label><input id="domPropietario" placeholder="Direccion completa"></div>
+        <div class="field"><label>Solicitante del Avaluo</label><input id="solicitante" placeholder="Nombre del solicitante"></div>
+        <div class="field"><label>Representante Legal</label><input id="repLegal" placeholder="Nombre o 'No Aplica'"></div>
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <h3><span class="icon">&#128205;</span> Ubicacion del Inmueble</h3>
+        <div class="row r2">
+          <div class="field"><label>Calle Exterior</label><input id="calleExt" placeholder="Nombre de la calle"></div>
+          <div class="field"><label>No. Exterior</label><input id="noExt" placeholder="105"></div>
+        </div>
+        <div class="row r2">
+          <div class="field"><label>Calle Interior</label><input id="calleInt" placeholder="Si aplica"></div>
+          <div class="field"><label>No. Interior</label><input id="noInt" placeholder="Si aplica"></div>
+        </div>
+        <div class="row r2">
+          <div class="field"><label>Colonia / Fraccionamiento</label><input id="colonia" placeholder="Centro"></div>
+          <div class="field"><label>Codigo Postal</label><input id="cp" placeholder="46900"></div>
+        </div>
+        <div class="row r2">
+          <div class="field"><label>Municipio</label><input id="municipio" placeholder="Mascota"></div>
+          <div class="field"><label>Estado</label><input id="estado" placeholder="Jalisco"></div>
+        </div>
+        <div class="row r3">
+          <div class="field"><label>Coord. UTM X</label><input id="utmX" type="number" placeholder="522696.21"></div>
+          <div class="field"><label>Coord. UTM Y</label><input id="utmY" type="number" placeholder="2269675.10"></div>
+          <div class="field"><label>Altitud (m.s.n.m.)</label><input id="altitud" type="number" placeholder="1241"></div>
+        </div>
+        <div class="row r2">
+          <div class="field"><label>Clave Catastral</label><input id="claveCatastral" placeholder="Clave catastral"></div>
+          <div class="field"><label>Cuenta Predial</label><input id="cuentaPredial" placeholder="Cuenta predial"></div>
+        </div>
+      </div>
+      <div class="card">
+        <h3><span class="icon">&#127961;</span> Caracteristicas Urbanas</h3>
+        <div class="row r3">
+          <div class="field"><label>Clasificacion de Zona</label>
+            <select id="clasificacionZona"><option>Habitacional</option><option>Comercial</option><option>Industrial</option><option>Mixta</option><option>Rural</option></select>
+          </div>
+          <div class="field"><label>Uso de Suelo</label><input id="usoSuelo" placeholder="Habitacional Densidad Media"></div>
+          <div class="field"><label>Estrato Socioeconomico</label>
+            <select id="estratoSocio"><option>Clase Alta (A/B)</option><option>Clase Media Alta (C+)</option><option>Clase Media (C)</option><option>Clase Media Baja (D+)</option><option>Clase Baja (D)</option><option>Clase Baja Baja (E)</option></select>
+          </div>
+        </div>
+        <label style="margin-bottom:8px;margin-top:4px;">Servicios con que cuenta la zona</label>
+        <div class="check-group">
+          <label class="check-item"><input type="checkbox" id="svcAgua" checked> Agua Potable</label>
+          <label class="check-item"><input type="checkbox" id="svcDrenaje" checked> Drenaje</label>
+          <label class="check-item"><input type="checkbox" id="svcElec" checked> Electrificacion</label>
+          <label class="check-item"><input type="checkbox" id="svcAlumbrado" checked> Alumbrado</label>
+          <label class="check-item"><input type="checkbox" id="svcTelefonia" checked> Telefonia</label>
+          <label class="check-item"><input type="checkbox" id="svcGas"> Gas Natural</label>
+        </div>
+        <div class="row r2" style="margin-top:12px;">
+          <div class="field"><label>Vialidades</label><input id="vialidades" placeholder="Pavimentadas, terraceria..."></div>
+          <div class="field"><label>Indice de Saturacion (%)</label><input id="indiceSaturacion" type="number" placeholder="70" step="1"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div style="text-align:right;margin-top:8px;" class="no-print">
+    <button class="btn btn-primary" onclick="showTab(1)">Siguiente: Terreno &#8594;</button>
+  </div>
+</div>
+
+<!-- ======= TAB 2: TERRENO ======= -->
+<div class="section" id="sec1">
+  <div class="row r2">
+    <div>
+      <div class="card">
+        <h3><span class="icon">&#127969;</span> Informacion del Terreno</h3>
+        <div class="row r2">
+          <div class="field"><label>Superficie segun Levantamiento (m2)</label><input id="supLevantamiento" type="number" step="0.01" oninput="calcTerreno()"></div>
+          <div class="field"><label>Superficie segun Escrituras (m2)</label><input id="supEscrituras" type="number" step="0.01"></div>
+        </div>
+        <div class="row r2">
+          <div class="field"><label>Superficie Construccion (m2)</label><input id="supConst" type="number" step="0.01" oninput="calcTerreno()"></div>
+          <div class="field"><label>Lote Promedio de la Zona (m2)</label><input id="lotePromedio" type="number" step="0.01"></div>
+        </div>
+        <div class="row r3">
+          <div class="field"><label>Topografia</label>
+            <select id="topografia"><option>Plana</option><option>Semiplana</option><option>Pendiente Ascendente</option><option>Pendiente Descendente</option><option>Accidentada</option></select>
+          </div>
+          <div class="field"><label>Forma</label>
+            <select id="forma" onchange="suggestFactors()"><option>Regular</option><option>Irregular</option><option>Triangular</option></select>
+          </div>
+          <div class="field"><label>No. de Frentes</label>
+            <select id="numFreentes" onchange="suggestFactors()"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option></select>
+          </div>
+        </div>
+        <div class="row r2">
+          <div class="field"><label>CUS</label><input id="cus" type="number" step="0.1"></div>
+          <div class="field"><label>COS</label><input id="cos" type="number" step="0.1"></div>
+        </div>
+        <div class="field"><label>Servidumbres / Restricciones</label><input id="servidumbres" placeholder="Las que marca obras publicas"></div>
+      </div>
+      <div class="card">
+        <h3><span class="icon">&#128207;</span> Colindancias</h3>
+        <div class="field"><label>Al Norte</label><input id="colNorte" placeholder="En X mts. con..."></div>
+        <div class="field"><label>Al Sur</label><input id="colSur" placeholder="En X mts. con..."></div>
+        <div class="field"><label>Al Oriente</label><input id="colOriente" placeholder="En X mts. con..."></div>
+        <div class="field"><label>Al Poniente</label><input id="colPoniente" placeholder="En X mts. con..."></div>
+        <div class="field"><label>Escritura / Notario</label><textarea id="escritura" rows="2" placeholder="Escritura No. ..."></textarea></div>
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <h3><span class="icon">&#128176;</span> Valor del Terreno — Enfoque Fisico</h3>
+        <div class="tip"><strong>Tip:</strong> El valor de calle se obtiene de la investigacion de mercado. Los factores ajustan el valor segun las caracteristicas del lote.</div>
+        <div class="row r2">
+          <div class="field"><label>Valor de Calle ($/m2)</label><input id="valorCalle" type="number" step="0.01" oninput="calcTerreno()"></div>
+          <div class="field"><label>Valor de Calle Locales ($/m2)</label><input id="valorCalleLocal" type="number" step="0.01"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;">
+          <label style="color:var(--teal);font-size:12px;text-transform:none;letter-spacing:0;margin:0;">FACTORES DE EFICIENCIA</label>
+          <button class="btn btn-ghost btn-sm no-print" onclick="resetFactors()" style="font-size:10px;">Restablecer tipicos</button>
+        </div>
+        <div class="factor-grid">
+          <div class="factor-item tooltip-wrap"><label>Fzo<br>(Zona)</label><input id="fzo" type="number" step=".01" value="1" oninput="calcTerreno()"><span class="tooltip-text">Factor de zona: ajusta por ubicacion relativa dentro de la zona. Rango: 0.7-1.3</span></div>
+          <div class="factor-item tooltip-wrap"><label>Fub<br>(Ubicacion)</label><input id="fub" type="number" step=".01" value="1" oninput="calcTerreno()"><span class="tooltip-text">Factor de ubicacion: posicion del lote respecto a avenidas, esquinas. Rango: 0.7-1.3</span></div>
+          <div class="factor-item tooltip-wrap"><label>Fesq<br>(Esquina)</label><input id="fesq" type="number" step=".01" value="1" oninput="calcTerreno()"><span class="tooltip-text">Factor de esquina: lotes en esquina valen mas. Rango: 1.0-1.15</span></div>
+          <div class="factor-item tooltip-wrap"><label>FFr<br>(Frente)</label><input id="ffr" type="number" step=".01" value="1" oninput="calcTerreno()"><span class="tooltip-text">Factor de frente: relacion frente/fondo del lote. Rango: 0.8-1.2</span></div>
+          <div class="factor-item tooltip-wrap"><label>FFo<br>(Forma)</label><input id="ffo" type="number" step=".01" value="1" oninput="calcTerreno()"><span class="tooltip-text">Factor de forma: regular=1, irregular reduce valor. Rango: 0.85-1.0</span></div>
+          <div class="factor-item tooltip-wrap"><label>FSup<br>(Superficie)</label><input id="fsup" type="number" step=".001" value="1" oninput="calcTerreno()"><span class="tooltip-text">Factor de superficie: ajusta por tamano vs lote promedio. Rango: 0.8-1.1</span></div>
+          <div class="factor-item tooltip-wrap"><label>Fi<br>(Irregularidad)</label><input id="fi" type="number" step=".01" value="1" oninput="calcTerreno()"><span class="tooltip-text">Factor de irregularidad: formas irregulares reducen aprovechamiento. Rango: 0.85-1.0</span></div>
+          <div class="factor-item tooltip-wrap"><label>Fep<br>(Exc. Profund.)</label><input id="fep" type="number" step=".01" value="1" oninput="calcTerreno()"><span class="tooltip-text">Factor exceso de profundidad: lotes muy profundos pierden valor al fondo. Rango: 0.85-1.0</span></div>
+          <div class="factor-item tooltip-wrap"><label>Fneg<br>(Negociacion)</label><input id="fneg" type="number" step=".01" value="1" oninput="calcTerreno()"><span class="tooltip-text">Factor de negociacion: descuento por tratarse de oferta vs precio cerrado. Rango: 0.85-1.0</span></div>
+          <div class="factor-item tooltip-wrap"><label>Indiviso</label><input id="indiviso" type="number" step=".01" value="1" oninput="calcTerreno()"><span class="tooltip-text">Porcentaje de indiviso si aplica (1 = 100%). Solo para condominios.</span></div>
+        </div>
+        <div id="factor-warnings" style="margin-top:8px;"></div>
+        <div id="factor-suggestions" style="margin-top:4px;"></div>
+
+        <div class="row r3" style="margin-top:16px;">
+          <div><div class="result-bar"><span>Factor Resultante (Fre)</span><span id="fre-display">1.000000</span></div></div>
+          <div><div class="result-bar"><span>Valor Unitario $/m2</span><span id="vu-display">$0.00</span></div></div>
+          <div><div class="result-bar"><span>Superficie (m2)</span><span id="sup-display">0.00</span></div></div>
+        </div>
+
+        <div style="margin-top:12px;" class="val-box teal">
+          <div class="vb-label">SUBTOTAL (A) — VALOR DEL TERRENO</div>
+          <div class="vb-value" id="valorTerreno-display">$0.00</div>
+        </div>
+      </div>
+      <div style="text-align:right;margin-top:8px;" class="no-print">
+        <button class="btn btn-ghost" onclick="showTab(0)">&#8592; Anterior</button>
+        <button class="btn btn-primary" onclick="showTab(2)">Siguiente: Construccion &#8594;</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ======= TAB 3: CONSTRUCCION ======= -->
+<div class="section" id="sec2">
+  <div class="tip"><strong>Ross-Heidecke automatico:</strong> Ingresa edad, estado de conservacion y vida probable. El Factor de Depreciacion (Fed) se calcula automaticamente.</div>
+
+  <div id="bloques-container"></div>
+  <button class="btn btn-outline no-print" onclick="addBloque()" style="margin-bottom:16px;">+ Agregar bloque constructivo</button>
+
+  <!-- Ross-Heidecke Reference -->
+  <div class="collapse-toggle no-print" onclick="toggleCollapse('rh-ref')">
+    <span>&#128200; Tabla de Referencia Ross-Heidecke</span>
+    <span class="arrow">&#9660;</span>
+  </div>
+  <div class="collapse-content" id="rh-ref">
+    <div class="card" style="overflow-x:auto;font-size:10px;">
+      <table class="rh-table" id="rh-reference-table"></table>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:16px;">
+    <h3><span class="icon">&#128202;</span> Resumen de Construccion</h3>
+    <div id="tabla-bloques"></div>
+    <div class="row r3" style="margin-top:12px;">
+      <div class="val-box"><div class="vb-label">Total m2</div><div class="vb-value" id="totalM2-display">0.00</div></div>
+      <div class="val-box"><div class="vb-label">VNR Ponderado $/m2</div><div class="vb-value" id="vnrPond-display">$0.00</div></div>
+      <div class="val-box teal"><div class="vb-label">SUBTOTAL (B) — CONSTRUCCION</div><div class="vb-value" id="valorConstruccion-display">$0.00</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3><span class="icon">&#9889;</span> Instalaciones Especiales (Subtotal C)</h3>
+    <div id="instalaciones-container"></div>
+    <button class="btn btn-outline btn-sm no-print" onclick="addInstalacion()" style="margin-top:8px;">+ Agregar instalacion</button>
+    <div class="val-box teal" style="margin-top:12px;">
+      <div class="vb-label">SUBTOTAL (C) — INSTALACIONES ESPECIALES</div>
+      <div class="vb-value" id="valorInstalaciones-display">$0.00</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3><span class="icon">&#128196;</span> Descripcion General del Inmueble</h3>
+    <div class="row r2">
+      <div class="field"><label>Obra Negra</label><textarea id="descObraNegra" rows="2" placeholder="Muros de tabique rojo, losas de concreto..."></textarea></div>
+      <div class="field"><label>Revestimientos</label><textarea id="descRevestimientos" rows="2" placeholder="Aplanados de mezcla, pintura vinilica..."></textarea></div>
+    </div>
+    <div class="row r2">
+      <div class="field"><label>Carpinteria</label><textarea id="descCarpinteria" rows="2" placeholder="Puertas de madera, closets..."></textarea></div>
+      <div class="field"><label>Instalaciones</label><textarea id="descInstalaciones" rows="2" placeholder="Hidraulica, sanitaria, electrica..."></textarea></div>
+    </div>
+    <div class="field"><label>Fachada</label><textarea id="descFachada" rows="2" placeholder="Aplanado y pintura, herreria..."></textarea></div>
+  </div>
+
+  <div class="val-box big" style="margin-bottom:16px;">
+    <div class="vb-label">VALOR FISICO O DIRECTO TOTAL (A + B + C)</div>
+    <div class="vb-value" id="valorFisico-display">$0.00</div>
+  </div>
+  <div style="text-align:right;" class="no-print">
+    <button class="btn btn-ghost" onclick="showTab(1)">&#8592; Anterior</button>
+    <button class="btn btn-primary" onclick="showTab(3)">Siguiente: Estudio de Mercado &#8594;</button>
+  </div>
+</div>
+
+<!-- ======= TAB 4: ESTUDIO DE MERCADO ======= -->
+<div class="section" id="sec3">
+  <div class="tip"><strong>Homologacion automatica:</strong> Ingresa los datos de cada comparable y los factores. El FRe y valor se calculan al instante.</div>
+
+  <div class="card">
+    <h3><span class="icon">&#127968;</span> Parametros del Inmueble Sujeto</h3>
+    <div class="row r4">
+      <div class="field"><label>Sup. Terreno Sujeto (m2)</label><input id="mktSupTerreno" type="number" oninput="calcMercado()"></div>
+      <div class="field"><label>Sup. Construccion Sujeto (m2)</label><input id="mktSupConst" type="number" oninput="calcMercado()"></div>
+      <div class="field"><label>Lote Tipo (m2)</label><input id="mktLoteTipo" type="number" oninput="calcMercado()"></div>
+      <div class="field"><label>Ano del Analisis</label><input id="mktAno" type="number" value="2026"></div>
+    </div>
+  </div>
+
+  <div id="comparables-container"></div>
+  <button class="btn btn-outline no-print" onclick="addComparable()" style="margin-bottom:16px;">+ Agregar comparable</button>
+
+  <div class="card">
+    <h3><span class="icon">&#128202;</span> Resultado de Homologacion</h3>
+    <div id="tabla-comparables"></div>
+    <hr class="divider">
+    <div class="row r2">
+      <div>
+        <div class="field"><label>Valor m2 Terreno Homologado ($/m2)</label><input id="vm2TerrHom" readonly></div>
+        <div class="field"><label>Valor m2 Construccion Homologado ($/m2)</label><input id="vm2ConstHom" type="number" oninput="calcMercado()"></div>
+        <div class="tip" style="margin-top:8px;">El valor de terreno proviene del analisis. El valor de construccion se ajusta con los factores de abajo.</div>
+        <label style="color:var(--teal);font-size:11px;margin-top:12px;">FACTORES DE CONSTRUCCION HOMOLOGADA</label>
+        <div class="row r4" style="margin-top:6px;">
+          <div class="field"><label>Sist. Constructivo</label><input id="fSistConstr" type="number" step="0.01" value="1" oninput="calcMercado()"></div>
+          <div class="field"><label>Terminados</label><input id="fTerminados" type="number" step="0.01" value="1" oninput="calcMercado()"></div>
+          <div class="field"><label>Proyecto</label><input id="fProyecto" type="number" step="0.01" value="1" oninput="calcMercado()"></div>
+          <div class="field"><label>Edo. Conservacion</label><input id="fEdoConserv" type="number" step="0.01" value="0.9" oninput="calcMercado()"></div>
+        </div>
+        <div class="result-bar"><span>Factor BB (producto)</span><span id="fBB-display">0.9000</span></div>
+      </div>
+      <div>
+        <div class="result-bar"><span>Terreno: <span id="mktST">0</span> m2 x <span id="mktVT">$0</span>/m2</span><span id="mktValTerreno">$0</span></div>
+        <div class="result-bar" style="margin-top:8px;"><span>Construccion: <span id="mktSC">0</span> m2 x <span id="mktVC">$0</span>/m2</span><span id="mktValConst">$0</span></div>
+        <div class="val-box teal" style="margin-top:12px;">
+          <div class="vb-label">VALOR POR COMPARACION DE MERCADO</div>
+          <div class="vb-value" id="valorMercado-display">$0.00</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div style="text-align:right;" class="no-print">
+    <button class="btn btn-ghost" onclick="showTab(2)">&#8592; Anterior</button>
+    <button class="btn btn-primary" onclick="showTab(4)">Siguiente: Capitalizacion &#8594;</button>
+  </div>
+</div>
+
+<!-- ======= TAB 5: CAPITALIZACION DE RENTAS ======= -->
+<div class="section" id="sec4">
+  <div class="row r2">
+    <div>
+      <div class="card">
+        <h3><span class="icon">&#127968;</span> Rentas por Bloque Constructivo</h3>
+        <div class="tip"><strong>Tip:</strong> Ingresa el valor de renta mensual por m2 segun investigacion de mercado.</div>
+        <div id="rentas-container"></div>
+        <div class="result-bar"><span>Renta Bruta Mensual</span><span id="rentaBruta-display">$0.00</span></div>
+        <div class="result-bar" style="margin-top:6px;"><span>Renta Bruta Anual</span><span id="rentaBrutaAnual-display">$0.00</span></div>
+      </div>
+      <div class="card">
+        <h3><span class="icon">&#128200;</span> Deducciones Aplicables</h3>
+        <div class="row r2">
+          <div><div class="row r2">
+            <div class="field"><label>Vacios (%)</label><input id="dedVacios" type="number" step="0.01" value="3" oninput="calcCapitalizacion()"></div>
+            <div class="field"><label>Impuesto Predial (%)</label><input id="dedPredial" type="number" step="0.01" value="2" oninput="calcCapitalizacion()"></div>
+          </div><div class="row r2">
+            <div class="field"><label>Servicio de Agua (%)</label><input id="dedAgua" type="number" step="0.01" value="2.5" oninput="calcCapitalizacion()"></div>
+            <div class="field"><label>Cons. / Mantenimiento (%)</label><input id="dedMant" type="number" step="0.01" value="3" oninput="calcCapitalizacion()"></div>
+          </div></div>
+          <div><div class="row r2">
+            <div class="field"><label>Administracion (%)</label><input id="dedAdmin" type="number" step="0.01" value="1" oninput="calcCapitalizacion()"></div>
+            <div class="field"><label>Energia Electrica (%)</label><input id="dedElec" type="number" step="0.01" value="1" oninput="calcCapitalizacion()"></div>
+          </div><div class="row r2">
+            <div class="field"><label>ISR (%)</label><input id="dedISR" type="number" step="0.01" value="7" oninput="calcCapitalizacion()"></div>
+            <div class="field"><label>Otros (%)</label><input id="dedOtros" type="number" step="0.01" value="1" oninput="calcCapitalizacion()"></div>
+          </div></div>
+        </div>
+        <div class="result-bar"><span>Total Deducciones</span><span id="totalDed-display">20.5%</span></div>
+        <div class="result-bar" style="margin-top:6px;"><span>Renta Neta Mensual</span><span id="rentaNeta-display">$0.00</span></div>
+        <div class="result-bar" style="margin-top:6px;"><span>Renta Neta Anual</span><span id="rentaNetaAnual-display">$0.00</span></div>
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <h3><span class="icon">&#128208;</span> Calculo de Tasa de Capitalizacion</h3>
+        <div class="tip">Selecciona la calificacion de cada criterio haciendo clic. La tasa se calcula automaticamente segun la tabla SHF.</div>
+        <table class="scoring-table" style="margin-bottom:12px;"><thead><tr><th style="text-align:left;">Criterio</th><th>0.07</th><th>0.08</th><th>0.09</th><th>0.10</th><th>0.11</th><th>0.12</th></tr></thead><tbody id="scoring-body"></tbody></table>
+        <div class="result-bar"><span>Tasa de Capitalizacion</span><span style="font-size:20px;color:var(--gold2);" id="tasaCap-display">0.00%</span></div>
+        <div class="tip" style="margin-top:8px;"><strong>Formula:</strong> Valor = Renta Neta Anual / Tasa de Capitalizacion</div>
+        <div class="val-box teal" style="margin-top:12px;">
+          <div class="vb-label">VALOR POR CAPITALIZACION DE RENTAS</div>
+          <div class="vb-value" id="valorRentas-display">$0.00</div>
+        </div>
+      </div>
+      <div style="text-align:right;margin-top:8px;" class="no-print">
+        <button class="btn btn-ghost" onclick="showTab(3)">&#8592; Anterior</button>
+        <button class="btn btn-primary" onclick="showTab(5)">Siguiente: Conclusion &#8594;</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ======= TAB 6: CONCLUSION ======= -->
+<div class="section" id="sec5">
+  <div class="card">
+    <h3><span class="icon">&#128202;</span> Resumen de los Tres Enfoques</h3>
+    <div class="summary-grid">
+      <div class="val-box teal"><div class="vb-label">Enfoque Fisico (A+B+C)</div><div class="vb-value" id="conc-fisico">$0</div></div>
+      <div class="val-box"><div class="vb-label">Cap. de Rentas</div><div class="vb-value" id="conc-rentas">$0</div></div>
+      <div class="val-box green"><div class="vb-label">Comparacion de Mercado</div><div class="vb-value" id="conc-mercado">$0</div></div>
+    </div>
+    <!-- SVG Chart -->
+    <div style="text-align:center;margin:16px 0;">
+      <svg id="enfoques-chart" width="400" height="140" viewBox="0 0 400 140"></svg>
+    </div>
+    <div id="conc-warnings"></div>
+  </div>
+
+  <div class="card">
+    <h3><span class="icon">&#9878;</span> Criterio de Conclusion</h3>
+    <div class="row r2">
+      <div class="field"><label>Enfoque a aplicar como valor comercial</label>
+        <select id="enfoqueAplicar" onchange="calcConclusion()">
+          <option value="fisico">Enfoque Fisico o Directo</option>
+          <option value="rentas">Capitalizacion de Rentas</option>
+          <option value="mercado" selected>Comparacion de Mercado (recomendado)</option>
+          <option value="promedio">Promedio ponderado</option>
+        </select>
+      </div>
+      <div class="field"><label>Redondeo (multiplo de $)</label>
+        <select id="redondeo" onchange="calcConclusion()">
+          <option value="1000">$1,000</option><option value="5000">$5,000</option>
+          <option value="10000" selected>$10,000</option><option value="50000">$50,000</option>
+          <option value="100000">$100,000</option>
+        </select>
+      </div>
+    </div>
+    <div class="field"><label>Justificacion</label>
+      <textarea id="justificacion" rows="3">De acuerdo a las caracteristicas antes descritas, a la investigacion y analisis de la zona en relacion a la oferta y demanda, asi como a los parametros actuales de costos de urbanizacion e infraestructura, al tipo de terreno con relacion a la zona de su ubicacion, y en base a los comparativos de mercado de terrenos en la zona, se considerara como valor comercial el enfoque de Mercado.</textarea>
+    </div>
+  </div>
+
+  <div class="conclusion-box">
+    <div style="font-size:12px;color:var(--dim);letter-spacing:.12em;margin-bottom:10px;">VALOR COMERCIAL DEL INMUEBLE</div>
+    <div class="conclusion-val" id="conc-valorFinal">$0</div>
+    <div class="conclusion-letras" id="conc-letras"></div>
+    <div class="conclusion-date">Calculado al: <span id="conc-fecha"></span></div>
+  </div>
+
+  <div class="card">
+    <h3><span class="icon">&#129309;</span> Rango de Negociacion</h3>
+    <div class="row r4">
+      <div class="val-box"><div class="vb-label">Ideal Vendedor (x1.10)</div><div class="vb-value" id="conc-vendedor">$0</div></div>
+      <div class="val-box teal"><div class="vb-label">Valor Maximo (Comercial)</div><div class="vb-value" id="conc-max">$0</div></div>
+      <div class="val-box"><div class="vb-label">Valor Minimo (x0.85)</div><div class="vb-value" id="conc-min">$0</div></div>
+      <div class="val-box green"><div class="vb-label">Ideal Comprador (x0.80)</div><div class="vb-value" id="conc-comprador">$0</div></div>
+    </div>
+  </div>
+
+  <div class="card no-print">
+    <h3><span class="icon">&#128196;</span> Acciones</h3>
+    <div class="row r3">
+      <button class="btn btn-gold" onclick="window.print()" style="width:100%;justify-content:center;">Imprimir / PDF</button>
+      <button class="btn btn-outline" onclick="exportJSON()" style="width:100%;justify-content:center;">Exportar JSON</button>
+      <button class="btn btn-outline" onclick="copyValues()" style="width:100%;justify-content:center;">Copiar Valores</button>
+    </div>
+  </div>
+</div>
+
+<!-- ======= TAB 7: FOTOS ======= -->
+<div class="section" id="sec6">
+  <div class="card">
+    <h3><span class="icon">&#128247;</span> Galeria Fotografica del Inmueble</h3>
+    <div class="tip"><strong>Tip:</strong> Haz clic en un cuadro para agregar una foto. Las fotos se guardaran localmente y apareceran al imprimir.</div>
+    <div class="photo-grid" id="photo-grid"></div>
+    <input type="file" id="photo-input" accept="image/*" multiple style="display:none;" onchange="handlePhotoUpload(event)">
+  </div>
+</div>
+
+    </div><!-- /wizard-main -->
+
+    <!-- ===== SIDEBAR ===== -->
+    <div class="wizard-sidebar no-print">
+      <div class="sidebar-section">
+        <h4>Completitud</h4>
+        <div class="sidebar-progress"><div class="sp-label"><span>Datos Generales</span><span id="prog-0">0%</span></div><div class="sp-bar"><div class="sp-fill" id="progbar-0" style="width:0%"></div></div></div>
+        <div class="sidebar-progress"><div class="sp-label"><span>Terreno</span><span id="prog-1">0%</span></div><div class="sp-bar"><div class="sp-fill" id="progbar-1" style="width:0%"></div></div></div>
+        <div class="sidebar-progress"><div class="sp-label"><span>Construccion</span><span id="prog-2">0%</span></div><div class="sp-bar"><div class="sp-fill" id="progbar-2" style="width:0%"></div></div></div>
+        <div class="sidebar-progress"><div class="sp-label"><span>Mercado</span><span id="prog-3">0%</span></div><div class="sp-bar"><div class="sp-fill" id="progbar-3" style="width:0%"></div></div></div>
+        <div class="sidebar-progress"><div class="sp-label"><span>Rentas</span><span id="prog-4">0%</span></div><div class="sp-bar"><div class="sp-fill" id="progbar-4" style="width:0%"></div></div></div>
+        <div class="sidebar-progress"><div class="sp-label"><span>Conclusion</span><span id="prog-5">0%</span></div><div class="sp-bar"><div class="sp-fill" id="progbar-5" style="width:0%"></div></div></div>
+      </div>
+      <hr class="divider">
+      <div class="sidebar-section">
+        <h4>Valores en Tiempo Real</h4>
+        <div class="sidebar-val"><span style="color:var(--dim)">Fisico</span><span style="color:var(--teal)" id="sb-fisico">$0</span></div>
+        <div class="sidebar-val"><span style="color:var(--dim)">Mercado</span><span style="color:var(--green)" id="sb-mercado">$0</span></div>
+        <div class="sidebar-val"><span style="color:var(--dim)">Rentas</span><span style="color:var(--gold2)" id="sb-rentas">$0</span></div>
+        <div class="sidebar-chart" id="sidebar-chart-container"></div>
+      </div>
+      <div class="sidebar-commercial">
+        <div class="sc-label">VALOR COMERCIAL</div>
+        <div class="sc-value" id="sb-comercial">$0</div>
+      </div>
+      <div id="sidebar-alerts" style="margin-top:12px;"></div>
+      <hr class="divider">
+      <button class="btn btn-gold btn-sm" onclick="window.print()" style="width:100%;justify-content:center;margin-top:8px;">Imprimir / PDF</button>
+      <button class="btn btn-outline btn-sm" onclick="saveCurrentAvaluo()" style="width:100%;justify-content:center;margin-top:8px;">Guardar Avaluo</button>
+    </div>
+  </div><!-- /wizard-body -->
+
+  <!-- Print Footer -->
+  <div class="print-footer">
+    <p>AVALUO INMOBILIARIO COMERCIAL — Spadiko Avaluos</p>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- JAVASCRIPT                                                    -->
+<!-- ============================================================ -->
+<script>
+// ============================================
+// GLOBALS
+// ============================================
+let currentView = 'landing';
+let currentUser = null;
+let currentAvaluoId = null;
+let bloques = [];
+let comparables = [];
+let instalaciones = [];
+let bloquesData = {};
+let bloqueCount = 0;
+let compCount = 0;
+let instCount = 0;
+let autoSaveTimer = null;
+let lastSaveTime = null;
+let photos = [];
+let photoSlotTarget = null;
+
+const HEIDECKE = {
+  'Nuevo':1,'Muy Bueno':0.9968,'Conservacion Normal':0.9748,'Regular':0.9191,
+  'Reparaciones Sencillas':0.8199,'Reparaciones Importantes':0.668,
+  'Rehabilitacion Completa':0.474,'Ruinoso':0.248,'Ruinoso Inutilizable':0.1
+};
+
+const FACTOR_RANGES = {
+  fzo:[0.7,1.3], fub:[0.7,1.3], fesq:[1.0,1.15], ffr:[0.8,1.2],
+  ffo:[0.85,1.0], fsup:[0.8,1.1], fi:[0.85,1.0], fep:[0.85,1.0], fneg:[0.85,1.0]
+};
+
+const SCORING = [
+  {criterio:'Edad (anos)',opciones:['0-5','5-20','20-40','40-50','50-60','MAS DE 60'],tasas:[0.07,0.08,0.09,0.10,0.11,0.12]},
+  {criterio:'Vida Util Remanente',opciones:['MAS DE 60','50-60','40-50','20-40','5-20','TERMINADA'],tasas:[0.07,0.08,0.09,0.10,0.11,0.12]},
+  {criterio:'Estado de Conserv.',opciones:['NUEVA','MUY BUENO','BUENO','REGULAR','MALO','RUINOSO'],tasas:[0.07,0.08,0.09,0.10,0.11,0.12]},
+  {criterio:'Proyecto',opciones:['MUY BUENO','BUENO','ADECUADO','REGULAR','DEFICIENTE','MALO'],tasas:[0.07,0.08,0.09,0.10,0.11,0.12]},
+  {criterio:'Rel. Sup (Terr/Const)',opciones:['Const>Terr >3:1','Const>Terr 3:1','Const>Terr 2:1','Terr=Const','Terr>Const 2:1','Terr>Const >3:1'],tasas:[0.07,0.08,0.09,0.10,0.11,0.12]},
+  {criterio:'Uso del Inmueble',opciones:['Casa Unifamiliar','Ed. Prod. Hab-Com','Dpto/Casa Condo','Ofna/Local Condo','Ofna/Local Unif.','Bodega/Industria'],tasas:[0.07,0.08,0.09,0.10,0.11,0.12]},
+  {criterio:'Clasif. Zona',opciones:['Lujo','1er Orden','2o. Orden','3er Orden','Prol. Serv.Com.','Prol. Serv/Inc.'],tasas:[0.07,0.08,0.09,0.10,0.11,0.12]},
+];
+let scoringSelections = [1,1,2,1,2,2,2];
+
+// ============================================
+// UTILITIES
+// ============================================
+function fmtMXN(v) { return new Intl.NumberFormat('es-MX',{style:'currency',currency:'MXN',minimumFractionDigits:2}).format(v||0); }
+function fmtMXN0(v) { return new Intl.NumberFormat('es-MX',{style:'currency',currency:'MXN',maximumFractionDigits:0}).format(v||0); }
+function num(id) { return parseFloat(document.getElementById(id)?.value)||0; }
+function setText(id, val) { const el = document.getElementById(id); if(el) el.textContent = val; }
+function setVal(id, val) { const el = document.getElementById(id); if(el) el.value = val; }
+
+function numToWords(n) {
+  n = Math.round(n); if(n===0) return 'CERO';
+  const U=['','UN','DOS','TRES','CUATRO','CINCO','SEIS','SIETE','OCHO','NUEVE','DIEZ','ONCE','DOCE','TRECE','CATORCE','QUINCE','DIECISEIS','DIECISIETE','DIECIOCHO','DIECINUEVE'];
+  const D=['','DIEZ','VEINTE','TREINTA','CUARENTA','CINCUENTA','SESENTA','SETENTA','OCHENTA','NOVENTA'];
+  const C=['','CIENTO','DOSCIENTOS','TRESCIENTOS','CUATROCIENTOS','QUINIENTOS','SEISCIENTOS','SETECIENTOS','OCHOCIENTOS','NOVECIENTOS'];
+  function centenas(n) {
+    if(n===100) return 'CIEN'; if(n===0) return '';
+    let r=C[Math.floor(n/100)]; let resto=n%100;
+    if(resto===0) return r; if(r) r+=' ';
+    if(resto<20) return r+U[resto];
+    let dec=D[Math.floor(resto/10)]; let un=U[resto%10];
+    if(Math.floor(resto/10)===2 && resto%10>0) return r+'VEINTI'+U[resto%10];
+    return r+dec+(un?' Y '+un:'');
+  }
+  let result='';
+  if(n>=1000000){let mill=Math.floor(n/1000000);result+=(mill===1?'UN MILLON':centenas(mill)+' MILLONES')+' ';n%=1000000;}
+  if(n>=1000){let miles=Math.floor(n/1000);result+=(miles===1?'MIL':centenas(miles)+' MIL')+' ';n%=1000;}
+  if(n>0) result+=centenas(n);
+  return result.trim();
+}
+
+function toast(msg, type='success') {
+  const c = document.getElementById('toast-container');
+  const t = document.createElement('div');
+  t.className = 'toast ' + type;
+  t.innerHTML = (type==='success'?'&#10003;':'&#9888;') + ' ' + msg;
+  c.appendChild(t);
+  setTimeout(()=>{ t.style.opacity='0'; t.style.transition='opacity 0.3s'; setTimeout(()=>t.remove(), 300); }, 3000);
+}
+
+function flashElement(id) {
+  const el = document.getElementById(id);
+  if(el) { el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash'); }
+}
+
+// ============================================
+// ROSS-HEIDECKE
+// ============================================
+function calcFed(edad, estado, vidaProbable) {
+  const vp=parseFloat(vidaProbable)||70; const e=parseFloat(edad)||0; const k=HEIDECKE[estado]||1;
+  if(e<=0) return k; if(e>=vp) return 0;
+  return Math.max(0, (1 - (e*(e+vp))/(2*vp*vp)) * k);
+}
+
+// ============================================
+// VIEW MANAGEMENT
+// ============================================
+function showView(view, subView) {
+  ['view-landing','view-auth','view-dashboard','view-wizard'].forEach(v=>{
+    document.getElementById(v).style.display='none';
+  });
+  if(view==='landing') document.getElementById('view-landing').style.display='block';
+  else if(view==='auth') { document.getElementById('view-auth').style.display='flex'; toggleAuth(subView||'login'); }
+  else if(view==='dashboard') { document.getElementById('view-dashboard').style.display='block'; renderDashboard(); }
+  else if(view==='wizard') document.getElementById('view-wizard').style.display='block';
+  currentView = view;
+}
+
+function toggleAuth(mode) {
+  document.getElementById('login-form').style.display = mode==='login'?'block':'none';
+  document.getElementById('register-form').style.display = mode==='register'?'block':'none';
+}
+
+// ============================================
+// AUTH
+// ============================================
+function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const pass = document.getElementById('login-pass').value;
+  if(!email || !pass) { toast('Completa todos los campos','error'); return; }
+  const users = JSON.parse(localStorage.getItem('spadiko_users')||'[]');
+  const user = users.find(u=>u.email===email && u.password===pass);
+  if(!user) { toast('Credenciales incorrectas','error'); return; }
+  currentUser = user;
+  localStorage.setItem('spadiko_current_user', JSON.stringify(user));
+  toast('Bienvenido, ' + user.name);
+  showView('dashboard');
+}
+
+function doRegister() {
+  const name = document.getElementById('reg-name').value.trim();
+  const email = document.getElementById('reg-email').value.trim();
+  const pass = document.getElementById('reg-pass').value;
+  const cedFed = document.getElementById('reg-cedFed').value.trim();
+  const cedEst = document.getElementById('reg-cedEst').value.trim();
+  const especialidad = document.getElementById('reg-especialidad').value.trim();
+  if(!name || !email || !pass) { toast('Nombre, email y contrasena son obligatorios','error'); return; }
+  if(pass.length < 4) { toast('La contrasena debe tener al menos 4 caracteres','error'); return; }
+  const users = JSON.parse(localStorage.getItem('spadiko_users')||'[]');
+  if(users.find(u=>u.email===email)) { toast('Ya existe una cuenta con ese email','error'); return; }
+  const user = { id: Date.now().toString(), name, email, password: pass, cedFed, cedEst, especialidad };
+  users.push(user);
+  localStorage.setItem('spadiko_users', JSON.stringify(users));
+  currentUser = user;
+  localStorage.setItem('spadiko_current_user', JSON.stringify(user));
+  toast('Cuenta creada exitosamente!');
+  showView('dashboard');
+}
+
+function doLogout() {
+  currentUser = null;
+  localStorage.removeItem('spadiko_current_user');
+  showView('landing');
+}
+
+// ============================================
+// DASHBOARD
+// ============================================
+function getAvaluos() {
+  if(!currentUser) return [];
+  return JSON.parse(localStorage.getItem('spadiko_avaluos_'+currentUser.id)||'[]');
+}
+function saveAvaluos(list) {
+  if(!currentUser) return;
+  localStorage.setItem('spadiko_avaluos_'+currentUser.id, JSON.stringify(list));
+}
+
+function renderDashboard() {
+  if(!currentUser) return;
+  document.getElementById('dash-user-name').textContent = currentUser.name;
+  let avaluos = getAvaluos();
+  const search = (document.getElementById('dash-search-input')?.value||'').toLowerCase();
+  const filter = document.getElementById('dash-filter')?.value||'';
+  if(search) avaluos = avaluos.filter(a=>(a.propietario||'').toLowerCase().includes(search)||(a.noAvaluo||'').toLowerCase().includes(search));
+  if(filter) avaluos = avaluos.filter(a=>a.status===filter);
+
+  // Stats
+  const all = getAvaluos();
+  const now = new Date();
+  const thisMonth = all.filter(a=>{ const d=new Date(a.fecha||a.createdAt); return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear(); });
+  const totalVal = all.reduce((s,a)=>s+(a._valorFinal||0),0);
+  const avgVal = all.length>0 ? totalVal/all.length : 0;
+  document.getElementById('stats-grid').innerHTML = `
+    <div class="stat-card"><div class="stat-label">Total Avaluos</div><div class="stat-value" style="color:var(--teal)">${all.length}</div><div class="stat-sub">En tu cuenta</div></div>
+    <div class="stat-card"><div class="stat-label">Valor Promedio</div><div class="stat-value" style="color:var(--gold2)">${fmtMXN0(avgVal)}</div><div class="stat-sub">Por avaluo</div></div>
+    <div class="stat-card"><div class="stat-label">Este Mes</div><div class="stat-value" style="color:var(--green)">${thisMonth.length}</div><div class="stat-sub">Avaluos creados</div></div>
+    <div class="stat-card"><div class="stat-label">Valor Total</div><div class="stat-value" style="color:var(--purple)">${fmtMXN0(totalVal)}</div><div class="stat-sub">Cartera valuada</div></div>
+  `;
+
+  // List
+  const listEl = document.getElementById('avaluo-list');
+  if(avaluos.length === 0) {
+    listEl.innerHTML = `<div class="empty-state"><div class="empty-icon">&#128196;</div><h3>Sin avaluos</h3><p>Crea tu primer avaluo para comenzar.</p></div>`;
+    return;
+  }
+  listEl.innerHTML = avaluos.map((a,i)=>{
+    const statusBadge = a.status==='completado'?'badge-green':a.status==='en_proceso'?'badge-gold':'badge-teal';
+    const statusText = a.status==='completado'?'Completado':a.status==='en_proceso'?'En proceso':'Borrador';
+    return `<div class="avaluo-row" onclick="editAvaluo(${i})">
+      <div class="av-num">${a.noAvaluo||'Sin numero'}</div>
+      <div><div class="av-prop">${a.propietario||'Sin propietario'}</div><div class="av-dir">${a.calleExt||''} ${a.noExt||''}, ${a.colonia||''}, ${a.municipio||''}</div></div>
+      <div class="av-date">${a.fecha||'Sin fecha'}</div>
+      <div><span class="badge ${statusBadge}">${statusText}</span></div>
+      <div class="av-val">${a._valorFinal?fmtMXN0(a._valorFinal):'—'}</div>
+      <div class="av-actions">
+        <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();duplicateAvaluo(${i})" title="Duplicar">&#128203;</button>
+        <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteAvaluo(${i})" title="Eliminar">&#128465;</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function newAvaluo() {
+  currentAvaluoId = null;
+  resetWizard();
+  const today = new Date().toISOString().split('T')[0];
+  setVal('fecha', today);
+  const count = getAvaluos().length + 1;
+  setVal('noAvaluo', 'SPD-' + new Date().getFullYear().toString().slice(2) + '-' + String(count).padStart(3,'0'));
+  syncHeader();
+  showView('wizard');
+  showTab(0);
+  startAutoSave();
+}
+
+function editAvaluo(index) {
+  const avaluos = getAvaluos();
+  const a = avaluos[index];
+  if(!a) return;
+  currentAvaluoId = index;
+  resetWizard();
+  loadAvaluoToForm(a);
+  showView('wizard');
+  showTab(0);
+  startAutoSave();
+}
+
+function duplicateAvaluo(index) {
+  const avaluos = getAvaluos();
+  const a = JSON.parse(JSON.stringify(avaluos[index]));
+  a.noAvaluo = (a.noAvaluo||'') + '-COPIA';
+  a.status = 'borrador';
+  a.createdAt = new Date().toISOString();
+  avaluos.push(a);
+  saveAvaluos(avaluos);
+  toast('Avaluo duplicado');
+  renderDashboard();
+}
+
+function deleteAvaluo(index) {
+  if(!confirm('Eliminar este avaluo? Esta accion no se puede deshacer.')) return;
+  const avaluos = getAvaluos();
+  avaluos.splice(index, 1);
+  saveAvaluos(avaluos);
+  toast('Avaluo eliminado');
+  renderDashboard();
+}
+
+function goToDashboard() {
+  saveCurrentAvaluo();
+  stopAutoSave();
+  showView('dashboard');
+}
+
+// ============================================
+// WIZARD RESET & LOAD
+// ============================================
+function resetWizard() {
+  bloques = []; comparables = []; instalaciones = [];
+  bloquesData = {}; bloqueCount = 0; compCount = 0; instCount = 0;
+  photos = [];
+  scoringSelections = [1,1,2,1,2,2,2];
+  window._valorTerreno=0; window._valorConstruccion=0; window._valorInstalaciones=0;
+  window._valorFisico=0; window._valorMercado=0; window._valorRentas=0; window._valorFinal=0;
+  window._rentaValues={};
+  document.getElementById('bloques-container').innerHTML='';
+  document.getElementById('comparables-container').innerHTML='';
+  document.getElementById('instalaciones-container').innerHTML='';
+  // Clear inputs
+  document.querySelectorAll('#view-wizard input:not([type="checkbox"]):not([type="file"]), #view-wizard textarea').forEach(el=>{
+    if(!el.id.startsWith('ded') && !el.id.startsWith('fSist') && !el.id.startsWith('fTerm') && !el.id.startsWith('fProy') && !el.id.startsWith('fEdoC') && el.id!=='redondeo' && el.id!=='hoja') {
+      if(el.type==='number') el.value=''; else if(el.tagName==='TEXTAREA' && el.id==='justificacion') {} else if(el.type!=='date') el.value='';
+    }
+  });
+  // Reset factor defaults
+  ['fzo','fub','fesq','ffr','ffo','fsup','fi','fep','fneg','indiviso'].forEach(f=>setVal(f,'1'));
+  setVal('fEdoConserv','0.9');
+  buildScoring();
+  buildPhotoGrid();
+  buildRHReference();
+}
+
+function loadAvaluoToForm(a) {
+  // Simple fields
+  const simpleFields = ['noAvaluo','fecha','hoja','propietario','domPropietario','solicitante','repLegal',
+    'calleExt','noExt','calleInt','noInt','colonia','cp','municipio','estado','utmX','utmY','altitud',
+    'claveCatastral','cuentaPredial','usoSuelo','vialidades','indiceSaturacion',
+    'supLevantamiento','supEscrituras','supConst','lotePromedio','cus','cos','servidumbres',
+    'colNorte','colSur','colOriente','colPoniente','escritura',
+    'valorCalle','valorCalleLocal','fzo','fub','fesq','ffr','ffo','fsup','fi','fep','fneg','indiviso',
+    'mktSupTerreno','mktSupConst','mktLoteTipo','mktAno','vm2ConstHom',
+    'fSistConstr','fTerminados','fProyecto','fEdoConserv',
+    'dedVacios','dedPredial','dedAgua','dedMant','dedAdmin','dedElec','dedISR','dedOtros',
+    'descObraNegra','descRevestimientos','descCarpinteria','descInstalaciones','descFachada','justificacion'];
+  simpleFields.forEach(f=>{ if(a[f]!==undefined && a[f]!==null) setVal(f, a[f]); });
+  // Selects
+  ['tipoInmueble','proposito','regimen','clasificacionZona','estratoSocio','topografia','forma','numFreentes','enfoqueAplicar','redondeo'].forEach(f=>{
+    if(a[f]) setVal(f, a[f]);
+  });
+  // Checkboxes
+  ['svcAgua','svcDrenaje','svcElec','svcAlumbrado','svcTelefonia','svcGas'].forEach(f=>{
+    const el = document.getElementById(f); if(el && a[f]!==undefined) el.checked = a[f];
+  });
+  // Bloques
+  if(a.bloques) a.bloques.forEach(b=>addBloque(b));
+  // Comparables
+  if(a.comparables) a.comparables.forEach(c=>addComparable(c));
+  // Instalaciones
+  if(a.instalaciones) a.instalaciones.forEach(inst=>addInstalacion(inst));
+  // Scoring
+  if(a.scoringSelections) scoringSelections = a.scoringSelections;
+  // Photos
+  if(a.photos) photos = a.photos;
+  // Rentas
+  if(a.rentaValues) window._rentaValues = a.rentaValues;
+
+  syncHeader();
+  buildScoring();
+  buildPhotoGrid();
+  calcTerreno();
+  calcInstalaciones();
+
+  // Delayed loads
+  setTimeout(()=>{
+    if(a.rentaValues) {
+      for(const id of bloques) {
+        const el = document.getElementById('renta-'+id);
+        if(el && window._rentaValues[id]) el.value = window._rentaValues[id];
+      }
+    }
+    calcCapitalizacion();
+    calcMercado();
+    calcConclusion();
+    updateSidebar();
+  }, 200);
+}
+
+// ============================================
+// SAVE / LOAD
+// ============================================
+function collectFormData() {
+  const data = {};
+  // Simple fields
+  const simpleFields = ['noAvaluo','fecha','hoja','propietario','domPropietario','solicitante','repLegal',
+    'calleExt','noExt','calleInt','noInt','colonia','cp','municipio','estado','utmX','utmY','altitud',
+    'claveCatastral','cuentaPredial','usoSuelo','vialidades','indiceSaturacion',
+    'supLevantamiento','supEscrituras','supConst','lotePromedio','cus','cos','servidumbres',
+    'colNorte','colSur','colOriente','colPoniente','escritura',
+    'valorCalle','valorCalleLocal','fzo','fub','fesq','ffr','ffo','fsup','fi','fep','fneg','indiviso',
+    'mktSupTerreno','mktSupConst','mktLoteTipo','mktAno','vm2ConstHom',
+    'fSistConstr','fTerminados','fProyecto','fEdoConserv',
+    'dedVacios','dedPredial','dedAgua','dedMant','dedAdmin','dedElec','dedISR','dedOtros',
+    'descObraNegra','descRevestimientos','descCarpinteria','descInstalaciones','descFachada','justificacion'];
+  simpleFields.forEach(f=>{ const el = document.getElementById(f); if(el) data[f] = el.value; });
+  // Selects
+  ['tipoInmueble','proposito','regimen','clasificacionZona','estratoSocio','topografia','forma','numFreentes','enfoqueAplicar','redondeo'].forEach(f=>{
+    const el = document.getElementById(f); if(el) data[f] = el.value;
+  });
+  // Checkboxes
+  ['svcAgua','svcDrenaje','svcElec','svcAlumbrado','svcTelefonia','svcGas'].forEach(f=>{
+    const el = document.getElementById(f); if(el) data[f] = el.checked;
+  });
+  // Bloques
+  data.bloques = bloques.map(id=>({
+    dest: document.getElementById('bDest-'+id)?.value||'',
+    sup: parseFloat(document.getElementById('bSup-'+id)?.value)||0,
+    vrn: parseFloat(document.getElementById('bVRN-'+id)?.value)||0,
+    edad: parseFloat(document.getElementById('bEdad-'+id)?.value)||0,
+    estado: document.getElementById('bEstado-'+id)?.value||'Nuevo',
+    vp: parseFloat(document.getElementById('bVP-'+id)?.value)||70,
+    clase: document.getElementById('bClase-'+id)?.value||'Economica',
+  }));
+  // Comparables
+  data.comparables = comparables.map(id=>({
+    ubic: document.getElementById('cUbic-'+id)?.value||'',
+    fuente: document.getElementById('cFuente-'+id)?.value||'',
+    tipo: document.getElementById('cTipo-'+id)?.value||'',
+    supT: parseFloat(document.getElementById('cSupT-'+id)?.value)||0,
+    supC: parseFloat(document.getElementById('cSupC-'+id)?.value)||0,
+    precio: parseFloat(document.getElementById('cPrecio-'+id)?.value)||0,
+    edad: parseFloat(document.getElementById('cEdad-'+id)?.value)||0,
+    fzo: parseFloat(document.getElementById('cFzo-'+id)?.value)||1,
+    fub: parseFloat(document.getElementById('cFub-'+id)?.value)||1,
+    fsup: parseFloat(document.getElementById('cFsup-'+id)?.value)||1,
+    ftopo: parseFloat(document.getElementById('cFtopo-'+id)?.value)||1,
+    fedad: parseFloat(document.getElementById('cFedad-'+id)?.value)||1,
+    fotro: parseFloat(document.getElementById('cFotro-'+id)?.value)||1,
+    fneg: parseFloat(document.getElementById('cFneg-'+id)?.value)||1,
+  }));
+  // Instalaciones
+  data.instalaciones = instalaciones.map(id=>({
+    desc: document.getElementById('instDesc-'+id)?.value||'',
+    cant: parseFloat(document.getElementById('instCant-'+id)?.value)||0,
+    vrnUnit: parseFloat(document.getElementById('instVRN-'+id)?.value)||0,
+  }));
+  data.scoringSelections = [...scoringSelections];
+  data.rentaValues = window._rentaValues ? {...window._rentaValues} : {};
+  data.photos = photos;
+  data._valorFinal = window._valorFinal||0;
+  data._valorFisico = window._valorFisico||0;
+  data._valorMercado = window._valorMercado||0;
+  data._valorRentas = window._valorRentas||0;
+  data.status = data._valorFinal>0 ? 'completado' : (data.propietario ? 'en_proceso' : 'borrador');
+  if(!data.createdAt) data.createdAt = new Date().toISOString();
+  data.updatedAt = new Date().toISOString();
+  return data;
+}
+
+function saveCurrentAvaluo() {
+  if(!currentUser) return;
+  const data = collectFormData();
+  const avaluos = getAvaluos();
+  if(currentAvaluoId !== null && currentAvaluoId < avaluos.length) {
+    data.createdAt = avaluos[currentAvaluoId].createdAt;
+    avaluos[currentAvaluoId] = data;
+  } else {
+    currentAvaluoId = avaluos.length;
+    avaluos.push(data);
+  }
+  saveAvaluos(avaluos);
+  lastSaveTime = new Date();
+  updateSaveIndicator();
+  toast('Avaluo guardado');
+}
+
+function startAutoSave() {
+  stopAutoSave();
+  autoSaveTimer = setInterval(()=>{
+    if(currentUser && currentView==='wizard') {
+      const data = collectFormData();
+      const avaluos = getAvaluos();
+      if(currentAvaluoId !== null && currentAvaluoId < avaluos.length) {
+        data.createdAt = avaluos[currentAvaluoId].createdAt;
+        avaluos[currentAvaluoId] = data;
+      } else { currentAvaluoId = avaluos.length; avaluos.push(data); }
+      saveAvaluos(avaluos);
+      lastSaveTime = new Date();
+      updateSaveIndicator();
+    }
+  }, 30000);
+}
+function stopAutoSave() { if(autoSaveTimer) { clearInterval(autoSaveTimer); autoSaveTimer=null; } }
+function updateSaveIndicator() {
+  const el = document.getElementById('save-indicator');
+  if(!el || !lastSaveTime) return;
+  const diff = Math.round((new Date()-lastSaveTime)/1000);
+  let text = 'Guardado ahora';
+  if(diff>60) text = 'Guardado hace '+Math.round(diff/60)+' min';
+  else if(diff>5) text = 'Guardado hace '+diff+'s';
+  el.innerHTML = '<div class="save-dot"></div> '+text;
+}
+
+// ============================================
+// TAB NAVIGATION
+// ============================================
+function showTab(n) {
+  document.querySelectorAll('.section').forEach((s,i)=>s.classList.toggle('active',i===n));
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',i===n));
+  if(n===4) updateRentasFromBloques();
+  if(n===5) calcConclusion();
+  updateProgress();
+}
+
+function syncHeader() {
+  const n=document.getElementById('noAvaluo')?.value||'';
+  setText('hdr-num',n);
+  document.getElementById('print-avaluo-num')&&(document.getElementById('print-avaluo-num').textContent='Avaluo No. '+n);
+}
+
+// ============================================
+// TERRENO
+// ============================================
+function calcTerreno() {
+  const fzo=num('fzo'),fub=num('fub'),fesq=num('fesq'),ffr=num('ffr');
+  const ffo=num('ffo'),fsup=num('fsup'),fi=num('fi'),fep=num('fep');
+  const fneg=num('fneg'),indiviso=num('indiviso')||1;
+  const fre=fzo*fub*fesq*ffr*ffo*fsup*fi*fep*fneg*indiviso;
+  const vc=num('valorCalle'), sup=num('supLevantamiento');
+  const vu=vc*fre, vt=sup*vu;
+  setText('fre-display',fre.toFixed(6));
+  setText('vu-display',fmtMXN(vu));
+  setText('sup-display',sup.toFixed(2));
+  setText('valorTerreno-display',fmtMXN(vt));
+  flashElement('valorTerreno-display');
+  window._valorTerreno=vt;
+  validateFactors();
+  calcFisico();
+  updateSidebar();
+}
+
+function resetFactors() {
+  ['fzo','fub','fesq','ffr','ffo','fsup','fi','fep','fneg','indiviso'].forEach(f=>setVal(f,'1'));
+  calcTerreno();
+  toast('Factores restablecidos a valores tipicos');
+}
+
+function validateFactors() {
+  let warns = '';
+  for(const [f, [min,max]] of Object.entries(FACTOR_RANGES)) {
+    const v = num(f);
+    const el = document.getElementById(f);
+    if(v < min || v > max) {
+      warns += `<div class="warn-gold" style="font-size:10px;padding:4px 8px;margin-bottom:2px;">&#9888; ${f.toUpperCase()}: ${v} esta fuera del rango tipico (${min}-${max})</div>`;
+      if(el) el.classList.add('warn-border');
+    } else {
+      if(el) el.classList.remove('warn-border');
+    }
+  }
+  document.getElementById('factor-warnings').innerHTML = warns;
+}
+
+function suggestFactors() {
+  const forma = document.getElementById('forma')?.value;
+  const frentes = parseInt(document.getElementById('numFreentes')?.value)||1;
+  let suggestions = '';
+  if(forma==='Irregular') suggestions += '<div class="tip" style="font-size:10px;padding:6px 10px;margin-bottom:2px;">&#128161; Forma irregular: considera Fi < 1 (ej: 0.95) y FFo < 1</div>';
+  if(frentes >= 2) suggestions += '<div class="tip" style="font-size:10px;padding:6px 10px;margin-bottom:2px;">&#128161; '+frentes+' frentes: considera Fesq > 1 (ej: 1.05-1.10)</div>';
+  document.getElementById('factor-suggestions').innerHTML = suggestions;
+}
+
+// ============================================
+// BLOQUES CONSTRUCTIVOS
+// ============================================
+function addBloque(data) {
+  bloqueCount++;
+  const id = bloqueCount;
+  const tipos = ['I','II','III','IV','V','VI','VII','VIII'];
+  const div = document.createElement('div');
+  div.className='block-card'; div.id='bloque-'+id;
+  div.innerHTML=`
+    <div class="block-header">
+      <div class="block-title">Tipo ${tipos[id-1]||id} — Bloque Constructivo</div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <span class="badge badge-teal" id="fed-badge-${id}">Fed: —</span>
+        <button class="btn btn-danger btn-sm no-print" onclick="removeBloque(${id})">&#10005;</button>
+      </div>
+    </div>
+    <div class="row r3">
+      <div class="field"><label>Destino / Uso</label>
+        <select id="bDest-${id}" onchange="calcBloques()"><option>Zona Casa</option><option>Taller</option><option>Habitaciones</option><option>Local Comercial</option><option>Oficina</option><option>Bodega</option><option>Garage</option><option>Patio</option><option>Otro</option></select>
+      </div>
+      <div class="field"><label>Superficie (m2)</label><input id="bSup-${id}" type="number" value="${data?.sup||''}" step="0.01" oninput="calcBloques()"></div>
+      <div class="field"><label>VRN ($/m2) — Costo nuevo</label><input id="bVRN-${id}" type="number" value="${data?.vrn||''}" oninput="calcBloques()"></div>
+    </div>
+    <div class="row r4">
+      <div class="field"><label>Edad (anos)</label><input id="bEdad-${id}" type="number" value="${data?.edad||''}" oninput="calcBloques()"></div>
+      <div class="field"><label>Estado de Conservacion</label>
+        <select id="bEstado-${id}" onchange="calcBloques()">${Object.keys(HEIDECKE).map(k=>`<option${k===(data?.estado)?' selected':''}>${k}</option>`).join('')}</select>
+      </div>
+      <div class="field"><label>Vida Probable (anos)</label><input id="bVP-${id}" type="number" value="${data?.vp||70}" oninput="calcBloques()"></div>
+      <div class="field"><label>Clase</label>
+        <select id="bClase-${id}"><option>Economica</option><option>Media-Econ.</option><option>Media</option><option>Superior</option><option>Lujo</option></select>
+      </div>
+    </div>
+    <div class="row r3">
+      <div class="result-bar"><span>Fed (Ross-Heidecke)</span><span id="bFed-${id}" style="color:var(--gold2);">—</span></div>
+      <div class="result-bar"><span>VNR $/m2</span><span id="bVNR-${id}">—</span></div>
+      <div class="result-bar"><span>Valor Parcial</span><span id="bValor-${id}" style="color:var(--teal);font-size:15px;">—</span></div>
+    </div>`;
+  document.getElementById('bloques-container').appendChild(div);
+  bloques.push(id);
+  if(data?.dest) { const s=document.getElementById('bDest-'+id); if(s) for(let o of s.options) if(o.text===data.dest){o.selected=true;break;} }
+  if(data?.clase) { const s=document.getElementById('bClase-'+id); if(s) for(let o of s.options) if(o.text===data.clase){o.selected=true;break;} }
+  calcBloques();
+}
+
+function removeBloque(id) {
+  const el=document.getElementById('bloque-'+id); if(el) el.remove();
+  bloques=bloques.filter(x=>x!==id); calcBloques();
+}
+
+function calcBloques() {
+  let totalSup=0,totalValor=0; const rows=[];
+  for(const id of bloques) {
+    const sup=parseFloat(document.getElementById('bSup-'+id)?.value)||0;
+    const vrn=parseFloat(document.getElementById('bVRN-'+id)?.value)||0;
+    const edad=parseFloat(document.getElementById('bEdad-'+id)?.value)||0;
+    const estado=document.getElementById('bEstado-'+id)?.value||'Nuevo';
+    const vp=parseFloat(document.getElementById('bVP-'+id)?.value)||70;
+    const dest=document.getElementById('bDest-'+id)?.value||'';
+    const fed=calcFed(edad,estado,vp);
+    const vnr=vrn*fed; const valor=sup*vnr;
+    totalSup+=sup; totalValor+=valor;
+    setText('bFed-'+id,fed.toFixed(6));
+    setText('bVNR-'+id,fmtMXN(vnr));
+    setText('bValor-'+id,fmtMXN(valor));
+    const badge=document.getElementById('fed-badge-'+id);
+    if(badge) badge.textContent='Fed: '+fed.toFixed(4);
+    rows.push({dest,sup,vrn,fed,vnr,valor});
+    bloquesData[id]={sup,vrn,fed,vnr,valor,dest,estado,edad,vp};
+  }
+  const vnrPond=totalSup>0?totalValor/totalSup:0;
+  setText('totalM2-display',totalSup.toFixed(2));
+  setText('vnrPond-display',fmtMXN(vnrPond));
+  setText('valorConstruccion-display',fmtMXN(totalValor));
+  flashElement('valorConstruccion-display');
+  window._valorConstruccion=totalValor;
+
+  const tipos=['I','II','III','IV','V','VI','VII','VIII'];
+  let html=`<table class="rh-table"><thead><tr><th>Tipo</th><th>Destino</th><th>Sup (m2)</th><th>VRN ($/m2)</th><th>Fed</th><th>VNR ($/m2)</th><th>Valor Parcial</th></tr></thead><tbody>`;
+  rows.forEach((r,i)=>{
+    html+=`<tr><td>Tipo ${tipos[i]||i+1}</td><td>${r.dest}</td><td>${r.sup.toFixed(2)}</td><td>${fmtMXN(r.vrn)}</td><td style="color:var(--gold2)">${r.fed.toFixed(6)}</td><td>${fmtMXN(r.vnr)}</td><td style="color:var(--teal);font-weight:700">${fmtMXN(r.valor)}</td></tr>`;
+  });
+  html+=`<tr style="font-weight:700;border-top:2px solid var(--border)"><td colspan="2">TOTAL</td><td>${totalSup.toFixed(2)}</td><td>-</td><td>-</td><td>${fmtMXN(vnrPond)}</td><td style="color:var(--teal)">${fmtMXN(totalValor)}</td></tr></tbody></table>`;
+  const t=document.getElementById('tabla-bloques'); if(t) t.innerHTML=html;
+  calcFisico();
+  updateSidebar();
+}
+
+// ============================================
+// INSTALACIONES
+// ============================================
+function addInstalacion(data) {
+  instCount++;
+  const id=instCount;
+  const div=document.createElement('div');
+  div.id='inst-'+id;
+  div.innerHTML=`<div class="row r4" style="margin-bottom:6px;align-items:end;">
+    <div class="field"><label>Descripcion</label><input id="instDesc-${id}" value="${data?.desc||''}" placeholder="Cisterna, Bomba..."></div>
+    <div class="field"><label>Cantidad</label><input id="instCant-${id}" type="number" value="${data?.cant||1}" oninput="calcInstalaciones()"></div>
+    <div class="field"><label>VRN Unitario ($)</label><input id="instVRN-${id}" type="number" value="${data?.vrnUnit||''}" oninput="calcInstalaciones()"></div>
+    <div style="display:flex;gap:6px;align-items:center;"><div class="field" style="flex:1;"><label>Valor ($)</label><input id="instVal-${id}" readonly value="$0.00"></div>
+    <button class="btn btn-danger btn-sm no-print" onclick="removeInstalacion(${id})" style="margin-bottom:14px;">&#10005;</button></div>
+  </div>`;
+  document.getElementById('instalaciones-container').appendChild(div);
+  instalaciones.push(id);
+  calcInstalaciones();
+}
+
+function removeInstalacion(id) {
+  const el=document.getElementById('inst-'+id); if(el) el.remove();
+  instalaciones=instalaciones.filter(x=>x!==id); calcInstalaciones();
+}
+
+function calcInstalaciones() {
+  let total=0;
+  for(const id of instalaciones) {
+    const cant=parseFloat(document.getElementById('instCant-'+id)?.value)||0;
+    const vrn=parseFloat(document.getElementById('instVRN-'+id)?.value)||0;
+    const val=cant*vrn; total+=val;
+    const el=document.getElementById('instVal-'+id); if(el) el.value=fmtMXN(val);
+  }
+  setText('valorInstalaciones-display',fmtMXN(total));
+  window._valorInstalaciones=total;
+  calcFisico();
+}
+
+function calcFisico() {
+  const a=window._valorTerreno||0, b=window._valorConstruccion||0, c=window._valorInstalaciones||0;
+  const total=a+b+c;
+  setText('valorFisico-display',fmtMXN(total));
+  flashElement('valorFisico-display');
+  window._valorFisico=total;
+  updateSidebar();
+}
+
+// ============================================
+// COMPARABLES DE MERCADO
+// ============================================
+function addComparable(data) {
+  compCount++;
+  const id=compCount;
+  const div=document.createElement('div');
+  div.className='comparable-card'; div.id='comp-'+id;
+  div.innerHTML=`
+    <div style="display:flex;align-items:center;margin-bottom:14px;">
+      <span class="comp-num">${id}</span>
+      <div style="flex:1;font-weight:700;font-size:12px;">Comparable No. ${id}</div>
+      <button class="btn btn-danger btn-sm no-print" onclick="removeComp(${id})">&#10005;</button>
+    </div>
+    <div class="row r3">
+      <div class="field"><label>Tipo de Inmueble</label>
+        <select id="cTipo-${id}" onchange="calcMercado()"><option>Terreno Urbano</option><option>Finca Urbana</option><option>Local Comercial</option><option>Casa Habitacion</option></select>
+      </div>
+      <div class="field"><label>Ubicacion / Direccion</label><input id="cUbic-${id}" value="${data?.ubic||''}" placeholder="Calle, No., Colonia"></div>
+      <div class="field"><label>Fuente / Telefono</label><input id="cFuente-${id}" value="${data?.fuente||''}" placeholder="Nombre o portal"></div>
+    </div>
+    <div class="row r5">
+      <div class="field"><label>Sup. Terreno (m2)</label><input id="cSupT-${id}" type="number" value="${data?.supT||''}" step="0.01" oninput="calcMercado()"></div>
+      <div class="field"><label>Sup. Const. (m2)</label><input id="cSupC-${id}" type="number" value="${data?.supC||''}" step="0.01" oninput="calcMercado()"></div>
+      <div class="field"><label>Precio Total ($)</label><input id="cPrecio-${id}" type="number" value="${data?.precio||''}" oninput="calcMercado()"></div>
+      <div class="field"><label>Edad (anos)</label><input id="cEdad-${id}" type="number" value="${data?.edad||''}" oninput="calcMercado()"></div>
+      <div class="field"><label>$/m2 calculado</label><input id="cPm2-${id}" readonly value="$0.00"></div>
+    </div>
+    <div style="font-size:10px;color:var(--dim);letter-spacing:.08em;margin:8px 0 6px;">FACTORES DE HOMOLOGACION</div>
+    <div class="row" style="grid-template-columns:repeat(7,1fr);gap:8px;">
+      <div class="factor-item"><label>Fzo<br>Zona</label><input id="cFzo-${id}" type="number" step=".001" value="${data?.fzo||1}" oninput="calcMercado()"></div>
+      <div class="factor-item"><label>Fub<br>Ubic.</label><input id="cFub-${id}" type="number" step=".001" value="${data?.fub||1}" oninput="calcMercado()"></div>
+      <div class="factor-item"><label>Fsup<br>Super.</label><input id="cFsup-${id}" type="number" step=".001" value="${data?.fsup||1}" oninput="calcMercado()"></div>
+      <div class="factor-item"><label>Ftopo<br>Topog.</label><input id="cFtopo-${id}" type="number" step=".001" value="${data?.ftopo||1}" oninput="calcMercado()"></div>
+      <div class="factor-item"><label>Fedad<br>Edad</label><input id="cFedad-${id}" type="number" step=".001" value="${data?.fedad||1}" oninput="calcMercado()"></div>
+      <div class="factor-item"><label>Fotro<br>Otro</label><input id="cFotro-${id}" type="number" step=".001" value="${data?.fotro||1}" oninput="calcMercado()"></div>
+      <div class="factor-item"><label>Fneg<br>Negoc.</label><input id="cFneg-${id}" type="number" step=".001" value="${data?.fneg??0.9}" oninput="calcMercado()"></div>
+    </div>
+    <div class="row r3" style="margin-top:10px;">
+      <div class="result-bar"><span>FRe</span><span id="cFRe-${id}" style="color:var(--gold2);">—</span></div>
+      <div class="result-bar"><span>Valor Unit. Ajustado</span><span id="cVU-${id}">—</span></div>
+      <div class="result-bar"><span style="font-weight:700;">Valor Hom. $/m2</span><span id="cVH-${id}" style="color:var(--teal);font-weight:700;font-size:15px;">—</span></div>
+    </div>`;
+  document.getElementById('comparables-container').appendChild(div);
+  comparables.push(id);
+  if(data?.tipo) { const s=document.getElementById('cTipo-'+id); if(s) for(let o of s.options) if(o.text===data.tipo){o.selected=true;break;} }
+  calcMercado();
+}
+
+function removeComp(id) {
+  const el=document.getElementById('comp-'+id); if(el) el.remove();
+  comparables=comparables.filter(x=>x!==id); calcMercado();
+}
+
+function calcMercado() {
+  let suma=0,count=0; const rows=[];
+  for(const id of comparables) {
+    const supT=parseFloat(document.getElementById('cSupT-'+id)?.value)||0;
+    const supC=parseFloat(document.getElementById('cSupC-'+id)?.value)||0;
+    const precio=parseFloat(document.getElementById('cPrecio-'+id)?.value)||0;
+    const sup=supT||supC||1;
+    const pm2=sup>0?precio/sup:0;
+    const fzo=parseFloat(document.getElementById('cFzo-'+id)?.value)||1;
+    const fub=parseFloat(document.getElementById('cFub-'+id)?.value)||1;
+    const fsup=parseFloat(document.getElementById('cFsup-'+id)?.value)||1;
+    const ftopo=parseFloat(document.getElementById('cFtopo-'+id)?.value)||1;
+    const fedad=parseFloat(document.getElementById('cFedad-'+id)?.value)||1;
+    const fotro=parseFloat(document.getElementById('cFotro-'+id)?.value)||1;
+    const fneg=parseFloat(document.getElementById('cFneg-'+id)?.value)||1;
+    const fre=fzo*fub*fsup*ftopo*fedad*fotro*fneg;
+    const vh=pm2*fre;
+    const pm2El=document.getElementById('cPm2-'+id); if(pm2El) pm2El.value=fmtMXN(pm2);
+    setText('cFRe-'+id,fre.toFixed(6));
+    setText('cVU-'+id,fmtMXN(pm2));
+    setText('cVH-'+id,fmtMXN(vh));
+    if(vh>0){suma+=vh;count++;}
+    rows.push({id,supT,supC,precio,pm2,fre,vh});
+  }
+  const promedio=count>0?suma/count:0;
+  const vm2C=num('vm2ConstHom');
+  const fBB=num('fSistConstr')*num('fTerminados')*num('fProyecto')*num('fEdoConserv');
+  // Use valor de calle from terrain section as terrain $/m2 (Analisis 2)
+  const valorCalleTerreno=num('valorCalle')||promedio;
+  const stSujeto=num('mktSupTerreno'), scSujeto=num('mktSupConst');
+  const vTerr=stSujeto*valorCalleTerreno, vConst=scSujeto*vm2C;
+  const vMercado=vTerr+vConst;
+
+  const el=document.getElementById('vm2TerrHom'); if(el) el.value=Math.round(valorCalleTerreno);
+  setText('fBB-display',fBB.toFixed(4));
+  setText('mktST',stSujeto.toFixed(2));
+  setText('mktSC',scSujeto.toFixed(2));
+  setText('mktVT',fmtMXN(valorCalleTerreno));
+  setText('mktVC',fmtMXN(vm2C));
+  setText('mktValTerreno',fmtMXN(vTerr));
+  setText('mktValConst',fmtMXN(vConst));
+  setText('valorMercado-display',fmtMXN(vMercado));
+  flashElement('valorMercado-display');
+  window._valorMercado=vMercado;
+
+  let html=`<table class="rh-table"><thead><tr><th>#</th><th>Superficie</th><th>Precio</th><th>$/m2</th><th>FRe</th><th>Valor Hom. $/m2</th></tr></thead><tbody>`;
+  rows.forEach(r=>{
+    html+=`<tr><td>${r.id}</td><td>${(r.supT||r.supC).toFixed(2)} m2</td><td>${fmtMXN(r.precio)}</td><td>${fmtMXN(r.pm2)}</td><td style="color:var(--gold2)">${r.fre.toFixed(4)}</td><td style="color:var(--teal);font-weight:700">${fmtMXN(r.vh)}</td></tr>`;
+  });
+  if(count>0) html+=`<tr style="font-weight:700"><td colspan="4">PROMEDIO HOMOLOGADO</td><td>-</td><td style="color:var(--teal)">${fmtMXN(promedio)}</td></tr>`;
+  html+='</tbody></table>';
+  const t=document.getElementById('tabla-comparables'); if(t) t.innerHTML=html;
+  updateSidebar();
+}
+
+// ============================================
+// CAPITALIZACION
+// ============================================
+function buildScoring() {
+  const body=document.getElementById('scoring-body'); if(!body) return;
+  let html='';
+  SCORING.forEach((s,row)=>{
+    html+=`<tr><td style="text-align:left;font-size:11px;color:var(--dim);padding:5px 8px;">${s.criterio}</td>`;
+    s.opciones.forEach((op,col)=>{
+      const sel=scoringSelections[row]===col;
+      html+=`<td class="${sel?'sel':''}" onclick="selectScore(${row},${col})">${op}</td>`;
+    });
+    html+='</tr>';
+  });
+  body.innerHTML=html;
+  calcCapitalizacion();
+}
+function selectScore(row,col) { scoringSelections[row]=col; buildScoring(); }
+
+function updateRentasFromBloques() {
+  const container=document.getElementById('rentas-container'); if(!container) return;
+  let html='';
+  for(const id of bloques) {
+    const dest=document.getElementById('bDest-'+id)?.value||'';
+    const sup=parseFloat(document.getElementById('bSup-'+id)?.value)||0;
+    const existing=window._rentaValues?.[id]||'';
+    html+=`<div class="row r3" style="margin-bottom:8px;align-items:end;">
+      <div class="field"><label>Bloque: ${dest}</label><input readonly value="${sup.toFixed(2)} m2" style="background:var(--panel)"></div>
+      <div class="field"><label>Renta $/m2/mes</label><input id="renta-${id}" type="number" step="0.01" value="${existing}" oninput="calcCapitalizacion()"></div>
+      <div class="result-bar"><span>Renta mensual</span><span id="rentaSub-${id}" style="color:var(--teal)">$0.00</span></div>
+    </div>`;
+  }
+  if(!bloques.length) html='<div style="color:var(--dim);font-size:12px;">Define los bloques constructivos primero (Seccion 3)</div>';
+  container.innerHTML=html;
+  calcCapitalizacion();
+}
+
+function calcCapitalizacion() {
+  if(!window._rentaValues) window._rentaValues={};
+  let rentaBruta=0;
+  for(const id of bloques) {
+    const sup=parseFloat(document.getElementById('bSup-'+id)?.value)||0;
+    const rentaM2=parseFloat(document.getElementById('renta-'+id)?.value)||0;
+    window._rentaValues[id]=rentaM2;
+    const rm=sup*rentaM2; rentaBruta+=rm;
+    setText('rentaSub-'+id,fmtMXN(rm));
+  }
+  const totalDedPct=(num('dedVacios')+num('dedPredial')+num('dedAgua')+num('dedMant')+num('dedAdmin')+num('dedElec')+num('dedISR')+num('dedOtros'))/100;
+  const rentaNeta=rentaBruta*(1-totalDedPct);
+  const rentaNetaAnual=rentaNeta*12;
+  setText('rentaBruta-display',fmtMXN(rentaBruta));
+  setText('rentaBrutaAnual-display',fmtMXN(rentaBruta*12));
+  setText('totalDed-display',(totalDedPct*100).toFixed(1)+'%');
+  setText('rentaNeta-display',fmtMXN(rentaNeta));
+  setText('rentaNetaAnual-display',fmtMXN(rentaNetaAnual));
+
+  let tasaRaw=0;
+  SCORING.forEach((s,row)=>{
+    const col=scoringSelections[row];
+    tasaRaw+=s.tasas[col]*(1+col/7);
+  });
+  const tasa=tasaRaw/SCORING.length;
+  setText('tasaCap-display',(tasa*100).toFixed(2)+'%');
+  const valorRentas=tasa>0?rentaNetaAnual/tasa:0;
+  setText('valorRentas-display',fmtMXN(valorRentas));
+  flashElement('valorRentas-display');
+  window._valorRentas=valorRentas;
+  window._tasa=tasa;
+  updateSidebar();
+}
+
+// ============================================
+// CONCLUSION
+// ============================================
+function calcConclusion() {
+  const fisico=window._valorFisico||0, rentas=window._valorRentas||0, mercado=window._valorMercado||0;
+  setText('conc-fisico',fmtMXN0(Math.round(fisico)));
+  setText('conc-rentas',fmtMXN0(Math.round(rentas)));
+  setText('conc-mercado',fmtMXN0(Math.round(mercado)));
+
+  const enfoque=document.getElementById('enfoqueAplicar')?.value||'mercado';
+  let valorBase=mercado;
+  if(enfoque==='fisico') valorBase=fisico;
+  else if(enfoque==='rentas') valorBase=rentas;
+  else if(enfoque==='promedio') valorBase=(fisico+rentas+mercado)/3;
+
+  const redondeo=parseInt(document.getElementById('redondeo')?.value)||10000;
+  const valorFinal=Math.round(valorBase/redondeo)*redondeo;
+  setText('conc-valorFinal',fmtMXN0(valorFinal));
+  const letras=numToWords(valorFinal)+' PESOS 00/100 M.N.';
+  setText('conc-letras','('+letras+')');
+
+  const fecha=document.getElementById('fecha')?.value;
+  if(fecha) { const d=new Date(fecha+'T12:00'); setText('conc-fecha',d.toLocaleDateString('es-MX',{day:'2-digit',month:'long',year:'numeric'})); }
+
+  setText('conc-max',fmtMXN0(valorFinal));
+  setText('conc-vendedor',fmtMXN0(Math.round(valorFinal*1.1/redondeo)*redondeo));
+  setText('conc-min',fmtMXN0(Math.round(valorFinal*0.85/redondeo)*redondeo));
+  setText('conc-comprador',fmtMXN0(Math.round(valorFinal*0.80/redondeo)*redondeo));
+  window._valorFinal=valorFinal;
+
+  // SVG Chart
+  drawEnfoquesChart(fisico, mercado, rentas);
+
+  // Warnings
+  let warns='';
+  if(fisico>0 && mercado>0) {
+    const diff=Math.abs(mercado-fisico)/fisico;
+    if(diff>0.3) warns+='<div class="warn" style="margin-bottom:4px;">&#9888; El valor de mercado difiere mas del 30% del fisico ('+Math.round(diff*100)+'%). Revisar factores.</div>';
+  }
+  document.getElementById('conc-warnings').innerHTML=warns;
+  updateSidebar();
+}
+
+function drawEnfoquesChart(fisico, mercado, rentas) {
+  const svg=document.getElementById('enfoques-chart'); if(!svg) return;
+  const maxVal=Math.max(fisico,mercado,rentas,1);
+  const barW=80, gap=40, baseX=60, baseY=120, maxH=100;
+  const hF=(fisico/maxVal)*maxH, hM=(mercado/maxVal)*maxH, hR=(rentas/maxVal)*maxH;
+  svg.innerHTML=`
+    <rect x="${baseX}" y="${baseY-hF}" width="${barW}" height="${hF}" rx="4" fill="rgba(45,212,191,0.6)"/>
+    <text x="${baseX+barW/2}" y="${baseY+16}" text-anchor="middle" fill="#7A93AB" font-size="10" font-family="Outfit">Fisico</text>
+    <text x="${baseX+barW/2}" y="${baseY-hF-6}" text-anchor="middle" fill="#2DD4BF" font-size="11" font-family="JetBrains Mono" font-weight="700">${fmtMXN0(fisico)}</text>
+    <rect x="${baseX+barW+gap}" y="${baseY-hM}" width="${barW}" height="${hM}" rx="4" fill="rgba(76,175,125,0.6)"/>
+    <text x="${baseX+barW+gap+barW/2}" y="${baseY+16}" text-anchor="middle" fill="#7A93AB" font-size="10" font-family="Outfit">Mercado</text>
+    <text x="${baseX+barW+gap+barW/2}" y="${baseY-hM-6}" text-anchor="middle" fill="#4CAF7D" font-size="11" font-family="JetBrains Mono" font-weight="700">${fmtMXN0(mercado)}</text>
+    <rect x="${baseX+2*(barW+gap)}" y="${baseY-hR}" width="${barW}" height="${hR}" rx="4" fill="rgba(200,146,42,0.6)"/>
+    <text x="${baseX+2*(barW+gap)+barW/2}" y="${baseY+16}" text-anchor="middle" fill="#7A93AB" font-size="10" font-family="Outfit">Rentas</text>
+    <text x="${baseX+2*(barW+gap)+barW/2}" y="${baseY-hR-6}" text-anchor="middle" fill="#E5B84A" font-size="11" font-family="JetBrains Mono" font-weight="700">${fmtMXN0(rentas)}</text>
+    <line x1="${baseX-10}" y1="${baseY}" x2="${baseX+3*(barW+gap)-gap+10}" y2="${baseY}" stroke="#3A5068" stroke-width="1"/>
+  `;
+}
+
+// ============================================
+// SIDEBAR
+// ============================================
+function updateSidebar() {
+  setText('sb-fisico',fmtMXN0(window._valorFisico||0));
+  setText('sb-mercado',fmtMXN0(window._valorMercado||0));
+  setText('sb-rentas',fmtMXN0(window._valorRentas||0));
+  setText('sb-comercial',fmtMXN0(window._valorFinal||0));
+
+  // Mini chart
+  const f=window._valorFisico||0, m=window._valorMercado||0, r=window._valorRentas||0;
+  const max=Math.max(f,m,r,1);
+  const c=document.getElementById('sidebar-chart-container');
+  if(c) {
+    c.innerHTML=`<svg width="260" height="50" viewBox="0 0 260 50">
+      <rect x="0" y="5" width="${(f/max)*250}" height="12" rx="3" fill="rgba(45,212,191,0.5)"/>
+      <rect x="0" y="22" width="${(m/max)*250}" height="12" rx="3" fill="rgba(76,175,125,0.5)"/>
+      <rect x="0" y="39" width="${(r/max)*250}" height="12" rx="3" fill="rgba(200,146,42,0.5)"/>
+    </svg>`;
+  }
+
+  // Alerts
+  let alerts='';
+  if(f>0 && m>0 && Math.abs(m-f)/f>0.3) alerts+='<div class="sidebar-alert">Mercado difiere >30% del fisico</div>';
+  if(window._tasa && (window._tasa<0.07||window._tasa>0.12)) alerts+='<div class="sidebar-alert gold">Tasa fuera de rango tipico (7-12%)</div>';
+  const alertsEl=document.getElementById('sidebar-alerts'); if(alertsEl) alertsEl.innerHTML=alerts;
+
+  updateProgress();
+}
+
+function updateProgress() {
+  // Simple progress calc based on filled fields
+  const checks = [
+    ['prog-0','progbar-0',['noAvaluo','fecha','propietario','calleExt','municipio','estado']],
+    ['prog-1','progbar-1',['supLevantamiento','valorCalle']],
+    ['prog-2','progbar-2',[()=>bloques.length>0]],
+    ['prog-3','progbar-3',[()=>comparables.length>0]],
+    ['prog-4','progbar-4',[()=>window._valorRentas>0]],
+    ['prog-5','progbar-5',[()=>window._valorFinal>0]],
+  ];
+  checks.forEach(([labelId,barId,fields])=>{
+    let filled=0,total=fields.length;
+    fields.forEach(f=>{
+      if(typeof f==='function') { if(f()) filled++; }
+      else { const el=document.getElementById(f); if(el&&el.value&&el.value!=='0') filled++; }
+    });
+    const pct=total>0?Math.round(filled/total*100):0;
+    setText(labelId,pct+'%');
+    const bar=document.getElementById(barId); if(bar) bar.style.width=pct+'%';
+  });
+}
+
+// ============================================
+// PHOTOS
+// ============================================
+function buildPhotoGrid() {
+  const grid=document.getElementById('photo-grid'); if(!grid) return;
+  let html='';
+  for(let i=0;i<12;i++) {
+    if(photos[i]) {
+      html+=`<div class="photo-slot" onclick="removePhoto(${i})">
+        <img src="${photos[i].src}" alt="Foto ${i+1}">
+        <div class="photo-overlay"><button class="btn btn-danger btn-sm">Eliminar</button></div>
+      </div>`;
+    } else {
+      html+=`<div class="photo-slot" onclick="triggerPhotoUpload(${i})">
+        <div class="photo-add-icon">+</div>
+        <div class="photo-add-text">Agregar foto</div>
+      </div>`;
+    }
+  }
+  grid.innerHTML=html;
+}
+
+function triggerPhotoUpload(slot) {
+  photoSlotTarget=slot;
+  document.getElementById('photo-input').click();
+}
+
+function handlePhotoUpload(event) {
+  const files=event.target.files;
+  if(!files.length) return;
+  for(const file of files) {
+    const reader=new FileReader();
+    reader.onload=function(e) {
+      const slot=photoSlotTarget!==null?photoSlotTarget:photos.length;
+      photos[slot]={src:e.target.result,caption:''};
+      photoSlotTarget=null;
+      buildPhotoGrid();
+    };
+    reader.readAsDataURL(file);
+  }
+  event.target.value='';
+}
+
+function removePhoto(index) {
+  photos.splice(index,1);
+  buildPhotoGrid();
+}
+
+// ============================================
+// ROSS-HEIDECKE REFERENCE TABLE
+// ============================================
+function buildRHReference() {
+  const table=document.getElementById('rh-reference-table'); if(!table) return;
+  const estados=Object.keys(HEIDECKE);
+  let html='<thead><tr><th>Edad</th>';
+  estados.forEach(e=>html+='<th style="font-size:8px;">'+e+'</th>');
+  html+='</tr></thead><tbody>';
+  [0,5,10,15,17,20,25,30,35,40,45,50,55,60,65,70].forEach(edad=>{
+    html+='<tr><td style="font-weight:700;">'+edad+'</td>';
+    estados.forEach(est=>{
+      const fed=calcFed(edad,est,70);
+      html+=`<td style="color:${fed>0.8?'var(--green)':fed>0.5?'var(--gold2)':'var(--red)'}">${fed.toFixed(4)}</td>`;
+    });
+    html+='</tr>';
+  });
+  html+='</tbody>';
+  table.innerHTML=html;
+}
+
+// ============================================
+// COLLAPSIBLE
+// ============================================
+function toggleCollapse(id) {
+  const el=document.getElementById(id); if(!el) return;
+  el.classList.toggle('open');
+  el.previousElementSibling?.classList.toggle('open');
+}
+
+// ============================================
+// EXPORT
+// ============================================
+function exportJSON() {
+  const data=collectFormData();
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='avaluo-'+(data.noAvaluo||'export')+'.json'; a.click();
+  toast('JSON exportado');
+}
+
+function copyValues() {
+  const txt=`AVALUO: ${document.getElementById('noAvaluo')?.value||''}
+Propietario: ${document.getElementById('propietario')?.value||''}
+Direccion: ${document.getElementById('calleExt')?.value||''} ${document.getElementById('noExt')?.value||''}, ${document.getElementById('colonia')?.value||''}, ${document.getElementById('municipio')?.value||''}
+---
+Valor Fisico: ${window._valorFisico?fmtMXN(window._valorFisico):'N/D'}
+Valor Mercado: ${window._valorMercado?fmtMXN(window._valorMercado):'N/D'}
+Valor Rentas: ${window._valorRentas?fmtMXN(window._valorRentas):'N/D'}
+VALOR COMERCIAL: ${window._valorFinal?fmtMXN0(window._valorFinal):'N/D'}`;
+  navigator.clipboard.writeText(txt).then(()=>toast('Valores copiados al portapapeles'));
+}
+
+// ============================================
+// KEYBOARD SHORTCUTS
+// ============================================
+document.addEventListener('keydown', function(e) {
+  if(currentView!=='wizard') return;
+  if((e.ctrlKey||e.metaKey) && e.key==='s') { e.preventDefault(); saveCurrentAvaluo(); }
+  if((e.ctrlKey||e.metaKey) && e.key==='p') { e.preventDefault(); window.print(); }
+  if((e.ctrlKey||e.metaKey) && e.key>='1' && e.key<='7') { e.preventDefault(); showTab(parseInt(e.key)-1); }
+});
+
+// ============================================
+// INIT
+// ============================================
+function init() {
+  // Check for existing session
+  const savedUser = localStorage.getItem('spadiko_current_user');
+  if(savedUser) {
+    currentUser = JSON.parse(savedUser);
+    showView('dashboard');
+  }
+  buildRHReference();
+  buildPhotoGrid();
+
+  // Update save indicator periodically
+  setInterval(updateSaveIndicator, 10000);
+}
+
+window.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
