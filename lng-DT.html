@@ -1,0 +1,3109 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Digital Twin | Planta LNG Regasificacion</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ===================================================
+   CSS RESET & ROOT VARIABLES
+   =================================================== */
+:root {
+  --bg:#060D18;--s1:#0A1420;--s2:#111D2B;--s3:#182838;
+  --or:#FF5500;--or-dim:rgba(255,85,0,.15);
+  --cy:#00C8F0;--cy-dim:rgba(0,200,240,.12);
+  --gr:#10D858;--gr-dim:rgba(16,216,88,.12);
+  --re:#E02020;--re-dim:rgba(224,32,32,.15);
+  --ye:#F0A000;--ye-dim:rgba(240,160,0,.12);
+  --t0:#E8F4FF;--t1:#7AAAC8;--t2:#3A607A;
+  --border:rgba(255,255,255,.06);--border2:rgba(255,255,255,.1);--border3:rgba(255,255,255,.15);
+  --radius:8px;--radius-sm:5px;
+  --shadow:0 2px 12px rgba(0,0,0,.4);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--t0);font-family:'Space Grotesk',sans-serif}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+/* ===================================================
+   KEYFRAME ANIMATIONS
+   =================================================== */
+@keyframes pd{0%,100%{opacity:1}50%{opacity:.4}}
+@keyframes pulse-ring{0%{transform:scale(1);opacity:.6}100%{transform:scale(2.8);opacity:0}}
+@keyframes slide-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes glow{0%,100%{filter:brightness(1)}50%{filter:brightness(1.3)}}
+@keyframes fade-alert{0%{opacity:0;transform:translateX(10px)}100%{opacity:1;transform:translateX(0)}}
+@keyframes frost-pulse{0%,100%{opacity:.3}50%{opacity:.7}}
+@keyframes vapor-rise{0%{opacity:0;transform:translateY(0)}30%{opacity:.6}100%{opacity:0;transform:translateY(-40px)}}
+@keyframes bar-fill{from{width:0}to{width:var(--w)}}
+
+/* ===================================================
+   HEADER (52px)
+   =================================================== */
+#header{
+  height:52px;background:var(--s1);border-bottom:1px solid var(--border2);
+  display:flex;align-items:center;padding:0 20px;gap:14px;flex-shrink:0;position:relative;z-index:100;
+}
+.h-logo{
+  width:32px;height:32px;background:var(--or);border-radius:6px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;font-weight:900;color:#fff;letter-spacing:-0.5px;flex-shrink:0;
+}
+.h-sep{width:1px;height:24px;background:var(--border2)}
+.h-plant{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--t1)}
+.h-plant b{color:var(--t0);font-weight:600}
+.h-status{display:flex;align-items:center;gap:6px;margin-left:auto}
+.h-dot{width:7px;height:7px;border-radius:50%;background:var(--gr);box-shadow:0 0 8px var(--gr);animation:pd 2s infinite}
+.h-status-txt{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--gr)}
+.h-time{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--t2)}
+.demo-badge{background:var(--re);color:#fff;font-size:9px;font-weight:700;letter-spacing:.12em;padding:2px 8px;border-radius:2px;font-family:'IBM Plex Mono',monospace}
+.h-back{
+  background:var(--s2);border:1px solid var(--border2);border-radius:6px;
+  padding:6px 14px;color:var(--t1);cursor:pointer;font-size:12px;
+  font-family:'Space Grotesk',sans-serif;font-weight:500;text-decoration:none;
+  transition:all .2s;display:flex;align-items:center;gap:6px;
+}
+.h-back:hover{background:var(--s3);color:var(--or);border-color:var(--or)}
+.h-alert-btn{
+  background:var(--s2);border:1px solid var(--border2);border-radius:6px;
+  padding:6px 12px;color:var(--t1);cursor:pointer;font-size:13px;
+  display:flex;align-items:center;gap:6px;transition:all .2s;
+}
+.h-alert-btn:hover{background:var(--s3);color:var(--or);border-color:var(--or)}
+.h-alert-cnt{background:var(--re);color:#fff;font-size:9px;font-weight:700;padding:1px 5px;border-radius:8px;font-family:'IBM Plex Mono',monospace}
+
+/* ===================================================
+   MAIN LAYOUT
+   =================================================== */
+#app{display:flex;height:calc(100vh - 52px);overflow:hidden}
+
+/* ===================================================
+   LEFT SIDEBAR (280px)
+   =================================================== */
+#sidebar-left{
+  width:280px;flex-shrink:0;background:var(--s1);
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;overflow:hidden;
+}
+.sl-tabs{display:flex;border-bottom:1px solid var(--border);flex-shrink:0}
+.sl-tab{
+  flex:1;padding:10px 6px;text-align:center;font-size:9px;font-weight:600;
+  letter-spacing:.08em;color:var(--t2);cursor:pointer;
+  border-bottom:2px solid transparent;transition:all .2s;
+  text-transform:uppercase;font-family:'IBM Plex Mono',monospace;
+}
+.sl-tab:hover{color:var(--t1)}
+.sl-tab.active{color:var(--or);border-bottom-color:var(--or)}
+.sl-panel{flex:1;overflow-y:auto;display:none}
+.sl-panel.active{display:block}
+
+.sl-section{padding:14px 16px 8px;border-bottom:1px solid var(--border)}
+.sl-label{
+  font-size:10px;font-weight:600;letter-spacing:.15em;color:var(--t2);
+  text-transform:uppercase;margin-bottom:10px;font-family:'IBM Plex Mono',monospace;
+}
+
+.kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:14px 16px}
+.kpi-card{background:var(--s2);border-radius:8px;padding:10px;border:1px solid var(--border)}
+.kpi-val{font-size:20px;font-weight:700;color:var(--or);line-height:1}
+.kpi-val.cy{color:var(--cy)}.kpi-val.gr{color:var(--gr)}.kpi-val.re{color:var(--re)}.kpi-val.ye{color:var(--ye)}
+.kpi-unit{font-family:'IBM Plex Mono',monospace;font-size:8px;color:var(--t2);margin-left:2px}
+.kpi-lbl{font-size:10px;color:var(--t1);margin-top:3px}
+
+/* Tank gauge visual */
+.tank-gauge{display:flex;align-items:flex-end;gap:12px;padding:10px 16px}
+.tg-bar{width:40px;height:100px;background:var(--s2);border-radius:4px;border:1px solid var(--border);position:relative;overflow:hidden}
+.tg-fill{position:absolute;bottom:0;left:0;right:0;border-radius:0 0 3px 3px;transition:height 1s}
+.tg-fill.t1{background:linear-gradient(to top,var(--cy),rgba(0,200,240,.4))}
+.tg-fill.t2{background:linear-gradient(to top,var(--or),rgba(255,85,0,.4))}
+.tg-info{font-size:11px;color:var(--t1)}
+.tg-info .tgv{font-size:18px;font-weight:700;display:block}
+.tg-info .tgv.cy{color:var(--cy)}.tg-info .tgv.or{color:var(--or)}
+.tg-info .tgl{font-size:9px;color:var(--t2);margin-top:2px;display:block}
+
+.asset-list{padding:8px 16px;overflow-y:auto;flex:1}
+.asset-item{
+  display:flex;align-items:center;gap:10px;padding:8px 10px;
+  border-radius:6px;cursor:pointer;transition:all .2s;margin-bottom:2px;
+  border:1px solid transparent;
+}
+.asset-item:hover{background:var(--s2)}
+.asset-item.active{background:var(--or-dim);border-color:rgba(255,85,0,.3)}
+.ai-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.ai-dot.ok{background:var(--gr);box-shadow:0 0 6px var(--gr)}
+.ai-dot.warn{background:var(--ye);box-shadow:0 0 6px var(--ye);animation:pd 1.5s infinite}
+.ai-dot.crit{background:var(--re);box-shadow:0 0 6px var(--re);animation:pd .8s infinite}
+.ai-name{font-size:12px;font-weight:600;color:var(--t0)}
+.ai-sub{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--t2)}
+
+/* ===================================================
+   CENTER
+   =================================================== */
+#center{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--bg);position:relative}
+#canvas-container{flex:1;position:relative;overflow:hidden}
+#canvas-container canvas{width:100%!important;height:100%!important;display:block}
+
+/* 3D overlay controls */
+.overlay-3d{position:absolute;top:10px;left:10px;display:flex;flex-direction:column;gap:4px;z-index:10}
+.sys-toggle{
+  display:flex;align-items:center;gap:6px;padding:5px 10px;
+  background:rgba(10,20,32,.92);border:1px solid var(--border2);border-radius:5px;
+  cursor:pointer;transition:all .2s;font-size:10px;font-weight:600;
+  color:var(--t1);backdrop-filter:blur(8px);font-family:'IBM Plex Mono',monospace;
+}
+.sys-toggle:hover{border-color:var(--or);color:var(--t0)}
+.sys-toggle.active{border-color:var(--or);color:var(--or);background:rgba(255,85,0,.08)}
+.sys-toggle .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+
+/* ===================================================
+   RIGHT PANEL (Equipment Detail) - RICH
+   =================================================== */
+#equip-panel{
+  position:absolute;top:12px;right:12px;width:360px;
+  background:rgba(10,20,32,.97);border:1px solid var(--border2);
+  border-radius:10px;padding:0;display:none;overflow-y:auto;
+  max-height:calc(100% - 24px);backdrop-filter:blur(12px);z-index:10;
+}
+.ep-header{padding:16px 16px 10px;border-bottom:1px solid var(--border)}
+.ep-close{position:absolute;top:8px;right:12px;cursor:pointer;color:var(--t2);font-size:16px;background:none;border:none}
+.ep-close:hover{color:var(--t0)}
+.ep-tag{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--or);margin-bottom:2px}
+.ep-name{font-size:18px;font-weight:700;margin-bottom:4px}
+.ep-sap-tag{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--t2);margin-bottom:4px}
+.ep-conf{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:9px;padding:2px 6px;border-radius:3px}
+.ep-conf.alta{background:var(--re-dim);color:var(--re)}
+.ep-conf.media{background:var(--ye-dim);color:var(--ye)}
+.ep-conf.baja{background:var(--gr-dim);color:var(--gr)}
+.ep-body{padding:12px 16px}
+.ep-section{
+  font-size:10px;font-weight:600;letter-spacing:.1em;color:var(--t2);
+  text-transform:uppercase;margin:12px 0 6px;border-bottom:1px solid var(--border);
+  padding-bottom:4px;font-family:'IBM Plex Mono',monospace;
+}
+.ep-row{display:flex;justify-content:space-between;font-size:12px;padding:3px 0}
+.ep-row .k{color:var(--t1)}.ep-row .v{color:var(--t0);font-family:'IBM Plex Mono',monospace;font-size:11px}
+.ep-sensor{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:4px 8px;background:var(--s2);border-radius:4px;margin-bottom:3px;font-size:11px;
+}
+.ep-sensor .sn{color:var(--t1);flex:1}.ep-sensor .sv{font-family:'IBM Plex Mono',monospace;font-weight:600;width:80px;text-align:right}
+.ep-sensor .sv.ok{color:var(--gr)}.ep-sensor .sv.warn{color:var(--ye)}.ep-sensor .sv.crit{color:var(--re)}.ep-sensor .sv.cy{color:var(--cy)}
+.ep-sensor .mini-bar{width:40px;height:8px;background:var(--s3);border-radius:4px;overflow:hidden;margin-left:6px}
+.ep-sensor .mini-bar-fill{height:100%;border-radius:4px;background:var(--gr);transition:width .5s}
+.ep-trend-canvas{width:100%;height:100px;background:var(--s2);border-radius:6px;border:1px solid var(--border);margin:6px 0}
+.ep-qr{width:80px;height:80px;background:var(--s2);border-radius:6px;border:1px solid var(--border);margin:6px 0}
+.qr-container{display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px;background:rgba(10,20,32,.6);border-radius:6px;border:1px solid rgba(255,255,255,.06)}
+.qr-label{font-family:'IBM Plex Mono',monospace;font-size:9px;color:rgba(255,255,255,.4)}
+.ep-doc-item{display:flex;align-items:center;gap:6px;padding:4px 8px;font-size:10px;color:var(--t1);background:var(--s2);border-radius:4px;margin-bottom:3px;cursor:pointer;border:1px solid var(--border)}
+.ep-doc-item:hover{border-color:var(--or);color:var(--or)}
+.ep-wo-item{padding:6px 8px;background:var(--s2);border-radius:4px;margin-bottom:3px;font-size:10px;border:1px solid var(--border);cursor:pointer}
+.ep-wo-item:hover{border-color:var(--or)}
+.ep-wo-item .wo-id{font-family:'IBM Plex Mono',monospace;color:var(--or);font-weight:700}
+.ep-wo-item .wo-desc{color:var(--t1);margin-top:2px}
+.ep-wo-item .wo-status{font-family:'IBM Plex Mono',monospace;font-size:8px;padding:1px 4px;border-radius:2px;display:inline-block;margin-top:2px}
+.ep-btn-group{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.ep-btn{
+  flex:1;min-width:80px;padding:8px;border-radius:6px;border:1px solid var(--or);
+  background:transparent;color:var(--or);font-size:10px;font-weight:600;
+  cursor:pointer;transition:all .2s;text-align:center;
+}
+.ep-btn:hover{background:var(--or);color:#fff}
+.ep-btn.primary{background:var(--or);color:#fff}
+.ep-btn.primary:hover{background:#e64d00}
+
+/* ===================================================
+   MONITOR VIEW (Dash)
+   =================================================== */
+.dash-view{overflow-y:auto;padding:20px;flex:1}
+.dash-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.dash-title{font-size:20px;font-weight:700}.dash-sub{font-size:11px;color:var(--t1)}
+.dash-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-bottom:16px}
+.dk-card{background:var(--s1);border-radius:8px;padding:14px;border:1px solid var(--border)}
+.dk-val{font-size:26px;font-weight:700}.dk-val.ok{color:var(--gr)}.dk-val.warn{color:var(--ye)}.dk-val.crit{color:var(--re)}.dk-val.info{color:var(--cy)}.dk-val.or{color:var(--or)}
+.dk-lbl{font-size:11px;color:var(--t1);margin-top:3px}.dk-sub{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--t2);margin-top:2px}
+.dash-section{font-size:13px;font-weight:700;color:var(--t1);letter-spacing:.05em;margin:16px 0 8px}
+.dash-grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.dash-grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.dash-card{background:var(--s1);border-radius:8px;padding:14px;border:1px solid var(--border)}
+.dash-card-title{font-size:12px;font-weight:700;margin-bottom:8px}
+
+/* Chart canvas */
+.chart-canvas{width:100%;height:120px;background:var(--s2);border-radius:6px;border:1px solid var(--border)}
+
+/* Alerts */
+.alert-card{background:var(--s1);border-radius:8px;padding:14px 16px;border-left:4px solid;display:flex;gap:14px;align-items:flex-start;margin-bottom:6px}
+.alert-card.crit{border-color:var(--re);background:rgba(224,32,32,.03)}
+.alert-card.warn{border-color:var(--ye);background:rgba(240,160,0,.03)}
+.alert-card.ok{border-color:var(--gr);background:rgba(16,216,88,.03)}
+.ac-icon{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;flex-shrink:0}
+.alert-card.crit .ac-icon{background:var(--re-dim);color:var(--re);border:1px solid var(--re)}
+.alert-card.warn .ac-icon{background:var(--ye-dim);color:var(--ye);border:1px solid var(--ye)}
+.alert-card.ok .ac-icon{background:var(--gr-dim);color:var(--gr);border:1px solid var(--gr)}
+.ac-body{flex:1}.ac-title{font-size:14px;font-weight:700;margin-bottom:3px}
+.ac-title.crit{color:var(--re)}.ac-title.warn{color:var(--ye)}
+.ac-desc{font-size:12px;color:var(--t1);line-height:1.5}
+.ac-meta{display:flex;gap:14px;margin-top:6px}
+.ac-tag{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--t2)}.ac-tag span{color:var(--t1)}
+
+/* Health bar */
+.health-bar{flex:1;height:5px;background:var(--s3);border-radius:3px;overflow:hidden}
+.health-fill{height:100%;border-radius:3px;transition:width .5s}
+.health-fill.ok{background:var(--gr)}.health-fill.warn{background:var(--ye)}.health-fill.crit{background:var(--re)}
+
+/* Data table */
+.dt-table{width:100%;border-collapse:collapse;font-size:11px}
+.dt-table th{text-align:left;padding:7px 10px;font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;color:var(--t2);letter-spacing:.08em;text-transform:uppercase;border-bottom:1px solid var(--border);background:var(--s2)}
+.dt-table td{padding:7px 10px;border-bottom:1px solid var(--border);color:var(--t1)}
+
+/* ===================================================
+   ALERT OVERLAY
+   =================================================== */
+#alert-overlay{
+  position:fixed;top:0;left:0;right:0;bottom:0;
+  background:rgba(0,0,0,.6);z-index:1000;display:none;
+  align-items:center;justify-content:center;
+}
+#alert-overlay.show{display:flex}
+.alert-modal{
+  background:var(--s1);border:1px solid var(--border2);border-radius:12px;
+  width:500px;max-height:70vh;overflow-y:auto;padding:20px;
+}
+.alert-modal-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.alert-modal-title{font-size:16px;font-weight:700}
+.alert-modal-close{background:none;border:none;color:var(--t2);font-size:18px;cursor:pointer}
+.alert-modal-close:hover{color:var(--t0)}
+
+/* ===================================================
+   SAP TOAST NOTIFICATIONS
+   =================================================== */
+#sapToastContainer{position:fixed;top:60px;right:16px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.sap-toast{
+  background:var(--s2);border:1px solid var(--or);border-radius:8px;padding:12px 16px;
+  min-width:260px;max-width:340px;box-shadow:0 4px 24px rgba(0,0,0,.5);
+  animation:toast-in .35s ease forwards;pointer-events:auto;
+}
+.sap-toast.removing{animation:toast-out .3s ease forwards}
+.sap-toast-hdr{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.sap-toast-badge{background:var(--or);color:#fff;font-size:8px;font-weight:700;padding:2px 6px;border-radius:3px;font-family:'IBM Plex Mono',monospace}
+.sap-toast-title{font-size:11px;font-weight:700;color:var(--t0)}
+.sap-toast-desc{font-size:10px;color:var(--t1);line-height:1.4}
+.sap-toast-time{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--t2);margin-top:4px}
+@keyframes toast-in{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:translateX(0)}}
+@keyframes toast-out{from{opacity:1;transform:translateX(0)}to{opacity:0;transform:translateX(40px)}}
+
+/* ===================================================
+   FULLSCREEN OVERLAY (SAP, TANDEM, ACC)
+   =================================================== */
+.fs-overlay{
+  position:fixed;top:0;left:0;width:100%;height:100%;z-index:500;
+  display:none;flex-direction:column;animation:fs-fade-in .3s ease;
+}
+.fs-overlay.show{display:flex}
+@keyframes fs-fade-in{from{opacity:0}to{opacity:1}}
+
+/* SAP Fullscreen */
+.fs-sap{background:#F0F2F5}
+.fs-sap-header{
+  height:48px;background:#354A5F;display:flex;align-items:center;padding:0 20px;gap:12px;flex-shrink:0;
+}
+.fs-sap-header .sap-logo{background:#fff;color:#354A5F;font-size:10px;font-weight:900;padding:3px 8px;border-radius:3px;letter-spacing:-0.5px}
+.fs-sap-header .sap-title{color:#fff;font-size:13px;font-weight:600;flex:1}
+.fs-sap-header .sap-user{color:rgba(255,255,255,.7);font-size:11px;font-family:'IBM Plex Mono',monospace}
+.fs-sap-header .sap-close{background:none;border:none;color:rgba(255,255,255,.7);font-size:20px;cursor:pointer;padding:4px 8px}
+.fs-sap-header .sap-close:hover{color:#fff}
+
+.fs-sap-body{display:flex;flex:1;overflow:hidden}
+.fs-sap-nav{width:200px;background:#2C3E50;flex-shrink:0;overflow-y:auto}
+.fs-sap-nav-item{
+  display:flex;align-items:center;gap:10px;padding:12px 16px;color:rgba(255,255,255,.7);
+  font-size:12px;font-weight:500;cursor:pointer;border-left:3px solid transparent;transition:all .2s;
+}
+.fs-sap-nav-item:hover{background:rgba(255,255,255,.05);color:#fff}
+.fs-sap-nav-item.active{background:rgba(255,255,255,.08);color:#fff;border-left-color:#FF5500}
+.fs-sap-nav-icon{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex-shrink:0}
+
+.fs-sap-content{flex:1;overflow-y:auto;padding:24px;background:#F0F2F5}
+
+/* SAP Fiori Tiles */
+.fiori-tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px}
+.fiori-tile{
+  background:#fff;border-radius:8px;padding:20px;border-left:4px solid #354A5F;
+  box-shadow:0 1px 4px rgba(0,0,0,.08);cursor:pointer;transition:all .2s;min-height:120px;
+  display:flex;flex-direction:column;justify-content:space-between;
+}
+.fiori-tile:hover{box-shadow:0 4px 16px rgba(0,0,0,.12);transform:translateY(-2px)}
+.fiori-tile-val{font-size:28px;font-weight:700;color:#354A5F}
+.fiori-tile-lbl{font-size:12px;color:#666;margin-top:4px}
+.fiori-tile-sub{font-family:'IBM Plex Mono',monospace;font-size:10px;color:#999;margin-top:8px}
+.fiori-tile.accent-or{border-left-color:#FF5500}
+.fiori-tile.accent-or .fiori-tile-val{color:#FF5500}
+.fiori-tile.accent-re{border-left-color:#E02020}
+.fiori-tile.accent-re .fiori-tile-val{color:#E02020}
+.fiori-tile.accent-gr{border-left-color:#10D858}
+.fiori-tile.accent-gr .fiori-tile-val{color:#10D858}
+.fiori-tile.accent-ye{border-left-color:#F0A000}
+.fiori-tile.accent-ye .fiori-tile-val{color:#F0A000}
+.fiori-tile.accent-cy{border-left-color:#00C8F0}
+.fiori-tile.accent-cy .fiori-tile-val{color:#00C8F0}
+
+/* SAP Tables in fullscreen */
+.sap-fs-table{width:100%;border-collapse:collapse;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.08);margin-bottom:20px}
+.sap-fs-table th{text-align:left;padding:12px 16px;font-size:11px;font-weight:600;color:#666;letter-spacing:.05em;text-transform:uppercase;background:#FAFBFC;border-bottom:2px solid #E8E8E8;font-family:'IBM Plex Mono',monospace}
+.sap-fs-table td{padding:12px 16px;border-bottom:1px solid #F0F0F0;color:#333;font-size:12px}
+.sap-fs-table tr:hover td{background:#F5F7FA}
+.sap-fs-table tr{cursor:pointer;transition:background .15s}
+.sap-fs-section{font-size:16px;font-weight:700;color:#354A5F;margin:20px 0 12px;padding-bottom:8px;border-bottom:2px solid #FF5500}
+.sap-fs-badge{font-family:'IBM Plex Mono',monospace;font-size:9px;padding:3px 8px;border-radius:4px;font-weight:700}
+.sap-fs-badge.p1{background:#FCEAEA;color:#E02020}
+.sap-fs-badge.p2{background:#FFF0E0;color:#FF5500}
+.sap-fs-badge.p3{background:#FFF8E1;color:#F0A000}
+.sap-fs-badge.p4{background:#E0F7FA;color:#00C8F0}
+.sap-fs-status{font-family:'IBM Plex Mono',monospace;font-size:9px;padding:3px 8px;border-radius:4px;font-weight:600}
+.sap-fs-status.open{background:#FCEAEA;color:#E02020}
+.sap-fs-status.wip{background:#FFF8E1;color:#F0A000}
+.sap-fs-status.sched{background:#E0F7FA;color:#00C8F0}
+.sap-fs-status.done{background:#E8F5E9;color:#10D858}
+
+/* SAP Detail pane */
+.sap-detail-pane{background:#fff;border-radius:8px;padding:20px;box-shadow:0 1px 4px rgba(0,0,0,.08);margin-bottom:20px}
+.sap-detail-title{font-size:14px;font-weight:700;color:#354A5F;margin-bottom:12px}
+.sap-detail-row{display:flex;justify-content:space-between;padding:6px 0;font-size:12px;border-bottom:1px solid #F0F0F0}
+.sap-detail-row .dk{color:#666}.sap-detail-row .dv{color:#333;font-family:'IBM Plex Mono',monospace;font-weight:500}
+
+/* SAP APM Health Cards */
+.sap-health-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;margin-bottom:20px}
+.sap-health-card{background:#fff;border-radius:8px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,.08);border-left:4px solid #10D858;cursor:pointer;transition:all .2s}
+.sap-health-card:hover{box-shadow:0 4px 16px rgba(0,0,0,.12);transform:translateY(-1px)}
+.sap-health-card.warn{border-left-color:#F0A000}
+.sap-health-card .hc-tag{font-family:'IBM Plex Mono',monospace;font-size:9px;color:#FF5500;font-weight:700}
+.sap-health-card .hc-name{font-size:13px;font-weight:700;color:#354A5F;margin:4px 0 8px}
+.sap-health-card .hc-bar{width:100%;height:6px;background:#E8E8E8;border-radius:3px;overflow:hidden;margin:6px 0}
+.sap-health-card .hc-bar-fill{height:100%;border-radius:3px;background:#10D858}
+.sap-health-card.warn .hc-bar-fill{background:#F0A000}
+.sap-health-card .hc-row{display:flex;justify-content:space-between;font-size:11px;color:#666;padding:2px 0}
+.sap-health-card .hc-row .hv{font-family:'IBM Plex Mono',monospace;color:#333}
+
+/* SAP MM Materials */
+.sap-mat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:20px}
+.sap-mat-card{background:#fff;border-radius:8px;padding:14px;box-shadow:0 1px 4px rgba(0,0,0,.08);cursor:pointer;transition:all .2s}
+.sap-mat-card:hover{box-shadow:0 4px 12px rgba(0,0,0,.1)}
+.sap-mat-card .mc-name{font-size:12px;font-weight:600;color:#354A5F}
+.sap-mat-card .mc-code{font-family:'IBM Plex Mono',monospace;font-size:10px;color:#999;margin:2px 0}
+.sap-mat-card .mc-stock{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700;color:#10D858;margin-top:6px}
+
+/* SAP BTP */
+.sap-btp-flow{display:flex;flex-direction:column;gap:10px;margin-bottom:16px}
+.sap-btp-step{background:#fff;border-radius:8px;padding:14px 16px;box-shadow:0 1px 4px rgba(0,0,0,.08);display:flex;align-items:flex-start;gap:12px}
+.sap-btp-num{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex-shrink:0;color:#fff}
+.sap-btp-text{font-size:12px;color:#555;line-height:1.5}
+.sap-btp-text b{color:#354A5F;font-weight:600}
+.sap-btp-log{background:#1E293B;border-radius:8px;padding:12px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#94A3B8;max-height:200px;overflow-y:auto;margin-bottom:16px}
+.sap-btp-log div{padding:2px 0}
+.sap-btp-log .log-time{color:#64748B}
+.sap-btp-log .log-module{color:#FF5500;font-weight:600}
+
+/* SAP Ver en Gemelo button */
+.sap-gemelo-btn{
+  background:#FF5500;color:#fff;border:none;border-radius:8px;padding:10px 20px;
+  font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;margin-top:12px;
+}
+.sap-gemelo-btn:hover{background:#e64d00;box-shadow:0 4px 12px rgba(255,85,0,.3)}
+
+/* ===================================================
+   ACC FULLSCREEN
+   =================================================== */
+.fs-acc{background:#F5F5F5}
+.fs-acc-header{
+  height:48px;background:#1B2A4A;display:flex;align-items:center;padding:0 20px;gap:12px;flex-shrink:0;
+}
+.fs-acc-header .acc-logo{font-size:12px;font-weight:800;color:#fff;letter-spacing:-.5px}
+.fs-acc-header .acc-title{color:rgba(255,255,255,.9);font-size:12px;flex:1}
+.fs-acc-header .acc-proj{font-family:'IBM Plex Mono',monospace;font-size:10px;color:rgba(255,255,255,.5)}
+.fs-acc-header .acc-close{background:none;border:none;color:rgba(255,255,255,.6);font-size:20px;cursor:pointer;padding:4px 8px}
+.fs-acc-header .acc-close:hover{color:#fff}
+
+.fs-acc-body{display:flex;flex:1;overflow:hidden}
+.fs-acc-nav{width:200px;background:#fff;border-right:1px solid #E0E0E0;flex-shrink:0;overflow-y:auto}
+.fs-acc-nav-item{
+  padding:12px 16px;font-size:12px;color:#666;cursor:pointer;border-left:3px solid transparent;transition:all .15s;
+}
+.fs-acc-nav-item:hover{background:#F5F7FA;color:#333}
+.fs-acc-nav-item.active{background:#E8F0FE;color:#1B2A4A;border-left-color:#1B2A4A;font-weight:600}
+.fs-acc-content{flex:1;overflow-y:auto;padding:24px;display:flex;gap:20px}
+.fs-acc-tree-panel{width:280px;background:#fff;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.08);overflow-y:auto;flex-shrink:0}
+.fs-acc-tree-hdr{padding:12px 16px;font-size:11px;font-weight:700;color:#1B2A4A;text-transform:uppercase;letter-spacing:.1em;border-bottom:1px solid #E0E0E0}
+.fs-acc-tree-cat{padding:8px 16px;font-size:10px;font-weight:600;color:#999;text-transform:uppercase;letter-spacing:.08em;margin-top:8px}
+.fs-acc-tree-doc{
+  display:flex;align-items:center;gap:8px;padding:8px 16px;font-size:11px;color:#555;cursor:pointer;transition:all .15s;border-left:3px solid transparent;
+}
+.fs-acc-tree-doc:hover{background:#F5F7FA;color:#333}
+.fs-acc-tree-doc.sel{background:#E8F0FE;color:#1B2A4A;border-left-color:#FF5500;font-weight:600}
+.fs-acc-tree-doc .doc-icon{color:#999;font-size:14px}
+
+.fs-acc-viewer{flex:1;background:#fff;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.08);display:flex;flex-direction:column}
+.fs-acc-viewer-toolbar{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid #E0E0E0;font-size:11px;color:#666}
+.fs-acc-viewer-toolbar .vt-title{font-weight:600;color:#333;flex:1}
+.fs-acc-viewer-body{flex:1;display:flex;align-items:center;justify-content:center;padding:20px;background:#FAFAFA;border-radius:0 0 8px 8px}
+.fs-acc-viewer-placeholder{text-align:center;color:#999}
+.fs-acc-viewer-placeholder .vp-icon{font-size:48px;margin-bottom:12px;opacity:.3}
+.fs-acc-viewer-placeholder .vp-text{font-size:13px}
+.fs-acc-viewer-placeholder .vp-sub{font-size:10px;color:#BBB;margin-top:4px}
+
+.fs-acc-meta{width:240px;background:#fff;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.08);overflow-y:auto;flex-shrink:0;padding:16px}
+.fs-acc-meta-title{font-size:11px;font-weight:700;color:#1B2A4A;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px}
+.fs-acc-meta-row{display:flex;justify-content:space-between;padding:4px 0;font-size:11px;border-bottom:1px solid #F0F0F0}
+.fs-acc-meta-row .mk{color:#999}.fs-acc-meta-row .mv{color:#333;font-family:'IBM Plex Mono',monospace;font-size:10px}
+
+/* ===================================================
+   TANDEM FULLSCREEN
+   =================================================== */
+.fs-tandem{background:#0D1117}
+.fs-tandem-header{
+  height:48px;background:#161B22;display:flex;align-items:center;padding:0 20px;gap:12px;flex-shrink:0;border-bottom:1px solid #30363D;
+}
+.fs-tandem-header .td-logo{font-size:12px;font-weight:800;color:#58A6FF;letter-spacing:-.5px}
+.fs-tandem-header .td-title{color:rgba(255,255,255,.9);font-size:12px;flex:1}
+.fs-tandem-header .td-close{background:none;border:none;color:rgba(255,255,255,.5);font-size:20px;cursor:pointer;padding:4px 8px}
+.fs-tandem-header .td-close:hover{color:#fff}
+
+.fs-tandem-body{display:flex;flex:1;overflow:hidden}
+.fs-tandem-left{width:280px;background:#161B22;border-right:1px solid #30363D;overflow-y:auto;flex-shrink:0;padding:16px}
+.fs-tandem-section{font-size:10px;font-weight:600;color:#8B949E;text-transform:uppercase;letter-spacing:.1em;margin:12px 0 8px}
+.fs-tandem-asset{
+  display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:6px;cursor:pointer;
+  font-size:11px;color:#C9D1D9;transition:all .15s;margin-bottom:2px;border:1px solid transparent;
+}
+.fs-tandem-asset:hover{background:rgba(255,255,255,.04);border-color:#30363D}
+.fs-tandem-asset.sel{background:rgba(88,166,255,.08);border-color:rgba(88,166,255,.3);color:#58A6FF}
+.fs-tandem-asset .ta-dot{width:8px;height:8px;border-radius:50%}
+.fs-tandem-asset .ta-dot.ok{background:#10D858}.fs-tandem-asset .ta-dot.warn{background:#F0A000}
+
+.fs-tandem-right{flex:1;overflow-y:auto;padding:24px;background:#0D1117}
+.fs-tandem-card{background:#161B22;border:1px solid #30363D;border-radius:8px;padding:16px;margin-bottom:16px}
+.fs-tandem-card-title{font-size:13px;font-weight:700;color:#C9D1D9;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid #30363D}
+.fs-tandem-row{display:flex;justify-content:space-between;padding:4px 0;font-size:11px;border-bottom:1px solid rgba(48,54,61,.5)}
+.fs-tandem-row .trk{color:#8B949E}.fs-tandem-row .trv{color:#C9D1D9;font-family:'IBM Plex Mono',monospace}
+.fs-tandem-stream{background:#0D1117;border:1px solid #30363D;border-radius:6px;padding:10px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#8B949E;max-height:200px;overflow-y:auto}
+.fs-tandem-stream div{padding:2px 0}
+
+/* ===================================================
+   IoT 3D LABELS
+   =================================================== */
+.iot-label{
+  background:rgba(6,13,24,.92);border:1px solid;border-radius:6px;padding:6px 10px;
+  font-family:'IBM Plex Mono',monospace;font-size:10px;color:#E8F4FF;
+  white-space:nowrap;pointer-events:none;backdrop-filter:blur(6px);
+  box-shadow:0 2px 8px rgba(0,0,0,.5);line-height:1.4;
+}
+.iot-label .iot-tag{font-weight:700;font-size:11px;margin-bottom:2px}
+.iot-label .iot-row{display:flex;gap:8px}
+.iot-label .iot-val{font-weight:600}
+
+/* ===================================================
+   HAMBURGER MENU & MOBILE RESPONSIVE
+   =================================================== */
+.hamburger-btn{
+  display:none;width:36px;height:36px;background:var(--s2);border:1px solid var(--border2);
+  border-radius:6px;cursor:pointer;flex-direction:column;align-items:center;justify-content:center;
+  gap:4px;flex-shrink:0;padding:0;
+}
+.hamburger-btn span{display:block;width:18px;height:2px;background:var(--t1);border-radius:1px;transition:all .3s}
+.hamburger-btn.active span:nth-child(1){transform:rotate(45deg) translate(4px,4px)}
+.hamburger-btn.active span:nth-child(2){opacity:0}
+.hamburger-btn.active span:nth-child(3){transform:rotate(-45deg) translate(4px,-4px)}
+.mobile-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:90}
+
+@media(max-width:900px){
+  .hamburger-btn{display:flex}
+  .h-plant{display:none}
+  .h-sep:nth-child(2),.h-sep:nth-child(4){display:none}
+  .demo-badge{display:none}
+  #header{padding:0 10px;gap:8px;height:46px}
+  .h-logo{width:28px;height:28px;font-size:12px}
+  .h-back{padding:4px 10px;font-size:11px}
+  .h-back span.back-text{display:none}
+  .h-alert-btn{padding:4px 8px;font-size:12px}
+
+  #sidebar-left{
+    position:fixed;top:46px;left:0;bottom:0;z-index:95;
+    width:300px;transform:translateX(-100%);transition:transform .3s ease;
+  }
+  #sidebar-left.mobile-open{transform:translateX(0)}
+  .mobile-overlay.show{display:block}
+
+  #center{width:100%}
+  #equip-panel{width:calc(100% - 24px);max-width:360px;right:6px;top:6px}
+  .overlay-3d{top:6px;left:6px}
+  .sys-toggle{font-size:9px;padding:4px 8px}
+
+  .alert-modal{width:calc(100% - 32px);max-width:450px}
+  .kpi-grid{grid-template-columns:1fr 1fr}
+
+  /* Fullscreen overlays on mobile */
+  .fs-sap-nav,.fs-acc-nav,.fs-tandem-left{display:none}
+  .fs-acc-meta{display:none}
+  .fiori-tiles{grid-template-columns:1fr 1fr}
+  .sap-health-grid{grid-template-columns:1fr}
+  .sap-mat-grid{grid-template-columns:1fr 1fr}
+  .fs-acc-tree-panel{width:100%}
+  .fs-acc-content{flex-direction:column}
+
+  .sap-toast{min-width:200px;max-width:280px}
+}
+
+@media(max-width:600px){
+  #sidebar-left{width:calc(100% - 30px)}
+  .kpi-grid{grid-template-columns:1fr 1fr}
+  .h-status-txt{font-size:9px}
+  .h-alert-btn{padding:4px 6px;font-size:11px}
+  #equip-panel{width:calc(100% - 20px);right:10px;max-width:none}
+  .fiori-tiles{grid-template-columns:1fr}
+  .sap-toast{min-width:180px;max-width:240px;padding:8px 12px}
+  .sap-toast-title{font-size:10px}
+  .sap-toast-desc{font-size:9px}
+}
+
+@media(max-width:480px){
+  #sidebar-left{width:calc(100% - 40px)}
+  .kpi-grid{grid-template-columns:1fr 1fr}
+  .h-status-txt{display:none}
+  .h-time{display:none}
+  #equip-panel{width:calc(100% - 16px);right:8px;left:8px;max-width:none}
+}
+</style>
+</head>
+<body>
+
+<!-- ====================================================
+     HEADER
+     ==================================================== -->
+<div id="header">
+  <button class="hamburger-btn" id="hamburgerBtn" onclick="toggleMobileSidebar()">
+    <span></span><span></span><span></span>
+  </button>
+  <div class="h-logo">EY</div>
+  <div class="h-sep"></div>
+  <div class="h-plant"><b>Planta LNG</b> &middot; LNG-MTY-01</div>
+  <div class="h-sep"></div>
+  <span class="demo-badge">DEMO</span>
+  <div class="h-status">
+    <div class="h-dot"></div>
+    <span class="h-status-txt">EN LINEA</span>
+  </div>
+  <div class="h-sep"></div>
+  <span class="h-time" id="clock">--:--:--</span>
+  <button class="h-alert-btn" onclick="showAlerts()">ALERTAS <span class="h-alert-cnt" id="alertCnt">3</span></button>
+  <a class="h-back" href="gas-hub.html">&larr; <span class="back-text">Hub</span></a>
+</div>
+<div class="mobile-overlay" id="mobileOverlay" onclick="toggleMobileSidebar()"></div>
+<div id="sapToastContainer"></div>
+
+<!-- ====================================================
+     APP
+     ==================================================== -->
+<div id="app">
+
+<!-- ====================================================
+     LEFT SIDEBAR
+     ==================================================== -->
+<div id="sidebar-left">
+  <div class="sl-tabs">
+    <div class="sl-tab active" data-sl="monitores">Monitores</div>
+    <div class="sl-tab" data-sl="sap">SAP</div>
+    <div class="sl-tab" data-sl="tandem">Tandem</div>
+    <div class="sl-tab" data-sl="acc">ACC</div>
+  </div>
+
+  <!-- MONITORES -->
+  <div class="sl-panel active" id="sl-monitores">
+    <div class="sl-section">
+      <div class="sl-label">KPIs Operativos</div>
+    </div>
+    <div class="kpi-grid">
+      <div class="kpi-card"><div class="kpi-val cy" id="kTank1">72</div><div class="kpi-unit">%</div><div class="kpi-lbl">Nivel Tanque 1</div></div>
+      <div class="kpi-card"><div class="kpi-val or" id="kTank2">58</div><div class="kpi-unit">%</div><div class="kpi-lbl">Nivel Tanque 2</div></div>
+      <div class="kpi-card"><div class="kpi-val ye" id="kPresion">5.2</div><div class="kpi-unit">bar</div><div class="kpi-lbl">Presion Tanques</div></div>
+      <div class="kpi-card"><div class="kpi-val re" id="kTemp">-155</div><div class="kpi-unit">&deg;C</div><div class="kpi-lbl">Temperatura LNG</div></div>
+      <div class="kpi-card"><div class="kpi-val gr" id="kFlujo">1,650</div><div class="kpi-unit">Nm3/h</div><div class="kpi-lbl">Flujo Regas.</div></div>
+      <div class="kpi-card"><div class="kpi-val cy" id="kTsalida">14</div><div class="kpi-unit">&deg;C</div><div class="kpi-lbl">T Salida Vap.</div></div>
+      <div class="kpi-card"><div class="kpi-val gr" id="kPsalida">4.1</div><div class="kpi-unit">bar</div><div class="kpi-lbl">Presion Salida</div></div>
+      <div class="kpi-card"><div class="kpi-val or" id="kVapActivos">2/3</div><div class="kpi-lbl">Vap. Activos</div></div>
+      <div class="kpi-card"><div class="kpi-val gr" id="kBOG">Normal</div><div class="kpi-lbl">BOG</div></div>
+      <div class="kpi-card"><div class="kpi-val cy" id="kInventario">82</div><div class="kpi-unit">KL</div><div class="kpi-lbl">Inventario</div></div>
+      <div class="kpi-card"><div class="kpi-val ye" id="kAutonomia">48</div><div class="kpi-unit">hrs</div><div class="kpi-lbl">Autonomia</div></div>
+      <div class="kpi-card"><div class="kpi-val gr" id="kDisp">99.1</div><div class="kpi-unit">%</div><div class="kpi-lbl">Disponibilidad</div></div>
+      <div class="kpi-card"><div class="kpi-val cy" id="kTempGrad">-162 / +15</div><div class="kpi-unit">&deg;C</div><div class="kpi-lbl">Gradiente Temp.</div></div>
+      <div class="kpi-card"><div class="kpi-val ye" id="kBOGpress">0.8</div><div class="kpi-unit">bar</div><div class="kpi-lbl">Presion BOG</div></div>
+      <div class="kpi-card"><div class="kpi-val or" id="kCountdown">47:32</div><div class="kpi-unit">hh:mm</div><div class="kpi-lbl">Autonomia Restante</div></div>
+    </div>
+
+    <div class="sl-section">
+      <div class="sl-label">Nivel de Tanques</div>
+    </div>
+    <div class="tank-gauge">
+      <div class="tg-bar"><div class="tg-fill t1" id="tg1" style="height:72%"></div></div>
+      <div class="tg-info"><span class="tgv cy" id="tgv1">72%</span><span class="tgl">TK-001</span><span class="tgl">30 KL</span></div>
+      <div class="tg-bar"><div class="tg-fill t2" id="tg2" style="height:58%"></div></div>
+      <div class="tg-info"><span class="tgv or" id="tgv2">58%</span><span class="tgl">TK-002</span><span class="tgl">24 KL</span></div>
+    </div>
+
+    <div class="sl-section">
+      <div class="sl-label">Activos</div>
+    </div>
+    <div class="asset-list" id="assetList"></div>
+  </div>
+
+</div>
+
+<!-- ====================================================
+     CENTER (3D + Overlays)
+     ==================================================== -->
+<div id="center">
+  <div id="canvas-container">
+    <!-- 3D overlay toggles -->
+    <div class="overlay-3d">
+      <div class="sys-toggle active" data-sys="cryo">
+        <div class="dot" style="background:var(--cy)"></div>Criogenico
+      </div>
+      <div class="sys-toggle active" data-sys="vapor">
+        <div class="dot" style="background:var(--gr)"></div>Vaporizacion
+      </div>
+      <div class="sys-toggle active" data-sys="reg">
+        <div class="dot" style="background:var(--ye)"></div>Regulacion
+      </div>
+      <div class="sys-toggle active" data-sys="safety">
+        <div class="dot" style="background:var(--re)"></div>Seguridad
+      </div>
+      <div class="sys-toggle active" data-sys="iot" id="iotToggle">
+        <div class="dot" style="background:var(--cy)"></div>IoT
+      </div>
+    </div>
+    <!-- Equipment detail panel (RICH) -->
+    <div id="equip-panel">
+      <div class="ep-header">
+        <button class="ep-close" onclick="closePanel()">&times;</button>
+        <div class="ep-tag" id="epTag">--</div>
+        <div class="ep-name" id="epName">--</div>
+        <div class="ep-sap-tag" id="epSapTag">SAP: --</div>
+        <div class="ep-conf baja" id="epConf">Normal</div>
+      </div>
+      <div class="ep-body">
+        <div class="ep-section">Ficha Tecnica</div>
+        <div id="epInfo"></div>
+        <div class="ep-section">Sensores en Tiempo Real</div>
+        <div id="epSensors"></div>
+        <div class="ep-section">Tendencia (60 pts)</div>
+        <canvas class="ep-trend-canvas" id="epTrendCanvas" width="320" height="100"></canvas>
+        <div class="ep-section">Codigo QR</div>
+        <div class="qr-container"><div id="epQrCanvas"></div><span class="qr-label">Escanear para ficha tecnica movil</span></div>
+        <div class="ep-section">Documentos</div>
+        <div id="epDocs"></div>
+        <div class="ep-section">Ultimas Ordenes SAP</div>
+        <div id="epWorkOrders"></div>
+        <div class="ep-btn-group">
+          <button class="ep-btn primary" onclick="openSAPFromPanel()">Abrir en SAP</button>
+          <button class="ep-btn" onclick="openACCFromPanel()">Ver Documentos</button>
+          <button class="ep-btn" onclick="crearOT()">Crear OT</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /app -->
+
+<!-- ====================================================
+     ALERT OVERLAY
+     ==================================================== -->
+<div id="alert-overlay">
+  <div class="alert-modal">
+    <div class="alert-modal-hdr">
+      <span class="alert-modal-title">Alertas Activas</span>
+      <button class="alert-modal-close" onclick="hideAlerts()">&times;</button>
+    </div>
+    <div id="alertList"></div>
+  </div>
+</div>
+
+<!-- ====================================================
+     SAP FULLSCREEN OVERLAY
+     ==================================================== -->
+<div class="fs-overlay fs-sap" id="sapOverlay">
+  <div class="fs-sap-header">
+    <span class="sap-logo">SAP</span>
+    <span class="sap-title">SAP S/4HANA 2023 | Plant Maintenance</span>
+    <span class="sap-user">Ing. Hernandez</span>
+    <button class="sap-close" onclick="closeSAPOverlay()">&times;</button>
+  </div>
+  <div class="fs-sap-body">
+    <div class="fs-sap-nav">
+      <div class="fs-sap-nav-item active" data-sap-view="launchpad" onclick="switchSAPView(this)">
+        <div class="fs-sap-nav-icon" style="background:#354A5F;color:#fff">LP</div>Launchpad
+      </div>
+      <div class="fs-sap-nav-item" data-sap-view="pm" onclick="switchSAPView(this)">
+        <div class="fs-sap-nav-icon" style="background:#FF5500;color:#fff">PM</div>Plant Maint.
+      </div>
+      <div class="fs-sap-nav-item" data-sap-view="apm" onclick="switchSAPView(this)">
+        <div class="fs-sap-nav-icon" style="background:#10D858;color:#fff">APM</div>Asset Perf.
+      </div>
+      <div class="fs-sap-nav-item" data-sap-view="mm" onclick="switchSAPView(this)">
+        <div class="fs-sap-nav-icon" style="background:#F0A000;color:#fff">MM</div>Materials
+      </div>
+      <div class="fs-sap-nav-item" data-sap-view="btp" onclick="switchSAPView(this)">
+        <div class="fs-sap-nav-icon" style="background:#00C8F0;color:#fff">BT</div>BTP Integration
+      </div>
+      <div class="fs-sap-nav-item" data-sap-view="gemelo" onclick="switchSAPView(this)">
+        <div class="fs-sap-nav-icon" style="background:#0a1420;color:#5AC8FA">3D</div>Gemelo Digital
+      </div>
+    </div>
+    <div class="fs-sap-content" id="sapContent">
+      <!-- Content loaded by JS -->
+    </div>
+  </div>
+</div>
+
+<!-- ====================================================
+     ACC FULLSCREEN OVERLAY
+     ==================================================== -->
+<div class="fs-overlay fs-acc" id="accOverlay">
+  <div class="fs-acc-header">
+    <span class="acc-logo">ACC</span>
+    <span class="acc-title">Autodesk Construction Cloud</span>
+    <span class="acc-proj">LNG-MTY-01 Planta Regasificacion</span>
+    <button class="acc-close" onclick="closeACCOverlay()">&times;</button>
+  </div>
+  <div class="fs-acc-body">
+    <div class="fs-acc-nav">
+      <div class="fs-acc-nav-item active" data-acc-view="docs" onclick="switchACCView(this)">Documentos</div>
+      <div class="fs-acc-nav-item" data-acc-view="models" onclick="switchACCView(this)">Modelos</div>
+      <div class="fs-acc-nav-item" data-acc-view="submittals" onclick="switchACCView(this)">Submittals</div>
+      <div class="fs-acc-nav-item" data-acc-view="rfis" onclick="switchACCView(this)">RFIs</div>
+    </div>
+    <div class="fs-acc-content" id="accContent">
+      <!-- Content loaded by JS -->
+    </div>
+  </div>
+</div>
+
+<!-- ====================================================
+     TANDEM FULLSCREEN OVERLAY
+     ==================================================== -->
+<div class="fs-overlay fs-tandem" id="tandemOverlay">
+  <div class="fs-tandem-header">
+    <span class="td-logo">TANDEM</span>
+    <span class="td-title">Autodesk Tandem | LNG-MTY-01</span>
+    <button class="td-close" onclick="closeTandemOverlay()">&times;</button>
+  </div>
+  <div class="fs-tandem-body">
+    <div class="fs-tandem-left" id="tandemLeft">
+      <!-- Populated by JS -->
+    </div>
+    <div class="fs-tandem-right" id="tandemRight">
+      <!-- Populated by JS -->
+    </div>
+  </div>
+</div>
+
+<!-- ====================================================
+     THREE.JS + CSS2DRenderer
+     ==================================================== -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/renderers/CSS2DRenderer.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+<script>
+/* ===================================================
+   GLOBAL STATE & DATA
+   =================================================== */
+const SIM = {
+  tank1Level: 72, tank2Level: 58,
+  tankPressure: 5.2, lngTemp: -155,
+  flowRate: 1650, tSalida: 14, pSalida: 4.1,
+  vapActivos: 2, bogStatus: 'Normal',
+  inventario: 82, autonomia: 48, disponibilidad: 99.1
+};
+
+var ASSETS = window.ASSETS = [
+  {id:'unl-01',name:'Bahia de Descarga',tag:'UNL-01',sapTag:'FUNC-UNL-001',type:'Descarga',status:'ok',
+    crit:'baja',info:{Tipo:'Manifold criogenico',Capacidad:'60 m3/h',Conexion:'3" Cryogenic',Material:'AISI 316L',Proveedor:'Chart Industries',Instalacion:'2024-06'},
+    sensors:[{n:'Presion descarga',v:'4.8 bar',s:'ok',pct:60},{n:'Temperatura LNG',v:'-156.2 C',s:'cy',pct:20},{n:'Flujo descarga',v:'0 m3/h',s:'ok',pct:0},{n:'Valvula ESD',v:'Abierta',s:'ok',pct:100}],
+    docs:['P&ID Descarga','Protocolo Descarga','Datasheet Manifold'],
+    workOrders:[{id:'PM-LNG-6006',desc:'Verificacion manguera criogenica',status:'done'},{id:'PM-LNG-6009',desc:'Inspeccion anual manifold',status:'sched'}]},
+  {id:'tk-001',name:'Tanque Criogenico 1',tag:'TK-001',sapTag:'EQUI-CTK-001',type:'Almacenamiento',status:'ok',
+    crit:'baja',info:{Tipo:'Vertical doble pared vacio',Capacidad:'42 KL',Material:'AISI 304L / A516',Diametro:'4.0 m',Altura:'12.0 m',MAWP:'8 barg',Proveedor:'Chart HLNG',Instalacion:'2023-11'},
+    sensors:[{n:'Nivel',v:'72%',s:'ok',pct:72},{n:'Presion',v:'5.2 bar',s:'ok',pct:65},{n:'Temp. liquido',v:'-155.3 C',s:'cy',pct:15},{n:'Temp. vacio',v:'-18.2 C',s:'ok',pct:30},{n:'Valvula seguridad',v:'Normal',s:'ok',pct:100},{n:'PSV set point',v:'7.5 barg',s:'ok',pct:94}],
+    docs:['Datasheet TK-001','P&ID Tanques','Cert. ASME VIII','Manual Operacion'],
+    workOrders:[{id:'PM-LNG-6001',desc:'Inspeccion nivel bajo',status:'open'},{id:'PM-LNG-6005',desc:'Inspeccion valvula seguridad',status:'sched'},{id:'PM-LNG-6010',desc:'Calibracion instrumentos',status:'done'}]},
+  {id:'tk-002',name:'Tanque Criogenico 2',tag:'TK-002',sapTag:'EQUI-CTK-002',type:'Almacenamiento',status:'warn',
+    crit:'media',info:{Tipo:'Vertical doble pared vacio',Capacidad:'42 KL',Material:'AISI 304L / A516',Diametro:'4.0 m',Altura:'12.0 m',MAWP:'8 barg',Proveedor:'Chart HLNG',Instalacion:'2023-11'},
+    sensors:[{n:'Nivel',v:'58%',s:'warn',pct:58},{n:'Presion',v:'5.1 bar',s:'ok',pct:64},{n:'Temp. liquido',v:'-154.8 C',s:'cy',pct:16},{n:'Temp. vacio',v:'-17.5 C',s:'ok',pct:32},{n:'Valvula seguridad',v:'Normal',s:'ok',pct:100},{n:'PSV set point',v:'7.5 barg',s:'ok',pct:94}],
+    docs:['Datasheet TK-002','P&ID Tanques','Cert. ASME VIII'],
+    workOrders:[{id:'PM-LNG-6005',desc:'Inspeccion valvula seguridad',status:'sched'},{id:'PM-LNG-6011',desc:'Purga anillo vacio',status:'wip'}]},
+  {id:'pbu-01',name:'Pressure Building Unit',tag:'PBU-01',sapTag:'EQUI-PBU-001',type:'Presurizacion',status:'ok',
+    crit:'baja',info:{Tipo:'Vaporizador de presion',Funcion:'Mantener presion tanque',Capacidad:'200 Nm3/h',Conexion:'1.5" SS'},
+    sensors:[{n:'Presion salida',v:'5.3 bar',s:'ok',pct:66},{n:'Temperatura',v:'-40 C',s:'cy',pct:35},{n:'Estado',v:'Auto',s:'ok',pct:100}],
+    docs:['P&ID PBU','Datasheet PBU'],
+    workOrders:[{id:'PM-LNG-6012',desc:'Limpieza intercambiador',status:'sched'}]},
+  {id:'vap-amb-01',name:'Vaporizador Ambiente 1',tag:'VAP-AMB-01',sapTag:'EQUI-VAP-001',type:'Vaporizacion',status:'ok',
+    crit:'baja',info:{Tipo:'Ambient Air Vaporizer (AAV)',Capacidad:'850 Nm3/h',Material:'Aluminio 6061-T6',Aletas:'30 horizontales',Altura:'8.0 m',Proveedor:'Cryoquip'},
+    sensors:[{n:'Flujo entrada',v:'540 Nm3/h',s:'ok',pct:64},{n:'T entrada',v:'-155 C',s:'cy',pct:15},{n:'T salida',v:'12 C',s:'ok',pct:70},{n:'Presion',v:'4.5 bar',s:'ok',pct:56},{n:'Estado',v:'ACTIVO',s:'ok',pct:100},{n:'Formacion hielo',v:'15%',s:'ok',pct:15}],
+    docs:['Datasheet VAP-AMB','P&ID Vaporizadores'],
+    workOrders:[{id:'PM-LNG-6002',desc:'Descongelamiento programado',status:'wip'},{id:'PM-LNG-6013',desc:'Inspeccion aletas',status:'sched'}]},
+  {id:'vap-amb-02',name:'Vaporizador Ambiente 2',tag:'VAP-AMB-02',sapTag:'EQUI-VAP-002',type:'Vaporizacion',status:'ok',
+    crit:'baja',info:{Tipo:'Ambient Air Vaporizer (AAV)',Capacidad:'850 Nm3/h',Material:'Aluminio 6061-T6',Aletas:'30 horizontales',Altura:'8.0 m',Proveedor:'Cryoquip'},
+    sensors:[{n:'Flujo entrada',v:'520 Nm3/h',s:'ok',pct:61},{n:'T entrada',v:'-155 C',s:'cy',pct:15},{n:'T salida',v:'14 C',s:'ok',pct:72},{n:'Presion',v:'4.4 bar',s:'ok',pct:55},{n:'Estado',v:'ACTIVO',s:'ok',pct:100},{n:'Formacion hielo',v:'22%',s:'ok',pct:22}],
+    docs:['Datasheet VAP-AMB','P&ID Vaporizadores'],
+    workOrders:[{id:'PM-LNG-6014',desc:'Revision drenaje',status:'done'}]},
+  {id:'vap-amb-03',name:'Vaporizador Ambiente 3',tag:'VAP-AMB-03',sapTag:'EQUI-VAP-003',type:'Vaporizacion',status:'warn',
+    crit:'baja',info:{Tipo:'Ambient Air Vaporizer (AAV)',Capacidad:'850 Nm3/h',Material:'Aluminio 6061-T6',Aletas:'30 horizontales',Altura:'8.0 m',Proveedor:'Cryoquip'},
+    sensors:[{n:'Flujo entrada',v:'0 Nm3/h',s:'ok',pct:0},{n:'T entrada',v:'-- C',s:'ok',pct:0},{n:'T salida',v:'-- C',s:'ok',pct:0},{n:'Presion',v:'0 bar',s:'ok',pct:0},{n:'Estado',v:'STANDBY',s:'warn',pct:0},{n:'Formacion hielo',v:'45%',s:'warn',pct:45}],
+    docs:['Datasheet VAP-AMB','P&ID Vaporizadores'],
+    workOrders:[{id:'PM-LNG-6003',desc:'Revision anual',status:'sched'}]},
+  {id:'vap-ba-01',name:'Vaporizador Bano Agua',tag:'VAP-BA-01',sapTag:'EQUI-VBA-001',type:'Vaporizacion',status:'ok',
+    crit:'baja',info:{Tipo:'Water Bath Vaporizer',Capacidad:'1200 Nm3/h',Combustible:'Gas Natural',Temperatura:'65 C',Proveedor:'Thermax'},
+    sensors:[{n:'Temp. bano',v:'62 C',s:'ok',pct:62},{n:'Flujo gas comb.',v:'45 Nm3/h',s:'ok',pct:45},{n:'T gases escape',v:'185 C',s:'ok',pct:50},{n:'Estado',v:'STANDBY',s:'warn',pct:0},{n:'Presion',v:'4.2 bar',s:'ok',pct:53}],
+    docs:['Datasheet VAP-BA','P&ID Vaporizadores'],
+    workOrders:[{id:'PM-LNG-6015',desc:'Inspeccion quemador',status:'wip'}]},
+  {id:'reg-01',name:'Skid de Regulacion',tag:'REG-01',sapTag:'EQUI-RGS-001',type:'Regulacion',status:'ok',
+    crit:'baja',info:{Tipo:'Regulacion en 2 etapas',P_entrada:'4.5 bar',P_salida:'4.1 bar',Valvulas:'Fisher Tipo 99',Proveedor:'Emerson'},
+    sensors:[{n:'Presion entrada',v:'4.5 bar',s:'ok',pct:56},{n:'Presion salida',v:'4.1 bar',s:'ok',pct:51},{n:'Temperatura',v:'12 C',s:'ok',pct:68},{n:'Valv. regulacion',v:'42% abierta',s:'ok',pct:42},{n:'Valv. seguridad',v:'Normal',s:'ok',pct:100}],
+    docs:['P&ID Regulacion','Datasheet Fisher 99'],
+    workOrders:[{id:'PM-LNG-6004',desc:'Calibracion valvula reguladora',status:'sched'}]},
+  {id:'odr-01',name:'Odorizador',tag:'ODR-01',sapTag:'EQUI-ODR-001',type:'Odorizacion',status:'ok',
+    crit:'baja',info:{Tipo:'Inyeccion por goteo',Odorante:'THT (Tetrahidrotiofeno)',Concentracion:'20 mg/m3',Proveedor:'GPL Odorizers'},
+    sensors:[{n:'Nivel odorante',v:'78%',s:'ok',pct:78},{n:'Tasa inyeccion',v:'1.2 mL/min',s:'ok',pct:60},{n:'Estado',v:'Activo',s:'ok',pct:100}],
+    docs:['Datasheet ODR','Hoja Seguridad THT'],
+    workOrders:[{id:'PM-LNG-6008',desc:'Recarga odorant tank',status:'sched'}]},
+  {id:'met-01',name:'Estacion de Medicion',tag:'MET-01',sapTag:'EQUI-MET-001',type:'Medicion',status:'ok',
+    crit:'baja',info:{Tipo:'Ultrasonica',Modelo:'Daniel 3812',Diametro:'4"',Precision:'+/- 0.5%',Proveedor:'Emerson Daniel'},
+    sensors:[{n:'Flujo instantaneo',v:'1,650 Nm3/h',s:'ok',pct:65},{n:'Volumen acumulado',v:'14,520 Nm3',s:'ok',pct:50},{n:'Presion',v:'4.1 bar',s:'ok',pct:51},{n:'Temperatura',v:'14 C',s:'ok',pct:72}],
+    docs:['Datasheet Daniel 3812','Cert. Calibracion'],
+    workOrders:[{id:'PM-LNG-6016',desc:'Verificacion metrologica',status:'done'}]},
+  {id:'bog-01',name:'Sistema BOG',tag:'BOG-01',sapTag:'EQUI-BOG-001',type:'BOG',status:'ok',
+    crit:'baja',info:{Tipo:'Compresor BOG',Capacidad:'50 Nm3/h',Funcion:'Gestion boil-off gas',Proveedor:'Corken'},
+    sensors:[{n:'Presion BOG',v:'0.3 bar',s:'ok',pct:15},{n:'Temperatura BOG',v:'-120 C',s:'cy',pct:25},{n:'Estado compresor',v:'Auto/Standby',s:'ok',pct:0},{n:'Vent stack',v:'Cerrado',s:'ok',pct:100}],
+    docs:['Datasheet Compresor','P&ID BOG'],
+    workOrders:[{id:'PM-LNG-6007',desc:'Revision compresor BOG',status:'done'}]},
+  {id:'ctrl-01',name:'Centro de Control',tag:'CTRL-01',sapTag:'FUNC-CTRL-001',type:'Control',status:'ok',
+    crit:'baja',info:{Tipo:'PLC + SCADA',PLC:'Allen-Bradley ControlLogix',SCADA:'Wonderware InTouch',ESD:'SIL-2 Certificado',Comunicacion:'Ethernet/IP'},
+    sensors:[{n:'Estado PLC',v:'RUN',s:'ok',pct:100},{n:'Estado SCADA',v:'Online',s:'ok',pct:100},{n:'ESD',v:'Armed',s:'ok',pct:100},{n:'Comunicacion',v:'OK 32ms',s:'ok',pct:95}],
+    docs:['Manual ESD','Diagrama Control'],
+    workOrders:[{id:'PM-LNG-6017',desc:'Prueba ESD trimestral',status:'sched'}]}
+];
+
+const ALERTS = [
+  {type:'warn',title:'Nivel bajo Tanque 2',desc:'TK-002 al 58%. Programar recarga antes de 36 hrs.',time:'14:32',equip:'TK-002'},
+  {type:'warn',title:'Hielo en Vaporizador 3',desc:'VAP-AMB-03 reporta 45% formacion de hielo. En standby para deshielo.',time:'11:15',equip:'VAP-AMB-03'},
+  {type:'crit',title:'Mantenimiento Vap. Bano Agua',desc:'VAP-BA-01 requiere inspeccion de quemador. OT 5001404 en proceso.',time:'09:45',equip:'VAP-BA-01'}
+];
+
+let selectedAsset = null;
+let scene, camera, renderer, controls;
+let meshMap = {};
+let clock3d;
+let vapParticles = [];
+let frostMeshes = [];
+let css2dRenderer;
+let iotLabelsVisible = true;
+let iotLabelObjects = [];
+let trendData = {};
+
+// -- LIVE PROCESS ANIMATION STATE --
+let cryoFlowParticles = [];   // Cryogenic flow path particles
+let steamParticles = [];       // Steam/heat from vaporizers
+let tankLevelMesh1 = null;     // Tank 1 level indicator mesh
+let tankLevelMesh2 = null;     // Tank 2 level indicator mesh
+let frostGlowPipes = [];       // Frost glow on cryo pipes
+let tankRefillTimer = 0;       // Timer for tank refill simulation
+
+/* ===================================================
+   CLOCK
+   =================================================== */
+function updateClock() {
+  const d = new Date();
+  document.getElementById('clock').textContent =
+    d.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+/* ===================================================
+   SIDEBAR TAB SWITCHING (opens overlays for SAP/Tandem/ACC)
+   =================================================== */
+document.querySelectorAll('.sl-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    const target = tab.dataset.sl;
+    // For SAP, Tandem, ACC: open fullscreen overlay directly
+    if (target === 'sap') { openSAPOverlay(); return; }
+    if (target === 'tandem') { openTandemOverlay(); return; }
+    if (target === 'acc') { openACCOverlay(); return; }
+    // For monitores: normal sidebar panel switch
+    document.querySelectorAll('.sl-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.sl-panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('sl-' + target).classList.add('active');
+  });
+});
+
+/* ===================================================
+   ASSET LIST
+   =================================================== */
+function buildAssetList() {
+  const list = document.getElementById('assetList');
+  list.innerHTML = '';
+  ASSETS.forEach(a => {
+    const el = document.createElement('div');
+    el.className = 'asset-item' + (selectedAsset === a.id ? ' active' : '');
+    el.innerHTML = '<div class="ai-dot '+a.status+'"></div><div><div class="ai-name">'+a.name+'</div><div class="ai-sub">'+a.tag+' | '+a.type+'</div></div>';
+    el.onclick = () => selectAsset(a.id);
+    list.appendChild(el);
+  });
+}
+
+/* ===================================================
+   RICH EQUIPMENT PANEL
+   =================================================== */
+function selectAsset(id) {
+  selectedAsset = id;
+  buildAssetList();
+  const a = ASSETS.find(x => x.id === id);
+  if (!a) return;
+  document.getElementById('epTag').textContent = a.tag;
+  document.getElementById('epName').textContent = a.name;
+  document.getElementById('epSapTag').textContent = 'SAP: ' + (a.sapTag || '--');
+  const conf = document.getElementById('epConf');
+  conf.textContent = a.crit === 'alta' ? 'Criticidad Alta' : a.crit === 'media' ? 'Criticidad Media' : 'Normal';
+  conf.className = 'ep-conf ' + a.crit;
+
+  // Ficha tecnica
+  let infoHTML = '';
+  for (const [k,v] of Object.entries(a.info)) {
+    infoHTML += '<div class="ep-row"><span class="k">'+k+'</span><span class="v">'+v+'</span></div>';
+  }
+  document.getElementById('epInfo').innerHTML = infoHTML;
+
+  // Sensors with mini bars
+  let sensHTML = '';
+  a.sensors.forEach(s => {
+    const barColor = s.s==='ok'?'var(--gr)':s.s==='warn'?'var(--ye)':s.s==='crit'?'var(--re)':'var(--cy)';
+    sensHTML += '<div class="ep-sensor"><span class="sn">'+s.n+'</span><span class="sv '+s.s+'">'+s.v+'</span>';
+    if (typeof s.pct === 'number') {
+      sensHTML += '<div class="mini-bar"><div class="mini-bar-fill" style="width:'+s.pct+'%;background:'+barColor+'"></div></div>';
+    }
+    sensHTML += '</div>';
+  });
+  document.getElementById('epSensors').innerHTML = sensHTML;
+
+  // Trend chart
+  drawTrendChart(a);
+
+  // QR code
+  drawQRCode(a.tag);
+
+  // Documents
+  let docsHTML = '';
+  if (a.docs) {
+    a.docs.forEach(d => {
+      docsHTML += '<div class="ep-doc-item" onclick="openACCOverlay()">[DOC] '+d+'</div>';
+    });
+  }
+  document.getElementById('epDocs').innerHTML = docsHTML;
+
+  // Work Orders
+  let woHTML = '';
+  if (a.workOrders) {
+    a.workOrders.forEach(wo => {
+      const statusCls = wo.status==='open'?'open':wo.status==='wip'?'wip':wo.status==='done'?'done':'sched';
+      const statusTxt = wo.status==='open'?'ABIERTA':wo.status==='wip'?'EN PROCESO':wo.status==='done'?'COMPLETADA':'PROGRAMADA';
+      woHTML += '<div class="ep-wo-item" onclick="openSAPOverlay()"><div class="wo-id">'+wo.id+'</div><div class="wo-desc">'+wo.desc+'</div><span class="wo-status sap-fs-status '+statusCls+'">'+statusTxt+'</span></div>';
+    });
+  }
+  document.getElementById('epWorkOrders').innerHTML = woHTML;
+
+  document.getElementById('equip-panel').style.display = 'block';
+  highlightMesh(id);
+}
+
+function drawTrendChart(asset) {
+  const canvas = document.getElementById('epTrendCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width, h = canvas.height;
+  ctx.clearRect(0,0,w,h);
+
+  // Initialize trend data if needed
+  if (!trendData[asset.id]) {
+    trendData[asset.id] = [];
+    for (let i = 0; i < 60; i++) {
+      trendData[asset.id].push(40 + Math.random()*40);
+    }
+  }
+  const data = trendData[asset.id];
+  // Add new point
+  data.push(30 + Math.random()*50);
+  if (data.length > 60) data.shift();
+
+  // Draw grid
+  ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i < 5; i++) {
+    const y = (i/4)*h;
+    ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke();
+  }
+
+  // Draw line
+  ctx.strokeStyle = '#FF5500';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  data.forEach((v, i) => {
+    const x = (i/(data.length-1))*w;
+    const y = h - (v/100)*h;
+    if (i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  });
+  ctx.stroke();
+
+  // Fill
+  ctx.lineTo(w, h);
+  ctx.lineTo(0, h);
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(255,85,0,0.08)';
+  ctx.fill();
+}
+
+function generateRealQR(containerId, data) {
+  var container = document.getElementById(containerId);
+  if (!container) return;
+  container.innerHTML = '';
+  var qr = qrcode(0, 'M');
+  qr.addData(data);
+  qr.make();
+  var size = 120;
+  var canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  canvas.style.width = size + 'px';
+  canvas.style.height = size + 'px';
+  canvas.style.borderRadius = '4px';
+  var ctx = canvas.getContext('2d');
+  var cellSize = size / qr.getModuleCount();
+  ctx.fillStyle = '#0a1420';
+  ctx.fillRect(0, 0, size, size);
+  ctx.fillStyle = '#FF5500';
+  for (var r = 0; r < qr.getModuleCount(); r++) {
+    for (var c = 0; c < qr.getModuleCount(); c++) {
+      if (qr.isDark(r, c)) {
+        ctx.fillRect(c * cellSize, r * cellSize, cellSize + 0.5, cellSize + 0.5);
+      }
+    }
+  }
+  container.appendChild(canvas);
+}
+function drawQRCode(tag) {
+  var url = 'https://creas-demo.netlify.app/lng-DT.html#' + tag;
+  generateRealQR('epQrCanvas', url);
+}
+
+function closePanel() {
+  document.getElementById('equip-panel').style.display = 'none';
+  selectedAsset = null;
+  buildAssetList();
+  clearHighlight();
+}
+
+function focusAsset() {
+  if (!selectedAsset || !meshMap[selectedAsset]) return;
+  const m = meshMap[selectedAsset];
+  const b = new THREE.Box3().setFromObject(m);
+  const center = b.getCenter(new THREE.Vector3());
+  const size = b.getSize(new THREE.Vector3());
+  const maxDim = Math.max(size.x, size.y, size.z);
+  const dist = maxDim * 3;
+  camera.position.set(center.x + dist*0.6, center.y + dist*0.5, center.z + dist*0.6);
+  controls.target.copy(center);
+  controls.update();
+}
+
+function openSAPFromPanel() { openSAPOverlay(); }
+function openACCFromPanel() { openACCOverlay(); }
+function crearOT() {
+  sapToast('PM', 'Creando nueva Orden de Trabajo para ' + (selectedAsset || 'equipo'));
+}
+
+/* ===================================================
+   ALERTS
+   =================================================== */
+function showAlerts() {
+  const list = document.getElementById('alertList');
+  list.innerHTML = '';
+  ALERTS.forEach(a => {
+    list.innerHTML += '<div class="alert-card '+a.type+'">'+
+      '<div class="ac-icon">'+(a.type==='crit'?'!':'!!')+'</div>'+
+      '<div class="ac-body">'+
+        '<div class="ac-title '+a.type+'">'+a.title+'</div>'+
+        '<div class="ac-desc">'+a.desc+'</div>'+
+        '<div class="ac-meta"><span class="ac-tag">Equipo: <span>'+a.equip+'</span></span><span class="ac-tag">Hora: <span>'+a.time+'</span></span></div>'+
+      '</div></div>';
+  });
+  document.getElementById('alert-overlay').classList.add('show');
+}
+function hideAlerts() {
+  document.getElementById('alert-overlay').classList.remove('show');
+}
+
+/* ===================================================
+   3D OVERLAY TOGGLES
+   =================================================== */
+document.querySelectorAll('.sys-toggle').forEach(btn => {
+  btn.addEventListener('click', () => {
+    btn.classList.toggle('active');
+    if (btn.dataset.sys === 'iot') {
+      iotLabelsVisible = btn.classList.contains('active');
+      iotLabelObjects.forEach(obj => { obj.element.style.display = iotLabelsVisible ? 'block' : 'none'; });
+    }
+  });
+});
+
+/* ===================================================
+   SAP FULLSCREEN OVERLAY
+   =================================================== */
+function openSAPOverlay() {
+  document.getElementById('sapOverlay').classList.add('show');
+  renderSAPView('launchpad');
+  // Move 3D canvas into SAP
+  var canvas = document.getElementById('threejs-canvas');
+  var sapContainer = document.getElementById('sap3dContainer');
+  if(canvas && sapContainer){
+    sapContainer.appendChild(canvas);
+    canvas.style.width = '100%';
+    canvas.style.height = '100%';
+    if(typeof renderer !== 'undefined'){
+      var w = sapContainer.clientWidth;
+      var h = sapContainer.clientHeight;
+      renderer.setSize(w, h);
+      if(typeof camera !== 'undefined'){
+        camera.aspect = w/h;
+        camera.updateProjectionMatrix();
+      }
+    }
+  }
+}
+function closeSAPOverlay() {
+  document.getElementById('sapOverlay').classList.remove('show');
+  // Find canvas wherever it ended up
+  var canvas = document.getElementById('threejs-canvas');
+  var container = document.getElementById('canvas-container');
+  if(canvas && container && canvas.parentElement !== container){
+    container.insertBefore(canvas, container.firstChild);
+    canvas.style.width = '100%';
+    canvas.style.height = '100%';
+    if(typeof renderer !== 'undefined'){
+      setTimeout(function(){
+        var w = container.clientWidth;
+        var h = container.clientHeight;
+        renderer.setSize(w, h);
+        if(typeof camera !== 'undefined'){
+          camera.aspect = w/h;
+          camera.updateProjectionMatrix();
+        }
+      }, 100);
+    }
+  }
+}
+function switchSAPView(el) {
+  document.querySelectorAll('.fs-sap-nav-item').forEach(i => i.classList.remove('active'));
+  el.classList.add('active');
+  renderSAPView(el.dataset.sapView);
+}
+
+function renderSAPView(view) {
+  const c = document.getElementById('sapContent');
+  if (view === 'launchpad') {
+    c.innerHTML = '<div class="sap-fs-section">SAP Fiori Launchpad</div>'+
+      '<div class="fiori-tiles">'+
+        '<div class="fiori-tile accent-re" onclick="switchSAPViewByName(\'pm\')"><div class="fiori-tile-val">3</div><div class="fiori-tile-lbl">Ordenes Abiertas</div><div class="fiori-tile-sub">PM - Mantenimiento</div></div>'+
+        '<div class="fiori-tile accent-or" onclick="switchSAPViewByName(\'pm\')"><div class="fiori-tile-val">8</div><div class="fiori-tile-lbl">Total Work Orders</div><div class="fiori-tile-sub">PM-LNG-6001 ... 6008</div></div>'+
+        '<div class="fiori-tile accent-gr" onclick="switchSAPViewByName(\'apm\')"><div class="fiori-tile-val">88%</div><div class="fiori-tile-lbl">Health Score Prom.</div><div class="fiori-tile-sub">APM - Asset Performance</div></div>'+
+        '<div class="fiori-tile accent-ye" onclick="switchSAPViewByName(\'mm\')"><div class="fiori-tile-val">5</div><div class="fiori-tile-lbl">Materiales Criogenicos</div><div class="fiori-tile-sub">MM - Stock Disponible</div></div>'+
+        '<div class="fiori-tile accent-cy" onclick="switchSAPViewByName(\'btp\')"><div class="fiori-tile-val">99.8%</div><div class="fiori-tile-lbl">Uptime Integracion</div><div class="fiori-tile-sub">BTP - Cloud Integration</div></div>'+
+        '<div class="fiori-tile" onclick="switchSAPViewByName(\'pm\')"><div class="fiori-tile-val">24,120</div><div class="fiori-tile-lbl">Hrs Operacion</div><div class="fiori-tile-sub">Equipos Criogenicos</div></div>'+
+      '</div>';
+  } else if (view === 'pm') {
+    c.innerHTML = '<div class="sap-fs-section">PM - Ordenes de Trabajo</div>'+
+      '<table class="sap-fs-table"><thead><tr><th>Orden</th><th>Equipo</th><th>Descripcion</th><th>Prioridad</th><th>Estado</th><th>Origen</th></tr></thead><tbody>'+
+        '<tr onclick="showSAPDetail(\'PM-LNG-6001\',\'CTK-01\',\'Inspeccion nivel bajo (12%)\',\'1-URGENTE\',\'ABIERTA\')"><td style="color:#FF5500;font-weight:700;font-family:\'IBM Plex Mono\',monospace">PM-LNG-6001</td><td>CTK-01</td><td>Tanque Cryo - Inspeccion nivel bajo (12%)</td><td><span class="sap-fs-badge p1">1-URGENTE</span></td><td><span class="sap-fs-status open">ABIERTA</span></td><td>DT Auto</td></tr>'+
+        '<tr onclick="showSAPDetail(\'PM-LNG-6002\',\'VAP-01\',\'Descongelamiento programado\',\'2-ALTA\',\'EN PROCESO\')"><td style="color:#FF5500;font-weight:700;font-family:\'IBM Plex Mono\',monospace">PM-LNG-6002</td><td>VAP-01</td><td>Vaporizador - Descongelamiento programado</td><td><span class="sap-fs-badge p2">2-ALTA</span></td><td><span class="sap-fs-status wip">EN PROCESO</span></td><td>Plan PM</td></tr>'+
+        '<tr onclick="showSAPDetail(\'PM-LNG-6003\',\'VAP-03\',\'Revision anual\',\'3-MEDIA\',\'PROGRAMADA\')"><td style="color:#FF5500;font-weight:700;font-family:\'IBM Plex Mono\',monospace">PM-LNG-6003</td><td>VAP-03</td><td>Vaporizador Standby - Revision anual</td><td><span class="sap-fs-badge p3">3-MEDIA</span></td><td><span class="sap-fs-status sched">PROGRAMADA</span></td><td>Plan PM</td></tr>'+
+        '<tr onclick="showSAPDetail(\'PM-LNG-6004\',\'RGS-01\',\'Calibracion valvula\',\'2-ALTA\',\'PROGRAMADA\')"><td style="color:#FF5500;font-weight:700;font-family:\'IBM Plex Mono\',monospace">PM-LNG-6004</td><td>RGS-01</td><td>Regulacion - Calibracion valvula reguladora</td><td><span class="sap-fs-badge p2">2-ALTA</span></td><td><span class="sap-fs-status sched">PROGRAMADA</span></td><td>Regulatorio</td></tr>'+
+        '<tr onclick="showSAPDetail(\'PM-LNG-6005\',\'CTK-02\',\'Inspeccion valvula seguridad\',\'1-URGENTE\',\'PROGRAMADA\')"><td style="color:#FF5500;font-weight:700;font-family:\'IBM Plex Mono\',monospace">PM-LNG-6005</td><td>CTK-02</td><td>Tanque Cryo - Inspeccion valvula seguridad</td><td><span class="sap-fs-badge p1">1-URGENTE</span></td><td><span class="sap-fs-status sched">PROGRAMADA</span></td><td>Regulatorio</td></tr>'+
+        '<tr onclick="showSAPDetail(\'PM-LNG-6006\',\'UNL-01\',\'Verificacion manguera\',\'3-MEDIA\',\'COMPLETADA\')"><td style="color:#FF5500;font-weight:700;font-family:\'IBM Plex Mono\',monospace">PM-LNG-6006</td><td>UNL-01</td><td>Descarga - Verificacion manguera criogenica</td><td><span class="sap-fs-badge p3">3-MEDIA</span></td><td><span class="sap-fs-status done">COMPLETADA</span></td><td>Plan PM</td></tr>'+
+        '<tr onclick="showSAPDetail(\'PM-LNG-6007\',\'BOG-01\',\'Revision compresor BOG\',\'4-BAJA\',\'CERT\')"><td style="color:#FF5500;font-weight:700;font-family:\'IBM Plex Mono\',monospace">PM-LNG-6007</td><td>BOG-01</td><td>Boil-off - Revision compresor BOG</td><td><span class="sap-fs-badge p4">4-BAJA</span></td><td><span class="sap-fs-status done">CERT</span></td><td>Plan PM</td></tr>'+
+        '<tr onclick="showSAPDetail(\'PM-LNG-6008\',\'ODR-01\',\'Recarga odorant\',\'3-MEDIA\',\'PROGRAMADA\')"><td style="color:#FF5500;font-weight:700;font-family:\'IBM Plex Mono\',monospace">PM-LNG-6008</td><td>ODR-01</td><td>Odorizador - Recarga odorant tank</td><td><span class="sap-fs-badge p3">3-MEDIA</span></td><td><span class="sap-fs-status sched">PROGRAMADA</span></td><td>Plan PM</td></tr>'+
+      '</tbody></table>'+
+      '<div id="sapDetailPane"></div>';
+  } else if (view === 'apm') {
+    c.innerHTML = '<div class="sap-fs-section">APM - Salud de Equipos</div>'+
+      '<div class="sap-health-grid">'+
+        '<div class="sap-health-card" onclick="sapGemeloBtn(\'tk-001\')"><div class="hc-tag">CTK-01 / CTK-02</div><div class="hc-name">Tanques Criogenicos</div><div class="hc-bar"><div class="hc-bar-fill" style="width:88%"></div></div><div class="hc-row"><span>Health Score</span><span class="hv">88%</span></div><div class="hc-row"><span>Hrs Operacion</span><span class="hv">24,120</span></div><div class="hc-row"><span>Prox. Inspeccion</span><span class="hv">12 dias</span></div></div>'+
+        '<div class="sap-health-card warn" onclick="sapGemeloBtn(\'vap-amb-01\')"><div class="hc-tag">VAP-01 / VAP-02 / VAP-03</div><div class="hc-name">Vaporizadores</div><div class="hc-bar"><div class="hc-bar-fill" style="width:72%"></div></div><div class="hc-row"><span>Health Score</span><span class="hv">72%</span></div><div class="hc-row"><span>Hrs Operacion</span><span class="hv">18,450</span></div><div class="hc-row"><span>Prox. Mant.</span><span class="hv">3 dias</span></div></div>'+
+        '<div class="sap-health-card" onclick="sapGemeloBtn(\'reg-01\')"><div class="hc-tag">RGS-01</div><div class="hc-name">Regulacion</div><div class="hc-bar"><div class="hc-bar-fill" style="width:95%"></div></div><div class="hc-row"><span>Health Score</span><span class="hv">95%</span></div><div class="hc-row"><span>Hrs Operacion</span><span class="hv">22,800</span></div><div class="hc-row"><span>Calibracion</span><span class="hv">OK</span></div></div>'+
+        '<div class="sap-health-card" onclick="sapGemeloBtn(\'bog-01\')"><div class="hc-tag">BOG-01</div><div class="hc-name">BOG</div><div class="hc-bar"><div class="hc-bar-fill" style="width:91%"></div></div><div class="hc-row"><span>Health Score</span><span class="hv">91%</span></div><div class="hc-row"><span>Hrs Operacion</span><span class="hv">8,300</span></div><div class="hc-row"><span>Estado</span><span class="hv">Standby</span></div></div>'+
+        '<div class="sap-health-card" onclick="sapGemeloBtn(\'met-01\')"><div class="hc-tag">MET-01</div><div class="hc-name">Medicion</div><div class="hc-bar"><div class="hc-bar-fill" style="width:97%"></div></div><div class="hc-row"><span>Health Score</span><span class="hv">97%</span></div><div class="hc-row"><span>Precision</span><span class="hv">+/- 0.5%</span></div><div class="hc-row"><span>Ult. Verif.</span><span class="hv">2026-03-20</span></div></div>'+
+      '</div>';
+  } else if (view === 'mm') {
+    c.innerHTML = '<div class="sap-fs-section">MM - Materiales Criogenicos</div>'+
+      '<div class="sap-mat-grid">'+
+        '<div class="sap-mat-card"><div class="mc-name">Sellos criogenicos</div><div class="mc-code">MAT-CRY-001</div><div class="mc-stock">Stock: 28 pzs</div></div>'+
+        '<div class="sap-mat-card"><div class="mc-name">Juntas criogenicas</div><div class="mc-code">MAT-JNT-002</div><div class="mc-stock">Stock: 12 pzs</div></div>'+
+        '<div class="sap-mat-card"><div class="mc-name">Odorant THT</div><div class="mc-code">MAT-ODR-003</div><div class="mc-stock">Stock: 45 L</div></div>'+
+        '<div class="sap-mat-card"><div class="mc-name">Aceite bomba criogenica</div><div class="mc-code">MAT-ACE-004</div><div class="mc-stock">Stock: 20 L</div></div>'+
+        '<div class="sap-mat-card"><div class="mc-name">Termocuplas tipo T</div><div class="mc-code">MAT-TMP-005</div><div class="mc-stock">Stock: 8 pzs</div></div>'+
+      '</div>'+
+      '<table class="sap-fs-table"><thead><tr><th>Material</th><th>Codigo</th><th>Stock</th><th>Min.</th><th>Ubicacion</th><th>Estado</th></tr></thead><tbody>'+
+        '<tr><td>Sellos criogenicos</td><td style="font-family:\'IBM Plex Mono\',monospace">MAT-CRY-001</td><td>28 pzs</td><td>10</td><td>ALM-01</td><td><span class="sap-fs-status done">OK</span></td></tr>'+
+        '<tr><td>Juntas criogenicas</td><td style="font-family:\'IBM Plex Mono\',monospace">MAT-JNT-002</td><td>12 pzs</td><td>8</td><td>ALM-01</td><td><span class="sap-fs-status done">OK</span></td></tr>'+
+        '<tr><td>Odorant THT</td><td style="font-family:\'IBM Plex Mono\',monospace">MAT-ODR-003</td><td>45 L</td><td>20</td><td>ALM-02</td><td><span class="sap-fs-status done">OK</span></td></tr>'+
+        '<tr><td>Aceite bomba criogenica</td><td style="font-family:\'IBM Plex Mono\',monospace">MAT-ACE-004</td><td>20 L</td><td>15</td><td>ALM-02</td><td><span class="sap-fs-status wip">BAJO</span></td></tr>'+
+        '<tr><td>Termocuplas tipo T</td><td style="font-family:\'IBM Plex Mono\',monospace">MAT-TMP-005</td><td>8 pzs</td><td>5</td><td>ALM-01</td><td><span class="sap-fs-status done">OK</span></td></tr>'+
+      '</tbody></table>';
+  } else if (view === 'btp') {
+    c.innerHTML = '<div class="sap-fs-section">BTP - Integration Flow</div>'+
+      '<div class="sap-btp-flow">'+
+        '<div class="sap-btp-step"><div class="sap-btp-num" style="background:#00C8F0">1</div><div class="sap-btp-text"><b>Digital Twin</b> detecta anomalia en sensor criogenico y genera alerta automatica via API</div></div>'+
+        '<div class="sap-btp-step"><div class="sap-btp-num" style="background:#FF5500">2</div><div class="sap-btp-text"><b>SAP BTP</b> recibe evento, valida contexto y enruta a SAP PM via iFlow</div></div>'+
+        '<div class="sap-btp-step"><div class="sap-btp-num" style="background:#F0A000">3</div><div class="sap-btp-text"><b>SAP PM</b> crea orden de trabajo con prioridad basada en criticidad del activo</div></div>'+
+        '<div class="sap-btp-step"><div class="sap-btp-num" style="background:#10D858">4</div><div class="sap-btp-text"><b>SAP MM</b> verifica stock de repuestos criogenicos y genera reserva automatica</div></div>'+
+      '</div>'+
+      '<div class="sap-fs-section">Stream Log</div>'+
+      '<div class="sap-btp-log" id="sapBtpLog">'+
+        '<div><span class="log-time">[09:15:02]</span> <span class="log-module">SAP PM</span> >> OT PM-LNG-6001 creada automaticamente desde DT</div>'+
+        '<div><span class="log-time">[09:15:04]</span> <span class="log-module">SAP MM</span> >> Reserva MAT-CRY-001 confirmada para OT 6001</div>'+
+        '<div><span class="log-time">[09:15:06]</span> <span class="log-module">APM</span> >> Health score CTK-01 actualizado: 88%</div>'+
+        '<div><span class="log-time">[10:30:11]</span> <span class="log-module">SAP PM</span> >> OT PM-LNG-6002 cambiada a EN PROCESO</div>'+
+        '<div><span class="log-time">[11:00:03]</span> <span class="log-module">SAP QM</span> >> Cromatografia programada para 2026-03-26</div>'+
+        '<div><span class="log-time">[12:45:18]</span> <span class="log-module">APM</span> >> Alerta predictiva: VAP-01 requiere descongelamiento</div>'+
+      '</div>';
+  } else if (view === 'gemelo') {
+    var equips = [
+      {tag:'CTK-01',name:'Tanque Criogenico 1',health:88},
+      {tag:'CTK-02',name:'Tanque Criogenico 2',health:88},
+      {tag:'VAP-01',name:'Vaporizador 1',health:72},
+      {tag:'VAP-02',name:'Vaporizador 2',health:85},
+      {tag:'RGS-01',name:'Regulacion',health:95},
+      {tag:'BOG-01',name:'BOG Compresor',health:91},
+      {tag:'MET-01',name:'Medicion',health:97},
+      {tag:'ODR-01',name:'Odorizador',health:90}
+    ];
+    var eqCards = '';
+    equips.forEach(function(eq){
+      var cls = eq.health >= 80 ? '#27AE60' : eq.health >= 60 ? '#F39C12' : '#E74C3C';
+      eqCards += '<div style="background:#f8f9fa;border-radius:8px;padding:12px;border-left:3px solid '+cls+'">' +
+        '<div style="font-weight:700;color:#354A5F;font-size:12px">'+eq.tag+'</div>' +
+        '<div style="font-size:10px;color:#666;margin:2px 0">'+eq.name+'</div>' +
+        '<div style="font-size:11px;font-weight:600;color:'+cls+'">Health: '+eq.health+'%</div>' +
+        '<button onclick="closeSAPOverlay();setTimeout(function(){selectAsset(\x27'+eq.tag.toLowerCase().replace(/-/g,'_')+'\x27)},300)" style="margin-top:6px;font-size:9px;padding:4px 10px;border:1px solid #ccc;border-radius:4px;background:#fff;cursor:pointer;font-family:inherit">Localizar</button>' +
+        '</div>';
+    });
+    c.innerHTML = '<div class="sap-fs-section">Gemelo Digital - Vista Integrada SAP</div>' +
+      '<p style="color:#888;font-size:11px;margin-bottom:16px;padding:0 20px">Modelo 3D en tiempo real vinculado a SAP PM/APM</p>' +
+      '<div style="padding:0 20px"><div id="sap3dContainer" style="width:100%;height:400px;position:relative;background:#0a1420;border-radius:8px;overflow:hidden;margin-bottom:16px"></div></div>' +
+      '<div style="padding:0 20px"><h4 style="color:#354A5F;margin-bottom:12px;font-size:14px">Equipos Vinculados SAP</h4>' +
+      '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px">'+eqCards+'</div></div>';
+    // Move canvas into the new container
+    var canvas = document.getElementById('threejs-canvas');
+    var sapContainer = document.getElementById('sap3dContainer');
+    if(canvas && sapContainer){
+      sapContainer.appendChild(canvas);
+      canvas.style.width = '100%';
+      canvas.style.height = '100%';
+      if(typeof renderer !== 'undefined'){
+        var w = sapContainer.clientWidth;
+        var h = sapContainer.clientHeight;
+        renderer.setSize(w, h);
+        if(typeof camera !== 'undefined'){
+          camera.aspect = w/h;
+          camera.updateProjectionMatrix();
+        }
+      }
+    }
+  }
+}
+
+function switchSAPViewByName(name) {
+  document.querySelectorAll('.fs-sap-nav-item').forEach(i => {
+    i.classList.toggle('active', i.dataset.sapView === name);
+  });
+  renderSAPView(name);
+}
+
+function showSAPDetail(id, equip, desc, prio, estado) {
+  const pane = document.getElementById('sapDetailPane');
+  if (!pane) return;
+  pane.innerHTML = '<div class="sap-detail-pane">'+
+    '<div class="sap-detail-title">Detalle: '+id+'</div>'+
+    '<div class="sap-detail-row"><span class="dk">Orden</span><span class="dv">'+id+'</span></div>'+
+    '<div class="sap-detail-row"><span class="dk">Equipo</span><span class="dv">'+equip+'</span></div>'+
+    '<div class="sap-detail-row"><span class="dk">Descripcion</span><span class="dv">'+desc+'</span></div>'+
+    '<div class="sap-detail-row"><span class="dk">Prioridad</span><span class="dv">'+prio+'</span></div>'+
+    '<div class="sap-detail-row"><span class="dk">Estado</span><span class="dv">'+estado+'</span></div>'+
+    '<div class="sap-detail-row"><span class="dk">Responsable</span><span class="dv">Tec. Rodriguez</span></div>'+
+    '<div class="sap-detail-row"><span class="dk">Fecha Plan</span><span class="dv">2026-03-28</span></div>'+
+    '<button class="sap-gemelo-btn" onclick="sapGemeloBtn(\''+equip.toLowerCase().replace('-','_')+'\')">Ver en Gemelo Digital</button>'+
+  '</div>';
+}
+
+function sapGemeloBtn(equipId) {
+  closeSAPOverlay();
+  // Map SAP equip codes to mesh IDs
+  const map = {'ctk_01':'tk-001','ctk_02':'tk-002','ctk-01':'tk-001','ctk-02':'tk-002',
+    'vap_01':'vap-amb-01','vap-01':'vap-amb-01','vap_02':'vap-amb-02','vap_03':'vap-amb-03',
+    'rgs_01':'reg-01','rgs-01':'reg-01','bog_01':'bog-01','bog-01':'bog-01',
+    'met_01':'met-01','met-01':'met-01','odr_01':'odr-01','odr-01':'odr-01','unl_01':'unl-01','unl-01':'unl-01'};
+  const meshId = map[equipId] || equipId;
+  if (meshMap[meshId]) {
+    selectAsset(meshId);
+    setTimeout(() => focusAsset(), 200);
+  }
+}
+
+/* ===================================================
+   ACC FULLSCREEN OVERLAY
+   =================================================== */
+function openACCOverlay() {
+  document.getElementById('accOverlay').classList.add('show');
+  renderACCView('docs');
+}
+function closeACCOverlay() {
+  document.getElementById('accOverlay').classList.remove('show');
+}
+function switchACCView(el) {
+  document.querySelectorAll('.fs-acc-nav-item').forEach(i => i.classList.remove('active'));
+  el.classList.add('active');
+  renderACCView(el.dataset.accView);
+}
+
+let selectedACCDoc = 'P&ID-LNG-001';
+function buildPidLng001(){
+  return '<div style="position:relative;width:100%;height:420px;background:#fff;border:2px solid #333;overflow:auto;font-family:Arial,sans-serif;">' +
+    '<div style="position:absolute;top:6px;left:6px;right:6px;height:32px;border:2px solid #333;display:flex;align-items:center;font-size:11px;color:#333;background:#f5f5f5;"><div style="flex:1;padding:0 8px;font-weight:700;">P&ID-LNG-001 | ALMACENAMIENTO CRIOGENICO</div><div style="border-left:1px solid #333;padding:0 6px;font-size:8px;color:#555;">REV.04 | 15-Mar-2026 | Ing. Garcia | APROBADO</div></div>' +
+    '<div style="position:absolute;top:60px;left:20px;width:90px;height:50px;border:2px solid #d35400;background:#fdebd0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#d35400;"><div>UNL-01</div><div style="font-size:7px;">Bahia Descarga</div></div>' +
+    '<div style="position:absolute;top:84px;left:110px;width:30px;height:2px;background:#0099cc;"></div>' +
+    '<div style="position:absolute;top:78px;left:128px;width:14px;height:14px;border:2px solid #333;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-size:7px;">X</div>' +
+    '<div style="position:absolute;top:55px;left:148px;width:110px;height:60px;border:2px solid #1a5276;background:#eaf2f8;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#1a5276;"><div>CTK-01</div><div style="font-size:7px;">Tanque Criogenico</div><div style="font-size:7px;">42 KL | -162C</div></div>' +
+    '<div style="position:absolute;top:130px;left:148px;width:110px;height:60px;border:2px solid #1a5276;background:#eaf2f8;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#1a5276;"><div>CTK-02</div><div style="font-size:7px;">Tanque Criogenico</div><div style="font-size:7px;">42 KL | -162C</div></div>' +
+    '<div style="position:absolute;top:43px;left:180px;width:22px;height:22px;border:1.5px solid #333;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:700;">LT</div>' +
+    '<div style="position:absolute;top:43px;left:210px;width:22px;height:22px;border:1.5px solid #333;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:700;">PT</div>' +
+    '<div style="position:absolute;top:43px;left:240px;width:22px;height:22px;border:1.5px solid #333;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:700;">TT</div>' +
+    '<div style="position:absolute;top:210px;left:148px;width:110px;height:50px;border:2px solid #7d3c98;background:#f4ecf7;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#7d3c98;"><div>PBU-01</div><div style="font-size:7px;">Pressure Build Unit</div></div>' +
+    '<div style="position:absolute;top:190px;left:200px;width:2px;height:20px;background:#333;"></div>' +
+    '<div style="position:absolute;top:84px;left:258px;width:30px;height:2px;background:#0099cc;"></div>' +
+    '<div style="position:absolute;top:160px;left:258px;width:30px;height:2px;background:#0099cc;"></div>' +
+    '<div style="position:absolute;top:84px;left:288px;width:2px;height:78px;background:#0099cc;"></div>' +
+    '<div style="position:absolute;top:81px;left:292px;font-size:8px;color:#0099cc;">--&gt; A Vaporizadores</div>' +
+    '<div style="position:absolute;bottom:6px;left:6px;right:6px;border-top:1px solid #ccc;padding-top:4px;font-size:7px;color:#666;">NOTAS: 1. LNG a -162C. 2. Tanques doble pared vacio ASME VIII. 3. PSV set 7.5 barg. | LNG-MTY-01</div></div>';
+}
+function buildPidLng002(){
+  return '<div style="position:relative;width:100%;height:420px;background:#fff;border:2px solid #333;overflow:auto;font-family:Arial,sans-serif;">' +
+    '<div style="position:absolute;top:6px;left:6px;right:6px;height:32px;border:2px solid #333;display:flex;align-items:center;font-size:11px;color:#333;background:#f5f5f5;"><div style="flex:1;padding:0 8px;font-weight:700;">P&ID-LNG-002 | REGASIFICACION Y REGULACION</div><div style="border-left:1px solid #333;padding:0 6px;font-size:8px;color:#555;">REV.03 | 15-Mar-2026 | Ing. Garcia</div></div>' +
+    '<div style="position:absolute;top:60px;left:20px;width:80px;height:45px;border:2px solid #1a5276;background:#eaf2f8;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#1a5276;"><div>CTK-01/02</div><div style="font-size:7px;">Desde Tanques</div></div>' +
+    '<div style="position:absolute;top:81px;left:100px;width:25px;height:2px;background:#0099cc;"></div>' +
+    '<div style="position:absolute;top:55px;left:130px;width:85px;height:50px;border:2px solid #1e8449;background:#eafaf1;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#1e8449;"><div>VAP-01</div><div style="font-size:7px;">Vap. Ambiente</div></div>' +
+    '<div style="position:absolute;top:120px;left:130px;width:85px;height:50px;border:2px solid #1e8449;background:#eafaf1;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#1e8449;"><div>VAP-02</div><div style="font-size:7px;">Vap. Ambiente</div></div>' +
+    '<div style="position:absolute;top:185px;left:130px;width:85px;height:50px;border:2px solid #1e8449;background:#eafaf1;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#1e8449;"><div>VAP-03</div><div style="font-size:7px;">Vap. Standby</div></div>' +
+    '<div style="position:absolute;top:255px;left:130px;width:85px;height:45px;border:2px solid #2e86c1;background:#d6eaf8;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#2e86c1;"><div>WBV-01</div><div style="font-size:7px;">Bano Agua</div></div>' +
+    '<div style="position:absolute;top:81px;left:100px;width:2px;height:200px;background:#0099cc;"></div>' +
+    '<div style="position:absolute;top:145px;left:102px;width:28px;height:2px;background:#0099cc;"></div>' +
+    '<div style="position:absolute;top:210px;left:102px;width:28px;height:2px;background:#0099cc;"></div>' +
+    '<div style="position:absolute;top:277px;left:102px;width:28px;height:2px;background:#0099cc;"></div>' +
+    '<div style="position:absolute;top:43px;left:158px;width:22px;height:22px;border:1.5px solid #333;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:700;">TT</div>' +
+    '<div style="position:absolute;top:81px;left:215px;width:2px;height:130px;background:#333;"></div>' +
+    '<div style="position:absolute;top:81px;left:217px;width:30px;height:2px;background:#333;"></div>' +
+    '<div style="position:absolute;top:145px;left:217px;width:30px;height:2px;background:#333;"></div>' +
+    '<div style="position:absolute;top:81px;left:252px;width:90px;height:50px;border:2px solid #7d3c98;background:#f4ecf7;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#7d3c98;"><div>REG-01</div><div style="font-size:7px;">Regulacion</div></div>' +
+    '<div style="position:absolute;top:75px;left:283px;width:14px;height:14px;border:2px solid #333;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-size:7px;">X</div>' +
+    '<div style="position:absolute;top:106px;left:342px;width:30px;height:2px;background:#333;"></div>' +
+    '<div style="position:absolute;top:103px;left:355px;font-size:8px;color:#333;">--&gt;</div>' +
+    '<div style="position:absolute;top:85px;left:378px;width:85px;height:50px;border:2px solid #8e44ad;background:#f5eef8;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#8e44ad;"><div>MET-01</div><div style="font-size:7px;">Medicion Coriolis</div></div>' +
+    '<div style="position:absolute;top:72px;left:406px;width:22px;height:22px;border:1.5px solid #333;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:700;">FT</div>' +
+    '<div style="position:absolute;top:106px;left:463px;width:25px;height:2px;background:#333;"></div>' +
+    '<div style="position:absolute;top:85px;left:494px;width:75px;height:45px;border:2px solid #566573;background:#eaecee;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#566573;"><div>SALIDA</div><div style="font-size:7px;">4.1 bar / 14C</div></div>' +
+    '<div style="position:absolute;top:140px;left:380px;font-size:7px;color:#888;font-family:monospace;">Q: 1,650 Nm3/h</div>' +
+    '<div style="position:absolute;bottom:6px;left:6px;right:6px;border-top:1px solid #ccc;padding-top:4px;font-size:7px;color:#666;">NOTAS: 1. T salida min 5C (NOM). 2. Regulacion 2 etapas. 3. Medicion fiscal Coriolis. | LNG-MTY-01</div></div>';
+}
+function buildDsLngCTK01(){
+  return '<div style="width:100%;max-width:600px;background:#fff;border:2px solid #333;font-family:Arial,sans-serif;color:#333;">' +
+    '<div style="background:#1a5276;color:#fff;padding:10px 14px;font-size:13px;font-weight:700;text-align:center;">FICHA TECNICA - TANQUE CRIOGENICO CTK-01</div>' +
+    '<div style="background:#2980b9;color:#fff;padding:5px 14px;font-size:9px;text-align:center;">Planta Regasificacion LNG | LNG-MTY-01 | Rev.03 | Mar-2026</div>' +
+    '<table style="width:100%;border-collapse:collapse;font-size:11px;">' +
+      '<tr style="background:#eaf2f8;"><td style="border:1px solid #bbb;padding:5px 8px;font-weight:600;width:38%;">Tag</td><td style="border:1px solid #bbb;padding:5px 8px;">CTK-01 (TK-001)</td></tr>' +
+      '<tr><td style="border:1px solid #bbb;padding:5px 8px;font-weight:600;background:#f8f9fa;">Servicio</td><td style="border:1px solid #bbb;padding:5px 8px;">Almacenamiento LNG Criogenico</td></tr>' +
+      '<tr style="background:#eaf2f8;"><td style="border:1px solid #bbb;padding:5px 8px;font-weight:600;">Tipo</td><td style="border:1px solid #bbb;padding:5px 8px;">Vertical doble pared al vacio</td></tr>' +
+      '<tr><td style="border:1px solid #bbb;padding:5px 8px;font-weight:600;background:#f8f9fa;">Capacidad</td><td style="border:1px solid #bbb;padding:5px 8px;">42,000 litros (42 KL)</td></tr>' +
+      '<tr style="background:#eaf2f8;"><td style="border:1px solid #bbb;padding:5px 8px;font-weight:600;">Diametro / Altura</td><td style="border:1px solid #bbb;padding:5px 8px;">4.0 m / 12.0 m</td></tr>' +
+      '<tr><td style="border:1px solid #bbb;padding:5px 8px;font-weight:600;background:#f8f9fa;">MAWP</td><td style="border:1px solid #bbb;padding:5px 8px;">8 barg</td></tr>' +
+      '<tr style="background:#eaf2f8;"><td style="border:1px solid #bbb;padding:5px 8px;font-weight:600;">Temp. Diseno</td><td style="border:1px solid #bbb;padding:5px 8px;">-196 C / +50 C</td></tr>' +
+      '<tr><td style="border:1px solid #bbb;padding:5px 8px;font-weight:600;background:#f8f9fa;">Material Interior</td><td style="border:1px solid #bbb;padding:5px 8px;">AISI 304L</td></tr>' +
+      '<tr style="background:#eaf2f8;"><td style="border:1px solid #bbb;padding:5px 8px;font-weight:600;">Material Exterior</td><td style="border:1px solid #bbb;padding:5px 8px;">SA-516 Gr.70</td></tr>' +
+      '<tr><td style="border:1px solid #bbb;padding:5px 8px;font-weight:600;background:#f8f9fa;">Aislamiento</td><td style="border:1px solid #bbb;padding:5px 8px;">Vacio + Perlita expandida</td></tr>' +
+      '<tr style="background:#eaf2f8;"><td style="border:1px solid #bbb;padding:5px 8px;font-weight:600;">Fabricante</td><td style="border:1px solid #bbb;padding:5px 8px;">Chart Industries (HLNG)</td></tr>' +
+      '<tr><td style="border:1px solid #bbb;padding:5px 8px;font-weight:600;background:#f8f9fa;">Codigo</td><td style="border:1px solid #bbb;padding:5px 8px;">ASME Section VIII Div.1</td></tr>' +
+      '<tr style="background:#eaf2f8;"><td style="border:1px solid #bbb;padding:5px 8px;font-weight:600;">Instalacion</td><td style="border:1px solid #bbb;padding:5px 8px;">Nov-2023</td></tr>' +
+      '<tr><td style="border:1px solid #bbb;padding:5px 8px;font-weight:600;background:#f8f9fa;">PSV Set Point</td><td style="border:1px solid #bbb;padding:5px 8px;">7.5 barg</td></tr>' +
+      '<tr style="background:#eaf2f8;"><td style="border:1px solid #bbb;padding:5px 8px;font-weight:600;">Instrumentacion</td><td style="border:1px solid #bbb;padding:5px 8px;">LT, PT, TT, LSH, LSLL, PSV x2</td></tr>' +
+    '</table><div style="padding:6px 14px;font-size:8px;color:#888;border-top:1px solid #bbb;">Documento controlado | LNG-MTY-01</div></div>';
+}
+function renderACCView(view) {
+  const c = document.getElementById('accContent');
+  if (view === 'docs') {
+    const docs = {
+      'P&ID': ['P&ID-LNG-001','P&ID-LNG-002'],
+      'Datasheets': ['DS-CTK-01'],
+      'PFD': ['PFD Proceso LNG'],
+      'GA Drawings': ['GA Planta General','GA Tanques'],
+      'HAZOP / Seguridad': ['Estudio HAZOP','Plan Emergencia','Manual ESD'],
+      'SOPs': ['SOP Descarga LNG','SOP Arranque Vap.','SOP Paro Emergencia'],
+      'Inspecciones': ['Insp. TK-001 Mar-2026','Insp. VAP-01 Feb-2026']
+    };
+    let treeHTML = '<div class="fs-acc-tree-hdr">Documentos del Proyecto</div>';
+    for (const [cat, items] of Object.entries(docs)) {
+      treeHTML += '<div class="fs-acc-tree-cat">'+cat+'</div>';
+      items.forEach(d => {
+        treeHTML += '<div class="fs-acc-tree-doc'+(d===selectedACCDoc?' sel':'')+'" onclick="selectACCDoc(\''+d+'\')"><span class="doc-icon">[D]</span>'+d+'</div>';
+      });
+    }
+    let viewerBody='',metaR='';
+    if(selectedACCDoc==='P&ID-LNG-001'){
+      viewerBody='<div class="fs-acc-viewer-toolbar"><span class="vt-title">P&ID-LNG-001 Almacenamiento Criogenico</span><span>Rev.04</span><span>DWG/PDF</span></div><div class="fs-acc-viewer-body" style="align-items:flex-start;justify-content:flex-start;">'+buildPidLng001()+'</div>';
+      metaR='<div class="fs-acc-meta-row"><span class="mk">Numero</span><span class="mv">P&ID-LNG-001</span></div><div class="fs-acc-meta-row"><span class="mk">Revision</span><span class="mv">Rev.04</span></div><div class="fs-acc-meta-row"><span class="mk">Autor</span><span class="mv">Ing. Garcia</span></div><div class="fs-acc-meta-row"><span class="mk">Estado</span><span class="mv">Aprobado</span></div>';
+    } else if(selectedACCDoc==='P&ID-LNG-002'){
+      viewerBody='<div class="fs-acc-viewer-toolbar"><span class="vt-title">P&ID-LNG-002 Regasificacion y Regulacion</span><span>Rev.03</span><span>DWG/PDF</span></div><div class="fs-acc-viewer-body" style="align-items:flex-start;justify-content:flex-start;">'+buildPidLng002()+'</div>';
+      metaR='<div class="fs-acc-meta-row"><span class="mk">Numero</span><span class="mv">P&ID-LNG-002</span></div><div class="fs-acc-meta-row"><span class="mk">Revision</span><span class="mv">Rev.03</span></div><div class="fs-acc-meta-row"><span class="mk">Autor</span><span class="mv">Ing. Garcia</span></div><div class="fs-acc-meta-row"><span class="mk">Estado</span><span class="mv">Aprobado</span></div>';
+    } else if(selectedACCDoc==='DS-CTK-01'){
+      viewerBody='<div class="fs-acc-viewer-toolbar"><span class="vt-title">Ficha Tecnica CTK-01</span><span>Rev.03</span><span>PDF</span></div><div class="fs-acc-viewer-body" style="align-items:flex-start;justify-content:flex-start;padding:16px;">'+buildDsLngCTK01()+'</div>';
+      metaR='<div class="fs-acc-meta-row"><span class="mk">Numero</span><span class="mv">DS-CTK-01</span></div><div class="fs-acc-meta-row"><span class="mk">Fabricante</span><span class="mv">Chart Industries</span></div><div class="fs-acc-meta-row"><span class="mk">Estado</span><span class="mv">Vigente</span></div>';
+    } else {
+      viewerBody='<div class="fs-acc-viewer-toolbar"><span class="vt-title">'+selectedACCDoc+'</span><span>Rev.03</span><span>PDF</span></div><div class="fs-acc-viewer-body"><div class="fs-acc-viewer-placeholder"><div class="vp-icon">[DOC]</div><div class="vp-text">'+selectedACCDoc+'</div><div class="vp-sub">Vista previa - LNG-MTY-01</div></div></div>';
+      metaR='<div class="fs-acc-meta-row"><span class="mk">Proyecto</span><span class="mv">LNG-MTY-01</span></div><div class="fs-acc-meta-row"><span class="mk">Estado</span><span class="mv">Aprobado</span></div>';
+    }
+    c.innerHTML = '<div class="fs-acc-tree-panel">'+treeHTML+'</div>'+
+      '<div class="fs-acc-viewer">'+viewerBody+'</div>'+
+      '<div class="fs-acc-meta"><div class="fs-acc-meta-title">Metadata</div>'+metaR+
+        '<div class="fs-acc-meta-row"><span class="mk">Planta</span><span class="mv">LNG Regasificacion</span></div>'+
+      '</div>';
+  } else if (view === 'models') {
+    c.innerHTML = '<div style="flex:1;display:flex;align-items:center;justify-content:center;background:#fff;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.08)"><div style="text-align:center;color:#999"><div style="font-size:48px;opacity:.3">[3D]</div><div style="font-size:14px;margin-top:8px">Modelo 3D - LNG-MTY-01</div><div style="font-size:11px;color:#BBB;margin-top:4px">Navisworks / Revit Model</div></div></div>';
+  } else if (view === 'submittals') {
+    c.innerHTML = '<div style="flex:1;padding:20px"><div style="font-size:16px;font-weight:700;color:#1B2A4A;margin-bottom:16px">Submittals</div>'+
+      '<table class="sap-fs-table"><thead><tr><th>#</th><th>Titulo</th><th>Responsable</th><th>Fecha</th><th>Estado</th></tr></thead><tbody>'+
+        '<tr><td>SUB-001</td><td>Tanques Criogenicos - Documentacion Chart</td><td>Ing. Garcia</td><td>2026-02-15</td><td><span class="sap-fs-status done">Aprobado</span></td></tr>'+
+        '<tr><td>SUB-002</td><td>Vaporizadores AAV - Datapack Cryoquip</td><td>Ing. Lopez</td><td>2026-02-28</td><td><span class="sap-fs-status done">Aprobado</span></td></tr>'+
+        '<tr><td>SUB-003</td><td>Instrumentacion Fisher - Certificados</td><td>Ing. Martinez</td><td>2026-03-10</td><td><span class="sap-fs-status wip">En revision</span></td></tr>'+
+      '</tbody></table></div>';
+  } else if (view === 'rfis') {
+    c.innerHTML = '<div style="flex:1;padding:20px"><div style="font-size:16px;font-weight:700;color:#1B2A4A;margin-bottom:16px">RFIs</div>'+
+      '<table class="sap-fs-table"><thead><tr><th>RFI</th><th>Asunto</th><th>De</th><th>Para</th><th>Fecha</th><th>Estado</th></tr></thead><tbody>'+
+        '<tr><td>RFI-001</td><td>Clarificacion cimentacion tanques</td><td>Contratista</td><td>Ing. Garcia</td><td>2026-01-20</td><td><span class="sap-fs-status done">Cerrado</span></td></tr>'+
+        '<tr><td>RFI-002</td><td>Especificacion tuberia criogenica</td><td>Subcontratista</td><td>Ing. Lopez</td><td>2026-02-05</td><td><span class="sap-fs-status done">Cerrado</span></td></tr>'+
+        '<tr><td>RFI-003</td><td>Ubicacion detectores gas</td><td>Seguridad</td><td>Ing. Martinez</td><td>2026-03-01</td><td><span class="sap-fs-status wip">Abierto</span></td></tr>'+
+      '</tbody></table></div>';
+  }
+}
+
+function selectACCDoc(name) {
+  selectedACCDoc = name;
+  renderACCView('docs');
+}
+
+/* ===================================================
+   TANDEM FULLSCREEN OVERLAY
+   =================================================== */
+function openTandemOverlay() {
+  document.getElementById('tandemOverlay').classList.add('show');
+  renderTandem();
+}
+function closeTandemOverlay() {
+  document.getElementById('tandemOverlay').classList.remove('show');
+}
+
+let selectedTandemAsset = 'tk-001';
+function renderTandem() {
+  // Left panel: asset hierarchy
+  const left = document.getElementById('tandemLeft');
+  let lHTML = '<div class="fs-tandem-section">Planta LNG-MTY-01</div>';
+  const categories = {
+    'Almacenamiento': [{id:'tk-001',name:'TK-001 Tanque Cryo 1',dot:'ok'},{id:'tk-002',name:'TK-002 Tanque Cryo 2',dot:'warn'}],
+    'Vaporizacion': [{id:'vap-amb-01',name:'VAP-AMB-01',dot:'ok'},{id:'vap-amb-02',name:'VAP-AMB-02',dot:'ok'},{id:'vap-amb-03',name:'VAP-AMB-03',dot:'warn'},{id:'vap-ba-01',name:'VAP-BA-01',dot:'ok'}],
+    'Regulacion / Medicion': [{id:'reg-01',name:'REG-01 Skid Reg.',dot:'ok'},{id:'odr-01',name:'ODR-01 Odorizador',dot:'ok'},{id:'met-01',name:'MET-01 Medicion',dot:'ok'}],
+    'Auxiliares': [{id:'bog-01',name:'BOG-01 Sistema BOG',dot:'ok'},{id:'pbu-01',name:'PBU-01',dot:'ok'},{id:'unl-01',name:'UNL-01 Descarga',dot:'ok'},{id:'ctrl-01',name:'CTRL-01 Control',dot:'ok'}]
+  };
+  for (const [cat, items] of Object.entries(categories)) {
+    lHTML += '<div class="fs-tandem-section">'+cat+'</div>';
+    items.forEach(a => {
+      lHTML += '<div class="fs-tandem-asset'+(a.id===selectedTandemAsset?' sel':'')+'" onclick="selectTandemAsset(\''+a.id+'\')"><div class="ta-dot '+a.dot+'"></div>'+a.name+'</div>';
+    });
+  }
+  left.innerHTML = lHTML;
+
+  // Right panel: details
+  const right = document.getElementById('tandemRight');
+  const asset = ASSETS.find(a => a.id === selectedTandemAsset);
+  if (!asset) { right.innerHTML = ''; return; }
+
+  let rHTML = '<div class="fs-tandem-card"><div class="fs-tandem-card-title">'+asset.tag+' - '+asset.name+'</div>';
+  for (const [k,v] of Object.entries(asset.info)) {
+    rHTML += '<div class="fs-tandem-row"><span class="trk">'+k+'</span><span class="trv">'+v+'</span></div>';
+  }
+  rHTML += '</div>';
+
+  rHTML += '<div class="fs-tandem-card"><div class="fs-tandem-card-title">Sensores en Tiempo Real</div>';
+  asset.sensors.forEach(s => {
+    rHTML += '<div class="fs-tandem-row"><span class="trk">'+s.n+'</span><span class="trv" style="color:'+(s.s==='ok'?'#10D858':s.s==='warn'?'#F0A000':s.s==='crit'?'#E02020':'#00C8F0')+'">'+s.v+'</span></div>';
+  });
+  rHTML += '</div>';
+
+  rHTML += '<div class="fs-tandem-card"><div class="fs-tandem-card-title">Stream</div>'+
+    '<div class="fs-tandem-stream" id="tandemStream">'+
+      '<div>[09:15:02] SCADA >> Tag '+asset.tag+' actualizado</div>'+
+      '<div>[09:15:04] Tandem >> Propiedades sincronizadas</div>'+
+      '<div>[09:16:00] IoT >> Lecturas recibidas: '+asset.sensors.length+' sensores</div>'+
+      '<div>[09:18:30] BIM >> Modelo 3D actualizado</div>'+
+    '</div></div>';
+
+  right.innerHTML = rHTML;
+}
+
+function selectTandemAsset(id) {
+  selectedTandemAsset = id;
+  renderTandem();
+}
+
+/* ===================================================
+   THREE.JS INITIALIZATION
+   =================================================== */
+function init3D() {
+  const container = document.getElementById('canvas-container');
+  const w = container.clientWidth;
+  const h = container.clientHeight;
+
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x060D18);
+  scene.fog = new THREE.FogExp2(0x060D18, 0.003);
+
+  camera = new THREE.PerspectiveCamera(50, w/h, 0.1, 500);
+  camera.position.set(55, 40, 55);
+
+  renderer = new THREE.WebGLRenderer({antialias:true, alpha:false});
+  renderer.setSize(w, h);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.1;
+  renderer.domElement.id = 'threejs-canvas';
+  container.appendChild(renderer.domElement);
+
+  // CSS2D Renderer for IoT labels
+  css2dRenderer = new THREE.CSS2DRenderer();
+  css2dRenderer.setSize(w, h);
+  css2dRenderer.domElement.style.position = 'absolute';
+  css2dRenderer.domElement.style.top = '0';
+  css2dRenderer.domElement.style.left = '0';
+  css2dRenderer.domElement.style.pointerEvents = 'none';
+  container.appendChild(css2dRenderer.domElement);
+
+  controls = new THREE.OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.08;
+  controls.rotateSpeed = 0.6;
+  controls.panSpeed = 0.5;
+  controls.zoomSpeed = 0.8;
+  controls.target.set(0, 4, 0);
+  controls.minDistance = 8;
+  controls.maxDistance = 150;
+  controls.maxPolarAngle = Math.PI/2.05;
+  controls.enablePan = true;
+  controls.screenSpacePanning = true;
+  controls.update();
+
+  // Lighting
+  scene.add(new THREE.AmbientLight(0x1a2a3a, 0.4));
+  scene.add(new THREE.HemisphereLight(0x4488cc, 0x443322, 0.5));
+
+  const sunLight = new THREE.DirectionalLight(0xffeedd, 1.0);
+  sunLight.position.set(40, 60, 30);
+  sunLight.castShadow = true;
+  sunLight.shadow.mapSize.set(2048, 2048);
+  sunLight.shadow.camera.near = 1;
+  sunLight.shadow.camera.far = 150;
+  sunLight.shadow.camera.left = -60;
+  sunLight.shadow.camera.right = 60;
+  sunLight.shadow.camera.top = 40;
+  sunLight.shadow.camera.bottom = -40;
+  scene.add(sunLight);
+
+  const cryoLight = new THREE.PointLight(0x00aaff, 0.6, 40);
+  cryoLight.position.set(-5, 8, 0);
+  scene.add(cryoLight);
+
+  const ctrlLight = new THREE.PointLight(0xffaa44, 0.5, 25);
+  ctrlLight.position.set(35, 5, -10);
+  scene.add(ctrlLight);
+
+  clock3d = new THREE.Clock();
+
+  buildGround();
+  buildUnloadingArea();
+  buildCryoTanks();
+  buildPBU();
+  buildAmbientVaporizers();
+  buildWaterBathVaporizer();
+  buildRegulationSkid();
+  buildOdorizer();
+  buildMeteringStation();
+  buildBOGSystem();
+  buildControlBuilding();
+  buildPiping();
+  buildSafetySystems();
+  buildUtilities();
+  buildPerimeter();
+  buildTankerTruck();
+
+  createIoTLabels();
+  setupRaycasting();
+  window.addEventListener('resize', onResize);
+  animate();
+}
+
+/* ===================================================
+   MATERIALS
+   =================================================== */
+const MAT = {
+  concrete:    new THREE.MeshStandardMaterial({color:0x555555, roughness:0.9, metalness:0.05}),
+  concreteDark:new THREE.MeshStandardMaterial({color:0x444444, roughness:0.95, metalness:0.05}),
+  stainless:   new THREE.MeshStandardMaterial({color:0xc0c8d0, roughness:0.2, metalness:0.6}),
+  aluminum:    new THREE.MeshStandardMaterial({color:0xd8dce0, roughness:0.15, metalness:0.7}),
+  cryoPipe:    new THREE.MeshStandardMaterial({color:0x88ccee, roughness:0.3, metalness:0.4, emissive:0x001122, emissiveIntensity:0.15}),
+  gasPipe:     new THREE.MeshStandardMaterial({color:0x999999, roughness:0.35, metalness:0.5}),
+  darkGray:    new THREE.MeshStandardMaterial({color:0x444455, roughness:0.6, metalness:0.3}),
+  red:         new THREE.MeshStandardMaterial({color:0xcc2020, roughness:0.5, metalness:0.2}),
+  yellow:      new THREE.MeshStandardMaterial({color:0xddaa00, roughness:0.5, metalness:0.2}),
+  green:       new THREE.MeshStandardMaterial({color:0x22aa44, roughness:0.5, metalness:0.2}),
+  white:       new THREE.MeshStandardMaterial({color:0xeeeeee, roughness:0.6, metalness:0.1}),
+  frost:       new THREE.MeshStandardMaterial({color:0xaaddff, roughness:0.4, metalness:0.3, transparent:true, opacity:0.7, emissive:0x112244, emissiveIntensity:0.1}),
+  glass:       new THREE.MeshStandardMaterial({color:0x44aaff, roughness:0.1, metalness:0.1, transparent:true, opacity:0.3}),
+  truckBody:   new THREE.MeshStandardMaterial({color:0x2244aa, roughness:0.4, metalness:0.3}),
+  truckTank:   new THREE.MeshStandardMaterial({color:0xbbccdd, roughness:0.2, metalness:0.5}),
+  asphalt:     new THREE.MeshStandardMaterial({color:0x333333, roughness:0.95, metalness:0.0}),
+  fence:       new THREE.MeshStandardMaterial({color:0x666666, roughness:0.7, metalness:0.4}),
+  glow:        new THREE.MeshStandardMaterial({color:0xffaa44, emissive:0xffaa44, emissiveIntensity:0.8}),
+  glowGreen:   new THREE.MeshStandardMaterial({color:0x10D858, emissive:0x10D858, emissiveIntensity:0.6}),
+  glowRed:     new THREE.MeshStandardMaterial({color:0xE02020, emissive:0xE02020, emissiveIntensity:0.6}),
+  glowCyan:    new THREE.MeshStandardMaterial({color:0x00C8F0, emissive:0x00C8F0, emissiveIntensity:0.4}),
+};
+
+/* ===================================================
+   HELPERS
+   =================================================== */
+function createGroup(name) { const g = new THREE.Group(); g.name = name; scene.add(g); return g; }
+function box(w,h,d,mat)    { return new THREE.Mesh(new THREE.BoxGeometry(w,h,d), mat); }
+function cyl(rT,rB,h,seg,mat){ return new THREE.Mesh(new THREE.CylinderGeometry(rT,rB,h,seg||16), mat); }
+function sphere(r,mat,ws,hs){ return new THREE.Mesh(new THREE.SphereGeometry(r,ws||16,hs||16), mat); }
+
+/* ===================================================
+   GROUND
+   =================================================== */
+function buildGround() {
+  const ground = box(100, 0.3, 60, MAT.concrete);
+  ground.position.set(0, -0.15, 0);
+  ground.receiveShadow = true;
+  scene.add(ground);
+
+  const terrain = box(140, 0.1, 100, new THREE.MeshStandardMaterial({color:0x2a3a2a, roughness:1}));
+  terrain.position.set(0, -0.35, 0);
+  scene.add(terrain);
+
+  const gridHelper = new THREE.GridHelper(100, 50, 0x333333, 0x222222);
+  gridHelper.position.y = 0.01;
+  scene.add(gridHelper);
+
+  const road = box(20, 0.05, 8, MAT.asphalt);
+  road.position.set(-50, 0.02, -20);
+  scene.add(road);
+
+  const road2 = box(12, 0.05, 30, MAT.asphalt);
+  road2.position.set(-44, 0.02, -5);
+  scene.add(road2);
+
+  for (let i = 0; i < 5; i++) {
+    const mark = box(0.3, 0.06, 1.5, MAT.yellow);
+    mark.position.set(-50 + i*4, 0.03, -20);
+    scene.add(mark);
+  }
+
+  const walk1 = box(1.0, 0.08, 55, new THREE.MeshStandardMaterial({color:0x666666,roughness:0.8}));
+  walk1.position.set(-15, 0.04, 2);
+  scene.add(walk1);
+  const walk2 = box(80, 0.08, 1.0, new THREE.MeshStandardMaterial({color:0x666666,roughness:0.8}));
+  walk2.position.set(5, 0.04, -15);
+  scene.add(walk2);
+}
+
+/* ===================================================
+   CONTAINMENT BERM
+   =================================================== */
+function buildContainmentBerm(x, z, w, d) {
+  const bermMat = new THREE.MeshStandardMaterial({color:0x606060, roughness:0.9, metalness:0.05});
+  const wallH = 0.5, wallT = 0.3;
+  const front = box(w, wallH, wallT, bermMat); front.position.set(x, wallH/2, z-d/2); scene.add(front);
+  const back  = box(w, wallH, wallT, bermMat); back.position.set(x, wallH/2, z+d/2);  scene.add(back);
+  const left  = box(wallT, wallH, d, bermMat); left.position.set(x-w/2, wallH/2, z);   scene.add(left);
+  const right = box(wallT, wallH, d, bermMat); right.position.set(x+w/2, wallH/2, z);  scene.add(right);
+  const floor = box(w-0.4, 0.05, d-0.4, new THREE.MeshStandardMaterial({color:0x4a4a4a,roughness:1}));
+  floor.position.set(x, -0.1, z);
+  scene.add(floor);
+}
+
+/* ===================================================
+   UNLOADING AREA
+   =================================================== */
+function buildUnloadingArea() {
+  const g = createGroup('unl-01');
+  const ox = -35, oz = -15;
+
+  const pad = box(12, 0.15, 8, MAT.concreteDark);
+  pad.position.set(ox, -0.08, oz); g.add(pad);
+
+  const pan = box(6, 0.1, 4, new THREE.MeshStandardMaterial({color:0x3a3a3a,roughness:1}));
+  pan.position.set(ox+1, 0.01, oz); g.add(pan);
+
+  const manifold = box(2, 1.5, 0.8, MAT.darkGray);
+  manifold.position.set(ox+6, 0.75, oz); g.add(manifold);
+
+  for (let i = 0; i < 3; i++) {
+    const valve = cyl(0.15, 0.15, 0.5, 8, MAT.stainless);
+    valve.rotation.z = Math.PI/2;
+    valve.position.set(ox+5.5+i*0.6, 1.3, oz); g.add(valve);
+    const wheel = cyl(0.2, 0.2, 0.05, 12, MAT.red);
+    wheel.position.set(ox+5.5+i*0.6, 1.7, oz); g.add(wheel);
+  }
+
+  const bollardPos = [[-5,-4],[-5,4],[5,-4],[5,4],[0,-4],[0,4]];
+  bollardPos.forEach(([dx,dz]) => {
+    const b = cyl(0.15, 0.18, 0.8, 8, MAT.yellow);
+    b.position.set(ox+dx, 0.4, oz+dz); g.add(b);
+  });
+
+  const hoseEnd = cyl(0.12, 0.12, 2, 8, MAT.cryoPipe);
+  hoseEnd.rotation.z = Math.PI/2;
+  hoseEnd.position.set(ox+3, 1.0, oz); g.add(hoseEnd);
+
+  meshMap['unl-01'] = g;
+}
+
+/* ===================================================
+   TANKER TRUCK
+   =================================================== */
+function buildTankerTruck() {
+  const g = createGroup('truck');
+  const ox = -42, oz = -15;
+
+  const chassis = box(8, 0.6, 2.2, MAT.darkGray);
+  chassis.position.set(ox, 0.8, oz); g.add(chassis);
+
+  const cab = box(2.5, 2.2, 2.4, MAT.truckBody);
+  cab.position.set(ox-3.5, 2.0, oz); g.add(cab);
+
+  const windshield = box(0.05, 1.0, 1.8, MAT.glass);
+  windshield.position.set(ox-4.7, 2.2, oz); g.add(windshield);
+
+  const tanker = cyl(1.2, 1.2, 7, 16, MAT.truckTank);
+  tanker.rotation.z = Math.PI/2;
+  tanker.position.set(ox+0.5, 2.3, oz); g.add(tanker);
+
+  const capL = sphere(1.2, MAT.truckTank, 16, 8);
+  capL.scale.set(1,1,0.15); capL.position.set(ox-3, 2.3, oz); g.add(capL);
+  const capR = sphere(1.2, MAT.truckTank, 16, 8);
+  capR.scale.set(1,1,0.15); capR.position.set(ox+4, 2.3, oz); g.add(capR);
+
+  const wheelMat = new THREE.MeshStandardMaterial({color:0x222222, roughness:0.9});
+  [[-4.2,-1.4],[-4.2,1.4],[1.5,-1.4],[1.5,1.4],[3,-1.4],[3,1.4]].forEach(([dx,dz]) => {
+    const w = cyl(0.5, 0.5, 0.4, 12, wheelMat);
+    w.rotation.x = Math.PI/2; w.position.set(ox+dx, 0.5, oz+dz); g.add(w);
+  });
+
+  const hosePoints = [];
+  for (let i = 0; i <= 20; i++) {
+    const t = i/20;
+    hosePoints.push(new THREE.Vector3(ox+5+t*8, 1.5+Math.sin(t*Math.PI)*1.2, oz));
+  }
+  const hoseCurve = new THREE.CatmullRomCurve3(hosePoints);
+  const hoseGeo = new THREE.TubeGeometry(hoseCurve, 20, 0.08, 8, false);
+  g.add(new THREE.Mesh(hoseGeo, MAT.cryoPipe));
+}
+
+/* ===================================================
+   CRYOGENIC TANKS
+   =================================================== */
+function buildCryoTanks() {
+  buildCryoTank('tk-001', -12, 0, SIM.tank1Level);
+  buildCryoTank('tk-002', -4,  0, SIM.tank2Level);
+  buildContainmentBerm(-8, 0, 22, 16);
+}
+
+function buildCryoTank(id, x, z, level) {
+  const g = createGroup(id);
+
+  const foundation = box(6, 0.8, 6, MAT.concrete);
+  foundation.position.set(x, 0.4, z); foundation.castShadow=true; g.add(foundation);
+
+  const outerShell = cyl(2, 2, 12, 32, MAT.stainless);
+  outerShell.position.set(x, 6.8, z); outerShell.castShadow=true; g.add(outerShell);
+
+  const topCap = new THREE.Mesh(
+    new THREE.SphereGeometry(2, 32, 16, 0, Math.PI*2, 0, Math.PI/4), MAT.stainless);
+  topCap.position.set(x, 12.8, z); g.add(topCap);
+
+  for (let i = 0; i < 8; i++) {
+    const angle = (i/8)*Math.PI*2;
+    const seam = box(0.02, 12, 0.02, MAT.darkGray);
+    seam.position.set(x+Math.cos(angle)*2.02, 6.8, z+Math.sin(angle)*2.02); g.add(seam);
+  }
+  for (let i = 0; i < 4; i++) {
+    const ring = cyl(2.05, 2.05, 0.06, 32, MAT.darkGray);
+    ring.position.set(x, 2+i*3.5, z); g.add(ring);
+  }
+
+  const gauge = box(0.08, 10, 0.08, new THREE.MeshStandardMaterial({color:0x111111}));
+  gauge.position.set(x+2.05, 6, z); g.add(gauge);
+  const levelInd = box(0.12, level/100*10, 0.12, MAT.glowCyan);
+  levelInd.position.set(x+2.05, 1+(level/100*10)/2, z); g.add(levelInd);
+
+  const pGauge = cyl(0.2, 0.2, 0.05, 12, MAT.white);
+  pGauge.rotation.z = Math.PI/2; pGauge.position.set(x+2.1, 11, z+0.5); g.add(pGauge);
+
+  const svBase = cyl(0.15, 0.15, 0.5, 8, MAT.darkGray);
+  svBase.position.set(x+0.8, 13.5, z); g.add(svBase);
+  const svTop = cyl(0.1, 0.15, 0.3, 8, MAT.red);
+  svTop.position.set(x+0.8, 13.9, z); g.add(svTop);
+
+  const pipeOut = cyl(0.12, 0.12, 1.5, 8, MAT.cryoPipe);
+  pipeOut.rotation.z = Math.PI/2; pipeOut.position.set(x+2.5, 1.5, z-0.5); g.add(pipeOut);
+  const pipeFill = cyl(0.1, 0.1, 1.5, 8, MAT.cryoPipe);
+  pipeFill.rotation.z = Math.PI/2; pipeFill.position.set(x+2.5, 1.0, z+0.5); g.add(pipeFill);
+
+  const nameplate = box(0.6, 0.4, 0.02, MAT.yellow);
+  nameplate.position.set(x+2.02, 5, z); g.add(nameplate);
+
+  const ladderX = x - 1.8;
+  for (let i = 0; i < 14; i++) {
+    const rung = cyl(0.03, 0.03, 0.5, 6, MAT.darkGray);
+    rung.rotation.z = Math.PI/2; rung.position.set(ladderX-0.4, 0.8+i*0.95, z); g.add(rung);
+  }
+  const railL = cyl(0.03, 0.03, 13.5, 6, MAT.darkGray);
+  railL.position.set(ladderX-0.15, 7, z-0.25); g.add(railL);
+  const railR = cyl(0.03, 0.03, 13.5, 6, MAT.darkGray);
+  railR.position.set(ladderX-0.15, 7, z+0.25); g.add(railR);
+
+  const platform = cyl(2.5, 2.5, 0.1, 32, new THREE.MeshStandardMaterial({color:0x555555,roughness:0.7,metalness:0.4,side:THREE.DoubleSide}));
+  platform.position.set(x, 13.2, z); g.add(platform);
+  for (let i = 0; i < 12; i++) {
+    const angle = (i/12)*Math.PI*2;
+    const post = cyl(0.025, 0.025, 1.0, 4, MAT.darkGray);
+    post.position.set(x+Math.cos(angle)*2.4, 13.7, z+Math.sin(angle)*2.4); g.add(post);
+  }
+  const railRing = new THREE.Mesh(new THREE.TorusGeometry(2.4, 0.025, 6, 32), MAT.darkGray);
+  railRing.rotation.x = Math.PI/2; railRing.position.set(x, 14.2, z); g.add(railRing);
+
+  meshMap[id] = g;
+}
+
+/* ===================================================
+   PRESSURE BUILDING UNIT
+   =================================================== */
+function buildPBU() {
+  const g = createGroup('pbu-01');
+  const ox = -16, oz = 8;
+
+  const coilBody = cyl(0.4, 0.4, 2.5, 12, MAT.aluminum);
+  coilBody.position.set(ox, 2.0, oz); g.add(coilBody);
+
+  for (let i = 0; i < 8; i++) {
+    const fin = cyl(0.6, 0.6, 0.03, 12, MAT.aluminum);
+    fin.position.set(ox, 1.0+i*0.3, oz); g.add(fin);
+  }
+
+  [[-0.5,-0.5],[0.5,-0.5],[-0.5,0.5],[0.5,0.5]].forEach(([dx,dz]) => {
+    const leg = box(0.1, 1.5, 0.1, MAT.darkGray);
+    leg.position.set(ox+dx, 0.35, oz+dz); g.add(leg);
+  });
+
+  const pipe1 = cyl(0.08, 0.08, 4, 8, MAT.cryoPipe);
+  pipe1.rotation.z = Math.PI/2; pipe1.position.set(ox+3, 3.0, oz); g.add(pipe1);
+
+  const valve = cyl(0.12, 0.12, 0.4, 8, MAT.darkGray);
+  valve.position.set(ox+1.5, 3.0, oz); g.add(valve);
+
+  meshMap['pbu-01'] = g;
+}
+
+/* ===================================================
+   AMBIENT AIR VAPORIZERS
+   =================================================== */
+function buildAmbientVaporizers() {
+  buildAAV('vap-amb-01', 6, 0);
+  buildAAV('vap-amb-02', 12, 0);
+  buildAAV('vap-amb-03', 18, 0);
+}
+
+function buildAAV(id, x, z) {
+  const g = createGroup(id);
+  const legH = 1.5;
+
+  [[-1.2,-0.8],[-1.2,0.8],[1.2,-0.8],[1.2,0.8]].forEach(([dx,dz]) => {
+    const leg = box(0.3, legH, 0.3, MAT.concrete);
+    leg.position.set(x+dx, legH/2, z+dz); g.add(leg);
+  });
+
+  const baseFrame = box(3, 0.15, 2, MAT.darkGray);
+  baseFrame.position.set(x, legH, z); g.add(baseFrame);
+
+  const finCount = 30, finSpacing = 0.22, startY = legH+0.3;
+  const isFrosty = id === 'vap-amb-03';
+  const frostLevel = isFrosty ? 0.6 : 0.3;
+
+  for (let i = 0; i < finCount; i++) {
+    const y = startY + i*finSpacing;
+    const useFrost = (i/finCount) < frostLevel;
+    const finMat = useFrost ? MAT.frost : MAT.aluminum;
+    const fin = box(2.8, 0.04, 1.8, finMat);
+    fin.position.set(x, y, z); fin.castShadow = true; g.add(fin);
+    if (useFrost) frostMeshes.push(fin);
+  }
+
+  const pipeH = finCount*finSpacing+0.5;
+  const p1 = cyl(0.08, 0.08, pipeH, 8, MAT.cryoPipe);
+  p1.position.set(x-0.5, startY+pipeH/2-0.3, z); g.add(p1);
+  const p2 = cyl(0.08, 0.08, pipeH, 8, MAT.cryoPipe);
+  p2.position.set(x+0.5, startY+pipeH/2-0.3, z); g.add(p2);
+
+  const frameH = finCount*finSpacing+1;
+  [[-1.4,-0.9],[-1.4,0.9],[1.4,-0.9],[1.4,0.9]].forEach(([dx,dz]) => {
+    const post = box(0.08, frameH, 0.08, MAT.darkGray);
+    post.position.set(x+dx, startY+frameH/2-0.5, z+dz); g.add(post);
+  });
+  const topFrame = box(3.0, 0.1, 2.0, MAT.darkGray);
+  topFrame.position.set(x, startY+frameH-0.5, z); g.add(topFrame);
+
+  const pipeIn = cyl(0.1, 0.1, 2, 8, MAT.cryoPipe);
+  pipeIn.rotation.z = Math.PI/2; pipeIn.position.set(x-2, 1.2, z); g.add(pipeIn);
+  const pipeOut = cyl(0.1, 0.1, 2, 8, MAT.gasPipe);
+  pipeOut.rotation.z = Math.PI/2; pipeOut.position.set(x+2, startY+frameH-1, z); g.add(pipeOut);
+
+  const drain = cyl(0.06, 0.08, 0.3, 8, MAT.darkGray);
+  drain.position.set(x, 0.15, z+1); g.add(drain);
+
+  meshMap[id] = g;
+}
+
+/* ===================================================
+   WATER BATH VAPORIZER
+   =================================================== */
+function buildWaterBathVaporizer() {
+  const g = createGroup('vap-ba-01');
+  const ox = 12, oz = 10;
+
+  const body = box(4, 2.5, 2, new THREE.MeshStandardMaterial({color:0x5a5a5a,roughness:0.5,metalness:0.3}));
+  body.position.set(ox, 1.75, oz); body.castShadow=true; g.add(body);
+
+  const insul = box(4.1, 2.6, 2.1, new THREE.MeshStandardMaterial({color:0x666666,roughness:0.7,metalness:0.1,transparent:true,opacity:0.3}));
+  insul.position.set(ox, 1.75, oz); g.add(insul);
+
+  const chimney = cyl(0.25, 0.3, 3, 12, MAT.darkGray);
+  chimney.position.set(ox+1.5, 4.5, oz); g.add(chimney);
+  const cap = cyl(0.4, 0.4, 0.05, 12, MAT.darkGray);
+  cap.position.set(ox+1.5, 6.0, oz); g.add(cap);
+
+  const inst1 = box(0.3, 0.5, 0.3, MAT.stainless);
+  inst1.position.set(ox-2.2, 2.0, oz); g.add(inst1);
+  const inst2 = box(0.3, 0.5, 0.3, MAT.stainless);
+  inst2.position.set(ox-2.2, 1.0, oz); g.add(inst2);
+
+  const pIn = cyl(0.1, 0.1, 2, 8, MAT.cryoPipe);
+  pIn.rotation.z = Math.PI/2; pIn.position.set(ox-3, 1.5, oz); g.add(pIn);
+  const pOut = cyl(0.1, 0.1, 2, 8, MAT.gasPipe);
+  pOut.rotation.z = Math.PI/2; pOut.position.set(ox+3, 2.0, oz); g.add(pOut);
+
+  const gasLine = cyl(0.06, 0.06, 3, 8, MAT.gasPipe);
+  gasLine.rotation.z = Math.PI/2; gasLine.position.set(ox+3, 0.5, oz-0.8); g.add(gasLine);
+
+  meshMap['vap-ba-01'] = g;
+}
+
+/* ===================================================
+   REGULATION SKID
+   =================================================== */
+function buildRegulationSkid() {
+  const g = createGroup('reg-01');
+  const ox = 26, oz = 0;
+  const frameMat = new THREE.MeshStandardMaterial({color:0x556677,roughness:0.5,metalness:0.4});
+
+  [[-1.5,-1],[-1.5,1],[1.5,-1],[1.5,1]].forEach(([dx,dz]) => {
+    const post = box(0.12, 2.5, 0.12, frameMat);
+    post.position.set(ox+dx, 1.25, oz+dz); g.add(post);
+  });
+
+  const b1 = box(3,0.1,0.1,frameMat); b1.position.set(ox,2.5,oz-1); g.add(b1);
+  const b2 = box(3,0.1,0.1,frameMat); b2.position.set(ox,2.5,oz+1); g.add(b2);
+  const b3 = box(0.1,0.1,2,frameMat); b3.position.set(ox-1.5,2.5,oz); g.add(b3);
+  const b4 = box(0.1,0.1,2,frameMat); b4.position.set(ox+1.5,2.5,oz); g.add(b4);
+
+  const base = box(3.2, 0.15, 2.2, MAT.concrete);
+  base.position.set(ox, 0.075, oz); g.add(base);
+
+  for (let i = 0; i < 2; i++) {
+    const vz = oz-0.5+i*1.0;
+    const vBody = cyl(0.2, 0.2, 0.8, 10, MAT.darkGray);
+    vBody.rotation.z = Math.PI/2; vBody.position.set(ox, 1.2, vz); g.add(vBody);
+    const act = cyl(0.15, 0.15, 0.6, 8, MAT.stainless);
+    act.position.set(ox, 1.8, vz); g.add(act);
+    const wheel = cyl(0.25, 0.25, 0.04, 12, MAT.red);
+    wheel.position.set(ox, 2.15, vz); g.add(wheel);
+    const pipe = cyl(0.1, 0.1, 3, 8, MAT.gasPipe);
+    pipe.rotation.z = Math.PI/2; pipe.position.set(ox, 1.2, vz); g.add(pipe);
+  }
+
+  const pg1 = cyl(0.12,0.12,0.03,12,MAT.white);
+  pg1.rotation.x=Math.PI/2; pg1.position.set(ox-1,1.8,oz-1.05); g.add(pg1);
+  const pg2 = cyl(0.12,0.12,0.03,12,MAT.white);
+  pg2.rotation.x=Math.PI/2; pg2.position.set(ox+1,1.8,oz-1.05); g.add(pg2);
+
+  const srv = cyl(0.1, 0.1, 0.6, 8, MAT.red);
+  srv.position.set(ox+1.2, 1.8, oz+0.5); g.add(srv);
+
+  const tray = box(3.5, 0.05, 0.4, MAT.darkGray);
+  tray.position.set(ox, 2.7, oz); g.add(tray);
+
+  meshMap['reg-01'] = g;
+}
+
+/* ===================================================
+   ODORIZER
+   =================================================== */
+function buildOdorizer() {
+  const g = createGroup('odr-01');
+  const ox = 32, oz = 0;
+
+  const cabinet = box(1, 1.5, 0.8, MAT.darkGray);
+  cabinet.position.set(ox, 0.75, oz); cabinet.castShadow=true; g.add(cabinet);
+  const door = box(0.8, 1.2, 0.02, new THREE.MeshStandardMaterial({color:0x555566,roughness:0.5,metalness:0.3}));
+  door.position.set(ox, 0.75, oz-0.42); g.add(door);
+
+  const tank = cyl(0.25, 0.25, 1.0, 12, MAT.stainless);
+  tank.position.set(ox+0.8, 0.5, oz); g.add(tank);
+
+  const pipe = cyl(0.06, 0.06, 3, 8, MAT.gasPipe);
+  pipe.rotation.z = Math.PI/2; pipe.position.set(ox, 0.5, oz+0.5); g.add(pipe);
+
+  meshMap['odr-01'] = g;
+}
+
+/* ===================================================
+   METERING STATION
+   =================================================== */
+function buildMeteringStation() {
+  const g = createGroup('met-01');
+  const ox = 36, oz = 0;
+
+  const base = box(2.5, 0.15, 1.5, MAT.concrete);
+  base.position.set(ox, 0.075, oz); g.add(base);
+
+  const meter = cyl(0.2, 0.2, 1.5, 12, MAT.stainless);
+  meter.rotation.z = Math.PI/2; meter.position.set(ox, 0.8, oz); g.add(meter);
+
+  const head = box(0.4, 0.6, 0.3, MAT.darkGray);
+  head.position.set(ox, 1.3, oz); g.add(head);
+
+  const pt = cyl(0.08, 0.08, 0.4, 8, MAT.stainless);
+  pt.position.set(ox+0.8, 1.2, oz); g.add(pt);
+  const te = cyl(0.04, 0.04, 0.5, 6, MAT.stainless);
+  te.rotation.z = Math.PI/4; te.position.set(ox-0.5, 1.1, oz); g.add(te);
+
+  const v1 = cyl(0.12,0.12,0.3,8,MAT.darkGray);
+  v1.rotation.z=Math.PI/2; v1.position.set(ox-1,0.8,oz); g.add(v1);
+  const v2 = cyl(0.12,0.12,0.3,8,MAT.darkGray);
+  v2.rotation.z=Math.PI/2; v2.position.set(ox+1,0.8,oz); g.add(v2);
+
+  const pipe = cyl(0.08, 0.08, 4, 8, MAT.gasPipe);
+  pipe.rotation.z = Math.PI/2; pipe.position.set(ox, 0.8, oz); g.add(pipe);
+
+  meshMap['met-01'] = g;
+}
+
+/* ===================================================
+   BOG SYSTEM
+   =================================================== */
+function buildBOGSystem() {
+  const g = createGroup('bog-01');
+  const ox = -8, oz = 10;
+
+  const compBody = box(1.5, 1.2, 1.0, MAT.darkGray);
+  compBody.position.set(ox, 0.6, oz); compBody.castShadow=true; g.add(compBody);
+
+  const motor = cyl(0.4, 0.4, 1.0, 12, new THREE.MeshStandardMaterial({color:0x336644,roughness:0.5,metalness:0.3}));
+  motor.rotation.z = Math.PI/2; motor.position.set(ox-1.2, 0.6, oz); g.add(motor);
+
+  const vent = cyl(0.15, 0.12, 3, 8, MAT.darkGray);
+  vent.position.set(ox+1.2, 2.5, oz); g.add(vent);
+  const ventCap = cyl(0.2, 0.2, 0.05, 8, MAT.darkGray);
+  ventCap.position.set(ox+1.2, 4.0, oz); g.add(ventCap);
+
+  const pipe = cyl(0.06, 0.06, 6, 8, MAT.cryoPipe);
+  pipe.rotation.z = Math.PI/2; pipe.position.set(ox-4, 10, oz); g.add(pipe);
+
+  const base = box(2.5, 0.15, 1.5, MAT.concrete);
+  base.position.set(ox, 0.075, oz); g.add(base);
+
+  meshMap['bog-01'] = g;
+}
+
+/* ===================================================
+   CONTROL BUILDING
+   =================================================== */
+function buildControlBuilding() {
+  const g = createGroup('ctrl-01');
+  const ox = 30, oz = -12;
+
+  const bldg = box(4, 2.8, 3, new THREE.MeshStandardMaterial({color:0x778888,roughness:0.8,metalness:0.1}));
+  bldg.position.set(ox, 1.4, oz); bldg.castShadow=true; g.add(bldg);
+
+  const roof = box(4.4, 0.15, 3.4, MAT.darkGray);
+  roof.position.set(ox, 2.85, oz); g.add(roof);
+
+  const door = box(0.8, 2.0, 0.05, new THREE.MeshStandardMaterial({color:0x334444,roughness:0.5}));
+  door.position.set(ox-1, 1.0, oz-1.53); g.add(door);
+
+  const window1 = box(1.2, 0.8, 0.05, MAT.glowCyan);
+  window1.position.set(ox+0.5, 1.8, oz-1.53); g.add(window1);
+
+  const plcCab = box(0.6, 1.8, 0.5, new THREE.MeshStandardMaterial({color:0x445555,roughness:0.5,metalness:0.3}));
+  plcCab.position.set(ox+2.5, 0.9, oz-0.5); g.add(plcCab);
+  const plcLight = sphere(0.05, MAT.glowGreen);
+  plcLight.position.set(ox+2.8, 1.6, oz-0.5); g.add(plcLight);
+
+  const esdPanel = box(0.5, 0.8, 0.1, MAT.red);
+  esdPanel.position.set(ox-2.2, 1.2, oz); g.add(esdPanel);
+  const esdBtn = cyl(0.08, 0.08, 0.05, 12, MAT.glowRed);
+  esdBtn.rotation.x = Math.PI/2; esdBtn.position.set(ox-2.25, 1.3, oz); g.add(esdBtn);
+
+  const antenna = cyl(0.03, 0.03, 3, 6, MAT.darkGray);
+  antenna.position.set(ox+1.5, 4.5, oz); g.add(antenna);
+  for (let i = 0; i < 3; i++) {
+    const elem = cyl(0.02, 0.02, 0.4, 4, MAT.darkGray);
+    elem.rotation.z = Math.PI/2; elem.position.set(ox+1.5, 4+i*0.5, oz); g.add(elem);
+  }
+
+  const ac = box(0.8, 0.6, 0.3, MAT.white);
+  ac.position.set(ox, 2.2, oz+1.53); g.add(ac);
+
+  meshMap['ctrl-01'] = g;
+}
+
+/* ===================================================
+   PIPING SYSTEM
+   =================================================== */
+function buildPiping() {
+  addPipeRun(MAT.cryoPipe, 0.15, [[-9.5,1.5,-0.5],[-5,1.5,-0.5],[-5,1.5,-5],[4,1.5,-5],[4,1.5,0]]);
+  addPipeRun(MAT.cryoPipe, 0.12, [[-1.5,1.5,-0.5],[-1.5,1.5,-5]]);
+  addPipeRun(MAT.cryoPipe, 0.12, [[4,1.5,-5],[6,1.5,-5],[6,1.2,0]]);
+  addPipeRun(MAT.cryoPipe, 0.12, [[10,1.5,-5],[12,1.5,-5],[12,1.2,0]]);
+  addPipeRun(MAT.cryoPipe, 0.12, [[16,1.5,-5],[18,1.5,-5],[18,1.2,0]]);
+  addPipeRun(MAT.cryoPipe, 0.1,  [[10,1.5,-5],[10,1.5,5],[10,1.5,10]]);
+
+  addPipeRun(MAT.gasPipe, 0.12, [[8,7,0],[8,7,-8],[24,7,-8],[24,1.2,-8],[24,1.2,0]]);
+  addPipeRun(MAT.gasPipe, 0.1,  [[14,7,0],[14,7,-8]]);
+  addPipeRun(MAT.gasPipe, 0.1,  [[20,7,0],[20,7,-8]]);
+  addPipeRun(MAT.gasPipe, 0.1,  [[15,2,10],[20,2,10],[20,7,10],[20,7,-8]]);
+  addPipeRun(MAT.gasPipe, 0.1,  [[28,0.8,0],[32,0.8,0],[36,0.8,0],[40,0.8,0]]);
+  addPipeRun(MAT.gasPipe, 0.12, [[40,0.8,0],[45,0.8,0],[48,0.8,0]]);
+
+  for (let x = -5; x <= 18; x += 4) {
+    const support = box(0.2, 1.5, 0.2, MAT.concrete);
+    support.position.set(x, 0.75, -5); scene.add(support);
+    const saddle = box(0.6, 0.1, 0.4, MAT.frost);
+    saddle.position.set(x, 1.5, -5); scene.add(saddle);
+  }
+
+  for (let x = 24; x <= 46; x += 4) {
+    const support = box(0.15, 0.8, 0.15, MAT.concrete);
+    support.position.set(x, 0.4, 0); scene.add(support);
+  }
+
+  [[8,-8],[14,-8],[20,-8],[24,-8]].forEach(([px,pz]) => {
+    const post = box(0.12, 7.5, 0.12, MAT.darkGray);
+    post.position.set(px, 3.75, pz); scene.add(post);
+  });
+  const rackBeam = box(16, 0.1, 0.1, MAT.darkGray);
+  rackBeam.position.set(16, 7.2, -8); scene.add(rackBeam);
+}
+
+function addPipeRun(mat, radius, points) {
+  for (let i = 0; i < points.length - 1; i++) {
+    const p1 = points[i], p2 = points[i+1];
+    const dx = p2[0]-p1[0], dy = p2[1]-p1[1], dz = p2[2]-p1[2];
+    const length = Math.sqrt(dx*dx+dy*dy+dz*dz);
+    if (length < 0.01) continue;
+
+    const pipe = cyl(radius, radius, length, 8, mat);
+    pipe.position.set((p1[0]+p2[0])/2, (p1[1]+p2[1])/2, (p1[2]+p2[2])/2);
+    const dir = new THREE.Vector3(dx,dy,dz).normalize();
+    const up = new THREE.Vector3(0,1,0);
+    pipe.quaternion.setFromUnitVectors(up, dir);
+    scene.add(pipe);
+  }
+  for (let i = 1; i < points.length - 1; i++) {
+    const elbow = sphere(radius*1.3, mat, 8, 8);
+    elbow.position.set(points[i][0], points[i][1], points[i][2]);
+    scene.add(elbow);
+  }
+}
+
+/* ===================================================
+   SAFETY SYSTEMS
+   =================================================== */
+function buildSafetySystems() {
+  [[-20,5],[-2,12],[10,12],[22,5],[35,5],[-20,-10],[22,-10],[35,-15]].forEach(([dx,dz]) => {
+    const post = cyl(0.04, 0.04, 3, 6, MAT.darkGray);
+    post.position.set(dx, 1.5, dz); scene.add(post);
+    const detector = box(0.2, 0.15, 0.15, MAT.yellow);
+    detector.position.set(dx, 3.1, dz); scene.add(detector);
+    const light = sphere(0.04, MAT.glowGreen);
+    light.position.set(dx, 3.3, dz); scene.add(light);
+  });
+
+  [[-25,0],[-25,-20],[0,-25],[25,-25],[40,-25]].forEach(([dx,dz]) => {
+    const post = box(0.3, 1.2, 0.3, MAT.red);
+    post.position.set(dx, 0.6, dz); scene.add(post);
+    const btn = cyl(0.1, 0.1, 0.04, 12, MAT.glowRed);
+    btn.position.set(dx, 1.25, dz-0.16); btn.rotation.x=Math.PI/2; scene.add(btn);
+  });
+
+  [[-30,-10],[0,15],[20,12],[35,-5]].forEach(([dx,dz]) => {
+    const ext = cyl(0.08, 0.08, 0.5, 8, MAT.red);
+    ext.position.set(dx, 0.6, dz); scene.add(ext);
+    const stand = cyl(0.03, 0.15, 0.3, 6, MAT.red);
+    stand.position.set(dx, 0.15, dz); scene.add(stand);
+  });
+
+  const wsPost = cyl(0.04, 0.05, 5, 6, MAT.darkGray);
+  wsPost.position.set(-30, 2.5, 20); scene.add(wsPost);
+  const cone = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.8, 8), new THREE.MeshStandardMaterial({color:0xff6600,roughness:0.6,side:THREE.DoubleSide}));
+  cone.rotation.z = Math.PI/2; cone.position.set(-29.5, 5, 20); scene.add(cone);
+
+  [[-25,-5],[-18,15],[5,-20],[30,-20]].forEach(([dx,dz]) => {
+    const signPost = cyl(0.03, 0.03, 2, 4, MAT.darkGray);
+    signPost.position.set(dx, 1, dz); scene.add(signPost);
+    const sign = box(0.6, 0.4, 0.02, MAT.yellow);
+    sign.position.set(dx, 2.1, dz); scene.add(sign);
+  });
+}
+
+/* ===================================================
+   UTILITIES
+   =================================================== */
+function buildUtilities() {
+  const elecCab = box(1.5, 2, 0.6, new THREE.MeshStandardMaterial({color:0x445555,roughness:0.5,metalness:0.3}));
+  elecCab.position.set(25, 1.0, -18); scene.add(elecCab);
+  const warnSign = box(0.3, 0.3, 0.02, MAT.yellow);
+  warnSign.position.set(25, 1.5, -17.68); scene.add(warnSign);
+
+  [[-25,-20],[-25,20],[35,20],[35,-20]].forEach(([px,pz]) => {
+    const pole = cyl(0.08, 0.1, 10, 6, MAT.darkGray);
+    pole.position.set(px, 5, pz); scene.add(pole);
+    const fixture = box(0.6, 0.1, 0.4, MAT.darkGray);
+    fixture.position.set(px, 10.1, pz); scene.add(fixture);
+    const lightGlow = box(0.5, 0.05, 0.3, MAT.glow);
+    lightGlow.position.set(px, 10.0, pz); scene.add(lightGlow);
+    const pLight = new THREE.PointLight(0xffaa66, 0.3, 20);
+    pLight.position.set(px, 9.5, pz); scene.add(pLight);
+  });
+
+  const groundBus = box(0.04, 0.04, 20, new THREE.MeshStandardMaterial({color:0x88aa44,roughness:0.5}));
+  groundBus.position.set(-10, 0.1, 0); scene.add(groundBus);
+  for (let i = 0; i < 5; i++) {
+    const rod = cyl(0.02, 0.02, 0.5, 4, new THREE.MeshStandardMaterial({color:0xaa8833}));
+    rod.position.set(-10, -0.1, -10+i*5); scene.add(rod);
+  }
+}
+
+/* ===================================================
+   PERIMETER FENCE
+   =================================================== */
+function buildPerimeter() {
+  const fenceH = 2.5;
+  const fenceMat = new THREE.MeshStandardMaterial({color:0x666666,roughness:0.7,metalness:0.4});
+  const perimeter = [[-48,-28],[-48,28],[48,28],[48,-28]];
+
+  for (let side = 0; side < 4; side++) {
+    const p1 = perimeter[side], p2 = perimeter[(side+1)%4];
+    const dx = p2[0]-p1[0], dz = p2[1]-p1[1];
+    const len = Math.sqrt(dx*dx+dz*dz);
+    const numPosts = Math.floor(len/4);
+
+    for (let i = 0; i <= numPosts; i++) {
+      const t = i/numPosts;
+      const post = cyl(0.04, 0.04, fenceH, 4, fenceMat);
+      post.position.set(p1[0]+dx*t, fenceH/2, p1[1]+dz*t); scene.add(post);
+    }
+
+    for (let r = 0; r < 3; r++) {
+      const ry = 0.5+r*0.9;
+      const rail = cyl(0.02, 0.02, len, 4, fenceMat);
+      rail.position.set((p1[0]+p2[0])/2, ry, (p1[1]+p2[1])/2);
+      const dir = new THREE.Vector3(dx,0,dz).normalize();
+      rail.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), dir);
+      scene.add(rail);
+    }
+  }
+
+  const gp1 = cyl(0.08, 0.08, 3, 6, MAT.yellow);
+  gp1.position.set(-48, 1.5, -22); scene.add(gp1);
+  const gp2 = cyl(0.08, 0.08, 3, 6, MAT.yellow);
+  gp2.position.set(-48, 1.5, -16); scene.add(gp2);
+}
+
+/* ===================================================
+   IoT LABELS (CSS2DRenderer)
+   =================================================== */
+const IOT_LABELS_DATA = [
+  {id:'ctk01', tag:'CTK-01', x:-12, y:16, z:0, color:'#00C8F0',
+    getData: () => 'Nivel: '+Math.round(SIM.tank1Level)+'% | P: '+SIM.tankPressure.toFixed(1)+' bar | T: '+Math.round(SIM.lngTemp)+'C'},
+  {id:'ctk02', tag:'CTK-02', x:-4, y:16, z:0, color:'#FF5500',
+    getData: () => 'Nivel: '+Math.round(SIM.tank2Level)+'% | P: '+(SIM.tankPressure-0.1).toFixed(1)+' bar | T: '+Math.round(SIM.lngTemp+0.5)+'C'},
+  {id:'vap01', tag:'VAP-01', x:6, y:10, z:0, color:'#10D858',
+    getData: () => 'Flow: '+(SIM.flowRate*0.33).toFixed(0)+' Nm3/h | Tout: '+Math.round(SIM.tSalida-2)+'C'},
+  {id:'vap02', tag:'VAP-02', x:12, y:10, z:0, color:'#10D858',
+    getData: () => 'Flow: '+(SIM.flowRate*0.27).toFixed(0)+' Nm3/h | Tout: '+Math.round(SIM.tSalida)+'C'},
+  {id:'rgs01', tag:'RGS-01', x:26, y:4, z:0, color:'#F0A000',
+    getData: () => 'Pout: '+SIM.pSalida.toFixed(1)+' bar'}
+];
+
+function createIoTLabels() {
+  IOT_LABELS_DATA.forEach(lbl => {
+    const div = document.createElement('div');
+    div.className = 'iot-label';
+    div.style.borderColor = lbl.color;
+    div.innerHTML = '<div class="iot-tag" style="color:'+lbl.color+'">'+lbl.tag+'</div><div class="iot-row"><span class="iot-val">'+lbl.getData()+'</span></div>';
+
+    const labelObj = new THREE.CSS2DObject(div);
+    labelObj.position.set(lbl.x, lbl.y, lbl.z);
+    scene.add(labelObj);
+    lbl.element = div;
+    lbl.object = labelObj;
+    iotLabelObjects.push(labelObj);
+  });
+}
+
+function updateIoTLabels() {
+  IOT_LABELS_DATA.forEach(lbl => {
+    if (lbl.element) {
+      lbl.element.innerHTML = '<div class="iot-tag" style="color:'+lbl.color+'">'+lbl.tag+'</div><div class="iot-row"><span class="iot-val">'+lbl.getData()+'</span></div>';
+      lbl.element.style.display = iotLabelsVisible ? 'block' : 'none';
+    }
+  });
+}
+
+/* ===================================================
+   RAYCASTING
+   =================================================== */
+function setupRaycasting() {
+  const raycaster = new THREE.Raycaster();
+  const mouse = new THREE.Vector2();
+
+  renderer.domElement.addEventListener('click', e => {
+    const rect = renderer.domElement.getBoundingClientRect();
+    mouse.x = ((e.clientX-rect.left)/rect.width)*2-1;
+    mouse.y = -((e.clientY-rect.top)/rect.height)*2+1;
+    raycaster.setFromCamera(mouse, camera);
+    const allMeshes = [];
+    scene.traverse(c => { if(c.isMesh) allMeshes.push(c); });
+    const intersects = raycaster.intersectObjects(allMeshes, false);
+    if (intersects.length > 0) {
+      let current = intersects[0].object;
+      while (current) {
+        if (current.name && meshMap[current.name]) { selectAsset(current.name); return; }
+        current = current.parent;
+      }
+    }
+  });
+
+  renderer.domElement.addEventListener('mousemove', e => {
+    const rect = renderer.domElement.getBoundingClientRect();
+    mouse.x = ((e.clientX-rect.left)/rect.width)*2-1;
+    mouse.y = -((e.clientY-rect.top)/rect.height)*2+1;
+    raycaster.setFromCamera(mouse, camera);
+    const allMeshes = [];
+    scene.traverse(c => { if(c.isMesh) allMeshes.push(c); });
+    const intersects = raycaster.intersectObjects(allMeshes, false);
+    let found = false;
+    if (intersects.length > 0) {
+      let current = intersects[0].object;
+      while (current) {
+        if (current.name && meshMap[current.name]) { found=true; break; }
+        current = current.parent;
+      }
+    }
+    renderer.domElement.style.cursor = found ? 'pointer' : 'default';
+  });
+}
+
+/* ===================================================
+   HIGHLIGHT
+   =================================================== */
+let highlightedMeshes = [];
+const highlightMat = new THREE.MeshStandardMaterial({color:0xFF5500, emissive:0xFF5500, emissiveIntensity:0.3, transparent:true, opacity:0.8});
+
+function highlightMesh(id) {
+  clearHighlight();
+  const group = meshMap[id];
+  if (!group) return;
+  group.traverse(child => {
+    if (child.isMesh) {
+      child.userData.origMat = child.material;
+      child.material = highlightMat;
+      highlightedMeshes.push(child);
+    }
+  });
+  setTimeout(() => {
+    highlightedMeshes.forEach(m => { if(m.userData.origMat) m.material = m.userData.origMat; });
+    highlightedMeshes = [];
+  }, 800);
+}
+
+function clearHighlight() {
+  highlightedMeshes.forEach(m => { if(m.userData.origMat) m.material = m.userData.origMat; });
+  highlightedMeshes = [];
+}
+
+/* ===================================================
+   VAPOR PARTICLES
+   =================================================== */
+function createVaporParticles() {
+  const particleCount = 80;
+  const positions = new Float32Array(particleCount*3);
+  const geo = new THREE.BufferGeometry();
+
+  for (let i = 0; i < particleCount; i++) {
+    positions[i*3]   = -15 + Math.random()*35;
+    positions[i*3+1] = Math.random()*3;
+    positions[i*3+2] = -5 + Math.random()*20;
+  }
+  geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+  const pMat = new THREE.PointsMaterial({
+    color:0x88ccff, size:0.4, transparent:true, opacity:0.3,
+    blending:THREE.AdditiveBlending, depthWrite:false
+  });
+
+  const particles = new THREE.Points(geo, pMat);
+  scene.add(particles);
+  vapParticles.push({mesh:particles, positions:positions, count:particleCount});
+}
+
+/* ===================================================
+   CRYOGENIC FLOW PARTICLES (Process Paths)
+   =================================================== */
+function createCryoFlowParticles() {
+  // Path 1: Unloading area (-42,2,-15) to tanks (-8,2,0) - blue/white cold LNG
+  const path1Points = [
+    {x:-35,y:2,z:-12}, {x:-25,y:2,z:-6}, {x:-15,y:2,z:-2}, {x:-8,y:2,z:0}
+  ];
+  createFlowPath(path1Points, 8, 0x44aaff, 0xccddff, 0.35, 0.008);
+
+  // Path 2: Tanks (-8,2,0) to vaporizers (12,3,0) - blue transitioning to orange
+  const path2Points = [
+    {x:-4,y:1.5,z:0}, {x:2,y:1.5,z:0}, {x:8,y:2,z:0}, {x:14,y:3,z:0}
+  ];
+  createFlowPath(path2Points, 9, 0x44aaff, 0xff8833, 0.3, 0.012);
+
+  // Path 3: Vaporizers (18,4,0) to regulation (26,2,0) - orange/yellow warm gas
+  const path3Points = [
+    {x:20,y:4,z:0}, {x:23,y:3,z:0}, {x:26,y:2.5,z:0}, {x:32,y:2,z:0}
+  ];
+  createFlowPath(path3Points, 8, 0xff8833, 0xffcc44, 0.25, 0.015);
+}
+
+function createFlowPath(waypoints, count, colorStart, colorEnd, size, speed) {
+  const positions = new Float32Array(count * 3);
+  const colors = new Float32Array(count * 3);
+  const geo = new THREE.BufferGeometry();
+  const cStart = new THREE.Color(colorStart);
+  const cEnd = new THREE.Color(colorEnd);
+
+  for (let i = 0; i < count; i++) {
+    const t = Math.random();
+    const seg = Math.min(Math.floor(t * (waypoints.length - 1)), waypoints.length - 2);
+    const lt = t * (waypoints.length - 1) - seg;
+    const wp0 = waypoints[seg], wp1 = waypoints[seg + 1];
+    positions[i*3]   = wp0.x + (wp1.x - wp0.x) * lt + (Math.random()-0.5)*0.5;
+    positions[i*3+1] = wp0.y + (wp1.y - wp0.y) * lt + (Math.random()-0.5)*0.3;
+    positions[i*3+2] = wp0.z + (wp1.z - wp0.z) * lt + (Math.random()-0.5)*0.5;
+    const c = new THREE.Color().lerpColors(cStart, cEnd, t);
+    colors[i*3] = c.r; colors[i*3+1] = c.g; colors[i*3+2] = c.b;
+  }
+  geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+  const mat = new THREE.PointsMaterial({
+    size: size, vertexColors: true, transparent: true, opacity: 0.7,
+    blending: THREE.AdditiveBlending, depthWrite: false
+  });
+  const pts = new THREE.Points(geo, mat);
+  scene.add(pts);
+  cryoFlowParticles.push({mesh: pts, waypoints: waypoints, count: count, speed: speed,
+    colorStart: cStart, colorEnd: cEnd, progress: new Float32Array(count)});
+  // Init progress
+  for (let i = 0; i < count; i++) cryoFlowParticles[cryoFlowParticles.length-1].progress[i] = Math.random();
+}
+
+/* ===================================================
+   VAPORIZER STEAM PARTICLES
+   =================================================== */
+function createSteamParticles() {
+  // Vaporizers at x=6, x=12, x=18, all at z=0, top around y=8
+  const vapPositions = [{x:6, z:0}, {x:12, z:0}, {x:18, z:0}];
+  vapPositions.forEach(vp => {
+    const count = 18;
+    const positions = new Float32Array(count * 3);
+    const sizes = new Float32Array(count);
+    const geo = new THREE.BufferGeometry();
+    for (let i = 0; i < count; i++) {
+      positions[i*3]   = vp.x + (Math.random()-0.5)*2.0;
+      positions[i*3+1] = 8 + Math.random()*3;
+      positions[i*3+2] = vp.z + (Math.random()-0.5)*1.5;
+      sizes[i] = 0.15 + Math.random()*0.2;
+    }
+    geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    const mat = new THREE.PointsMaterial({
+      color: 0xffffff, size: 0.25, transparent: true, opacity: 0.35,
+      blending: THREE.AdditiveBlending, depthWrite: false
+    });
+    const pts = new THREE.Points(geo, mat);
+    scene.add(pts);
+    steamParticles.push({mesh: pts, count: count, baseX: vp.x, baseZ: vp.z, baseY: 8, maxH: 5});
+  });
+}
+
+/* ===================================================
+   FROST GLOW PIPES
+   =================================================== */
+function createFrostGlowPipes() {
+  // Add glowing cryo pipe segments near tanks
+  const pipeSegs = [
+    {x:-12, y:1.5, z:-0.5, len:3, rot:'z'},
+    {x:-4,  y:1.5, z:-0.5, len:3, rot:'z'},
+    {x:-8,  y:1.2, z:0,    len:6, rot:'z'},
+  ];
+  pipeSegs.forEach(seg => {
+    const geo = new THREE.CylinderGeometry(0.18, 0.18, seg.len, 8);
+    const mat = new THREE.MeshBasicMaterial({
+      color: 0x88ccff, transparent: true, opacity: 0.15
+    });
+    const m = new THREE.Mesh(geo, mat);
+    m.position.set(seg.x, seg.y, seg.z);
+    if (seg.rot === 'z') m.rotation.z = Math.PI/2;
+    scene.add(m);
+    frostGlowPipes.push(m);
+  });
+}
+
+/* ===================================================
+   ANIMATION LOOP
+   =================================================== */
+function animate() {
+  requestAnimationFrame(animate);
+  const dt = clock3d.getDelta();
+  const elapsed = clock3d.getElapsedTime();
+
+  controls.update();
+
+  vapParticles.forEach(vp => {
+    const pos = vp.mesh.geometry.attributes.position.array;
+    for (let i = 0; i < vp.count; i++) {
+      pos[i*3+1] += dt*(0.3+Math.random()*0.5);
+      pos[i*3]   += Math.sin(elapsed+i)*dt*0.2;
+      if (pos[i*3+1] > 4) {
+        pos[i*3+1] = 0;
+        pos[i*3]   = -15+Math.random()*35;
+        pos[i*3+2] = -5+Math.random()*20;
+      }
+    }
+    vp.mesh.geometry.attributes.position.needsUpdate = true;
+  });
+
+  frostMeshes.forEach((m,i) => {
+    if (m.material && m.material.opacity !== undefined)
+      m.material.opacity = 0.5+0.2*Math.sin(elapsed*0.5+i*0.3);
+  });
+
+  // -- CRYOGENIC FLOW PARTICLES animation --
+  cryoFlowParticles.forEach(fp => {
+    const pos = fp.mesh.geometry.attributes.position.array;
+    const col = fp.mesh.geometry.attributes.color.array;
+    for (let i = 0; i < fp.count; i++) {
+      fp.progress[i] += fp.speed + Math.random()*0.003;
+      if (fp.progress[i] > 1) fp.progress[i] = 0;
+      const t = fp.progress[i];
+      const seg = Math.min(Math.floor(t * (fp.waypoints.length - 1)), fp.waypoints.length - 2);
+      const lt = t * (fp.waypoints.length - 1) - seg;
+      const w0 = fp.waypoints[seg], w1 = fp.waypoints[seg + 1];
+      pos[i*3]   = w0.x + (w1.x - w0.x)*lt + Math.sin(elapsed*2+i)*0.15;
+      pos[i*3+1] = w0.y + (w1.y - w0.y)*lt + Math.sin(elapsed*3+i*0.7)*0.1;
+      pos[i*3+2] = w0.z + (w1.z - w0.z)*lt + Math.cos(elapsed*2+i*0.5)*0.15;
+      const c = new THREE.Color().lerpColors(fp.colorStart, fp.colorEnd, t);
+      col[i*3]=c.r; col[i*3+1]=c.g; col[i*3+2]=c.b;
+    }
+    fp.mesh.geometry.attributes.position.needsUpdate = true;
+    fp.mesh.geometry.attributes.color.needsUpdate = true;
+    fp.mesh.material.opacity = 0.5 + 0.2*Math.sin(elapsed*1.5);
+  });
+
+  // -- VAPORIZER STEAM animation --
+  steamParticles.forEach(sp => {
+    const pos = sp.mesh.geometry.attributes.position.array;
+    for (let i = 0; i < sp.count; i++) {
+      pos[i*3+1] += dt*(0.4+Math.random()*0.6);
+      pos[i*3]   += Math.sin(elapsed*1.5+i*0.4)*dt*0.3;
+      pos[i*3+2] += Math.cos(elapsed*1.2+i*0.3)*dt*0.2;
+      const height = pos[i*3+1] - sp.baseY;
+      if (height > sp.maxH) {
+        pos[i*3]   = sp.baseX + (Math.random()-0.5)*2.0;
+        pos[i*3+1] = sp.baseY;
+        pos[i*3+2] = sp.baseZ + (Math.random()-0.5)*1.5;
+      }
+    }
+    sp.mesh.geometry.attributes.position.needsUpdate = true;
+    sp.mesh.material.opacity = 0.2 + 0.15*Math.sin(elapsed*0.8);
+  });
+
+  // -- FROST GLOW PIPES pulsing --
+  frostGlowPipes.forEach((m, i) => {
+    m.material.opacity = 0.1 + 0.12*Math.sin(elapsed*0.7 + i*1.2);
+  });
+
+  // -- TANK LEVEL visual change (driven by SIM data) --
+  if (tankLevelMesh1) {
+    const h1 = (SIM.tank1Level/100)*10;
+    tankLevelMesh1.scale.y = Math.max(0.01, h1/5);
+    tankLevelMesh1.position.y = 1 + h1/2;
+  }
+  if (tankLevelMesh2) {
+    const h2 = (SIM.tank2Level/100)*10;
+    tankLevelMesh2.scale.y = Math.max(0.01, h2/5);
+    tankLevelMesh2.position.y = 1 + h2/2;
+  }
+
+  renderer.render(scene, camera);
+  if (css2dRenderer) css2dRenderer.render(scene, camera);
+}
+
+/* ===================================================
+   RESIZE
+   =================================================== */
+function onResize() {
+  const container = document.getElementById('canvas-container');
+  const w = container.clientWidth, h = container.clientHeight;
+  camera.aspect = w/h;
+  camera.updateProjectionMatrix();
+  renderer.setSize(w, h);
+  if (css2dRenderer) css2dRenderer.setSize(w, h);
+}
+
+/* ===================================================
+   ORBIT CONTROLS (inline r128)
+   =================================================== */
+THREE.OrbitControls = function(object, domElement) {
+  this.object = object;
+  this.domElement = domElement;
+  this.enabled = true;
+  this.target = new THREE.Vector3();
+  this.enableDamping = true;
+  this.dampingFactor = 0.08;
+  this.enableZoom = true;
+  this.zoomSpeed = 0.8;
+  this.minDistance = 8;
+  this.maxDistance = 150;
+  this.enableRotate = true;
+  this.rotateSpeed = 0.6;
+  this.enablePan = true;
+  this.panSpeed = 0.5;
+  this.screenSpacePanning = true;
+  this.minPolarAngle = 0;
+  this.maxPolarAngle = Math.PI;
+
+  const scope = this;
+  const STATE = {NONE:-1,ROTATE:0,DOLLY:1,PAN:2,TOUCH_ROTATE:3,TOUCH_DOLLY_PAN:4};
+  let state = STATE.NONE;
+  let spherical = new THREE.Spherical();
+  let sphericalDelta = new THREE.Spherical();
+  let scale = 1;
+  let panOffset = new THREE.Vector3();
+  let rotateStart = new THREE.Vector2();
+  let rotateEnd = new THREE.Vector2();
+  let rotateDelta = new THREE.Vector2();
+  let panStart = new THREE.Vector2();
+  let panEnd = new THREE.Vector2();
+  let panDelta = new THREE.Vector2();
+  let dollyStart = new THREE.Vector2();
+  let dollyEnd = new THREE.Vector2();
+  let dollyDelta = new THREE.Vector2();
+
+  this.update = function() {
+    const offset = new THREE.Vector3();
+    const quat = new THREE.Quaternion().setFromUnitVectors(object.up, new THREE.Vector3(0,1,0));
+    const quatInverse = quat.clone().invert();
+
+    return function update() {
+      const position = scope.object.position;
+      offset.copy(position).sub(scope.target);
+      offset.applyQuaternion(quat);
+      spherical.setFromVector3(offset);
+      spherical.theta += sphericalDelta.theta;
+      spherical.phi += sphericalDelta.phi;
+      spherical.phi = Math.max(scope.minPolarAngle, Math.min(scope.maxPolarAngle, spherical.phi));
+      spherical.makeSafe();
+      spherical.radius *= scale;
+      spherical.radius = Math.max(scope.minDistance, Math.min(scope.maxDistance, spherical.radius));
+      scope.target.add(panOffset);
+      offset.setFromSpherical(spherical);
+      offset.applyQuaternion(quatInverse);
+      position.copy(scope.target).add(offset);
+      scope.object.lookAt(scope.target);
+
+      if (scope.enableDamping) {
+        sphericalDelta.theta *= (1-scope.dampingFactor);
+        sphericalDelta.phi *= (1-scope.dampingFactor);
+        panOffset.multiplyScalar(1-scope.dampingFactor);
+      } else {
+        sphericalDelta.set(0,0,0);
+        panOffset.set(0,0,0);
+      }
+      scale = 1;
+      return false;
+    };
+  }();
+
+  function onMouseDown(event) {
+    if (!scope.enabled) return;
+    event.preventDefault();
+    switch(event.button) {
+      case 0: if(!scope.enableRotate) return; rotateStart.set(event.clientX,event.clientY); state=STATE.ROTATE; break;
+      case 1: if(!scope.enableZoom) return; dollyStart.set(event.clientX,event.clientY); state=STATE.DOLLY; break;
+      case 2: if(!scope.enablePan) return; panStart.set(event.clientX,event.clientY); state=STATE.PAN; break;
+    }
+    if(state!==STATE.NONE){ document.addEventListener('mousemove',onMouseMove,false); document.addEventListener('mouseup',onMouseUp,false); }
+  }
+
+  function onMouseMove(event) {
+    if(!scope.enabled) return; event.preventDefault();
+    switch(state) {
+      case STATE.ROTATE:
+        rotateEnd.set(event.clientX,event.clientY);
+        rotateDelta.subVectors(rotateEnd,rotateStart).multiplyScalar(scope.rotateSpeed);
+        sphericalDelta.theta -= 0.4*Math.PI*rotateDelta.x/scope.domElement.clientHeight;
+        sphericalDelta.phi -= 0.4*Math.PI*rotateDelta.y/scope.domElement.clientHeight;
+        rotateStart.copy(rotateEnd); break;
+      case STATE.DOLLY:
+        dollyEnd.set(event.clientX,event.clientY);
+        dollyDelta.subVectors(dollyEnd,dollyStart);
+        if(dollyDelta.y>0) scale/=Math.pow(0.95,scope.zoomSpeed);
+        else if(dollyDelta.y<0) scale*=Math.pow(0.95,scope.zoomSpeed);
+        dollyStart.copy(dollyEnd); break;
+      case STATE.PAN:
+        panEnd.set(event.clientX,event.clientY);
+        panDelta.subVectors(panEnd,panStart).multiplyScalar(scope.panSpeed);
+        const offset=new THREE.Vector3(); offset.copy(scope.object.position).sub(scope.target);
+        let targetDist=offset.length()*Math.tan(scope.object.fov/2*Math.PI/180);
+        const pL=new THREE.Vector3(); pL.setFromMatrixColumn(scope.object.matrix,0);
+        pL.multiplyScalar(-2*panDelta.x*targetDist/scope.domElement.clientHeight);
+        const pU=new THREE.Vector3(); pU.setFromMatrixColumn(scope.object.matrix,1);
+        pU.multiplyScalar(2*panDelta.y*targetDist/scope.domElement.clientHeight);
+        panOffset.add(pL).add(pU); panStart.copy(panEnd); break;
+    }
+    scope.update();
+  }
+
+  function onMouseUp() {
+    document.removeEventListener('mousemove',onMouseMove,false);
+    document.removeEventListener('mouseup',onMouseUp,false);
+    state=STATE.NONE;
+  }
+
+  function onWheel(event) {
+    if(!scope.enabled||!scope.enableZoom) return;
+    event.preventDefault(); event.stopPropagation();
+    if(event.deltaY>0) scale/=Math.pow(0.95,scope.zoomSpeed);
+    else if(event.deltaY<0) scale*=Math.pow(0.95,scope.zoomSpeed);
+    scope.update();
+  }
+
+  function onTouchStart(event) {
+    if(!scope.enabled) return; event.preventDefault();
+    switch(event.touches.length) {
+      case 1: rotateStart.set(event.touches[0].pageX,event.touches[0].pageY); state=STATE.TOUCH_ROTATE; break;
+      case 2:
+        const dx=event.touches[0].pageX-event.touches[1].pageX;
+        const dy=event.touches[0].pageY-event.touches[1].pageY;
+        dollyStart.set(0,Math.sqrt(dx*dx+dy*dy));
+        panStart.set((event.touches[0].pageX+event.touches[1].pageX)*0.5,(event.touches[0].pageY+event.touches[1].pageY)*0.5);
+        state=STATE.TOUCH_DOLLY_PAN; break;
+    }
+  }
+
+  function onTouchMove(event) {
+    if(!scope.enabled) return; event.preventDefault();
+    switch(state) {
+      case STATE.TOUCH_ROTATE:
+        rotateEnd.set(event.touches[0].pageX,event.touches[0].pageY);
+        rotateDelta.subVectors(rotateEnd,rotateStart).multiplyScalar(scope.rotateSpeed);
+        sphericalDelta.theta -= 0.4*Math.PI*rotateDelta.x/scope.domElement.clientHeight;
+        sphericalDelta.phi -= 0.4*Math.PI*rotateDelta.y/scope.domElement.clientHeight;
+        rotateStart.copy(rotateEnd); break;
+      case STATE.TOUCH_DOLLY_PAN:
+        const dx=event.touches[0].pageX-event.touches[1].pageX;
+        const dy=event.touches[0].pageY-event.touches[1].pageY;
+        dollyEnd.set(0,Math.sqrt(dx*dx+dy*dy));
+        dollyDelta.subVectors(dollyEnd,dollyStart);
+        if(dollyDelta.y>0) scale/=Math.pow(0.95,scope.zoomSpeed);
+        else if(dollyDelta.y<0) scale*=Math.pow(0.95,scope.zoomSpeed);
+        dollyStart.copy(dollyEnd);
+        const px=(event.touches[0].pageX+event.touches[1].pageX)*0.5;
+        const py=(event.touches[0].pageY+event.touches[1].pageY)*0.5;
+        panEnd.set(px,py); panDelta.subVectors(panEnd,panStart).multiplyScalar(scope.panSpeed);
+        const offset=new THREE.Vector3(); offset.copy(scope.object.position).sub(scope.target);
+        let dist=offset.length()*Math.tan(scope.object.fov/2*Math.PI/180);
+        const pL2=new THREE.Vector3().setFromMatrixColumn(scope.object.matrix,0).multiplyScalar(-2*panDelta.x*dist/scope.domElement.clientHeight);
+        const pU2=new THREE.Vector3().setFromMatrixColumn(scope.object.matrix,1).multiplyScalar(2*panDelta.y*dist/scope.domElement.clientHeight);
+        panOffset.add(pL2).add(pU2); panStart.copy(panEnd); break;
+    }
+    scope.update();
+  }
+
+  function onTouchEnd() { state=STATE.NONE; }
+  function onContextMenu(e) { e.preventDefault(); }
+
+  domElement.addEventListener('contextmenu',onContextMenu,false);
+  domElement.addEventListener('mousedown',onMouseDown,false);
+  domElement.addEventListener('wheel',onWheel,{passive:false});
+  domElement.addEventListener('touchstart',onTouchStart,{passive:false});
+  domElement.addEventListener('touchmove',onTouchMove,{passive:false});
+  domElement.addEventListener('touchend',onTouchEnd,false);
+
+  this.update();
+};
+
+/* ===================================================
+   REAL-TIME SIMULATION
+   =================================================== */
+function simulateData() {
+  // Tank level decrease with refill when low
+  tankRefillTimer++;
+  if (SIM.tank1Level < 25 && tankRefillTimer > 30) {
+    SIM.tank1Level = Math.min(95, SIM.tank1Level + 2.5);
+  } else {
+    SIM.tank1Level = Math.max(15, SIM.tank1Level - Math.random()*0.05);
+  }
+  if (SIM.tank2Level < 20 && tankRefillTimer > 45) {
+    SIM.tank2Level = Math.min(90, SIM.tank2Level + 2.0);
+    tankRefillTimer = 0;
+  } else {
+    SIM.tank2Level = Math.max(10, SIM.tank2Level - Math.random()*0.04);
+  }
+  SIM.lngTemp = -155 + (Math.random()-0.5)*2;
+  SIM.tSalida = 14 + (Math.random()-0.5)*3;
+  SIM.tankPressure = 5.2 + (Math.random()-0.5)*0.4;
+  SIM.pSalida = 4.1 + (Math.random()-0.5)*0.3;
+  SIM.flowRate = 1650 + Math.floor((Math.random()-0.5)*100);
+  SIM.inventario = Math.round((SIM.tank1Level+SIM.tank2Level)/100*84);
+  SIM.autonomia = Math.round(SIM.inventario/SIM.flowRate*1000*24);
+
+  document.getElementById('kTank1').textContent = Math.round(SIM.tank1Level);
+  document.getElementById('kTank2').textContent = Math.round(SIM.tank2Level);
+  document.getElementById('kPresion').textContent = SIM.tankPressure.toFixed(1);
+  document.getElementById('kTemp').textContent = Math.round(SIM.lngTemp);
+  document.getElementById('kFlujo').textContent = SIM.flowRate.toLocaleString();
+  document.getElementById('kTsalida').textContent = Math.round(SIM.tSalida);
+  document.getElementById('kPsalida').textContent = SIM.pSalida.toFixed(1);
+  document.getElementById('kInventario').textContent = SIM.inventario;
+  document.getElementById('kAutonomia').textContent = SIM.autonomia;
+
+  // -- Temperature gradient from tank to outlet --
+  const tTank = Math.round(SIM.lngTemp);
+  const tOut = Math.round(SIM.tSalida);
+  document.getElementById('kTempGrad').textContent = tTank + ' / +' + tOut;
+  // -- BOG pressure slowly building --
+  SIM.bogPressure = (SIM.bogPressure || 0.8) + Math.random()*0.02 - 0.005;
+  if (SIM.bogPressure > 2.0) SIM.bogPressure = 0.5;
+  if (SIM.bogPressure < 0.3) SIM.bogPressure = 0.5;
+  document.getElementById('kBOGpress').textContent = SIM.bogPressure.toFixed(2);
+  const bogEl = document.getElementById('kBOGpress');
+  bogEl.className = 'kpi-val '+(SIM.bogPressure>1.5?'re':SIM.bogPressure>1.0?'ye':'gr');
+  // -- Autonomy countdown --
+  const aHrs = Math.floor(SIM.autonomia);
+  const aMins = Math.floor((SIM.autonomia - aHrs)*60);
+  document.getElementById('kCountdown').textContent = aHrs+':'+(aMins<10?'0':'')+aMins;
+  const cdEl = document.getElementById('kCountdown');
+  cdEl.className = 'kpi-val '+(SIM.autonomia<12?'re':SIM.autonomia<24?'ye':'or');
+
+  document.getElementById('tg1').style.height = Math.round(SIM.tank1Level)+'%';
+  document.getElementById('tgv1').textContent = Math.round(SIM.tank1Level)+'%';
+  document.getElementById('tg2').style.height = Math.round(SIM.tank2Level)+'%';
+  document.getElementById('tgv2').textContent = Math.round(SIM.tank2Level)+'%';
+
+  const t1el = document.getElementById('kTank1');
+  t1el.className = 'kpi-val '+(SIM.tank1Level<30?'re':SIM.tank1Level<50?'ye':'cy');
+  const t2el = document.getElementById('kTank2');
+  t2el.className = 'kpi-val '+(SIM.tank2Level<30?'re':SIM.tank2Level<50?'ye':'or');
+
+  // Update IoT labels
+  updateIoTLabels();
+
+  // Update trend chart if panel is open
+  if (selectedAsset) {
+    const a = ASSETS.find(x => x.id===selectedAsset);
+    if (a) {
+      if (a.id==='tk-001') {
+        a.sensors[0].v = Math.round(SIM.tank1Level)+'%'; a.sensors[0].pct = Math.round(SIM.tank1Level);
+        a.sensors[0].s = SIM.tank1Level<30?'crit':SIM.tank1Level<50?'warn':'ok';
+        a.sensors[1].v = SIM.tankPressure.toFixed(1)+' bar';
+        a.sensors[2].v = SIM.lngTemp.toFixed(1)+' C';
+      } else if (a.id==='tk-002') {
+        a.sensors[0].v = Math.round(SIM.tank2Level)+'%'; a.sensors[0].pct = Math.round(SIM.tank2Level);
+        a.sensors[0].s = SIM.tank2Level<30?'crit':SIM.tank2Level<50?'warn':'ok';
+        a.sensors[1].v = (SIM.tankPressure-0.1).toFixed(1)+' bar';
+        a.sensors[2].v = (SIM.lngTemp+0.5).toFixed(1)+' C';
+      } else if (a.id==='reg-01') {
+        a.sensors[0].v = (SIM.pSalida+0.4).toFixed(1)+' bar';
+        a.sensors[1].v = SIM.pSalida.toFixed(1)+' bar';
+        a.sensors[2].v = Math.round(SIM.tSalida)+' C';
+      } else if (a.id==='met-01') {
+        a.sensors[0].v = SIM.flowRate.toLocaleString()+' Nm3/h';
+        a.sensors[2].v = SIM.pSalida.toFixed(1)+' bar';
+        a.sensors[3].v = Math.round(SIM.tSalida)+' C';
+      }
+
+      let sensHTML = '';
+      a.sensors.forEach(s => {
+        const barColor = s.s==='ok'?'var(--gr)':s.s==='warn'?'var(--ye)':s.s==='crit'?'var(--re)':'var(--cy)';
+        sensHTML += '<div class="ep-sensor"><span class="sn">'+s.n+'</span><span class="sv '+s.s+'">'+s.v+'</span>';
+        if (typeof s.pct === 'number') {
+          sensHTML += '<div class="mini-bar"><div class="mini-bar-fill" style="width:'+s.pct+'%;background:'+barColor+'"></div></div>';
+        }
+        sensHTML += '</div>';
+      });
+      document.getElementById('epSensors').innerHTML = sensHTML;
+      drawTrendChart(a);
+    }
+  }
+
+  if (SIM.tank2Level<40 && !ALERTS.find(a=>a.title.includes('Critico'))) {
+    ALERTS.unshift({type:'crit',title:'Nivel Critico Tanque 2',desc:'TK-002 por debajo del 40%. Requiere recarga inmediata.',
+      time:new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'}),equip:'TK-002'});
+    document.getElementById('alertCnt').textContent = ALERTS.length;
+  }
+  if (SIM.tankPressure>5.8 && !ALERTS.find(a=>a.title.includes('Presion alta'))) {
+    ALERTS.unshift({type:'warn',title:'Presion alta tanques',desc:'Presion de tanques > 5.8 bar. Verificar PBU.',
+      time:new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'}),equip:'TK-001'});
+    document.getElementById('alertCnt').textContent = ALERTS.length;
+  }
+}
+
+/* ===================================================
+   MOBILE SIDEBAR TOGGLE
+   =================================================== */
+function toggleMobileSidebar() {
+  const sidebar = document.getElementById('sidebar-left');
+  const overlay = document.getElementById('mobileOverlay');
+  const btn = document.getElementById('hamburgerBtn');
+  const isOpen = sidebar.classList.contains('mobile-open');
+  if (isOpen) {
+    sidebar.classList.remove('mobile-open');
+    overlay.classList.remove('show');
+    btn.classList.remove('active');
+  } else {
+    sidebar.classList.add('mobile-open');
+    overlay.classList.add('show');
+    btn.classList.add('active');
+  }
+}
+
+/* ===================================================
+   SAP TOAST NOTIFICATIONS
+   =================================================== */
+function sapToast(module, desc) {
+  const container = document.getElementById('sapToastContainer');
+  const toast = document.createElement('div');
+  toast.className = 'sap-toast';
+  const now = new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  toast.innerHTML = '<div class="sap-toast-hdr"><span class="sap-toast-badge">'+module+'</span><span class="sap-toast-title">SAP S/4HANA</span></div><div class="sap-toast-desc">'+desc+'</div><div class="sap-toast-time">'+now+'</div>';
+  container.appendChild(toast);
+  setTimeout(() => { toast.classList.add('removing'); setTimeout(() => toast.remove(), 300); }, 3500);
+}
+
+/* ===================================================
+   SAP FIORI DATA UPDATE
+   =================================================== */
+function updateSAPData() {
+  if (Math.random() < 0.15) {
+    const msgs = [
+      'SAP PM >> Verificacion automatica de ordenes completada',
+      'APM >> Health scores recalculados para todos los activos',
+      'SAP MM >> Stock de repuestos criogenicos verificado',
+      'SAP QM >> Analisis de pureza CH4: 98.2% - OK',
+      'APM >> Tendencia de vaporizadores actualizada',
+      'SAP PM >> Sincronizacion DT-SAP completada'
+    ];
+    const log = document.getElementById('sapBtpLog');
+    if (log) {
+      const entry = document.createElement('div');
+      const now = new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+      entry.innerHTML = '<span class="log-time">['+now+']</span> <span class="log-module">'+msgs[Math.floor(Math.random()*msgs.length)].split(' >> ')[0]+'</span> >> '+msgs[Math.floor(Math.random()*msgs.length)].split(' >> ')[1];
+      log.appendChild(entry);
+      log.scrollTop = log.scrollHeight;
+    }
+  }
+}
+
+/* ===================================================
+   INITIALIZATION
+   =================================================== */
+var appStarted = false;
+function startApp(){
+  if(appStarted) return;
+  appStarted = true;
+  buildAssetList();
+  init3D();
+  createVaporParticles();
+  createCryoFlowParticles();
+  createSteamParticles();
+  createFrostGlowPipes();
+  setInterval(() => { simulateData(); updateSAPData(); }, 2000);
+  setInterval(function(){
+    var sapOverlay = document.getElementById('sapOverlay');
+    var sapVisible = sapOverlay && sapOverlay.classList.contains('show');
+    if(!sapVisible){
+      var canvas = document.getElementById('threejs-canvas');
+      var container = document.getElementById('canvas-container');
+      if(canvas && container && canvas.parentElement !== container){
+        container.insertBefore(canvas, container.firstChild);
+        renderer.setSize(container.clientWidth, container.clientHeight);
+        camera.aspect = container.clientWidth / container.clientHeight;
+        camera.updateProjectionMatrix();
+      }
+    }
+  }, 2000);
+}
+if(document.readyState === 'loading'){ document.addEventListener('DOMContentLoaded', startApp); } else { startApp(); }
+</script>
+<script src="dt-enhancements.js"></script>
+</body>
+</html>

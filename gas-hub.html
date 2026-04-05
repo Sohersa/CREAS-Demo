@@ -1,0 +1,1784 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EY CREAS - Plataforma Nacional de Gemelos Digitales</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+    --bg: #060D18;
+    --s1: #0A1420;
+    --or: #FF5500;
+    --cy: #00C8F0;
+    --gr: #10D858;
+    --t0: #E8F4FF;
+    --t1: #7AAAC8;
+    --t2: #3A607A;
+    --re: #E02020;
+    --ye: #F0A000;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: 'Space Grotesk', sans-serif;
+    background: var(--bg);
+    color: var(--t0);
+    overflow-x: hidden;
+    min-height: 100vh;
+}
+
+/* Scanline overlay */
+body::after {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    pointer-events: none;
+    z-index: 9999;
+    background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0,200,240,0.015) 2px,
+        rgba(0,200,240,0.015) 4px
+    );
+}
+
+/* Grid background */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    pointer-events: none;
+    z-index: 0;
+    background-image:
+        linear-gradient(rgba(58,96,122,0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(58,96,122,0.06) 1px, transparent 1px);
+    background-size: 40px 40px;
+}
+
+/* ====== TOPBAR ====== */
+.topbar {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 52px;
+    background: linear-gradient(180deg, rgba(10,20,32,0.98), rgba(6,13,24,0.95));
+    border-bottom: 1px solid rgba(0,200,240,0.15);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    z-index: 1000;
+    backdrop-filter: blur(10px);
+}
+
+.topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.logo-box {
+    width: 32px; height: 32px;
+    background: var(--or);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+    color: #fff;
+    letter-spacing: -0.5px;
+}
+
+.topbar-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--t0);
+    letter-spacing: 0.3px;
+}
+
+.topbar-center {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--t1);
+    letter-spacing: 0.5px;
+    text-align: center;
+}
+
+.topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--t1);
+}
+
+.status-dot {
+    width: 8px; height: 8px;
+    background: var(--gr);
+    border-radius: 50%;
+    animation: pulse-dot 2s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(16,216,88,0.4); }
+    50% { box-shadow: 0 0 0 6px rgba(16,216,88,0); }
+}
+
+.clock {
+    font-weight: 500;
+    color: var(--cy);
+    min-width: 65px;
+    text-align: right;
+}
+
+/* ====== MAIN ====== */
+.main {
+    margin-top: 52px;
+    display: flex;
+    height: calc(100vh - 52px - 36px);
+    position: relative;
+    z-index: 1;
+}
+
+/* ====== MAP PANEL ====== */
+.map-panel {
+    width: 60%;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    overflow: hidden;
+}
+
+.map-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+}
+
+.map-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--t1);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.filter-buttons {
+    display: flex;
+    gap: 6px;
+}
+
+.filter-btn {
+    background: var(--s1);
+    border: 1px solid var(--t2);
+    color: var(--t1);
+    padding: 4px 12px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.filter-btn:hover { border-color: var(--cy); color: var(--t0); }
+.filter-btn.active { background: rgba(0,200,240,0.12); border-color: var(--cy); color: var(--cy); }
+
+.map-container {
+    flex: 1;
+    background: var(--s1);
+    border: 1px solid rgba(58,96,122,0.25);
+    border-radius: 6px;
+    position: relative;
+    overflow: hidden;
+    min-height: 0;
+}
+
+.map-container #googleMap {
+    width: 100%;
+    height: 100%;
+}
+
+/* Leaflet dark popup overrides */
+.dark-popup .leaflet-popup-content-wrapper {
+    background: transparent !important;
+    border-radius: 8px !important;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.7) !important;
+    padding: 0 !important;
+}
+.dark-popup .leaflet-popup-content { margin: 0 !important; }
+.dark-popup .leaflet-popup-tip { background: #0A1420 !important; border: 1px solid rgba(0,200,240,0.2) !important; }
+.dark-popup .leaflet-popup-close-button { color: #7AAAC8 !important; font-size: 18px !important; top: 6px !important; right: 8px !important; }
+.dark-popup .leaflet-popup-close-button:hover { color: #FF5500 !important; }
+.leaflet-control-zoom a { background: #0A1420 !important; color: #7AAAC8 !important; border-color: rgba(0,200,240,0.2) !important; }
+.leaflet-control-zoom a:hover { background: #0f1d2e !important; color: #00C8F0 !important; }
+
+/* Plant markers */
+.plant-marker {
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.plant-marker:hover .marker-dot {
+    r: 7;
+    filter: brightness(1.4);
+}
+
+.plant-marker .marker-dot {
+    transition: all 0.3s;
+}
+
+.plant-marker .marker-ring {
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.plant-marker:hover .marker-ring {
+    opacity: 0.4;
+}
+
+/* Tooltip */
+.map-tooltip {
+    position: absolute;
+    background: rgba(10,20,32,0.96);
+    border: 1px solid var(--cy);
+    border-radius: 4px;
+    padding: 10px 14px;
+    font-size: 11px;
+    pointer-events: none;
+    z-index: 100;
+    display: none;
+    min-width: 180px;
+    backdrop-filter: blur(8px);
+}
+
+.map-tooltip .tt-name {
+    font-weight: 600;
+    color: var(--t0);
+    margin-bottom: 4px;
+    font-size: 12px;
+}
+
+.map-tooltip .tt-row {
+    display: flex;
+    justify-content: space-between;
+    color: var(--t1);
+    margin-top: 2px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+}
+
+.map-tooltip .tt-row span:last-child { color: var(--t0); }
+
+.map-tooltip .tt-status {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 2px;
+    font-size: 9px;
+    font-weight: 600;
+    margin-top: 4px;
+}
+
+.map-tooltip .tt-hint {
+    font-size: 9px;
+    color: var(--t2);
+    margin-top: 6px;
+    font-style: italic;
+}
+
+/* Legend */
+.map-legend {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding: 8px 0 0 0;
+    flex-shrink: 0;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--t1);
+}
+
+.legend-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+}
+
+.legend-count {
+    color: var(--t0);
+    font-weight: 600;
+}
+
+/* ====== DASHBOARD PANEL ====== */
+.dashboard-panel {
+    width: 40%;
+    padding: 16px 16px 16px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.dashboard-panel::-webkit-scrollbar { width: 4px; }
+.dashboard-panel::-webkit-scrollbar-track { background: var(--bg); }
+.dashboard-panel::-webkit-scrollbar-thumb { background: var(--t2); border-radius: 2px; }
+
+.section-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--t2);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 8px;
+    padding-left: 2px;
+}
+
+/* Summary Cards */
+.summary-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+}
+
+.summary-card {
+    background: var(--s1);
+    border: 1px solid rgba(58,96,122,0.2);
+    border-radius: 5px;
+    padding: 12px;
+    text-align: center;
+    transition: border-color 0.3s;
+}
+
+.summary-card:hover { border-color: rgba(0,200,240,0.3); }
+
+.summary-card .sc-value {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--t0);
+    font-family: 'IBM Plex Mono', monospace;
+    line-height: 1;
+}
+
+.summary-card .sc-value.green { color: var(--gr); }
+.summary-card .sc-value.yellow { color: var(--ye); }
+.summary-card .sc-value.red { color: var(--re); }
+.summary-card .sc-value.cyan { color: var(--cy); }
+.summary-card .sc-value.orange { color: var(--or); }
+
+.summary-card .sc-label {
+    font-size: 9px;
+    color: var(--t2);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-top: 4px;
+}
+
+/* Business Unit Cards */
+.bu-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.bu-card {
+    background: var(--s1);
+    border: 1px solid rgba(58,96,122,0.2);
+    border-radius: 5px;
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.bu-card:hover {
+    border-color: rgba(0,200,240,0.3);
+    background: rgba(10,20,32,0.8);
+}
+
+.bu-indicator {
+    width: 4px;
+    height: 36px;
+    border-radius: 2px;
+    flex-shrink: 0;
+}
+
+.bu-icon {
+    width: 32px; height: 32px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+    opacity: 0.15;
+}
+
+.bu-info { flex: 1; min-width: 0; }
+
+.bu-name {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--t0);
+}
+
+.bu-meta {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--t1);
+    margin-top: 1px;
+}
+
+.bu-right {
+    text-align: right;
+    flex-shrink: 0;
+}
+
+.bu-metric {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--t0);
+}
+
+.bu-bar-wrap {
+    width: 60px;
+    height: 4px;
+    background: rgba(58,96,122,0.3);
+    border-radius: 2px;
+    margin-top: 4px;
+    overflow: hidden;
+}
+
+.bu-bar {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.6s ease;
+}
+
+/* Alerts */
+.alerts-section { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+
+.alerts-list {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-height: 0;
+    max-height: 250px;
+}
+
+.alerts-list::-webkit-scrollbar { width: 3px; }
+.alerts-list::-webkit-scrollbar-track { background: transparent; }
+.alerts-list::-webkit-scrollbar-thumb { background: var(--t2); border-radius: 2px; }
+
+.alert-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 7px 10px;
+    background: var(--s1);
+    border-radius: 4px;
+    border-left: 3px solid var(--t2);
+    font-size: 10px;
+    flex-shrink: 0;
+    animation: alert-in 0.3s ease;
+}
+
+@keyframes alert-in {
+    from { opacity: 0; transform: translateX(10px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+.alert-item.critical { border-left-color: var(--re); }
+.alert-item.warning { border-left-color: var(--ye); }
+.alert-item.info { border-left-color: var(--cy); }
+.alert-item.ok { border-left-color: var(--gr); }
+
+.alert-severity {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 8px;
+    font-weight: 700;
+    padding: 1px 4px;
+    border-radius: 2px;
+    flex-shrink: 0;
+    min-width: 50px;
+    text-align: center;
+    margin-top: 1px;
+}
+
+.alert-item.critical .alert-severity { background: rgba(224,32,32,0.2); color: var(--re); }
+.alert-item.warning .alert-severity { background: rgba(240,160,0,0.2); color: var(--ye); }
+.alert-item.info .alert-severity { background: rgba(0,200,240,0.15); color: var(--cy); }
+.alert-item.ok .alert-severity { background: rgba(16,216,88,0.15); color: var(--gr); }
+
+.alert-body { flex: 1; }
+
+.alert-plant {
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 600;
+    color: var(--t0);
+    font-size: 10px;
+}
+
+.alert-msg {
+    color: var(--t1);
+    margin-top: 1px;
+    line-height: 1.3;
+}
+
+.alert-time {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    color: var(--t2);
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
+/* Executive KPIs */
+.exec-kpi-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.exec-kpi {
+    background: rgba(10,20,32,0.8);
+    border: 1px solid rgba(0,200,240,0.12);
+    border-radius: 6px;
+    padding: 12px;
+    text-align: center;
+}
+
+.exec-kpi-value {
+    font-size: 28px;
+    font-weight: 700;
+    font-family: 'IBM Plex Mono', monospace;
+    line-height: 1;
+}
+
+.exec-kpi-label {
+    font-size: 9px;
+    color: #7AAAC8;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 4px;
+}
+
+.exec-kpi-trend {
+    font-size: 10px;
+    margin-top: 4px;
+}
+
+.exec-kpi-trend.up { color: var(--gr); }
+.exec-kpi-trend.down { color: var(--ye); }
+
+/* Top Alertas Criticas */
+.critical-alerts-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.critical-alert-item {
+    background: var(--s1);
+    border: 1px solid rgba(224,32,32,0.15);
+    border-left: 4px solid var(--re);
+    border-radius: 5px;
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.critical-alert-info {
+    flex: 1;
+}
+
+.critical-alert-plant {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--t0);
+}
+
+.critical-alert-msg {
+    font-size: 11px;
+    color: var(--t1);
+    margin-top: 2px;
+    line-height: 1.4;
+}
+
+.critical-alert-severity {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 2px;
+    background: rgba(224,32,32,0.2);
+    color: var(--re);
+    flex-shrink: 0;
+}
+
+.btn-ver-planta {
+    background: rgba(224,32,32,0.12);
+    border: 1px solid rgba(224,32,32,0.3);
+    border-radius: 4px;
+    color: var(--re);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    font-weight: 600;
+    padding: 5px 10px;
+    cursor: pointer;
+    flex-shrink: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: all 0.2s;
+}
+
+.btn-ver-planta:hover {
+    background: rgba(224,32,32,0.25);
+    border-color: var(--re);
+}
+
+/* Integracion Enterprise */
+.enterprise-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+}
+
+.enterprise-card {
+    background: var(--s1);
+    border: 1px solid rgba(58,96,122,0.2);
+    border-radius: 5px;
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.enterprise-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--gr);
+    flex-shrink: 0;
+    box-shadow: 0 0 6px rgba(16,216,88,0.4);
+}
+
+.enterprise-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.enterprise-name {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--t0);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.enterprise-meta {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    color: var(--t1);
+    margin-top: 1px;
+}
+
+.enterprise-status {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 8px;
+    font-weight: 600;
+    color: var(--gr);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    flex-shrink: 0;
+}
+
+/* ====== BOTTOM BAR ====== */
+.bottombar {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    height: 36px;
+    background: rgba(10,20,32,0.95);
+    border-top: 1px solid rgba(58,96,122,0.15);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    z-index: 1000;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--t2);
+}
+
+.bottombar-left { display: flex; align-items: center; gap: 6px; }
+
+.bottombar-badges {
+    display: flex;
+    gap: 8px;
+}
+
+.badge {
+    padding: 2px 8px;
+    border: 1px solid rgba(58,96,122,0.25);
+    border-radius: 3px;
+    font-size: 9px;
+    color: var(--t1);
+    letter-spacing: 0.3px;
+}
+
+/* ====== SIDEBAR / SLIDE-IN PANEL ====== */
+.sidebar-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 2000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+}
+
+.sidebar-overlay.open { opacity: 1; pointer-events: all; }
+
+.sidebar-panel {
+    position: fixed;
+    top: 0; right: -420px;
+    width: 400px;
+    height: 100vh;
+    background: var(--bg);
+    border-left: 1px solid rgba(0,200,240,0.2);
+    z-index: 2001;
+    transition: right 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+}
+
+.sidebar-panel.open { right: 0; }
+
+.sidebar-header {
+    padding: 20px;
+    border-bottom: 1px solid rgba(58,96,122,0.2);
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+}
+
+.sidebar-close {
+    width: 28px; height: 28px;
+    background: rgba(58,96,122,0.2);
+    border: none;
+    border-radius: 4px;
+    color: var(--t1);
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.sidebar-close:hover { background: rgba(224,32,32,0.2); color: var(--re); }
+
+.sidebar-plant-name {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--t0);
+    margin-bottom: 4px;
+}
+
+.sidebar-plant-id {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--t1);
+}
+
+.sidebar-plant-type {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 600;
+    margin-top: 6px;
+}
+
+.sidebar-body { padding: 20px; flex: 1; }
+
+.sidebar-section {
+    margin-bottom: 20px;
+}
+
+.sidebar-section-title {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--t2);
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    margin-bottom: 10px;
+}
+
+.sidebar-kpi-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.sidebar-kpi {
+    background: var(--s1);
+    border: 1px solid rgba(58,96,122,0.2);
+    border-radius: 5px;
+    padding: 12px;
+}
+
+.sidebar-kpi-label {
+    font-size: 9px;
+    color: var(--t2);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.sidebar-kpi-value {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--t0);
+    margin-top: 2px;
+}
+
+.sidebar-info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(58,96,122,0.1);
+    font-size: 12px;
+}
+
+.sidebar-info-row .label { color: var(--t2); }
+.sidebar-info-row .value { color: var(--t0); font-weight: 500; }
+
+.sidebar-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.sidebar-status-badge.operativa { background: rgba(16,216,88,0.12); color: var(--gr); }
+.sidebar-status-badge.mantenimiento { background: rgba(240,160,0,0.12); color: var(--ye); }
+
+.sidebar-status-badge .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+}
+
+.sidebar-status-badge.operativa .dot { background: var(--gr); }
+.sidebar-status-badge.mantenimiento .dot { background: var(--ye); }
+
+.btn-open-dt {
+    display: block;
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, var(--or), #cc4400);
+    border: none;
+    border-radius: 6px;
+    color: #fff;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+    text-decoration: none;
+    transition: all 0.2s;
+    letter-spacing: 0.3px;
+    margin-top: 20px;
+}
+
+.btn-open-dt:hover { filter: brightness(1.15); transform: translateY(-1px); }
+
+/* ====== RESPONSIVE ====== */
+@media (max-width: 1000px) {
+    .main {
+        flex-direction: column;
+        height: auto;
+        min-height: calc(100vh - 52px - 36px);
+    }
+    .map-panel { width: 100%; height: 50vh; }
+    .dashboard-panel { width: 100%; padding: 16px; }
+    .topbar-center { display: none; }
+    .sidebar-panel { width: 100%; right: -110%; }
+}
+
+@media (max-width: 600px) {
+    .summary-grid { grid-template-columns: repeat(2, 1fr); }
+    .filter-buttons { flex-wrap: wrap; }
+    .map-legend { flex-wrap: wrap; gap: 8px; }
+    .bottombar-badges { display: none; }
+}
+
+/* ====== MARKER PULSE ANIMATION ====== */
+@keyframes marker-pulse {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+}
+
+.marker-dot { animation: marker-pulse 3s ease-in-out infinite; }
+
+/* Maintenance markers blink */
+.marker-maintenance .marker-dot {
+    animation: marker-blink 1.5s ease-in-out infinite;
+}
+
+@keyframes marker-blink {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 1; }
+}
+
+/* ====== RESPONSIVE: TABLET / SMALL DESKTOP ====== */
+@media (max-width: 1000px) {
+    .main {
+        flex-direction: column;
+        height: auto;
+        overflow-y: auto;
+    }
+    .map-panel {
+        width: 100%;
+        min-height: 50vh;
+    }
+    .dashboard-panel {
+        width: 100%;
+        max-height: none;
+        overflow: visible;
+        padding: 16px;
+    }
+    .summary-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 6px;
+    }
+    .bu-cards {
+        flex-direction: column;
+    }
+    .filter-buttons {
+        flex-wrap: wrap;
+    }
+}
+
+/* ====== RESPONSIVE: MOBILE ====== */
+@media (max-width: 600px) {
+    .topbar {
+        height: 44px;
+        padding: 0 12px;
+    }
+    .topbar-center {
+        display: none;
+    }
+    .topbar-title {
+        font-size: 12px;
+    }
+    .main {
+        margin-top: 44px;
+        height: auto;
+    }
+    .map-panel {
+        min-height: 55vh;
+        padding: 10px;
+    }
+    .map-container {
+        min-height: 45vh;
+    }
+    .map-title {
+        font-size: 11px;
+    }
+    .filter-btn {
+        font-size: 9px;
+        padding: 3px 8px;
+    }
+    .summary-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .sc-value {
+        font-size: 22px;
+    }
+    .sc-label,
+    .summary-card .sc-label {
+        font-size: 8px;
+    }
+    .section-title {
+        font-size: 10px;
+    }
+    .bu-card {
+        padding: 8px 10px;
+    }
+    .alert-item {
+        padding: 5px 8px;
+        font-size: 9px;
+        gap: 6px;
+    }
+    .sidebar-panel {
+        width: 100%;
+        right: -105%;
+    }
+    .sidebar-panel.open {
+        right: 0;
+    }
+    .bottombar {
+        flex-wrap: wrap;
+        font-size: 9px;
+        height: auto;
+        min-height: 36px;
+        padding: 4px 12px;
+        gap: 4px;
+    }
+    .bottombar-badges {
+        flex-wrap: wrap;
+        gap: 4px;
+    }
+    .map-legend {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    .dashboard-panel {
+        padding: 10px;
+    }
+}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<header class="topbar">
+    <div class="topbar-left">
+        <div class="logo-box" style="background:none;width:auto;height:auto;border-radius:0"><img src="ey-logo.svg" alt="EY" width="64" height="38" style="display:block"></div>
+        <span class="topbar-title">Plataforma Nacional de Gemelos Digitales</span>
+    </div>
+    <div class="topbar-center">CREAS &mdash; Capital Projects, Risk, Engineering, Analytics &amp; Solutions</div>
+    <div class="topbar-right">
+        <div class="status-dot"></div>
+        <span>En Linea</span>
+        <span class="clock" id="clock">--:--:--</span>
+    </div>
+</header>
+
+<!-- MAIN CONTENT -->
+<div class="main">
+    <!-- MAP PANEL -->
+    <div class="map-panel">
+        <div class="map-header">
+            <span class="map-title">Mapa Nacional de Operaciones</span>
+            <div class="filter-buttons">
+                <button class="filter-btn active" data-filter="ALL" onclick="filterPlants('ALL')">Todos</button>
+                <button class="filter-btn" data-filter="TAS" onclick="filterPlants('TAS')">TAS</button>
+                <button class="filter-btn" data-filter="GNC" onclick="filterPlants('GNC')">GNC</button>
+                <button class="filter-btn" data-filter="LNG" onclick="filterPlants('LNG')">LNG</button>
+                <button class="filter-btn" data-filter="DUCTOS" onclick="filterPlants('DUCTOS')">Ductos</button>
+                <button class="filter-btn" data-filter="FV" onclick="filterPlants('FV')">FV</button>
+            </div>
+        </div>
+
+        <div class="map-container" id="mapContainer">
+            <div id="googleMap"></div>
+            <div class="map-tooltip" id="mapTooltip"></div>
+        </div>
+
+        <div class="map-legend" id="mapLegend"></div>
+    </div>
+
+    <!-- DASHBOARD PANEL -->
+    <div class="dashboard-panel">
+        <!-- Summary Cards -->
+        <div>
+            <div class="section-title">Resumen Operativo</div>
+            <div class="summary-grid">
+                <div class="summary-card">
+                    <div class="sc-value cyan" id="kpi-total">33</div>
+                    <div class="sc-label">Total Plantas</div>
+                </div>
+                <div class="summary-card">
+                    <div class="sc-value green" id="kpi-op">29</div>
+                    <div class="sc-label">Operativas</div>
+                </div>
+                <div class="summary-card">
+                    <div class="sc-value yellow" id="kpi-maint">4</div>
+                    <div class="sc-label">En Mantenimiento</div>
+                </div>
+                <div class="summary-card">
+                    <div class="sc-value" id="kpi-gas">120,450</div>
+                    <div class="sc-label">Cap. Gas (m3)</div>
+                </div>
+                <div class="summary-card">
+                    <div class="sc-value orange" id="kpi-solar">225</div>
+                    <div class="sc-label">Cap. Solar (MWp)</div>
+                </div>
+                <div class="summary-card">
+                    <div class="sc-value red" id="kpi-alerts">7</div>
+                    <div class="sc-label">Alertas Activas</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Executive KPIs -->
+        <div>
+            <div class="section-title">INDICADORES EJECUTIVOS</div>
+            <div class="exec-kpi-grid">
+                <div class="exec-kpi">
+                    <div class="exec-kpi-value" style="color: var(--gr)" id="exec-disponibilidad">97.8%</div>
+                    <div class="exec-kpi-label">Disponibilidad Global</div>
+                    <div class="exec-kpi-trend up">+2.1% vs mes anterior</div>
+                </div>
+                <div class="exec-kpi">
+                    <div class="exec-kpi-value" style="color: var(--re)" id="exec-ots">4</div>
+                    <div class="exec-kpi-label">OTs Criticas Abiertas</div>
+                    <div class="exec-kpi-trend down">-0.5% vs mes anterior</div>
+                </div>
+                <div class="exec-kpi">
+                    <div class="exec-kpi-value" style="color: var(--cy)" id="exec-produccion">45,200</div>
+                    <div class="exec-kpi-label">Produccion Gas Total (m3/dia)</div>
+                    <div class="exec-kpi-trend up">+1.8% vs mes anterior</div>
+                </div>
+                <div class="exec-kpi">
+                    <div class="exec-kpi-value" style="color: var(--gr)" id="exec-solar">38.5</div>
+                    <div class="exec-kpi-label">Generacion Solar (MW)</div>
+                    <div class="exec-kpi-trend up">+3.2% vs mes anterior</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Business Units -->
+        <div>
+            <div class="section-title">Unidades de Negocio</div>
+            <div class="bu-cards">
+                <div class="bu-card" onclick="filterPlants('TAS')">
+                    <div class="bu-indicator" style="background: var(--ye)"></div>
+                    <div class="bu-icon" style="background: var(--ye)">&#9679;</div>
+                    <div class="bu-info">
+                        <div class="bu-name">TAS &mdash; Gas LP</div>
+                        <div class="bu-meta">10 plantas &middot; 113,000 m3 almacenamiento</div>
+                    </div>
+                    <div class="bu-right">
+                        <div class="bu-metric">90%</div>
+                        <div class="bu-bar-wrap"><div class="bu-bar" style="width:90%; background:var(--ye)"></div></div>
+                    </div>
+                </div>
+
+                <div class="bu-card" onclick="filterPlants('GNC')">
+                    <div class="bu-indicator" style="background: var(--cy)"></div>
+                    <div class="bu-icon" style="background: var(--cy)">&#9679;</div>
+                    <div class="bu-info">
+                        <div class="bu-name">GNC &mdash; Gas Natural Comprimido</div>
+                        <div class="bu-meta">8 estaciones &middot; 31,700 Nm3/h capacidad</div>
+                    </div>
+                    <div class="bu-right">
+                        <div class="bu-metric">87.5%</div>
+                        <div class="bu-bar-wrap"><div class="bu-bar" style="width:87.5%; background:var(--cy)"></div></div>
+                    </div>
+                </div>
+
+                <div class="bu-card" onclick="filterPlants('LNG')">
+                    <div class="bu-indicator" style="background: var(--or)"></div>
+                    <div class="bu-icon" style="background: var(--or)">&#9679;</div>
+                    <div class="bu-info">
+                        <div class="bu-name">LNG &mdash; Gas Natural Licuado</div>
+                        <div class="bu-meta">5 plantas &middot; 416 KL almacenamiento</div>
+                    </div>
+                    <div class="bu-right">
+                        <div class="bu-metric">80%</div>
+                        <div class="bu-bar-wrap"><div class="bu-bar" style="width:80%; background:var(--or)"></div></div>
+                    </div>
+                </div>
+
+                <div class="bu-card" onclick="filterPlants('DUCTOS')">
+                    <div class="bu-indicator" style="background: var(--t1)"></div>
+                    <div class="bu-icon" style="background: var(--t1)">&#9679;</div>
+                    <div class="bu-info">
+                        <div class="bu-name">DUCTOS &mdash; Gasoductos</div>
+                        <div class="bu-meta">4 estaciones &middot; 350 MMSCFD</div>
+                    </div>
+                    <div class="bu-right">
+                        <div class="bu-metric">100%</div>
+                        <div class="bu-bar-wrap"><div class="bu-bar" style="width:100%; background:var(--t1)"></div></div>
+                    </div>
+                </div>
+
+                <div class="bu-card" onclick="filterPlants('FV')">
+                    <div class="bu-indicator" style="background: var(--gr)"></div>
+                    <div class="bu-icon" style="background: var(--gr)">&#9679;</div>
+                    <div class="bu-info">
+                        <div class="bu-name">FV &mdash; Fotovoltaica (Solar)</div>
+                        <div class="bu-meta">6 plantas &middot; 225 MWp</div>
+                    </div>
+                    <div class="bu-right">
+                        <div class="bu-metric">83.3%</div>
+                        <div class="bu-bar-wrap"><div class="bu-bar" style="width:83.3%; background:var(--gr)"></div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top Alertas Criticas -->
+        <div>
+            <div class="section-title">TOP ALERTAS CRITICAS</div>
+            <div class="critical-alerts-list">
+                <div class="critical-alert-item">
+                    <span class="critical-alert-severity">CRITICA</span>
+                    <div class="critical-alert-info">
+                        <div class="critical-alert-plant">TAS-QRO-01 - Terminal Queretaro</div>
+                        <div class="critical-alert-msg">Fuga detectada en linea de transferencia B - Requiere intervencion inmediata</div>
+                    </div>
+                    <button class="btn-ver-planta" onclick="filterPlants('TAS')">Ver planta</button>
+                </div>
+                <div class="critical-alert-item">
+                    <span class="critical-alert-severity">CRITICA</span>
+                    <div class="critical-alert-info">
+                        <div class="critical-alert-plant">LNG-CDX-01 - Planta LNG CDMX</div>
+                        <div class="critical-alert-msg">BOG pressure buildup anormal - Venteo de emergencia activado</div>
+                    </div>
+                    <button class="btn-ver-planta" onclick="filterPlants('LNG')">Ver planta</button>
+                </div>
+                <div class="critical-alert-item">
+                    <span class="critical-alert-severity">URGENTE</span>
+                    <div class="critical-alert-info">
+                        <div class="critical-alert-plant">GNC-PUE-01 - Estacion GNC Puebla</div>
+                        <div class="critical-alert-msg">Compresor principal fuera de servicio - Capacidad reducida 40%</div>
+                    </div>
+                    <button class="btn-ver-planta" onclick="filterPlants('GNC')">Ver planta</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Alerts -->
+        <div class="alerts-section">
+            <div class="section-title">Alertas Recientes</div>
+            <div class="alerts-list" id="alertsList"></div>
+        </div>
+
+        <!-- Integracion Enterprise -->
+        <div>
+            <div class="section-title">INTEGRACION ENTERPRISE</div>
+            <div class="enterprise-grid">
+                <div class="enterprise-card">
+                    <div class="enterprise-dot"></div>
+                    <div class="enterprise-info">
+                        <div class="enterprise-name">SAP S/4HANA</div>
+                        <div class="enterprise-meta">33 plantas conectadas</div>
+                    </div>
+                    <div class="enterprise-status">Activo</div>
+                </div>
+                <div class="enterprise-card">
+                    <div class="enterprise-dot"></div>
+                    <div class="enterprise-info">
+                        <div class="enterprise-name">Autodesk ACC</div>
+                        <div class="enterprise-meta">1,247 documentos</div>
+                    </div>
+                    <div class="enterprise-status">Sincronizado</div>
+                </div>
+                <div class="enterprise-card">
+                    <div class="enterprise-dot"></div>
+                    <div class="enterprise-info">
+                        <div class="enterprise-name">Autodesk Tandem</div>
+                        <div class="enterprise-meta">856 activos digitales</div>
+                    </div>
+                    <div class="enterprise-status">En linea</div>
+                </div>
+                <div class="enterprise-card">
+                    <div class="enterprise-dot"></div>
+                    <div class="enterprise-info">
+                        <div class="enterprise-name">SCADA/IoT</div>
+                        <div class="enterprise-meta">245 sensores</div>
+                    </div>
+                    <div class="enterprise-status">Streaming</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- BOTTOM BAR -->
+<footer class="bottombar">
+    <div class="bottombar-left">EY CREAS &middot; Gemelos Digitales &middot; Datos Simulados &middot; 2026</div>
+    <div class="bottombar-badges">
+        <span class="badge">SAP S/4HANA</span>
+        <span class="badge">Autodesk ACC</span>
+        <span class="badge">Tandem</span>
+        <span class="badge">SCADA/IoT</span>
+    </div>
+</footer>
+
+<!-- SIDEBAR OVERLAY -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+<div class="sidebar-panel" id="sidebarPanel">
+    <div class="sidebar-header">
+        <div>
+            <div class="sidebar-plant-name" id="sb-name">--</div>
+            <div class="sidebar-plant-id" id="sb-id">--</div>
+            <div class="sidebar-plant-type" id="sb-type">--</div>
+        </div>
+        <button class="sidebar-close" onclick="closeSidebar()">&times;</button>
+    </div>
+    <div class="sidebar-body">
+        <div class="sidebar-section">
+            <div class="sidebar-section-title">Estado</div>
+            <div id="sb-status"></div>
+        </div>
+        <div class="sidebar-section">
+            <div class="sidebar-section-title">Ubicacion</div>
+            <div class="sidebar-info-row">
+                <span class="label">Estado</span>
+                <span class="value" id="sb-state">--</span>
+            </div>
+            <div class="sidebar-info-row">
+                <span class="label">Coordenadas</span>
+                <span class="value" id="sb-coords">--</span>
+            </div>
+        </div>
+        <div class="sidebar-section">
+            <div class="sidebar-section-title">Indicadores Clave</div>
+            <div class="sidebar-kpi-grid" id="sb-kpis"></div>
+        </div>
+        <a class="btn-open-dt" id="sb-link" href="#">Abrir Gemelo Digital &rarr;</a>
+    </div>
+</div>
+
+<script>
+// ====== PLANT DATA ======
+const plants = [
+    { id:"TAS-AGS-01", name:"Terminal Aguascalientes", type:"TAS", state:"Aguascalientes", lat:21.8818, lng:-102.2916, capacity:"12,000 m3", status:"Operativa", extra:{tanks:4} },
+    { id:"TAS-MTY-01", name:"Terminal Monterrey Norte", type:"TAS", state:"Nuevo Leon", lat:25.7617, lng:-100.1865, capacity:"18,000 m3", status:"Operativa", extra:{tanks:6} },
+    { id:"TAS-GDL-01", name:"Terminal Guadalajara", type:"TAS", state:"Jalisco", lat:20.6597, lng:-103.3496, capacity:"15,000 m3", status:"Operativa", extra:{tanks:5} },
+    { id:"TAS-PUE-01", name:"Terminal Puebla", type:"TAS", state:"Puebla", lat:19.0414, lng:-98.2063, capacity:"8,000 m3", status:"Operativa", extra:{tanks:3} },
+    { id:"TAS-QRO-01", name:"Terminal Queretaro", type:"TAS", state:"Queretaro", lat:20.5888, lng:-100.3899, capacity:"10,000 m3", status:"Mantenimiento", extra:{tanks:4} },
+    { id:"TAS-SLP-01", name:"Terminal San Luis Potosi", type:"TAS", state:"San Luis Potosi", lat:22.1565, lng:-100.9855, capacity:"9,500 m3", status:"Operativa", extra:{tanks:3} },
+    { id:"TAS-LEO-01", name:"Terminal Leon", type:"TAS", state:"Guanajuato", lat:21.1221, lng:-101.6821, capacity:"11,000 m3", status:"Operativa", extra:{tanks:4} },
+    { id:"TAS-CHI-01", name:"Terminal Chihuahua", type:"TAS", state:"Chihuahua", lat:28.6353, lng:-106.0889, capacity:"7,000 m3", status:"Operativa", extra:{tanks:2} },
+    { id:"TAS-HMO-01", name:"Terminal Hermosillo", type:"TAS", state:"Sonora", lat:29.0729, lng:-110.9559, capacity:"8,500 m3", status:"Operativa", extra:{tanks:3} },
+    { id:"TAS-VER-01", name:"Terminal Veracruz", type:"TAS", state:"Veracruz", lat:19.1738, lng:-96.1342, capacity:"14,000 m3", status:"Operativa", extra:{tanks:5} },
+    { id:"GNC-MTY-01", name:"Estacion GNC Monterrey", type:"GNC", state:"Nuevo Leon", lat:25.6866, lng:-100.3161, capacity:"5,000 Nm3/h", status:"Operativa", extra:{compressors:2} },
+    { id:"GNC-GDL-01", name:"Estacion GNC Guadalajara", type:"GNC", state:"Jalisco", lat:20.7214, lng:-103.3887, capacity:"3,500 Nm3/h", status:"Operativa", extra:{compressors:1} },
+    { id:"GNC-QRO-01", name:"Estacion GNC Queretaro", type:"GNC", state:"Queretaro", lat:20.6233, lng:-100.4115, capacity:"4,000 Nm3/h", status:"Operativa", extra:{compressors:2} },
+    { id:"GNC-CDX-01", name:"Estacion GNC CDMX Norte", type:"GNC", state:"CDMX", lat:19.4969, lng:-99.1269, capacity:"6,000 Nm3/h", status:"Operativa", extra:{compressors:3} },
+    { id:"GNC-PUE-01", name:"Estacion GNC Puebla", type:"GNC", state:"Puebla", lat:19.0616, lng:-98.1837, capacity:"3,000 Nm3/h", status:"Mantenimiento", extra:{compressors:1} },
+    { id:"GNC-SLP-01", name:"Estacion GNC San Luis", type:"GNC", state:"San Luis Potosi", lat:22.1195, lng:-101.0028, capacity:"2,500 Nm3/h", status:"Operativa", extra:{compressors:1} },
+    { id:"GNC-AGS-01", name:"Estacion GNC Aguascalientes", type:"GNC", state:"Aguascalientes", lat:21.9103, lng:-102.3133, capacity:"3,200 Nm3/h", status:"Operativa", extra:{compressors:1} },
+    { id:"GNC-LEO-01", name:"Estacion GNC Leon", type:"GNC", state:"Guanajuato", lat:21.1543, lng:-101.7112, capacity:"4,500 Nm3/h", status:"Operativa", extra:{compressors:2} },
+    { id:"LNG-MTY-01", name:"Planta LNG Monterrey", type:"LNG", state:"Nuevo Leon", lat:25.7345, lng:-100.2518, capacity:"120 KL", status:"Operativa", extra:{tanks:2} },
+    { id:"LNG-GDL-01", name:"Planta LNG Guadalajara", type:"LNG", state:"Jalisco", lat:20.6866, lng:-103.4143, capacity:"80 KL", status:"Operativa", extra:{tanks:1} },
+    { id:"LNG-CDX-01", name:"Planta LNG CDMX", type:"LNG", state:"Estado de Mexico", lat:19.5218, lng:-99.0937, capacity:"100 KL", status:"Operativa", extra:{tanks:2} },
+    { id:"LNG-QRO-01", name:"Planta LNG Queretaro", type:"LNG", state:"Queretaro", lat:20.5515, lng:-100.4218, capacity:"60 KL", status:"Mantenimiento", extra:{tanks:1} },
+    { id:"LNG-PUE-01", name:"Planta LNG Puebla", type:"LNG", state:"Puebla", lat:19.0218, lng:-98.2437, capacity:"56 KL", status:"Operativa", extra:{tanks:1} },
+    { id:"DUC-NOR-01", name:"Estacion Compresion Norte", type:"DUCTOS", state:"Tamaulipas", lat:25.4218, lng:-99.1437, capacity:"80 MMSCFD", status:"Operativa", extra:{compressors:2} },
+    { id:"DUC-CEN-01", name:"Estacion Compresion Centro", type:"DUCTOS", state:"San Luis Potosi", lat:22.3218, lng:-100.8437, capacity:"120 MMSCFD", status:"Operativa", extra:{compressors:3} },
+    { id:"DUC-BAJ-01", name:"Estacion Regulacion Bajio", type:"DUCTOS", state:"Guanajuato", lat:20.9218, lng:-101.4437, capacity:"60 MMSCFD", status:"Operativa", extra:{compressors:1} },
+    { id:"DUC-SUR-01", name:"Estacion Compresion Sur", type:"DUCTOS", state:"Veracruz", lat:19.5218, lng:-96.9237, capacity:"90 MMSCFD", status:"Operativa", extra:{compressors:2} },
+    { id:"FV-SON-01", name:"Planta Solar Sonora", type:"FV", state:"Sonora", lat:29.2218, lng:-110.8937, capacity:"50 MWp", status:"Operativa", extra:{inverters:10} },
+    { id:"FV-CHI-01", name:"Planta Solar Chihuahua", type:"FV", state:"Chihuahua", lat:28.8218, lng:-106.4437, capacity:"30 MWp", status:"Operativa", extra:{inverters:6} },
+    { id:"FV-AGS-01", name:"Planta Solar Aguascalientes", type:"FV", state:"Aguascalientes", lat:21.9518, lng:-102.3237, capacity:"25 MWp", status:"Operativa", extra:{inverters:5} },
+    { id:"FV-GDL-01", name:"Planta Solar Jalisco", type:"FV", state:"Jalisco", lat:20.5218, lng:-103.5137, capacity:"40 MWp", status:"Operativa", extra:{inverters:8} },
+    { id:"FV-SLP-01", name:"Planta Solar San Luis", type:"FV", state:"San Luis Potosi", lat:22.2818, lng:-100.9137, capacity:"20 MWp", status:"Mantenimiento", extra:{inverters:4} },
+    { id:"FV-COA-01", name:"Planta Solar Coahuila", type:"FV", state:"Coahuila", lat:25.3918, lng:-101.0237, capacity:"60 MWp", status:"Operativa", extra:{inverters:12} }
+];
+
+// ====== COLOR MAP ======
+const typeColors = {
+    TAS: '#F0A000',
+    GNC: '#00C8F0',
+    LNG: '#FF5500',
+    DUCTOS: '#7AAAC8',
+    FV: '#10D858'
+};
+
+const typeNames = {
+    TAS: 'Gas LP',
+    GNC: 'Gas Natural Comprimido',
+    LNG: 'Gas Natural Licuado',
+    DUCTOS: 'Gasoductos',
+    FV: 'Fotovoltaica (Solar)'
+};
+
+const dtLinks = {
+    TAS: 'tas-DT.html',
+    GNC: 'gnc-DT.html',
+    LNG: 'lng-DT.html',
+    DUCTOS: 'ductos-DT.html',
+    FV: 'fv-DT.html'
+};
+
+// ====== LEAFLET MAP ======
+let leafletMap;
+let leafletMarkers = [];
+let markerLayerGroup;
+let activeFilter = 'ALL';
+
+function initGoogleMap() {
+    leafletMap = L.map('googleMap', {
+        center: [23.6345, -102.5528],
+        zoom: 5,
+        zoomControl: true,
+        attributionControl: false,
+        maxBounds: [[13, -120], [34, -85]],
+        minZoom: 4,
+        maxZoom: 12
+    });
+
+    // Dark satellite-style tiles (CartoDB Dark Matter)
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        subdomains: 'abcd',
+        maxZoom: 19
+    }).addTo(leafletMap);
+
+    markerLayerGroup = L.layerGroup().addTo(leafletMap);
+    renderLeafletMarkers();
+
+    // Fix map size after render
+    setTimeout(function(){ leafletMap.invalidateSize(); }, 200);
+}
+
+function createCircleIcon(color, isMaint) {
+    var size = isMaint ? 10 : 12;
+    var opacity = isMaint ? 0.6 : 1;
+    var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + (size*2+8) + '" height="' + (size*2+8) + '">' +
+        '<circle cx="' + (size+4) + '" cy="' + (size+4) + '" r="' + (size+2) + '" fill="none" stroke="' + color + '" stroke-width="1.5" opacity="0.4">' +
+        '<animate attributeName="r" values="' + (size+2) + ';' + (size+5) + ';' + (size+2) + '" dur="2s" repeatCount="indefinite"/>' +
+        '<animate attributeName="opacity" values="0.4;0.1;0.4" dur="2s" repeatCount="indefinite"/>' +
+        '</circle>' +
+        '<circle cx="' + (size+4) + '" cy="' + (size+4) + '" r="' + size + '" fill="' + color + '" opacity="' + opacity + '"/>' +
+        '<circle cx="' + (size+4) + '" cy="' + (size+4) + '" r="' + (size-4) + '" fill="white" opacity="0.25"/>' +
+        '</svg>';
+    return L.icon({
+        iconUrl: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg),
+        iconSize: [size*2+8, size*2+8],
+        iconAnchor: [size+4, size+4],
+        popupAnchor: [0, -(size+4)]
+    });
+}
+
+function renderLeafletMarkers() {
+    markerLayerGroup.clearLayers();
+    leafletMarkers = [];
+
+    plants.forEach(function(p) {
+        var color = typeColors[p.type];
+        var isMaint = p.status === 'Mantenimiento';
+
+        var marker = L.marker([p.lat, p.lng], {
+            icon: createCircleIcon(color, isMaint),
+            title: p.name
+        });
+
+        marker._plantType = p.type;
+        marker._plantData = p;
+
+        var statusColor = p.status === 'Operativa' ? '#10D858' : '#F0A000';
+        var statusBg = p.status === 'Operativa' ? 'rgba(16,216,88,0.15)' : 'rgba(240,160,0,0.15)';
+
+        var popupContent = '<div style="background:#0A1420;color:#E8F4FF;font-family:Space Grotesk,sans-serif;padding:14px 16px;min-width:240px;border-radius:8px;border:1px solid rgba(0,200,240,0.2);">' +
+            '<div style="font-size:15px;font-weight:600;margin-bottom:10px;color:#E8F4FF;border-bottom:1px solid rgba(0,200,240,0.15);padding-bottom:8px;">' + p.name + '</div>' +
+            '<div style="display:flex;justify-content:space-between;font-size:11px;color:#7AAAC8;margin-bottom:5px;"><span>ID:</span><span style="color:#E8F4FF;font-family:IBM Plex Mono,monospace;">' + p.id + '</span></div>' +
+            '<div style="display:flex;justify-content:space-between;font-size:11px;color:#7AAAC8;margin-bottom:5px;"><span>Tipo:</span><span style="color:' + color + ';font-weight:600;">' + typeNames[p.type] + '</span></div>' +
+            '<div style="display:flex;justify-content:space-between;font-size:11px;color:#7AAAC8;margin-bottom:5px;"><span>Ubicacion:</span><span style="color:#E8F4FF;">' + p.state + '</span></div>' +
+            '<div style="display:flex;justify-content:space-between;font-size:11px;color:#7AAAC8;margin-bottom:10px;"><span>Capacidad:</span><span style="color:#00C8F0;font-weight:600;">' + p.capacity + '</span></div>' +
+            '<div style="text-align:center;padding:5px 10px;border-radius:4px;font-size:10px;font-weight:700;letter-spacing:1px;background:' + statusBg + ';color:' + statusColor + ';margin-bottom:10px;">' + p.status.toUpperCase() + '</div>' +
+            '<div style="text-align:center;"><a href="' + dtLinks[p.type] + '" style="display:inline-block;background:#FF5500;color:#fff;padding:8px 20px;border-radius:5px;font-size:12px;font-weight:700;text-decoration:none;letter-spacing:0.5px;transition:background 0.2s;">Abrir Gemelo Digital &rarr;</a></div>' +
+            '</div>';
+
+        marker.bindPopup(popupContent, {
+            className: 'dark-popup',
+            maxWidth: 280,
+            closeButton: true
+        });
+
+        marker.on('click', function() {
+            openSidebar(p);
+        });
+
+        markerLayerGroup.addLayer(marker);
+        leafletMarkers.push(marker);
+    });
+}
+
+function applyFilter() {
+    leafletMarkers.forEach(function(m) {
+        if (activeFilter === 'ALL' || m._plantType === activeFilter) {
+            if (!markerLayerGroup.hasLayer(m)) markerLayerGroup.addLayer(m);
+        } else {
+            markerLayerGroup.removeLayer(m);
+        }
+    });
+}
+
+function filterPlants(type) {
+    activeFilter = type;
+    document.querySelectorAll('.filter-btn').forEach(function(b) {
+        b.classList.toggle('active', b.dataset.filter === type);
+    });
+    applyFilter();
+}
+
+// ====== SIDEBAR ======
+function openSidebar(plant) {
+    var panel = document.getElementById('sidebarPanel');
+    var overlay = document.getElementById('sidebarOverlay');
+
+    document.getElementById('sb-name').textContent = plant.name;
+    document.getElementById('sb-id').textContent = plant.id;
+
+    var typeEl = document.getElementById('sb-type');
+    typeEl.textContent = plant.type + ' - ' + typeNames[plant.type];
+    typeEl.style.background = typeColors[plant.type] + '22';
+    typeEl.style.color = typeColors[plant.type];
+
+    var statusEl = document.getElementById('sb-status');
+    var isOp = plant.status === 'Operativa';
+    statusEl.innerHTML = '<span class="sidebar-status-badge ' + (isOp ? 'operativa' : 'mantenimiento') + '">' +
+        '<span class="dot" style="background:' + (isOp ? '#10D858' : '#F0A000') + '"></span>' +
+        plant.status +
+    '</span>';
+
+    document.getElementById('sb-state').textContent = plant.state;
+    document.getElementById('sb-coords').textContent = plant.lat.toFixed(4) + ', ' + plant.lng.toFixed(4);
+
+    // Generate KPIs
+    var kpisEl = document.getElementById('sb-kpis');
+    var kpis = generateKPIs(plant);
+    kpisEl.innerHTML = kpis.map(function(k) {
+        return '<div class="sidebar-kpi">' +
+            '<div class="sidebar-kpi-label">' + k.label + '</div>' +
+            '<div class="sidebar-kpi-value" style="color:' + (k.color || '#E8F4FF') + '">' + k.value + '</div>' +
+        '</div>';
+    }).join('');
+
+    document.getElementById('sb-link').href = dtLinks[plant.type];
+
+    panel.classList.add('open');
+    overlay.classList.add('open');
+}
+
+function closeSidebar() {
+    document.getElementById('sidebarPanel').classList.remove('open');
+    document.getElementById('sidebarOverlay').classList.remove('open');
+}
+
+function generateKPIs(plant) {
+    var base = [{ label: 'Capacidad', value: plant.capacity, color: '#00C8F0' }];
+
+    switch (plant.type) {
+        case 'TAS':
+            return base.concat([
+                { label: 'Tanques', value: plant.extra.tanks, color: '#F0A000' },
+                { label: 'Presion Prom.', value: (10 + Math.random() * 4).toFixed(1) + ' kg/cm2' },
+                { label: 'Temp. Amb.', value: (22 + Math.random() * 10).toFixed(0) + ' C' }
+            ]);
+        case 'GNC':
+            return base.concat([
+                { label: 'Compresores', value: plant.extra.compressors, color: '#00C8F0' },
+                { label: 'Presion Sal.', value: (180 + Math.random() * 40).toFixed(0) + ' bar' },
+                { label: 'Flujo', value: (Math.random() * 3000 + 1000).toFixed(0) + ' Nm3/h' }
+            ]);
+        case 'LNG':
+            return base.concat([
+                { label: 'Tanques Crio.', value: plant.extra.tanks, color: '#FF5500' },
+                { label: 'Temperatura', value: '-' + (155 + Math.random() * 10).toFixed(0) + ' C' },
+                { label: 'Nivel', value: (40 + Math.random() * 50).toFixed(0) + '%' }
+            ]);
+        case 'DUCTOS':
+            return base.concat([
+                { label: 'Compresores', value: plant.extra.compressors, color: '#7AAAC8' },
+                { label: 'Presion Ent.', value: (45 + Math.random() * 20).toFixed(0) + ' bar' },
+                { label: 'Flujo', value: (Math.random() * 60 + 40).toFixed(0) + ' MMSCFD' }
+            ]);
+        case 'FV':
+            return base.concat([
+                { label: 'Inversores', value: plant.extra.inverters, color: '#10D858' },
+                { label: 'Perf. Ratio', value: (75 + Math.random() * 10).toFixed(1) + '%' },
+                { label: 'Irradiancia', value: (600 + Math.random() * 400).toFixed(0) + ' W/m2' }
+            ]);
+        default:
+            return base;
+    }
+}
+
+// ====== LEGEND ======
+function renderLegend() {
+    var legend = document.getElementById('mapLegend');
+    var counts = {};
+    plants.forEach(function(p) { counts[p.type] = (counts[p.type] || 0) + 1; });
+
+    var types = ['TAS', 'GNC', 'LNG', 'DUCTOS', 'FV'];
+    legend.innerHTML = types.map(function(type) {
+        return '<div class="legend-item">' +
+            '<div class="legend-dot" style="background:' + typeColors[type] + '"></div>' +
+            '<span>' + type + '</span>' +
+            '<span class="legend-count">(' + (counts[type] || 0) + ')</span>' +
+        '</div>';
+    }).join('');
+}
+
+// ====== ALERTS ======
+var alertTemplates = [
+    { severity: 'critical', cls: 'critical', plant: 'TAS-QRO-01', msg: 'Presion tanque SPH-02 alta (14.2 kg/cm2)', label: 'CRITICA' },
+    { severity: 'warning', cls: 'warning', plant: 'GNC-PUE-01', msg: 'Compresor #1 en mantenimiento programado', label: 'WARNING' },
+    { severity: 'warning', cls: 'warning', plant: 'LNG-QRO-01', msg: 'Nivel tanque criogenico bajo (12%)', label: 'WARNING' },
+    { severity: 'info', cls: 'info', plant: 'FV-SLP-01', msg: 'Performance ratio debajo objetivo (78%)', label: 'INFO' },
+    { severity: 'critical', cls: 'critical', plant: 'TAS-MTY-01', msg: 'Detector gas LEL zona almacenamiento', label: 'CRITICA' },
+    { severity: 'warning', cls: 'warning', plant: 'FV-COA-01', msg: 'Inversor INV-03 derating por temperatura', label: 'WARNING' },
+    { severity: 'info', cls: 'info', plant: 'DUC-CEN-01', msg: 'Pigging programado completado', label: 'INFO' },
+    { severity: 'ok', cls: 'ok', plant: 'GNC-MTY-01', msg: 'Compresor #2 restaurado', label: 'OK' },
+    { severity: 'warning', cls: 'warning', plant: 'TAS-SLP-01', msg: 'Temperatura ambiente elevada (38 C)', label: 'WARNING' },
+    { severity: 'info', cls: 'info', plant: 'LNG-MTY-01', msg: 'Descarga pipa criogenica completada', label: 'INFO' }
+];
+
+var extraAlerts = [
+    { severity: 'critical', cls: 'critical', plant: 'TAS-GDL-01', msg: 'Fuga detectada linea transferencia B', label: 'CRITICA' },
+    { severity: 'warning', cls: 'warning', plant: 'GNC-CDX-01', msg: 'Presion cascada baja critica (120 bar)', label: 'WARNING' },
+    { severity: 'ok', cls: 'ok', plant: 'FV-SON-01', msg: 'Tracker #5 calibrado exitosamente', label: 'OK' },
+    { severity: 'info', cls: 'info', plant: 'DUC-NOR-01', msg: 'Mantenimiento preventivo programado 03/28', label: 'INFO' },
+    { severity: 'critical', cls: 'critical', plant: 'LNG-CDX-01', msg: 'BOG pressure buildup anormal', label: 'CRITICA' },
+    { severity: 'warning', cls: 'warning', plant: 'TAS-VER-01', msg: 'Vibracion bomba PMP-01 fuera de rango', label: 'WARNING' },
+    { severity: 'ok', cls: 'ok', plant: 'GNC-LEO-01', msg: 'Dispensador #3 calibracion completada', label: 'OK' },
+    { severity: 'info', cls: 'info', plant: 'FV-CHI-01', msg: 'Produccion mensual supera objetivo (+4.2%)', label: 'INFO' }
+];
+
+function formatTime(offset) {
+    var d = new Date(Date.now() - offset * 60000);
+    return d.getHours().toString().padStart(2, '0') + ':' + d.getMinutes().toString().padStart(2, '0');
+}
+
+function renderAlerts() {
+    var list = document.getElementById('alertsList');
+    list.innerHTML = alertTemplates.map(function(a, i) {
+        return '<div class="alert-item ' + a.cls + '">' +
+            '<span class="alert-severity">' + a.label + '</span>' +
+            '<div class="alert-body">' +
+                '<div class="alert-plant">' + a.plant + '</div>' +
+                '<div class="alert-msg">' + a.msg + '</div>' +
+            '</div>' +
+            '<span class="alert-time">' + formatTime((i + 1) * 7) + '</span>' +
+        '</div>';
+    }).join('');
+}
+
+var extraAlertIdx = 0;
+function addRandomAlert() {
+    var list = document.getElementById('alertsList');
+    var a = extraAlerts[extraAlertIdx % extraAlerts.length];
+    extraAlertIdx++;
+
+    var div = document.createElement('div');
+    div.className = 'alert-item ' + a.cls;
+    div.innerHTML =
+        '<span class="alert-severity">' + a.label + '</span>' +
+        '<div class="alert-body">' +
+            '<div class="alert-plant">' + a.plant + '</div>' +
+            '<div class="alert-msg">' + a.msg + '</div>' +
+        '</div>' +
+        '<span class="alert-time">' + formatTime(0) + '</span>';
+
+    list.insertBefore(div, list.firstChild);
+
+    // Remove oldest if too many
+    while (list.children.length > 15) {
+        list.removeChild(list.lastChild);
+    }
+
+    // Update alert count
+    var countEl = document.getElementById('kpi-alerts');
+    var count = parseInt(countEl.textContent);
+    if (a.severity === 'critical' || a.severity === 'warning') count++;
+    if (count > 15) count = 7;
+    countEl.textContent = count;
+}
+
+// ====== CLOCK ======
+function updateClock() {
+    var now = new Date();
+    document.getElementById('clock').textContent =
+        now.getHours().toString().padStart(2, '0') + ':' +
+        now.getMinutes().toString().padStart(2, '0') + ':' +
+        now.getSeconds().toString().padStart(2, '0');
+}
+
+// ====== KPI FLUCTUATION ======
+function fluctuateKPIs() {
+    var gasEl = document.getElementById('kpi-gas');
+    var base = 120450;
+    var val = base + Math.floor(Math.random() * 200 - 100);
+    gasEl.textContent = val.toLocaleString();
+
+    var solarEl = document.getElementById('kpi-solar');
+    var sBase = 225;
+    var sVal = sBase + (Math.random() * 2 - 1);
+    solarEl.textContent = sVal.toFixed(0);
+
+    // Executive KPIs fluctuation
+    var dispEl = document.getElementById('exec-disponibilidad');
+    var dispBase = 97.8;
+    var dispVal = dispBase + (Math.random() * 0.4 - 0.2);
+    dispEl.textContent = dispVal.toFixed(1) + '%';
+
+    var otsEl = document.getElementById('exec-ots');
+    var otsBase = 4;
+    var otsVal = otsBase + Math.floor(Math.random() * 3 - 1);
+    if (otsVal < 1) otsVal = 1;
+    otsEl.textContent = otsVal;
+
+    var prodEl = document.getElementById('exec-produccion');
+    var prodBase = 45200;
+    var prodVal = prodBase + Math.floor(Math.random() * 300 - 150);
+    prodEl.textContent = prodVal.toLocaleString();
+
+    var solarExEl = document.getElementById('exec-solar');
+    var solarExBase = 38.5;
+    var solarExVal = solarExBase + (Math.random() * 1.0 - 0.5);
+    solarExEl.textContent = solarExVal.toFixed(1);
+}
+
+// ====== INIT ======
+function onGoogleMapsReady() {
+    initGoogleMap();
+    renderLegend();
+    renderAlerts();
+    updateClock();
+
+    setInterval(updateClock, 1000);
+    setInterval(addRandomAlert, 30000);
+    setInterval(fluctuateKPIs, 5000);
+}
+
+// Keyboard: Escape closes sidebar
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeSidebar();
+});
+</script>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded',function(){setTimeout(onGoogleMapsReady,100)});
+window.addEventListener('resize', function() {
+    if (typeof leafletMap !== 'undefined' && leafletMap) {
+        leafletMap.invalidateSize();
+    }
+});
+</script>
+
+</body>
+</html>

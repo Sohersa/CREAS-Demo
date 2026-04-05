@@ -1,0 +1,2305 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Digital Twin | Estación Compresora de Gas Natural</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+--bg:#060D18;--s1:#0A1420;--s2:#0E1A2A;--s3:#121E34;
+--b0:#182636;--b1:#1E3048;--b2:#243858;
+--or:#FF5500;--cy:#00C8F0;--gr:#10D858;
+--re:#E02020;--ye:#F0A000;
+--t0:#E8F4FF;--t1:#7AAAC8;--t2:#3A607A;
+--sidebar-l:280px;--sidebar-r:320px;--topbar:52px;
+}
+html,body{height:100%;width:100%;overflow:hidden;background:var(--bg);color:var(--t0);font-family:'Space Grotesk',sans-serif;-webkit-font-smoothing:antialiased}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--b1);border-radius:2px}
+@keyframes bk{0%,100%{opacity:1}50%{opacity:.15}}
+@keyframes pulse{0%,100%{transform:scale(1);opacity:.85}50%{transform:scale(1.1);opacity:1}}
+@keyframes glow{0%,100%{box-shadow:0 0 6px var(--cy)}50%{box-shadow:0 0 14px var(--cy)}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* TOPBAR */
+.topbar{position:fixed;top:0;left:0;right:0;height:var(--topbar);z-index:50;background:rgba(6,13,24,.97);border-bottom:1px solid var(--b0);display:flex;align-items:center;gap:0;backdrop-filter:blur(20px)}
+.tb-brand{display:flex;align-items:center;gap:10px;padding:0 20px;border-right:1px solid var(--b0);height:100%}
+.tb-ey{background:var(--or);color:#fff;font-weight:700;font-size:14px;padding:5px 10px;border-radius:4px;letter-spacing:1px}
+.tb-title{font-size:14px;font-weight:700;color:#fff}
+.tb-sub{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--t2);margin-top:1px}
+.tb-sep{width:1px;height:28px;background:var(--b0);margin:0 14px}
+.tb-plant{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--t1);letter-spacing:.5px}
+.tb-center{flex:1;display:flex;align-items:center;gap:12px;padding:0 16px}
+.tb-status{display:flex;align-items:center;gap:6px}
+.sys-dot{width:8px;height:8px;border-radius:50%;background:var(--gr);box-shadow:0 0 8px var(--gr)}
+.sys-dot.al{background:var(--re);animation:bk .7s infinite}
+.sys-badge{font-family:'IBM Plex Mono',monospace;font-size:9px;padding:3px 9px;border-radius:3px;border:1px solid}
+.sb-ok{color:var(--gr);border-color:rgba(16,216,88,.3);background:rgba(16,216,88,.07)}
+.sb-al{color:var(--re);border-color:rgba(224,32,32,.35);background:rgba(224,32,32,.09)}
+.tb-right{display:flex;align-items:center;gap:10px;padding:0 16px;border-left:1px solid var(--b0);height:100%}
+.tb-clock{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--t2)}
+.tb-alert-btn{padding:7px 14px;border:1px solid var(--b0);border-radius:6px;background:var(--s2);color:var(--t1);font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:11px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:6px}
+.tb-alert-btn:hover{border-color:var(--or);color:var(--or);background:rgba(255,85,0,.06)}
+.tb-alert-cnt{background:var(--re);color:#fff;font-size:9px;font-weight:700;padding:1px 5px;border-radius:8px;font-family:'IBM Plex Mono',monospace}
+.demo-badge{background:var(--re);color:#fff;font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:700;letter-spacing:1.5px;padding:2px 8px;border-radius:2px}
+
+/* LAYOUT */
+.layout{position:fixed;top:var(--topbar);left:0;right:0;bottom:0;display:grid;grid-template-columns:var(--sidebar-l) 1fr var(--sidebar-r);grid-template-rows:1fr}
+.sidebar-left{grid-column:1;background:var(--s1);border-right:1px solid var(--b0);display:flex;flex-direction:column;overflow:hidden}
+.sidebar-right{grid-column:3;background:var(--s1);border-left:1px solid var(--b0);display:flex;flex-direction:column;overflow:hidden}
+
+/* SIDEBAR TABS */
+.stab-bar{display:flex;border-bottom:1px solid var(--b0);flex-shrink:0}
+.stab{flex:1;padding:10px 6px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--t2);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;letter-spacing:.5px}
+.stab:hover{color:var(--t1);background:rgba(255,255,255,.02)}
+.stab.on{color:var(--or);border-bottom-color:var(--or);background:rgba(255,85,0,.04)}
+.stab-icon{font-size:14px;display:block;margin-bottom:2px}
+.spanel{display:none;flex:1;overflow-y:auto;padding:12px}
+.spanel.on{display:flex;flex-direction:column;gap:0}
+
+/* SECTION HEADERS */
+.sec-hdr{font-family:'IBM Plex Mono',monospace;font-size:8px;font-weight:500;letter-spacing:2px;color:var(--t2);text-transform:uppercase;margin:14px 0 8px;padding-bottom:4px;border-bottom:1px solid var(--b0)}
+.sec-hdr:first-child{margin-top:4px}
+
+/* KPI CARDS */
+.kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:4px}
+.kpi-card{background:var(--s2);border-radius:8px;padding:10px;border:1px solid var(--b0);transition:border-color .2s}
+.kpi-card:hover{border-color:var(--b2)}
+.kpi-val{font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700;line-height:1}
+.kpi-val.cy{color:var(--cy)}.kpi-val.or{color:var(--or)}.kpi-val.gr{color:var(--gr)}.kpi-val.re{color:var(--re)}.kpi-val.ye{color:var(--ye)}
+.kpi-unit{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--t2);margin-left:2px}
+.kpi-lbl{font-size:10px;color:var(--t1);margin-top:3px}
+.kpi-bar{width:100%;height:4px;background:var(--b0);border-radius:2px;margin-top:6px;overflow:hidden}
+.kpi-fill{height:100%;border-radius:2px;transition:width .8s ease}
+.kpi-fill.cy{background:var(--cy)}.kpi-fill.or{background:var(--or)}.kpi-fill.gr{background:var(--gr)}.kpi-fill.re{background:var(--re)}.kpi-fill.ye{background:var(--ye)}
+
+/* TRAIN CARDS */
+.train-card{background:var(--s2);border-radius:10px;padding:12px;border:1px solid var(--b0);margin-bottom:6px;cursor:pointer;transition:all .2s}
+.train-card:hover{border-color:rgba(0,200,240,.3)}
+.train-card.active{border-color:var(--cy);background:rgba(0,200,240,.04)}
+.train-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.train-name{font-weight:700;font-size:13px}
+.train-status{font-family:'IBM Plex Mono',monospace;font-size:9px;padding:2px 6px;border-radius:3px}
+.train-status.ok{background:rgba(16,216,88,.1);color:var(--gr);border:1px solid rgba(16,216,88,.2)}
+.train-status.warn{background:rgba(240,160,0,.1);color:var(--ye);border:1px solid rgba(240,160,0,.2)}
+.train-status.crit{background:rgba(224,32,32,.1);color:var(--re);border:1px solid rgba(224,32,32,.2)}
+.train-metrics{display:flex;gap:12px;font-size:10px;color:var(--t1)}
+.train-metrics .v{font-family:'IBM Plex Mono',monospace;font-weight:600;color:var(--t0)}
+
+/* ASSET ITEMS */
+.asset-item{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:6px;cursor:pointer;transition:all .15s;margin-bottom:2px;border:1px solid transparent}
+.asset-item:hover{background:var(--s2)}
+.asset-item.active{background:rgba(255,85,0,.08);border-color:rgba(255,85,0,.2)}
+.ai-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.ai-dot.ok{background:var(--gr);box-shadow:0 0 5px var(--gr)}
+.ai-dot.warn{background:var(--ye);box-shadow:0 0 5px var(--ye);animation:bk 1.5s infinite}
+.ai-dot.off{background:var(--t2)}
+.ai-dot.crit{background:var(--re);box-shadow:0 0 5px var(--re);animation:bk .7s infinite}
+.ai-name{font-size:11px;font-weight:600;color:var(--t0)}
+.ai-sub{font-family:'IBM Plex Mono',monospace;font-size:8px;color:var(--t2)}
+
+/* ALERTS */
+.alert-item{background:var(--s2);border-radius:8px;padding:10px;border-left:3px solid;margin-bottom:6px;animation:fadeIn .3s ease}
+.alert-item.crit{border-color:var(--re);background:rgba(224,32,32,.04)}
+.alert-item.warn{border-color:var(--ye);background:rgba(240,160,0,.04)}
+.alert-item.info{border-color:var(--cy);background:rgba(0,200,240,.04)}
+.al-title{font-size:12px;font-weight:700;margin-bottom:3px}
+.al-title.crit{color:var(--re)}.al-title.warn{color:var(--ye)}.al-title.info{color:var(--cy)}
+.al-desc{font-size:10px;color:var(--t1);line-height:1.4}
+.al-time{font-family:'IBM Plex Mono',monospace;font-size:8px;color:var(--t2);margin-top:4px}
+
+/* ALERT OVERLAY */
+.alert-overlay{position:fixed;top:var(--topbar);right:0;width:380px;bottom:0;background:var(--s1);border-left:1px solid var(--b0);z-index:40;transform:translateX(100%);transition:transform .3s;padding:16px;overflow-y:auto;display:flex;flex-direction:column;gap:8px}
+.alert-overlay.open{transform:translateX(0)}
+.ao-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.ao-title{font-size:14px;font-weight:700}
+.ao-close{background:none;border:1px solid var(--b0);color:var(--t2);width:28px;height:28px;border-radius:4px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center}
+.ao-close:hover{color:var(--t0);border-color:var(--t2)}
+
+/* CANVAS CENTER */
+.canvas-wrap{grid-column:2;position:relative;overflow:hidden;background:var(--bg)}
+#cv{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
+#cv:active{cursor:grabbing}
+
+/* 3D LABELS */
+#labels3d{position:absolute;inset:0;pointer-events:none;z-index:5}
+#iotLabels{position:absolute;inset:0;pointer-events:none;z-index:6}
+.lbl3d{position:absolute;font-family:'IBM Plex Mono',monospace;font-size:8px;white-space:nowrap;padding:2px 7px;border-radius:3px;border:1px solid;background:rgba(6,13,24,.92);transform:translate(-50%,-140%);pointer-events:none;backdrop-filter:blur(4px)}
+.lbl3d.cy{color:var(--cy);border-color:rgba(0,200,240,.3)}
+.lbl3d.or{color:var(--or);border-color:rgba(255,85,0,.3)}
+.lbl3d.gr{color:var(--gr);border-color:rgba(16,216,88,.3)}
+.lbl3d.re{color:var(--re);border-color:rgba(224,32,32,.3)}
+.lbl3d.ye{color:var(--ye);border-color:rgba(240,160,0,.3)}
+.lbl3d.wh{color:var(--t0);border-color:var(--b1)}
+
+/* IoT label cards */
+.iot-lbl{position:absolute;font-family:'IBM Plex Mono',monospace;font-size:9px;background:rgba(6,13,24,.93);border:1px solid var(--b1);border-radius:6px;padding:6px 10px;pointer-events:none;transform:translate(-50%,-120%);backdrop-filter:blur(6px);min-width:180px}
+.iot-tag{color:var(--or);font-weight:700;font-size:8px;letter-spacing:1px;margin-bottom:3px}
+.iot-row{display:flex;justify-content:space-between;gap:12px;margin-bottom:1px}
+.iot-k{color:var(--t2)}
+.iot-v{font-weight:600}
+.iot-v.ok{color:var(--gr)}.iot-v.warn{color:var(--ye)}.iot-v.crit{color:var(--re)}.iot-v.cy{color:var(--cy)}
+
+/* FLOW LEGEND */
+.flow-legend{position:absolute;bottom:14px;left:14px;z-index:8;background:rgba(6,13,24,.92);border:1px solid var(--b0);border-radius:8px;padding:8px 12px;backdrop-filter:blur(8px)}
+.fl-title{font-family:'IBM Plex Mono',monospace;font-size:7px;color:var(--t2);letter-spacing:2px;margin-bottom:6px;text-transform:uppercase}
+.fl-row{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--t1);margin-bottom:3px}
+.fl-row:last-child{margin-bottom:0}
+.fl-dot{width:14px;height:4px;border-radius:2px;flex-shrink:0}
+
+/* CANVAS BUTTONS */
+.cv-btns{position:absolute;bottom:14px;right:14px;z-index:8;display:flex;gap:6px}
+.cv-btn{background:rgba(6,13,24,.9);border:1px solid var(--b0);border-radius:6px;padding:7px 12px;font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--t2);cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:5px}
+.cv-btn:hover{color:var(--cy);border-color:var(--cy)}
+.cv-btn.active{color:var(--gr);border-color:var(--gr)}
+
+/* HOTKEYS PANEL */
+.hotkeys{position:absolute;top:14px;left:14px;z-index:8;background:rgba(6,13,24,.88);border:1px solid var(--b0);border-radius:6px;padding:8px 12px;font-family:'IBM Plex Mono',monospace;font-size:8px;color:var(--t2)}
+.hk-r{display:flex;gap:8px;margin-bottom:3px;align-items:center}
+.hk-r:last-child{margin-bottom:0}
+.hk-k{background:var(--b1);border-radius:3px;padding:1px 5px;color:var(--t1);min-width:16px;text-align:center}
+
+/* CAMERA PRESET BAR */
+.cam-bar{position:absolute;top:14px;right:14px;z-index:8;display:flex;gap:4px}
+.cam-btn{background:rgba(6,13,24,.9);border:1px solid var(--b0);border-radius:4px;padding:5px 10px;font-family:'IBM Plex Mono',monospace;font-size:8px;color:var(--t2);cursor:pointer;transition:all .2s}
+.cam-btn:hover{color:var(--or);border-color:var(--or)}
+.cam-btn.active{color:var(--or);border-color:var(--or);background:rgba(255,85,0,.08)}
+
+/* RIGHT PANEL */
+.rp-header{padding:14px;border-bottom:1px solid var(--b0);flex-shrink:0}
+.rp-tag{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--or);margin-bottom:2px}
+.rp-name{font-size:16px;font-weight:700;margin-bottom:4px}
+.rp-status{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:9px;padding:2px 7px;border-radius:3px}
+.rp-status.ok{background:rgba(16,216,88,.1);color:var(--gr);border:1px solid rgba(16,216,88,.2)}
+.rp-status.warn{background:rgba(240,160,0,.1);color:var(--ye);border:1px solid rgba(240,160,0,.2)}
+.rp-status.crit{background:rgba(224,32,32,.1);color:var(--re);border:1px solid rgba(224,32,32,.2)}
+.rp-status.off{background:rgba(58,96,122,.1);color:var(--t2);border:1px solid rgba(58,96,122,.2)}
+.rp-body{flex:1;overflow-y:auto;padding:14px}
+.rp-sec{font-family:'IBM Plex Mono',monospace;font-size:8px;font-weight:500;letter-spacing:2px;color:var(--t2);text-transform:uppercase;margin:12px 0 6px;padding-bottom:3px;border-bottom:1px solid var(--b0)}
+.rp-sec:first-child{margin-top:0}
+.rp-row{display:flex;justify-content:space-between;font-size:11px;padding:3px 0}
+.rp-row .k{color:var(--t1)}.rp-row .v{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--t0);font-weight:500}
+.rp-sensor{display:flex;justify-content:space-between;align-items:center;padding:4px 8px;background:var(--s2);border-radius:4px;margin-bottom:3px;font-size:10px}
+.rp-sensor .sn{color:var(--t1)}.rp-sensor .sv{font-family:'IBM Plex Mono',monospace;font-weight:600}
+.rp-sensor .sv.ok{color:var(--gr)}.rp-sensor .sv.warn{color:var(--ye)}.rp-sensor .sv.crit{color:var(--re)}.rp-sensor .sv.cy{color:var(--cy)}
+.rp-btn{width:100%;padding:8px;border-radius:6px;border:1px solid var(--or);background:transparent;color:var(--or);font-family:'Space Grotesk',sans-serif;font-size:11px;font-weight:600;cursor:pointer;margin-top:8px;transition:all .2s}
+.rp-btn:hover{background:var(--or);color:#fff}
+.rp-gauge{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.rp-gauge-bar{flex:1;height:6px;background:var(--b0);border-radius:3px;overflow:hidden}
+.rp-gauge-fill{height:100%;border-radius:3px;transition:width .8s}
+.rp-gauge-val{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;min-width:40px;text-align:right}
+.rp-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:var(--t2);text-align:center;padding:20px}
+.rp-empty-icon{font-size:36px;opacity:.4}
+.rp-empty-text{font-size:12px}
+.rp-empty-hint{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--t2);opacity:.6}
+
+/* QR */
+.qr-wrap{text-align:center;margin-top:8px}
+.qr-wrap canvas{border-radius:6px;border:2px solid var(--b1)}
+
+/* TREND CHART */
+.trend-wrap{margin-top:8px}
+.trend-canvas{width:100%;height:60px;background:var(--s2);border-radius:6px;border:1px solid var(--b0)}
+
+/* SAP OVERLAY */
+.fs-overlay{position:fixed;top:0;left:0;right:0;bottom:0;z-index:500;background:#F0F2F5;display:none;flex-direction:column;animation:fsIn .3s ease}
+.fs-overlay.open{display:flex}
+@keyframes fsIn{from{opacity:0;transform:scale(.98)}to{opacity:1;transform:scale(1)}}
+.fs-header{height:48px;background:#354A5F;display:flex;align-items:center;padding:0 20px;gap:16px;flex-shrink:0}
+.fs-header-title{color:#fff;font-size:14px;font-weight:700;letter-spacing:.3px}
+.fs-header-sub{color:rgba(255,255,255,.6);font-family:'IBM Plex Mono',monospace;font-size:10px}
+.fs-close{margin-left:auto;background:none;border:1px solid rgba(255,255,255,.3);color:#fff;width:32px;height:32px;border-radius:4px;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.fs-close:hover{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.5)}
+.fs-body{flex:1;display:flex;overflow:hidden}
+.fs-nav{width:200px;background:#2C3E50;display:flex;flex-direction:column;padding:8px 0;flex-shrink:0;overflow-y:auto}
+.fs-nav-item{padding:10px 16px;color:rgba(255,255,255,.7);font-size:12px;cursor:pointer;border-left:3px solid transparent;transition:all .15s;display:flex;align-items:center;gap:8px}
+.fs-nav-item:hover{color:#fff;background:rgba(255,255,255,.05)}
+.fs-nav-item.active{color:#fff;background:rgba(232,116,59,.1);border-left-color:#E8743B}
+.fs-content{flex:1;overflow-y:auto;padding:20px;background:#F0F2F5}
+.fs-section{display:none}
+.fs-section.active{display:block}
+.sap-card{background:#fff;border-radius:8px;padding:16px;border:1px solid #e0e0e0;color:#333;margin-bottom:12px}
+.sap-card-title{font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;color:#354A5F;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid #e8e8e8}
+.sap-kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+.sap-kpi{background:#FAFBFC;border:1px solid #E0E0E0;border-radius:6px;padding:12px;text-align:center}
+.sap-kpi-val{font-size:24px;font-weight:700;color:#354A5F}
+.sap-kpi-lbl{font-size:10px;color:#777;margin-top:4px}
+.sap-wo-table{width:100%;border-collapse:collapse;font-size:11px}
+.sap-wo-table th{font-family:'IBM Plex Mono',monospace;font-size:9px;color:#354A5F;text-align:left;padding:8px 6px;border-bottom:2px solid #354A5F;text-transform:uppercase;letter-spacing:.5px}
+.sap-wo-table td{padding:8px 6px;border-bottom:1px solid #E8E8E8;color:#333}
+.sap-wo-table tr:hover td{background:#F0F4F8}
+.sap-badge{font-family:'IBM Plex Mono',monospace;font-size:8px;padding:2px 6px;border-radius:3px;font-weight:600}
+.sap-badge.open{background:#E3F2FD;color:#0D47A1;border:1px solid #90CAF9}
+.sap-badge.prog{background:#FFF3E0;color:#E65100;border:1px solid #FFD180}
+.sap-badge.done{background:#E8F5E9;color:#2E7D32;border:1px solid #A5D6A7}
+.sap-badge.crit{background:#FDE8E8;color:#CC1919;border:1px solid #F5C6C6}
+.sap-badge.high{background:#FFF3E0;color:#E65100;border:1px solid #FFD180}
+.sap-badge.med{background:#E3F2FD;color:#1565C0;border:1px solid #90CAF9}
+.sap-health-card{background:#FAFBFC;border:1px solid #E0E0E0;border-radius:6px;padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:12px}
+.sap-health-score{font-size:28px;font-weight:700;min-width:60px;text-align:center}
+.sap-health-info{flex:1}
+.sap-health-name{font-size:13px;font-weight:600;color:#333}
+.sap-health-tag{font-family:'IBM Plex Mono',monospace;font-size:9px;color:#777}
+.sap-health-bar{height:6px;background:#E0E0E0;border-radius:3px;overflow:hidden;margin-top:6px}
+.sap-health-fill{height:100%;border-radius:3px}
+.sap-integ-flow{display:flex;align-items:center;gap:6px;justify-content:center;padding:12px;flex-wrap:wrap}
+.flow-node{background:#354A5F;color:#fff;font-family:'IBM Plex Mono',monospace;font-size:9px;padding:6px 12px;border-radius:4px}
+.flow-arrow{color:#354A5F;font-weight:700;font-size:14px}
+.sap-stream{max-height:200px;overflow-y:auto;font-family:'IBM Plex Mono',monospace;font-size:9px;color:#555;background:#F8F9FA;border:1px solid #E0E0E0;border-radius:6px;padding:10px}
+.sap-stream-line{padding:3px 0;border-bottom:1px solid #F0F0F0}
+.sap-stream-ts{color:#354A5F;font-weight:600}
+
+/* ANOMALY MODAL */
+.anomaly-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:600;display:none;align-items:center;justify-content:center}
+.anomaly-overlay.open{display:flex}
+.anomaly-modal{background:var(--s1);border:1px solid var(--re);border-radius:12px;width:520px;max-height:80vh;overflow-y:auto;padding:24px}
+.anomaly-hdr{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.anomaly-icon{width:40px;height:40px;border-radius:50%;background:rgba(224,32,32,.15);border:2px solid var(--re);display:flex;align-items:center;justify-content:center;font-size:20px;animation:bk .7s infinite}
+.anomaly-title{font-size:18px;font-weight:700;color:var(--re)}
+.anomaly-sub{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--t2)}
+.anomaly-section{margin-bottom:14px}
+.anomaly-section-title{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--or);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px}
+.anomaly-var{display:flex;justify-content:space-between;padding:4px 8px;background:var(--s2);border-radius:4px;margin-bottom:3px;font-size:11px}
+.anomaly-var .k{color:var(--t1)}.anomaly-var .v{font-family:'IBM Plex Mono',monospace;font-weight:600}
+.anomaly-var .v.re{color:var(--re)}.anomaly-var .v.ye{color:var(--ye)}.anomaly-var .v.gr{color:var(--gr)}
+.anomaly-step{display:flex;gap:10px;padding:8px;background:var(--s2);border-radius:6px;margin-bottom:4px;border-left:3px solid var(--or)}
+.anomaly-step-num{background:var(--or);color:#fff;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0}
+.anomaly-step-text{font-size:11px;color:var(--t1);line-height:1.4}
+.anomaly-btn{width:100%;padding:10px;border-radius:6px;border:none;background:var(--or);color:#fff;font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:700;cursor:pointer;margin-top:8px;transition:all .2s}
+.anomaly-btn:hover{background:#ff6a1a}
+.anomaly-btn.secondary{background:transparent;border:1px solid var(--b1);color:var(--t1)}
+.anomaly-btn.secondary:hover{border-color:var(--cy);color:var(--cy)}
+
+/* OUTAGE SIM BAR */
+.outage-bar{display:flex;height:24px;border-radius:4px;overflow:hidden;margin:8px 0}
+.outage-seg{display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:8px;color:#fff;font-weight:600}
+
+/* WO TABLE IN RIGHT PANEL */
+.wo-table{width:100%;border-collapse:collapse;font-size:10px;margin-top:6px}
+.wo-table th{font-family:'IBM Plex Mono',monospace;font-size:8px;color:var(--t2);text-align:left;padding:5px 4px;border-bottom:1px solid var(--b0);letter-spacing:1px;text-transform:uppercase}
+.wo-table td{padding:5px 4px;border-bottom:1px solid rgba(24,38,54,.5);color:var(--t1)}
+.wo-status{font-family:'IBM Plex Mono',monospace;font-size:8px;padding:2px 5px;border-radius:3px}
+.wo-status.open{background:rgba(0,200,240,.1);color:var(--cy);border:1px solid rgba(0,200,240,.2)}
+.wo-status.prog{background:rgba(255,85,0,.1);color:var(--or);border:1px solid rgba(255,85,0,.2)}
+.wo-status.done{background:rgba(16,216,88,.1);color:var(--gr);border:1px solid rgba(16,216,88,.2)}
+
+/* MOBILE RESPONSIVE */
+@media(max-width:1100px){
+.layout{grid-template-columns:0 1fr 0}
+.sidebar-left,.sidebar-right{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="tb-brand">
+    <span class="tb-ey">EY</span>
+    <div>
+      <div class="tb-title">Digital Twin</div>
+      <div class="tb-sub">Capital Projects & Infrastructure</div>
+    </div>
+  </div>
+  <div class="tb-sep"></div>
+  <div class="tb-plant">CS-01 &bull; Estación Compresora de Transmisión</div>
+  <span class="demo-badge">DEMO</span>
+  <a href="index.html" style="padding:7px 14px;border:1px solid var(--b0);border-radius:6px;background:transparent;color:var(--t2);font-family:'Space Grotesk',sans-serif;font-weight:500;font-size:11px;cursor:pointer;transition:all .2s;text-decoration:none;margin-left:8px">&larr; Hub</a>
+  <div class="tb-center">
+    <div class="tb-status">
+      <div class="sys-dot" id="sysDot"></div>
+      <span class="sys-badge sb-ok" id="sysBadge">OPERATIVA</span>
+    </div>
+  </div>
+  <div class="tb-right">
+    <div class="tb-clock" id="clock"></div>
+    <button class="tb-alert-btn" onclick="toggleAlertPanel()">
+      Alertas <span class="tb-alert-cnt" id="alertCnt">0</span>
+    </button>
+  </div>
+</div>
+
+<!-- ALERT OVERLAY -->
+<div class="alert-overlay" id="alertOverlay">
+  <div class="ao-hdr">
+    <div class="ao-title">Alertas Activas</div>
+    <button class="ao-close" onclick="toggleAlertPanel()">&times;</button>
+  </div>
+  <div id="alertList"></div>
+</div>
+
+<!-- MAIN LAYOUT -->
+<div class="layout">
+
+<!-- LEFT SIDEBAR -->
+<div class="sidebar-left">
+  <div class="stab-bar">
+    <div class="stab on" onclick="switchTab(0)"><span class="stab-icon">&#9881;</span>MONITOR</div>
+    <div class="stab" onclick="openSAP()"><span class="stab-icon">&#9854;</span>SAP</div>
+    <div class="stab" onclick="openACC()"><span class="stab-icon">&#9733;</span>ACC</div>
+    <div class="stab" onclick="openTandem()"><span class="stab-icon">&#9670;</span>TANDEM</div>
+    <div class="stab" onclick="switchTab(2)"><span class="stab-icon">&#9741;</span>ACTIVOS</div>
+    <div class="stab" onclick="switchTab(3)"><span class="stab-icon">&#9888;</span>ALERTAS</div>
+  </div>
+
+  <!-- MONITOR PANEL -->
+  <div class="spanel on" id="sp0">
+    <div class="sec-hdr">Presiones Principales</div>
+    <div class="kpi-grid">
+      <div class="kpi-card"><div class="kpi-val cy" id="kInletP">72.5</div><span class="kpi-unit">bar</span><div class="kpi-lbl">Presión Succión</div><div class="kpi-bar"><div class="kpi-fill cy" style="width:72%"></div></div></div>
+      <div class="kpi-card"><div class="kpi-val or" id="kOutletP">98.3</div><span class="kpi-unit">bar</span><div class="kpi-lbl">Presión Descarga</div><div class="kpi-bar"><div class="kpi-fill or" style="width:82%"></div></div></div>
+      <div class="kpi-card"><div class="kpi-val gr" id="kFlow">14.8</div><span class="kpi-unit">MMSCFD</span><div class="kpi-lbl">Flujo Estación</div><div class="kpi-bar"><div class="kpi-fill gr" style="width:74%"></div></div></div>
+      <div class="kpi-card"><div class="kpi-val ye" id="kRatio">1.36</div><span class="kpi-unit">ratio</span><div class="kpi-lbl">Relación Compresión</div><div class="kpi-bar"><div class="kpi-fill ye" style="width:68%"></div></div></div>
+    </div>
+
+    <div class="sec-hdr">Trenes de Compresión</div>
+    <div class="train-card" onclick="selectEquipment('trainA')">
+      <div class="train-hdr">
+        <span class="train-name">Tren A &mdash; K-201</span>
+        <span class="train-status ok" id="trainAStatus">OPERATIVO</span>
+      </div>
+      <div class="train-metrics">
+        <span>RPM: <span class="v" id="trainASpd">9,450</span></span>
+        <span>Carga: <span class="v" id="trainALoad">78%</span></span>
+        <span>Vib: <span class="v" id="trainAVib">2.8</span> mm/s</span>
+      </div>
+    </div>
+    <div class="train-card" onclick="selectEquipment('trainB')">
+      <div class="train-hdr">
+        <span class="train-name">Tren B &mdash; K-301</span>
+        <span class="train-status ok" id="trainBStatus">OPERATIVO</span>
+      </div>
+      <div class="train-metrics">
+        <span>RPM: <span class="v" id="trainBSpd">9,380</span></span>
+        <span>Carga: <span class="v" id="trainBLoad">74%</span></span>
+        <span>Vib: <span class="v" id="trainBVib">2.5</span> mm/s</span>
+      </div>
+    </div>
+
+    <div class="sec-hdr">Utilidades</div>
+    <div class="kpi-grid">
+      <div class="kpi-card"><div class="kpi-val gr" id="kLube">4.2</div><span class="kpi-unit">bar</span><div class="kpi-lbl">Aceite Lubricante</div></div>
+      <div class="kpi-card"><div class="kpi-val cy" id="kSeal">52.1</div><span class="kpi-unit">bar</span><div class="kpi-lbl">Sello Seco</div></div>
+      <div class="kpi-card"><div class="kpi-val gr" id="kIA">7.2</div><span class="kpi-unit">bar</span><div class="kpi-lbl">Aire Instrumentos</div></div>
+      <div class="kpi-card"><div class="kpi-val ye" id="kFuel">22.4</div><span class="kpi-unit">bar</span><div class="kpi-lbl">Gas Combustible</div></div>
+    </div>
+
+    <div class="sec-hdr">Seguridad</div>
+    <div class="kpi-grid">
+      <div class="kpi-card"><div class="kpi-val gr">0</div><span class="kpi-unit">ppm</span><div class="kpi-lbl">Gas Detectado</div></div>
+      <div class="kpi-card"><div class="kpi-val gr">OK</div><div class="kpi-lbl">ESD Loop</div></div>
+    </div>
+  </div>
+
+  <!-- SAP PANEL -->
+  <div class="spanel" id="sp1">
+    <div style="padding:20px;text-align:center">
+      <div style="font-size:32px;margin-bottom:8px">&#128196;</div>
+      <div style="font-size:13px;font-weight:600;margin-bottom:6px">SAP S/4HANA</div>
+      <div style="font-size:10px;color:var(--t2);margin-bottom:12px">Integración EAM / APM / MM</div>
+      <button class="rp-btn" onclick="openSAP()">Abrir SAP Fiori</button>
+    </div>
+  </div>
+
+  <!-- ACTIVOS PANEL -->
+  <div class="spanel" id="sp2">
+    <div class="sec-hdr">Sistema 100 - Pipeline</div>
+    <div class="asset-item" onclick="selectEquipment('inletHeader')"><div class="ai-dot ok"></div><div><div class="ai-name">Header de Entrada</div><div class="ai-sub">HD-101 / V-101 / XV-102</div></div></div>
+
+    <div class="sec-hdr">Sistema 120 - Separación</div>
+    <div class="asset-item" onclick="selectEquipment('scrubberA')"><div class="ai-dot ok"></div><div><div class="ai-name">Scrubber A</div><div class="ai-sub">S-121</div></div></div>
+    <div class="asset-item" onclick="selectEquipment('scrubberB')"><div class="ai-dot ok"></div><div><div class="ai-name">Scrubber B</div><div class="ai-sub">S-122</div></div></div>
+
+    <div class="sec-hdr">Sistema 200 - Tren A</div>
+    <div class="asset-item" onclick="selectEquipment('driverA')"><div class="ai-dot ok"></div><div><div class="ai-name">Driver A</div><div class="ai-sub">A-201</div></div></div>
+    <div class="asset-item" onclick="selectEquipment('compressorA')"><div class="ai-dot ok" id="dotCompA"></div><div><div class="ai-name">Compresor Centrífugo A</div><div class="ai-sub">K-201</div></div></div>
+
+    <div class="sec-hdr">Sistema 300 - Tren B</div>
+    <div class="asset-item" onclick="selectEquipment('driverB')"><div class="ai-dot ok"></div><div><div class="ai-name">Driver B</div><div class="ai-sub">A-301</div></div></div>
+    <div class="asset-item" onclick="selectEquipment('compressorB')"><div class="ai-dot ok"></div><div><div class="ai-name">Compresor Centrífugo B</div><div class="ai-sub">K-301</div></div></div>
+
+    <div class="sec-hdr">Sistema 400 - Enfriamiento</div>
+    <div class="asset-item" onclick="selectEquipment('coolerA')"><div class="ai-dot ok"></div><div><div class="ai-name">Gas Cooler A</div><div class="ai-sub">AC-401</div></div></div>
+    <div class="asset-item" onclick="selectEquipment('coolerB')"><div class="ai-dot ok"></div><div><div class="ai-name">Gas Cooler B</div><div class="ai-sub">AC-402</div></div></div>
+
+    <div class="sec-hdr">Sistema 500-700 - Utilidades</div>
+    <div class="asset-item" onclick="selectEquipment('fuelGas')"><div class="ai-dot ok"></div><div><div class="ai-name">Fuel Gas Skid</div><div class="ai-sub">FG-501</div></div></div>
+    <div class="asset-item" onclick="selectEquipment('lubeOil')"><div class="ai-dot ok"></div><div><div class="ai-name">Lube Oil System</div><div class="ai-sub">TK-601 / P-601</div></div></div>
+    <div class="asset-item" onclick="selectEquipment('instrAir')"><div class="ai-dot ok"></div><div><div class="ai-name">Aire de Instrumentos</div><div class="ai-sub">IA-701</div></div></div>
+
+    <div class="sec-hdr">Sistema 800-900 - Eléctrico/Control</div>
+    <div class="asset-item" onclick="selectEquipment('generator')"><div class="ai-dot ok"></div><div><div class="ai-name">Generador Respaldo</div><div class="ai-sub">G-801</div></div></div>
+    <div class="asset-item" onclick="selectEquipment('controlBldg')"><div class="ai-dot ok"></div><div><div class="ai-name">Edificio de Control</div><div class="ai-sub">CB-901</div></div></div>
+
+    <div class="sec-hdr">Sistema 950 - Seguridad</div>
+    <div class="asset-item" onclick="selectEquipment('blowdown')"><div class="ai-dot ok"></div><div><div class="ai-name">Blowdown Stack</div><div class="ai-sub">BD-951</div></div></div>
+  </div>
+
+  <!-- ALERTAS PANEL -->
+  <div class="spanel" id="sp3">
+    <div id="sideAlertList"></div>
+  </div>
+</div>
+
+<!-- CENTER CANVAS -->
+<div class="canvas-wrap">
+  <canvas id="cv"></canvas>
+  <div id="labels3d"></div>
+  <div id="iotLabels"></div>
+
+  <div class="hotkeys">
+    <div class="hk-r"><span class="hk-k">R</span> Reset cámara</div>
+    <div class="hk-r"><span class="hk-k">1</span> Vista general</div>
+    <div class="hk-r"><span class="hk-k">2</span> Tren A</div>
+    <div class="hk-r"><span class="hk-k">3</span> Tren B</div>
+    <div class="hk-r"><span class="hk-k">4</span> Control Bldg</div>
+    <div class="hk-r"><span class="hk-k">I</span> Toggle IoT</div>
+    <div class="hk-r"><span class="hk-k">Click</span> Seleccionar</div>
+  </div>
+
+  <div class="cam-bar">
+    <button class="cam-btn active" onclick="camPreset(0)">General</button>
+    <button class="cam-btn" onclick="camPreset(1)">Tren A</button>
+    <button class="cam-btn" onclick="camPreset(2)">Tren B</button>
+    <button class="cam-btn" onclick="camPreset(3)">Coolers</button>
+    <button class="cam-btn" onclick="camPreset(4)">Control</button>
+    <button class="cam-btn" onclick="camPreset(5)">Seguridad</button>
+  </div>
+
+  <div class="flow-legend">
+    <div class="fl-title">Flujo de Gas</div>
+    <div class="fl-row"><div class="fl-dot" style="background:var(--cy)"></div>Gas de proceso</div>
+    <div class="fl-row"><div class="fl-dot" style="background:var(--or)"></div>Gas comprimido</div>
+    <div class="fl-row"><div class="fl-dot" style="background:var(--ye)"></div>Fuel gas</div>
+    <div class="fl-row"><div class="fl-dot" style="background:var(--gr)"></div>Lube / Seal</div>
+    <div class="fl-row"><div class="fl-dot" style="background:var(--re)"></div>Blowdown / ESD</div>
+  </div>
+
+  <div class="cv-btns">
+    <button class="cv-btn active" onclick="toggleIoT()" id="iotBtn">&#9881; IoT ON</button>
+    <button class="cv-btn" onclick="triggerAnomaly()">&#9888; Anomalía</button>
+    <button class="cv-btn" onclick="resetCamera()">&#8634; Reset</button>
+  </div>
+</div>
+
+<!-- RIGHT SIDEBAR -->
+<div class="sidebar-right">
+  <div id="rightPanel">
+    <div class="rp-empty">
+      <div class="rp-empty-icon">&#9881;</div>
+      <div class="rp-empty-text">Selecciona un equipo</div>
+      <div class="rp-empty-hint">Click en el modelo 3D o en la lista de activos</div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /layout -->
+
+<!-- SAP OVERLAY -->
+<div class="fs-overlay" id="sapOverlay">
+  <div class="fs-header">
+    <span class="fs-header-title">SAP S/4HANA &mdash; Fiori Launchpad</span>
+    <span class="fs-header-sub">CS-01 Estación Compresora</span>
+    <button class="fs-close" onclick="closeSAP()">&times;</button>
+  </div>
+  <div class="fs-body">
+    <div class="fs-nav">
+      <div class="fs-nav-item active" onclick="switchSapTab(0)">&#128196; PM - Mantenimiento</div>
+      <div class="fs-nav-item" onclick="switchSapTab(1)">&#128200; APM - Confiabilidad</div>
+      <div class="fs-nav-item" onclick="switchSapTab(2)">&#128230; MM - Materiales</div>
+      <div class="fs-nav-item" onclick="switchSapTab(3)">&#128279; Integration Suite</div>
+    </div>
+    <div class="fs-content" id="sapContent">
+      <!-- PM -->
+      <div class="fs-section active" id="sapSec0">
+        <div class="sap-kpi-grid">
+          <div class="sap-kpi"><div class="sap-kpi-val" style="color:#2E7D32">94.8%</div><div class="sap-kpi-lbl">Disponibilidad</div></div>
+          <div class="sap-kpi"><div class="sap-kpi-val" style="color:#E65100">3</div><div class="sap-kpi-lbl">OT Abiertas</div></div>
+          <div class="sap-kpi"><div class="sap-kpi-val" style="color:#1565C0">1,247</div><div class="sap-kpi-lbl">MTBF (hrs)</div></div>
+          <div class="sap-kpi"><div class="sap-kpi-val" style="color:#354A5F">$142K</div><div class="sap-kpi-lbl">Costo Mant. YTD</div></div>
+        </div>
+        <div class="sap-card">
+          <div class="sap-card-title">IW38 - Órdenes de Trabajo</div>
+          <table class="sap-wo-table">
+            <tr><th>Orden</th><th>Equipo</th><th>Descripción</th><th>Prioridad</th><th>Estado</th></tr>
+            <tr><td>PM-CS01-4001</td><td>K-201</td><td>Inspección vibración bearing DE</td><td><span class="sap-badge crit">P1</span></td><td><span class="sap-badge prog">EN PROCESO</span></td></tr>
+            <tr><td>PM-CS01-4002</td><td>AC-401</td><td>Reemplazo correas ventilador M-401</td><td><span class="sap-badge high">P2</span></td><td><span class="sap-badge open">ABIERTA</span></td></tr>
+            <tr><td>PM-CS01-4003</td><td>LO-201</td><td>Análisis aceite lubricante Tren A</td><td><span class="sap-badge med">P3</span></td><td><span class="sap-badge open">ABIERTA</span></td></tr>
+            <tr><td>PM-CS01-4004</td><td>FG-501</td><td>Calibración PCV-501 fuel gas</td><td><span class="sap-badge med">P3</span></td><td><span class="sap-badge done">COMPLETADA</span></td></tr>
+            <tr><td>PM-CS01-4005</td><td>IA-701</td><td>Preventivo compresor aire instrum.</td><td><span class="sap-badge med">P3</span></td><td><span class="sap-badge done">COMPLETADA</span></td></tr>
+          </table>
+        </div>
+      </div>
+      <!-- APM -->
+      <div class="fs-section" id="sapSec1">
+        <div class="sap-card">
+          <div class="sap-card-title">Asset Performance Management - Health Scores</div>
+          <div id="apmCards"></div>
+        </div>
+        <div class="sap-card">
+          <div class="sap-card-title">Predicción de Falla - Ventana Estimada</div>
+          <div style="padding:12px;font-size:13px;color:#333">
+            <p><strong>K-201 Compresor Centrífugo A</strong></p>
+            <p style="margin:8px 0;color:#777">Modelo predictivo basado en vibración, temperatura de bearing y análisis de aceite.</p>
+            <div style="display:flex;gap:16px;margin-top:12px">
+              <div style="background:#FDE8E8;border:1px solid #F5C6C6;border-radius:6px;padding:12px;flex:1;text-align:center">
+                <div style="font-size:28px;font-weight:700;color:#CC1919" id="sapRUL">340</div>
+                <div style="font-size:10px;color:#777">Horas est. a falla</div>
+              </div>
+              <div style="background:#E3F2FD;border:1px solid #90CAF9;border-radius:6px;padding:12px;flex:1;text-align:center">
+                <div style="font-size:28px;font-weight:700;color:#1565C0">87%</div>
+                <div style="font-size:10px;color:#777">Confianza modelo</div>
+              </div>
+              <div style="background:#FFF3E0;border:1px solid #FFD180;border-radius:6px;padding:12px;flex:1;text-align:center">
+                <div style="font-size:28px;font-weight:700;color:#E65100">Bearing</div>
+                <div style="font-size:10px;color:#777">Modo de falla</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- MM -->
+      <div class="fs-section" id="sapSec2">
+        <div class="sap-card">
+          <div class="sap-card-title">MM - Inventario Refacciones Críticas</div>
+          <table class="sap-wo-table">
+            <tr><th>Material</th><th>Descripción</th><th>Stock</th><th>Min</th><th>Ubicación</th></tr>
+            <tr><td>MAT-4401</td><td>Bearing DE Compresor K-201/K-301</td><td style="font-weight:700;color:#CC1919">1</td><td>2</td><td>ALM-CS01-01</td></tr>
+            <tr><td>MAT-4402</td><td>Dry Gas Seal Kit K-201/K-301</td><td style="font-weight:700">3</td><td>2</td><td>ALM-CS01-01</td></tr>
+            <tr><td>MAT-4403</td><td>Correa ventilador AC-401/402</td><td style="font-weight:700">6</td><td>4</td><td>ALM-CS01-02</td></tr>
+            <tr><td>MAT-4404</td><td>Filtro aceite LO-201</td><td style="font-weight:700">4</td><td>2</td><td>ALM-CS01-02</td></tr>
+            <tr><td>MAT-4405</td><td>Válvula antisurge RV-201/301</td><td style="font-weight:700;color:#CC1919">0</td><td>1</td><td>PENDIENTE</td></tr>
+            <tr><td>MAT-4406</td><td>Filtro fuel gas FG-501</td><td style="font-weight:700">5</td><td>3</td><td>ALM-CS01-02</td></tr>
+          </table>
+        </div>
+      </div>
+      <!-- Integration -->
+      <div class="fs-section" id="sapSec3">
+        <div class="sap-card">
+          <div class="sap-card-title">Arquitectura de Integración</div>
+          <div class="sap-integ-flow">
+            <span class="flow-node">PLC / RTU</span><span class="flow-arrow">&rarr;</span>
+            <span class="flow-node">OPC-UA</span><span class="flow-arrow">&rarr;</span>
+            <span class="flow-node">Edge Gateway</span><span class="flow-arrow">&rarr;</span>
+            <span class="flow-node">SAP IS</span><span class="flow-arrow">&rarr;</span>
+            <span class="flow-node">S/4HANA</span><span class="flow-arrow">&rarr;</span>
+            <span class="flow-node">Autodesk Tandem</span>
+          </div>
+        </div>
+        <div class="sap-card">
+          <div class="sap-card-title">Event Stream - Tiempo Real</div>
+          <div class="sap-stream" id="sapStream"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ACC OVERLAY -->
+<div class="fs-overlay" id="accOverlay">
+  <div class="fs-header" style="background:#1E1E2E">
+    <div style="display:flex;align-items:center;gap:12px">
+      <div style="font-weight:700;color:#fff;font-size:14px">[A] Autodesk Construction Cloud</div>
+    </div>
+    <span class="fs-header-sub">Proyecto: CS-01 Estación Compresora</span>
+    <button class="fs-close" onclick="closeACC()">&times;</button>
+  </div>
+  <div class="fs-body">
+    <div class="fs-nav" style="background:#2a2a3e">
+      <div class="fs-nav-item active" onclick="switchAccTab(0)">&#128196; Documentos</div>
+      <div class="fs-nav-item" onclick="switchAccTab(1)">&#128206; Modelos BIM</div>
+      <div class="fs-nav-item" onclick="switchAccTab(2)">&#128203; Submittals</div>
+      <div class="fs-nav-item" onclick="switchAccTab(3)">&#128172; RFIs</div>
+    </div>
+    <div class="fs-content" id="accContent">
+      <div class="fs-section active" id="accSec0">
+        <div class="sap-card">
+          <div class="sap-card-title">Documentos del Proyecto</div>
+          <table class="sap-wo-table">
+            <tr><th>Documento</th><th>Revisión</th><th>Tipo</th><th>Fecha</th><th>Estado</th></tr>
+            <tr><td>CS01-PID-001 P&ID General</td><td>Rev.C</td><td>P&ID</td><td>2026-02-15</td><td><span class="sap-badge done">APROBADO</span></td></tr>
+            <tr><td>CS01-MEC-010 GA Tren A</td><td>Rev.B</td><td>Mecánico</td><td>2026-03-01</td><td><span class="sap-badge done">APROBADO</span></td></tr>
+            <tr><td>CS01-MEC-020 GA Tren B</td><td>Rev.B</td><td>Mecánico</td><td>2026-03-01</td><td><span class="sap-badge done">APROBADO</span></td></tr>
+            <tr><td>CS01-ELE-001 Diagrama Unifilar</td><td>Rev.A</td><td>El��ctrico</td><td>2026-01-20</td><td><span class="sap-badge prog">EN REVISIÓN</span></td></tr>
+            <tr><td>CS01-INS-001 Loop Diagrams</td><td>Rev.B</td><td>Instrumentación</td><td>2026-02-28</td><td><span class="sap-badge done">APROBADO</span></td></tr>
+            <tr><td>CS01-CIV-001 Plano de Cimentación</td><td>Rev.C</td><td>Civil</td><td>2026-03-10</td><td><span class="sap-badge done">APROBADO</span></td></tr>
+            <tr><td>CS01-PIP-001 Isométricos Proceso</td><td>Rev.A</td><td>Piping</td><td>2026-03-15</td><td><span class="sap-badge open">BORRADOR</span></td></tr>
+            <tr><td>CS01-SAF-001 Plan Seguridad</td><td>Rev.B</td><td>HSE</td><td>2026-01-10</td><td><span class="sap-badge done">APROBADO</span></td></tr>
+          </table>
+        </div>
+      </div>
+      <div class="fs-section" id="accSec1">
+        <div class="sap-card">
+          <div class="sap-card-title">Modelos BIM / IFC</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div style="background:#FAFBFC;border:1px solid #E0E0E0;border-radius:6px;padding:16px">
+              <div style="font-size:28px;text-align:center;margin-bottom:8px">&#127959;</div>
+              <div style="font-weight:600;font-size:13px;text-align:center">CS01-3D-MECH.ifc</div>
+              <div style="font-size:10px;color:#777;text-align:center">Modelo Mecánico Principal<br>Rev.B | 142 MB | 2,847 elementos</div>
+            </div>
+            <div style="background:#FAFBFC;border:1px solid #E0E0E0;border-radius:6px;padding:16px">
+              <div style="font-size:28px;text-align:center;margin-bottom:8px">&#9889;</div>
+              <div style="font-weight:600;font-size:13px;text-align:center">CS01-3D-ELEC.ifc</div>
+              <div style="font-size:10px;color:#777;text-align:center">Modelo Eléctrico<br>Rev.A | 68 MB | 1,234 elementos</div>
+            </div>
+            <div style="background:#FAFBFC;border:1px solid #E0E0E0;border-radius:6px;padding:16px">
+              <div style="font-size:28px;text-align:center;margin-bottom:8px">&#128295;</div>
+              <div style="font-weight:600;font-size:13px;text-align:center">CS01-3D-PIPE.ifc</div>
+              <div style="font-size:10px;color:#777;text-align:center">Modelo Piping<br>Rev.A | 198 MB | 4,562 elementos</div>
+            </div>
+            <div style="background:#FAFBFC;border:1px solid #E0E0E0;border-radius:6px;padding:16px">
+              <div style="font-size:28px;text-align:center;margin-bottom:8px">&#127970;</div>
+              <div style="font-weight:600;font-size:13px;text-align:center">CS01-3D-CIVIL.ifc</div>
+              <div style="font-size:10px;color:#777;text-align:center">Modelo Civil/Estructural<br>Rev.C | 85 MB | 892 elementos</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="fs-section" id="accSec2">
+        <div class="sap-card">
+          <div class="sap-card-title">Submittals</div>
+          <table class="sap-wo-table">
+            <tr><th>No.</th><th>Descripción</th><th>Proveedor</th><th>Fecha</th><th>Estado</th></tr>
+            <tr><td>SUB-001</td><td>Compresor centrífugo K-201/K-301</td><td>OEM Compresión</td><td>2025-11-15</td><td><span class="sap-badge done">APROBADO</span></td></tr>
+            <tr><td>SUB-002</td><td>Turbina driver A-201/A-301</td><td>OEM Turbinas</td><td>2025-12-01</td><td><span class="sap-badge done">APROBADO</span></td></tr>
+            <tr><td>SUB-003</td><td>Air Coolers AC-401/AC-402</td><td>Cooler Mfg.</td><td>2026-01-10</td><td><span class="sap-badge done">APROBADO</span></td></tr>
+            <tr><td>SUB-004</td><td>Scrubbers S-121/S-122</td><td>Vessel Fab.</td><td>2026-01-20</td><td><span class="sap-badge prog">EN REVISIÓN</span></td></tr>
+            <tr><td>SUB-005</td><td>Sistema Fire & Gas</td><td>Safety Systems</td><td>2026-02-05</td><td><span class="sap-badge open">PENDIENTE</span></td></tr>
+          </table>
+        </div>
+      </div>
+      <div class="fs-section" id="accSec3">
+        <div class="sap-card">
+          <div class="sap-card-title">RFIs (Solicitudes de Información)</div>
+          <table class="sap-wo-table">
+            <tr><th>RFI</th><th>Asunto</th><th>De</th><th>Para</th><th>Estado</th></tr>
+            <tr><td>RFI-041</td><td>Clarificación cimentación K-201</td><td>Civil</td><td>Mecánico</td><td><span class="sap-badge done">CERRADO</span></td></tr>
+            <tr><td>RFI-042</td><td>Ruta cable tray MCC a Tren A</td><td>Eléctrico</td><td>Piping</td><td><span class="sap-badge prog">ABIERTO</span></td></tr>
+            <tr><td>RFI-043</td><td>Spec válvula antisurge RV-201</td><td>Proceso</td><td>OEM</td><td><span class="sap-badge prog">ABIERTO</span></td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TANDEM OVERLAY -->
+<div class="fs-overlay" id="tandemOverlay">
+  <div class="fs-header" style="background:#0a2f4e">
+    <div style="display:flex;align-items:center;gap:12px">
+      <div style="font-weight:700;color:#fff;font-size:14px">[A] Autodesk Tandem</div>
+      <div style="color:rgba(255,255,255,.5);font-size:12px">Digital Twin Platform</div>
+    </div>
+    <span class="fs-header-sub">Facility: CS-01</span>
+    <button class="fs-close" onclick="closeTandem()">&times;</button>
+  </div>
+  <div class="fs-body">
+    <div class="fs-nav" style="background:#0d3a5c">
+      <div class="fs-nav-item active" onclick="switchTandemTab(0)">&#9881; Assets</div>
+      <div class="fs-nav-item" onclick="switchTandemTab(1)">&#128200; Streams</div>
+      <div class="fs-nav-item" onclick="switchTandemTab(2)">&#128279; Connections</div>
+    </div>
+    <div class="fs-content" id="tandemContent">
+      <div class="fs-section active" id="tandemSec0">
+        <div class="sap-card">
+          <div class="sap-card-title">Asset Hierarchy - CS-01</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#333;padding:8px;background:#FAFBFC;border-radius:6px;border:1px solid #E0E0E0">
+            <div style="font-weight:700;margin-bottom:6px">&#128205; CS-01 Estación Compresora</div>
+            <div style="margin-left:16px;border-left:2px solid #ccc;padding-left:8px">
+              <div style="font-weight:600;color:#354A5F;margin:4px 0">&#9881; Sys-100 Pipeline & Tie-ins</div>
+              <div style="margin-left:16px;color:#666;font-size:10px">HD-101 Inlet Header &bull; V-101 &bull; XV-102 &bull; FT-101 &bull; PT-101 &bull; TT-101</div>
+              <div style="font-weight:600;color:#354A5F;margin:4px 0">&#9881; Sys-120 Separación</div>
+              <div style="margin-left:16px;color:#666;font-size:10px">S-121 Scrubber A &bull; S-122 Scrubber B &bull; TK-121 &bull; P-121</div>
+              <div style="font-weight:600;color:#354A5F;margin:4px 0">&#9881; Sys-200 Tren A</div>
+              <div style="margin-left:16px;color:#666;font-size:10px">A-201 Driver &bull; K-201 Compressor &bull; C-201 Coupling &bull; RV-201 Antisurge &bull; LO-201 &bull; SG-201</div>
+              <div style="font-weight:600;color:#354A5F;margin:4px 0">&#9881; Sys-300 Tren B</div>
+              <div style="margin-left:16px;color:#666;font-size:10px">A-301 Driver &bull; K-301 Compressor &bull; C-301 Coupling &bull; RV-301 Antisurge &bull; LO-301 &bull; SG-301</div>
+              <div style="font-weight:600;color:#354A5F;margin:4px 0">&#9881; Sys-400 Enfriamiento</div>
+              <div style="margin-left:16px;color:#666;font-size:10px">AC-401 Gas Cooler A &bull; AC-402 Gas Cooler B &bull; M-401..M-404 Fan Motors</div>
+              <div style="font-weight:600;color:#354A5F;margin:4px 0">&#9881; Sys-500 Fuel Gas</div>
+              <div style="margin-left:16px;color:#666;font-size:10px">FG-501 Filter Sep &bull; PCV-501 &bull; FT-501 &bull; XV-501</div>
+              <div style="font-weight:600;color:#354A5F;margin:4px 0">&#9881; Sys-600-700-800 Utilidades</div>
+              <div style="margin-left:16px;color:#666;font-size:10px">TK-601 Lube Oil &bull; IA-701 Instr Air &bull; G-801 Generator &bull; UPS-801 &bull; MCC-801</div>
+              <div style="font-weight:600;color:#354A5F;margin:4px 0">&#9881; Sys-900 Control</div>
+              <div style="margin-left:16px;color:#666;font-size:10px">CB-901 &bull; PLC-901 &bull; HMI-901 &bull; RTU-901 &bull; HIS-901 &bull; FGS-901</div>
+              <div style="font-weight:600;color:#354A5F;margin:4px 0">&#9881; Sys-950 Seguridad</div>
+              <div style="margin-left:16px;color:#666;font-size:10px">BD-951 Blowdown &bull; XV-951 ESD &bull; GD-951/952 Gas Det &bull; FD-951 Flame Det</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="fs-section" id="tandemSec1">
+        <div class="sap-card">
+          <div class="sap-card-title">Live Sensor Streams</div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px" id="tandemStreams"></div>
+        </div>
+      </div>
+      <div class="fs-section" id="tandemSec2">
+        <div class="sap-card">
+          <div class="sap-card-title">System Connections</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div style="background:#E8F5E9;border:1px solid #A5D6A7;border-radius:6px;padding:12px"><div style="font-weight:700;color:#2E7D32">&#9989; SAP S/4HANA</div><div style="font-size:10px;color:#555;margin-top:4px">Conectado &bull; Last sync: 2s ago &bull; 68 assets</div></div>
+            <div style="background:#E8F5E9;border:1px solid #A5D6A7;border-radius:6px;padding:12px"><div style="font-weight:700;color:#2E7D32">&#9989; IoT Gateway</div><div style="font-size:10px;color:#555;margin-top:4px">Conectado &bull; 142 tags &bull; 1s refresh</div></div>
+            <div style="background:#E8F5E9;border:1px solid #A5D6A7;border-radius:6px;padding:12px"><div style="font-weight:700;color:#2E7D32">&#9989; ACC (Docs)</div><div style="font-size:10px;color:#555;margin-top:4px">Conectado &bull; 42 documentos &bull; 4 modelos IFC</div></div>
+            <div style="background:#E8F5E9;border:1px solid #A5D6A7;border-radius:6px;padding:12px"><div style="font-weight:700;color:#2E7D32">&#9989; SCADA RTU</div><div style="font-size:10px;color:#555;margin-top:4px">Conectado &bull; Latencia: 12ms &bull; 0 tags stale</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ANOMALY MODAL -->
+<div class="anomaly-overlay" id="anomalyOverlay">
+  <div class="anomaly-modal">
+    <div class="anomaly-hdr">
+      <div class="anomaly-icon">&#9888;</div>
+      <div>
+        <div class="anomaly-title">Anomalía Detectada &mdash; K-201</div>
+        <div class="anomaly-sub">CS01-200-K-201-GAS &bull; Compresor Centrífugo A</div>
+      </div>
+    </div>
+
+    <div class="anomaly-section">
+      <div class="anomaly-section-title">Variables Críticas</div>
+      <div class="anomaly-var"><span class="k">Vibración Radial DE</span><span class="v re" id="anVibDE">7.8 mm/s</span></div>
+      <div class="anomaly-var"><span class="k">Vibración Radial NDE</span><span class="v ye" id="anVibNDE">5.2 mm/s</span></div>
+      <div class="anomaly-var"><span class="k">Bearing Temp DE</span><span class="v re" id="anBearDE">112 °C</span></div>
+      <div class="anomaly-var"><span class="k">Bearing Temp NDE</span><span class="v ye" id="anBearNDE">95 °C</span></div>
+      <div class="anomaly-var"><span class="k">Seal Gas DP</span><span class="v ye" id="anSealDP">0.8 bar</span></div>
+      <div class="anomaly-var"><span class="k">Antisurge Margin</span><span class="v gr">18.4%</span></div>
+    </div>
+
+    <div class="anomaly-section">
+      <div class="anomaly-section-title">Ventana de Falla Estimada</div>
+      <div class="anomaly-var"><span class="k">RUL (Remaining Useful Life)</span><span class="v re" id="anRUL">~340 hrs</span></div>
+      <div class="anomaly-var"><span class="k">Modo de falla probable</span><span class="v ye">Deterioro bearing / seal</span></div>
+      <div class="anomaly-var"><span class="k">Confianza del modelo</span><span class="v cy">87%</span></div>
+    </div>
+
+    <div class="anomaly-section">
+      <div class="anomaly-section-title">Secuencia de Intervención</div>
+      <div class="anomaly-step"><div class="anomaly-step-num">1</div><div class="anomaly-step-text">Aislar Tren A: Cerrar XV-102 (suction), XV-401 (discharge). Confirmar bloqueo.</div></div>
+      <div class="anomaly-step"><div class="anomaly-step-num">2</div><div class="anomaly-step-text">Transferir carga a Tren B: Verificar K-301 en línea al 100% capacidad.</div></div>
+      <div class="anomaly-step"><div class="anomaly-step-num">3</div><div class="anomaly-step-text">Despresurizar Tren A: Abrir BD-201 blowdown. Verificar presión cero.</div></div>
+      <div class="anomaly-step"><div class="anomaly-step-num">4</div><div class="anomaly-step-text">Inspeccionar bearing DE: Desmontar coupling guard C-201, acceder a carcasa.</div></div>
+      <div class="anomaly-step"><div class="anomaly-step-num">5</div><div class="anomaly-step-text">Verificar dry gas seal SG-201: Revisar vent flow y differential pressure.</div></div>
+      <div class="anomaly-step"><div class="anomaly-step-num">6</div><div class="anomaly-step-text">Reemplazo de componentes según hallazgo. Reservar MAT-4401 (bearing) de SAP.</div></div>
+    </div>
+
+    <div class="anomaly-section">
+      <div class="anomaly-section-title">Simulación de Outage</div>
+      <div style="font-size:11px;color:var(--t1);margin-bottom:6px">Tiempo estimado de intervención con planeación anticipada vs. sin planeación:</div>
+      <div class="outage-bar">
+        <div class="outage-seg" style="background:var(--re);width:15%">Aislam.</div>
+        <div class="outage-seg" style="background:var(--ye);width:25%">Desmont.</div>
+        <div class="outage-seg" style="background:var(--or);width:30%">Reemplazo</div>
+        <div class="outage-seg" style="background:var(--cy);width:15%">Pruebas</div>
+        <div class="outage-seg" style="background:var(--gr);width:15%">Arranque</div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--t2)">
+        <span>Con planeación: <span style="color:var(--gr);font-weight:700">36 hrs</span></span>
+        <span>Sin planeación: <span style="color:var(--re);font-weight:700">72+ hrs</span></span>
+      </div>
+    </div>
+
+    <button class="anomaly-btn" onclick="closeAnomaly()">Generar OT en SAP</button>
+    <button class="anomaly-btn secondary" onclick="closeAnomaly()">Cerrar</button>
+  </div>
+</div>
+
+<script>
+/* ════════════════════════════════════════════════════
+   ESTACIÓN COMPRESORA - DIGITAL TWIN ENGINE
+   Three.js r128 | Single-file | ~120m x 80m site
+   ════════════════════════════════════════════════════ */
+
+// ── GLOBALS ──
+let scene, camera, renderer, controls, raycaster, mouse;
+const equipMeshes = {};
+const labels3d = [];
+const iotLabels = [];
+let selectedKey = null;
+let prevMat = null;
+let iotVisible = false;
+let anomalyActive = false;
+const flowParticles = [];
+
+// ── SIMULATION STATE ──
+const SIM = {
+  inletP: 72.5, outletP: 98.3, flow: 14.8, ratio: 1.36,
+  trainA: { on: true, rpm: 9450, load: 78, vibDE: 2.8, vibNDE: 2.4, bearDE: 78, bearNDE: 72, sealP: 52.1, sealFlow: 12.4, sealDP: 2.1, dischP: 98.1, dischT: 68, suctP: 72.5, suctT: 32, recyclePos: 12, asMargin: 22.5, health: 92 },
+  trainB: { on: true, rpm: 9380, load: 74, vibDE: 2.5, vibNDE: 2.2, bearDE: 74, bearNDE: 70, sealP: 51.8, sealFlow: 11.8, sealDP: 2.2, dischP: 97.8, dischT: 66, suctP: 72.3, suctT: 31.5, recyclePos: 10, asMargin: 24.1, health: 95 },
+  scrubberA: { level: 22, pressure: 72.3, dp: 0.12, temp: 32 },
+  scrubberB: { level: 18, pressure: 72.1, dp: 0.10, temp: 31.8 },
+  coolerA: { inT: 68, outT: 42, fan1: true, fan2: true, ambT: 28 },
+  coolerB: { inT: 66, outT: 41, fan1: true, fan2: true, ambT: 28 },
+  fuelGas: { pIn: 72, pOut: 22.4, temp: 30, flow: 850, filterDP: 0.08 },
+  lubeOil: { level: 82, pressure: 4.2, temp: 52, filterDP: 0.15, mainPump: true, auxPump: false },
+  sealGas: { supplyP: 52.1, ventFlow: 2.8, dp: 2.1, health: 94 },
+  instrAir: { pressure: 7.2, dewPoint: -40, compStatus: true, receiverP: 7.8 },
+  electrical: { utilityOk: true, genStatus: false, upsCharge: 98, loadKW: 420 },
+  fireGas: { gasDetPPM: 0, flameOk: false, esdOk: true, blowdownReady: true },
+  control: { netLatency: 12, packetLoss: 0.01, staleTags: 0, plcHealth: true, remoteLink: true },
+  alerts: [],
+  hours: 48762
+};
+
+// ── EQUIPMENT DATA ──
+const EQUIP = {
+  inletHeader: { tag:'HD-101',name:'Header de Entrada / Suction',system:'Sys-100 Pipeline',status:'ok',crit:'Media',brand:'Site Fabricated',cap:'36" NPS',
+    sensors:[{n:'Presión entrada',v:()=>SIM.inletP.toFixed(1)+' bar',s:'ok'},{n:'Temperatura',v:()=>SIM.trainA.suctT.toFixed(1)+' °C',s:'ok'},{n:'Flujo estación',v:()=>SIM.flow.toFixed(1)+' MMSCFD',s:'ok'},{n:'Válvula V-101',v:()=>'ABIERTA',s:'ok'},{n:'ESD XV-102',v:()=>'ARMADA',s:'ok'}]},
+  scrubberA: { tag:'S-121',name:'Filtro-Separador A',system:'Sys-120 Separación',status:'ok',crit:'Alta',brand:'Peerless Mfg.',cap:'250 MMSCFD',
+    sensors:[{n:'Nivel',v:()=>SIM.scrubberA.level.toFixed(0)+' %',s:()=>SIM.scrubberA.level>60?'warn':'ok'},{n:'Presión',v:()=>SIM.scrubberA.pressure.toFixed(1)+' bar',s:'ok'},{n:'DP filtro',v:()=>SIM.scrubberA.dp.toFixed(2)+' bar',s:'ok'},{n:'Temperatura',v:()=>SIM.scrubberA.temp.toFixed(1)+' °C',s:'ok'}]},
+  scrubberB: { tag:'S-122',name:'Filtro-Separador B',system:'Sys-120 Separación',status:'ok',crit:'Alta',brand:'Peerless Mfg.',cap:'250 MMSCFD',
+    sensors:[{n:'Nivel',v:()=>SIM.scrubberB.level.toFixed(0)+' %',s:()=>SIM.scrubberB.level>60?'warn':'ok'},{n:'Presión',v:()=>SIM.scrubberB.pressure.toFixed(1)+' bar',s:'ok'},{n:'DP filtro',v:()=>SIM.scrubberB.dp.toFixed(2)+' bar',s:'ok'},{n:'Temperatura',v:()=>SIM.scrubberB.temp.toFixed(1)+' °C',s:'ok'}]},
+  driverA: { tag:'A-201',name:'Driver Unit A (Turbina Industrial)',system:'Sys-200 Tren A',status:'ok',crit:'Alta',brand:'Industrial Gas Turbine',cap:'12 MW mechanical drive',
+    sensors:[{n:'Velocidad',v:()=>SIM.trainA.rpm+' RPM',s:'ok'},{n:'Carga',v:()=>SIM.trainA.load+'%',s:'ok'},{n:'Exhaust Temp',v:()=>(480+Math.random()*10).toFixed(0)+' °C',s:'ok'},{n:'Fuel Gas P',v:()=>SIM.fuelGas.pOut.toFixed(1)+' bar',s:'ok'},{n:'Horas operación',v:()=>SIM.hours,s:'ok'}]},
+  compressorA: { tag:'K-201',name:'Compresor Centrífugo A',system:'Sys-200 Tren A',status:'ok',crit:'Alta',brand:'Centrifugal Compressor OEM',cap:'15 MMSCFD @ 1.36 ratio',
+    sensors:[{n:'Vibración DE',v:()=>SIM.trainA.vibDE.toFixed(1)+' mm/s',s:()=>SIM.trainA.vibDE>6?'crit':SIM.trainA.vibDE>4?'warn':'ok'},{n:'Vibración NDE',v:()=>SIM.trainA.vibNDE.toFixed(1)+' mm/s',s:()=>SIM.trainA.vibNDE>5?'warn':'ok'},{n:'Bearing Temp DE',v:()=>SIM.trainA.bearDE.toFixed(0)+' °C',s:()=>SIM.trainA.bearDE>100?'crit':SIM.trainA.bearDE>85?'warn':'ok'},{n:'Bearing Temp NDE',v:()=>SIM.trainA.bearNDE.toFixed(0)+' °C',s:'ok'},{n:'Presión Succión',v:()=>SIM.trainA.suctP.toFixed(1)+' bar',s:'ok'},{n:'Presión Descarga',v:()=>SIM.trainA.dischP.toFixed(1)+' bar',s:'ok'},{n:'Temp Descarga',v:()=>SIM.trainA.dischT.toFixed(0)+' °C',s:'ok'},{n:'Recycle Valve',v:()=>SIM.trainA.recyclePos+'%',s:'ok'},{n:'Antisurge Margin',v:()=>SIM.trainA.asMargin.toFixed(1)+'%',s:()=>SIM.trainA.asMargin<15?'warn':'ok'},{n:'Seal Gas P',v:()=>SIM.trainA.sealP.toFixed(1)+' bar',s:'ok'},{n:'Seal DP',v:()=>SIM.trainA.sealDP.toFixed(1)+' bar',s:'ok'},{n:'Health Index',v:()=>SIM.trainA.health+'%',s:()=>SIM.trainA.health<80?'warn':'ok'}]},
+  trainA: { tag:'TREN-A',name:'Tren de Compresión A (Driver + Compresor)',system:'Sys-200',status:'ok',crit:'Alta',brand:'Integrated Package',cap:'15 MMSCFD',
+    sensors:[{n:'RPM',v:()=>SIM.trainA.rpm,s:'ok'},{n:'Carga',v:()=>SIM.trainA.load+'%',s:'ok'},{n:'Vib DE',v:()=>SIM.trainA.vibDE.toFixed(1)+' mm/s',s:()=>SIM.trainA.vibDE>6?'crit':SIM.trainA.vibDE>4?'warn':'ok'},{n:'Health',v:()=>SIM.trainA.health+'%',s:()=>SIM.trainA.health<80?'warn':'ok'}]},
+  driverB: { tag:'A-301',name:'Driver Unit B (Turbina Industrial)',system:'Sys-300 Tren B',status:'ok',crit:'Alta',brand:'Industrial Gas Turbine',cap:'12 MW mechanical drive',
+    sensors:[{n:'Velocidad',v:()=>SIM.trainB.rpm+' RPM',s:'ok'},{n:'Carga',v:()=>SIM.trainB.load+'%',s:'ok'},{n:'Exhaust Temp',v:()=>(475+Math.random()*10).toFixed(0)+' °C',s:'ok'},{n:'Fuel Gas P',v:()=>SIM.fuelGas.pOut.toFixed(1)+' bar',s:'ok'}]},
+  compressorB: { tag:'K-301',name:'Compresor Centrífugo B',system:'Sys-300 Tren B',status:'ok',crit:'Alta',brand:'Centrifugal Compressor OEM',cap:'15 MMSCFD @ 1.36 ratio',
+    sensors:[{n:'Vibración DE',v:()=>SIM.trainB.vibDE.toFixed(1)+' mm/s',s:()=>SIM.trainB.vibDE>4?'warn':'ok'},{n:'Vibración NDE',v:()=>SIM.trainB.vibNDE.toFixed(1)+' mm/s',s:'ok'},{n:'Bearing Temp DE',v:()=>SIM.trainB.bearDE.toFixed(0)+' °C',s:'ok'},{n:'Bearing Temp NDE',v:()=>SIM.trainB.bearNDE.toFixed(0)+' °C',s:'ok'},{n:'Presión Succión',v:()=>SIM.trainB.suctP.toFixed(1)+' bar',s:'ok'},{n:'Presión Descarga',v:()=>SIM.trainB.dischP.toFixed(1)+' bar',s:'ok'},{n:'Antisurge Margin',v:()=>SIM.trainB.asMargin.toFixed(1)+'%',s:'ok'},{n:'Seal Gas P',v:()=>SIM.trainB.sealP.toFixed(1)+' bar',s:'ok'},{n:'Health Index',v:()=>SIM.trainB.health+'%',s:'ok'}]},
+  trainB: { tag:'TREN-B',name:'Tren de Compresión B (Driver + Compresor)',system:'Sys-300',status:'ok',crit:'Alta',brand:'Integrated Package',cap:'15 MMSCFD',
+    sensors:[{n:'RPM',v:()=>SIM.trainB.rpm,s:'ok'},{n:'Carga',v:()=>SIM.trainB.load+'%',s:'ok'},{n:'Vib DE',v:()=>SIM.trainB.vibDE.toFixed(1)+' mm/s',s:'ok'},{n:'Health',v:()=>SIM.trainB.health+'%',s:'ok'}]},
+  coolerA: { tag:'AC-401',name:'Gas Cooler A (Air Cooler)',system:'Sys-400 Enfriamiento',status:'ok',crit:'Media',brand:'Air Cooled Heat Exchanger',cap:'15 MMSCFD',
+    sensors:[{n:'Temp Entrada',v:()=>SIM.coolerA.inT.toFixed(0)+' °C',s:'ok'},{n:'Temp Salida',v:()=>SIM.coolerA.outT.toFixed(0)+' °C',s:'ok'},{n:'Fan 1',v:()=>SIM.coolerA.fan1?'ON':'OFF',s:()=>SIM.coolerA.fan1?'ok':'warn'},{n:'Fan 2',v:()=>SIM.coolerA.fan2?'ON':'OFF',s:()=>SIM.coolerA.fan2?'ok':'warn'},{n:'Ambiente',v:()=>SIM.coolerA.ambT+'°C',s:'ok'}]},
+  coolerB: { tag:'AC-402',name:'Gas Cooler B (Air Cooler)',system:'Sys-400 Enfriamiento',status:'ok',crit:'Media',brand:'Air Cooled Heat Exchanger',cap:'15 MMSCFD',
+    sensors:[{n:'Temp Entrada',v:()=>SIM.coolerB.inT.toFixed(0)+' °C',s:'ok'},{n:'Temp Salida',v:()=>SIM.coolerB.outT.toFixed(0)+' °C',s:'ok'},{n:'Fan 1',v:()=>SIM.coolerB.fan1?'ON':'OFF',s:'ok'},{n:'Fan 2',v:()=>SIM.coolerB.fan2?'ON':'OFF',s:'ok'}]},
+  fuelGas: { tag:'FG-501',name:'Fuel Gas Skid',system:'Sys-500 Fuel Gas',status:'ok',crit:'Alta',brand:'Fuel Gas Module',cap:'1500 Nm³/h',
+    sensors:[{n:'P Entrada',v:()=>SIM.fuelGas.pIn.toFixed(0)+' bar',s:'ok'},{n:'P Salida',v:()=>SIM.fuelGas.pOut.toFixed(1)+' bar',s:'ok'},{n:'Temperatura',v:()=>SIM.fuelGas.temp+'°C',s:'ok'},{n:'Flujo',v:()=>SIM.fuelGas.flow+' Nm³/h',s:'ok'},{n:'Filtro DP',v:()=>SIM.fuelGas.filterDP.toFixed(2)+' bar',s:'ok'}]},
+  lubeOil: { tag:'TK-601',name:'Sistema Aceite Lubricante',system:'Sys-600 Lube Oil',status:'ok',crit:'Alta',brand:'Lube Oil Module',cap:'2000 L',
+    sensors:[{n:'Nivel Tanque',v:()=>SIM.lubeOil.level+'%',s:()=>SIM.lubeOil.level<50?'warn':'ok'},{n:'Presión',v:()=>SIM.lubeOil.pressure.toFixed(1)+' bar',s:'ok'},{n:'Temperatura',v:()=>SIM.lubeOil.temp+'°C',s:()=>SIM.lubeOil.temp>65?'warn':'ok'},{n:'Filtro DP',v:()=>SIM.lubeOil.filterDP.toFixed(2)+' bar',s:'ok'},{n:'Bomba Principal',v:()=>SIM.lubeOil.mainPump?'ON':'OFF',s:'ok'},{n:'Bomba Aux',v:()=>SIM.lubeOil.auxPump?'STANDBY':'OFF',s:'ok'}]},
+  instrAir: { tag:'IA-701',name:'Paquete Aire de Instrumentos',system:'Sys-700 Instr. Air',status:'ok',crit:'Media',brand:'Air Compressor Package',cap:'50 Nm³/min',
+    sensors:[{n:'Presión',v:()=>SIM.instrAir.pressure.toFixed(1)+' bar',s:'ok'},{n:'Punto rocío',v:()=>SIM.instrAir.dewPoint+'°C',s:'ok'},{n:'Compresor',v:()=>SIM.instrAir.compStatus?'ON':'OFF',s:'ok'},{n:'Receiver P',v:()=>SIM.instrAir.receiverP.toFixed(1)+' bar',s:'ok'}]},
+  generator: { tag:'G-801',name:'Generador de Respaldo',system:'Sys-800 Eléctrico',status:'ok',crit:'Media',brand:'Backup Generator',cap:'500 kW',
+    sensors:[{n:'Utilidad',v:()=>SIM.electrical.utilityOk?'OK':'FALLA',s:()=>SIM.electrical.utilityOk?'ok':'crit'},{n:'Generador',v:()=>SIM.electrical.genStatus?'ON':'STANDBY',s:'ok'},{n:'UPS Carga',v:()=>SIM.electrical.upsCharge+'%',s:'ok'},{n:'Carga Total',v:()=>SIM.electrical.loadKW+' kW',s:'ok'}]},
+  controlBldg: { tag:'CB-901',name:'Edificio de Control / SCADA',system:'Sys-900 Control',status:'ok',crit:'Alta',brand:'Control Building',cap:'PLC + HMI + Historian',
+    sensors:[{n:'Latencia Red',v:()=>SIM.control.netLatency+' ms',s:'ok'},{n:'Packet Loss',v:()=>SIM.control.packetLoss+'%',s:'ok'},{n:'Tags Stale',v:()=>SIM.control.staleTags,s:()=>SIM.control.staleTags>0?'warn':'ok'},{n:'PLC Health',v:()=>SIM.control.plcHealth?'OK':'FALLA',s:()=>SIM.control.plcHealth?'ok':'crit'},{n:'Remote Link',v:()=>SIM.control.remoteLink?'OK':'DOWN',s:()=>SIM.control.remoteLink?'ok':'crit'}]},
+  blowdown: { tag:'BD-951',name:'Blowdown Stack',system:'Sys-950 Seguridad',status:'ok',crit:'Alta',brand:'Site Fabricated',cap:'Emergency depressurization',
+    sensors:[{n:'Gas Detector',v:()=>SIM.fireGas.gasDetPPM+' ppm',s:()=>SIM.fireGas.gasDetPPM>100?'crit':SIM.fireGas.gasDetPPM>20?'warn':'ok'},{n:'ESD Loop',v:()=>SIM.fireGas.esdOk?'ARMADO':'TRIP',s:()=>SIM.fireGas.esdOk?'ok':'crit'},{n:'Blowdown Ready',v:()=>SIM.fireGas.blowdownReady?'SI':'NO',s:'ok'}]}
+};
+
+// ── HELPERS ──
+const bx=(w,h,d)=>new THREE.BoxGeometry(w,h,d);
+const cy=(rT,rB,h,s=16)=>new THREE.CylinderGeometry(rT,rB,h,s);
+const sp=(r,ws=12,hs=8)=>new THREE.SphereGeometry(r,ws,hs);
+function M(c,o={}){return new THREE.MeshStandardMaterial({color:c,metalness:o.m||0,roughness:o.r||.5,transparent:!!o.t,opacity:o.o||1,emissive:o.e||0,emissiveIntensity:o.ei||0,side:o.ds?THREE.DoubleSide:THREE.FrontSide})}
+function mk(g,m,x,y,z,rx,ry,rz){const ms=new THREE.Mesh(g,m);ms.position.set(x,y,z);if(rx)ms.rotation.x=rx;if(ry)ms.rotation.y=ry;if(rz)ms.rotation.z=rz;ms.castShadow=true;ms.receiveShadow=true;return ms}
+function grp(){return new THREE.Group()}
+
+// Materials
+const MAT={
+  steel:M(0x7A8894,{m:.7,r:.35}),darkSteel:M(0x3A4450,{m:.8,r:.3}),
+  pipe:M(0x6B7B8D,{m:.6,r:.4}),pipeYel:M(0xC4A830,{m:.5,r:.4}),pipeRed:M(0xA03030,{m:.5,r:.4}),pipeGreen:M(0x30A050,{m:.5,r:.4}),pipeCyan:M(0x30A0C0,{m:.5,r:.4}),
+  concrete:M(0x8A8A80,{m:0,r:.9}),concreteLight:M(0x9A9A90,{m:0,r:.85}),
+  gravel:M(0x706860,{m:0,r:1}),
+  building:M(0x354A5F,{m:.1,r:.7}),buildingLight:M(0x4A6070,{m:.1,r:.7}),
+  roof:M(0x2A3A4A,{m:.2,r:.6}),
+  skid:M(0x4A5A6A,{m:.6,r:.4}),
+  vessel:M(0x6A7A8A,{m:.7,r:.3}),
+  copper:M(0xB87333,{m:.8,r:.25}),
+  motor:M(0x2A5A3A,{m:.5,r:.5}),
+  exhaust:M(0x5A5A5A,{m:.3,r:.7}),
+  insulation:M(0xB0A890,{m:0,r:.8}),
+  fence:M(0x4A4A4A,{m:.3,r:.6}),
+  yellow:M(0xE0C030,{m:.1,r:.6}),
+  red:M(0xC03030,{m:.1,r:.6}),
+  white:M(0xD0D0D0,{m:.1,r:.6}),
+  glass:M(0x8AC0E0,{m:.2,r:.1,t:true,o:.4}),
+  screen:M(0x002211,{m:.1,r:.3,e:0x00cc88,ei:.6}),
+  blowdown:M(0x8A4A2A,{m:.5,r:.5}),
+  grating:M(0x5A6A7A,{m:.7,r:.4,t:true,o:.85}),
+  highlight:M(0xFF5500,{m:.3,r:.4,e:0xFF5500,ei:.4}),
+  anomaly:M(0xFF0000,{m:.3,r:.4,e:0xFF0000,ei:.6})
+};
+
+function register(key,mesh,pos){
+  equipMeshes[key]={mesh,pos};
+  mesh.traverse(c=>{if(c.isMesh){c.userData.eqKey=key;c.userData.parentGroup=mesh}});
+}
+
+// ── SCENE INIT ──
+function initScene(){
+  const wrap=document.querySelector('.canvas-wrap');
+  const cv=document.getElementById('cv');
+  scene=new THREE.Scene();
+  scene.background=new THREE.Color(0x060D18);
+  scene.fog=new THREE.FogExp2(0x060D18,.003);
+
+  camera=new THREE.PerspectiveCamera(45,wrap.clientWidth/wrap.clientHeight,.5,600);
+  camera.position.set(80,55,90);
+
+  renderer=new THREE.WebGLRenderer({canvas:cv,antialias:true});
+  renderer.setSize(wrap.clientWidth,wrap.clientHeight);
+  renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  renderer.shadowMap.enabled=true;
+  renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+  renderer.toneMapping=THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure=1.1;
+  renderer.outputEncoding=THREE.sRGBEncoding;
+
+  // Lights
+  const hemi=new THREE.HemisphereLight(0x8899bb,0x223344,.6);
+  scene.add(hemi);
+  const sun=new THREE.DirectionalLight(0xFFDDBB,1.3);
+  sun.position.set(50,70,40);sun.castShadow=true;
+  sun.shadow.mapSize.set(2048,2048);
+  sun.shadow.camera.left=-80;sun.shadow.camera.right=80;
+  sun.shadow.camera.top=60;sun.shadow.camera.bottom=-60;
+  sun.shadow.camera.near=1;sun.shadow.camera.far=200;
+  sun.shadow.bias=-.001;
+  scene.add(sun);
+  const fill=new THREE.DirectionalLight(0x4488CC,.4);
+  fill.position.set(-30,40,-20);scene.add(fill);
+  const amb=new THREE.AmbientLight(0x112233,.3);scene.add(amb);
+
+  // Controls (OrbitControls inline)
+  controls=new THREE.OrbitControls(camera,cv);
+  controls.target.set(0,5,0);
+  controls.enableDamping=true;controls.dampingFactor=.08;
+  controls.maxPolarAngle=Math.PI/2.05;
+  controls.minDistance=20;controls.maxDistance=200;
+
+  raycaster=new THREE.Raycaster();
+  mouse=new THREE.Vector2();
+  cv.addEventListener('click',onCanvasClick);
+
+  window.addEventListener('resize',()=>{
+    camera.aspect=wrap.clientWidth/wrap.clientHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(wrap.clientWidth,wrap.clientHeight);
+  });
+
+  buildStation();
+  buildLabels();
+  buildIoTLabels();
+  animate();
+  setInterval(simTick,3000);
+}
+
+// ── BUILD STATION ──
+function buildStation(){
+  // Ground - 120x80m site
+  const ground=mk(bx(140,0.3,100),MAT.gravel,0,-.15,0);ground.receiveShadow=true;scene.add(ground);
+  // Concrete pads
+  const pad1=mk(bx(130,0.15,90),MAT.concrete,0,0,0);pad1.receiveShadow=true;scene.add(pad1);
+
+  // Internal roads (6m wide)
+  const roadMat=M(0x3A3A3A,{m:0,r:.9});
+  scene.add(mk(bx(130,.05,6),roadMat,0,.08,-35));// south road
+  scene.add(mk(bx(130,.05,6),roadMat,0,.08,35));// north road
+  scene.add(mk(bx(6,.05,70),roadMat,-55,.08,0));// west road
+  scene.add(mk(bx(6,.05,70),roadMat,55,.08,0));// east road
+
+  // Perimeter fence
+  buildFence();
+
+  // Zone 1: Inlet tie-in & suction header (west side)
+  buildInletHeader();
+
+  // Zone 2: Scrubbers
+  buildScrubbers();
+
+  // Zone 3: Compression trains
+  buildTrainA();
+  buildTrainB();
+
+  // Zone 4: Gas coolers
+  buildCoolers();
+
+  // Zone 5: Discharge header (east side)
+  buildDischargeHeader();
+
+  // Zone 6: Utilities (south)
+  buildFuelGasSkid();
+  buildLubeOilSystem();
+  buildSealGasPanels();
+  buildInstrumentAir();
+
+  // Zone 7: Electrical / Control
+  buildElectrical();
+  buildControlBuilding();
+
+  // Zone 8: Safety
+  buildBlowdownStack();
+  buildFireGasDevices();
+
+  // Zone 9: Laydown / Crane pad
+  buildLaydown();
+
+  // Piping network
+  buildPiping();
+
+  // Safety signage
+  buildSignage();
+
+  // Cable trays (main runs)
+  buildCableTrays();
+
+  // Road markings
+  buildRoadMarkings();
+
+  // Additional platforms and walkways
+  buildWalkways();
+
+  // Grid
+  const grid=new THREE.GridHelper(140,28,0x1A2A3A,0x0A1520);
+  grid.position.y=.02;scene.add(grid);
+}
+
+function buildCableTrays(){
+  const ct=MAT.grating;
+  // Main cable tray run from control building to trains
+  scene.add(mk(bx(50,.06,.5),ct,0,4.5,18));// main E-W run
+  // Vertical drops to equipment
+  scene.add(mk(bx(.5,.06,10),ct,-12,4.5,14));// drop to train A
+  scene.add(mk(bx(.5,.06,10),ct,-12,4.5,22));// drop to train B area
+  scene.add(mk(bx(.5,.06,12),ct,18,4.5,14));// drop to coolers
+  // Cable tray from MCC to equipment
+  scene.add(mk(bx(40,.06,.5),ct,0,3.8,-20));// south run
+  // Tray supports (every 5m)
+  for(let i=-20;i<=20;i+=5){
+    scene.add(mk(bx(.08,4.5,.08),MAT.darkSteel,i,2.25,18));
+    scene.add(mk(bx(.08,3.8,.08),MAT.darkSteel,i,1.9,-20));
+  }
+}
+
+function buildRoadMarkings(){
+  const markMat=M(0xCCCC00,{t:true,o:.5});
+  // Yellow center lines on roads
+  for(let i=-60;i<=60;i+=4){
+    scene.add(mk(bx(2,.02,.15),markMat,i,.09,-35));
+    scene.add(mk(bx(2,.02,.15),markMat,i,.09,35));
+  }
+  for(let i=-30;i<=30;i+=4){
+    scene.add(mk(bx(.15,.02,2),markMat,-55,.09,i));
+    scene.add(mk(bx(.15,.02,2),markMat,55,.09,i));
+  }
+  // Crosswalk at control building
+  for(let i=-3;i<=3;i++){
+    scene.add(mk(bx(1,.02,.3),M(0xFFFFFF,{t:true,o:.4}),i*2,.09,22));
+  }
+}
+
+function buildWalkways(){
+  // Elevated walkway between trains
+  const wg=grp();
+  // Grating platform
+  wg.add(mk(bx(8,.06,2),MAT.grating,-12,3,0));
+  // Support columns
+  wg.add(mk(bx(.1,3,.1),MAT.darkSteel,-16,1.5,-.9));
+  wg.add(mk(bx(.1,3,.1),MAT.darkSteel,-16,1.5,.9));
+  wg.add(mk(bx(.1,3,.1),MAT.darkSteel,-8,1.5,-.9));
+  wg.add(mk(bx(.1,3,.1),MAT.darkSteel,-8,1.5,.9));
+  // Handrails
+  wg.add(mk(bx(8,.03,.03),MAT.yellow,-12,4,1));
+  wg.add(mk(bx(8,.03,.03),MAT.yellow,-12,4,-1));
+  wg.add(mk(bx(8,.03,.03),MAT.yellow,-12,3.5,1));
+  wg.add(mk(bx(8,.03,.03),MAT.yellow,-12,3.5,-1));
+  // Vertical handrail posts
+  for(let i=-16;i<=-8;i+=2){
+    wg.add(mk(cy(.02,.02,1,6),MAT.yellow,i,3.5,1));
+    wg.add(mk(cy(.02,.02,1,6),MAT.yellow,i,3.5,-1));
+  }
+  scene.add(wg);
+
+  // Staircase to walkway
+  for(let i=0;i<8;i++){
+    scene.add(mk(bx(1,.04,.3),MAT.grating,-17,.4+i*.35,-1+i*.12));
+  }
+}
+
+// ── FENCE ──
+function buildFence(){
+  const fg=grp();
+  const postMat=MAT.fence;
+  const wireMat=new THREE.LineBasicMaterial({color:0x555555});
+  const corners=[[-62,-42],[62,-42],[62,42],[-62,42]];
+  for(let i=0;i<corners.length;i++){
+    const [x1,z1]=corners[i];
+    const [x2,z2]=corners[(i+1)%4];
+    const dx=x2-x1,dz=z2-z1;
+    const len=Math.sqrt(dx*dx+dz*dz);
+    const posts=Math.floor(len/4);
+    for(let p=0;p<=posts;p++){
+      const t=p/posts;
+      const px=x1+dx*t,pz=z1+dz*t;
+      fg.add(mk(cy(.08,.08,2.5,6),postMat,px,1.25,pz));
+    }
+    // Wire lines
+    for(let h=0;h<4;h++){
+      const geo=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(x1,.5+h*.6,z1),new THREE.Vector3(x2,.5+h*.6,z2)]);
+      fg.add(new THREE.Line(geo,wireMat));
+    }
+  }
+  scene.add(fg);
+}
+
+// ── INLET HEADER ──
+function buildInletHeader(){
+  const g=grp();
+  // Pad
+  g.add(mk(bx(20,.2,12),MAT.concreteLight,-48,.1,0));
+  // Main pipe 36" (radius ~0.45m)
+  g.add(mk(cy(.45,.45,18,16),MAT.pipe,-48,1.5,0,0,0,Math.PI/2));
+  // Valve V-101
+  const v1=buildValve(-52,1.5,0,.8);g.add(v1);
+  // ESD valve XV-102
+  const v2=buildValve(-46,1.5,0,.9);v2.children.forEach(c=>{if(c.material===MAT.red){}});g.add(v2);
+  // Instrument cluster
+  g.add(mk(bx(.3,.6,.3),MAT.skid,-44,2.4,1.5));// PT-101
+  g.add(mk(bx(.3,.6,.3),MAT.skid,-44,2.4,-1.5));// TT-101
+  g.add(mk(cy(.25,.25,.5,8),MAT.steel,-42,2,0));// FT-101
+  // Supports
+  for(let i=0;i<5;i++){
+    g.add(mk(bx(.15,1.5,.6),MAT.darkSteel,-55+i*3,.75,1.8));
+    g.add(mk(bx(.15,1.5,.6),MAT.darkSteel,-55+i*3,.75,-1.8));
+  }
+  scene.add(g);
+  register('inletHeader',g,new THREE.Vector3(-48,3,0));
+}
+
+function buildValve(x,y,z,s=1){
+  const vg=grp();
+  vg.add(mk(cy(.3*s,.3*s,.8*s,8),MAT.darkSteel,x,y,z,0,0,Math.PI/2));
+  vg.add(mk(cy(.15*s,.15*s,.6*s,6),MAT.steel,x,y+.5*s,z));
+  vg.add(mk(cy(.25*s,.25*s,.08*s,8),MAT.red,x,y+.8*s,z));
+  return vg;
+}
+
+// ── SCRUBBERS ──
+function buildScrubbers(){
+  buildScrubberUnit('scrubberA',-32,0,-8);
+  buildScrubberUnit('scrubberB',-32,0,8);
+}
+function buildScrubberUnit(key,x,y,z){
+  const g=grp();
+  // Pad
+  g.add(mk(bx(10,.2,8),MAT.concreteLight,x,.1,z));
+  // Vertical vessel ~9m tall, 1.2m dia
+  const vessel=mk(cy(1.2,1.2,9,24),MAT.vessel,x,4.5+y,z);g.add(vessel);
+  // Dished head top
+  g.add(mk(sp(1.2,16,8),MAT.vessel,x,9+y,z));
+  // Dished head bottom
+  g.add(mk(sp(1.2,16,8),MAT.vessel,x,0+y,z));
+  // Nozzles
+  g.add(mk(cy(.25,.25,.6,8),MAT.pipe,x+1.2,7,z,0,0,Math.PI/2));// inlet
+  g.add(mk(cy(.25,.25,.6,8),MAT.pipe,x-1.2,8,z,0,0,Math.PI/2));// outlet
+  g.add(mk(cy(.15,.15,.4,8),MAT.pipe,x,0,z));// drain
+  // Level instrument
+  g.add(mk(bx(.15,2,.15),MAT.skid,x+1.4,4,z+.5));
+  // Platform at 6m
+  g.add(mk(bx(3.5,.08,3.5),MAT.grating,x,6,z));
+  // Handrails
+  g.add(mk(cy(.03,.03,1,6),MAT.yellow,x+1.7,6.5,z+1.7));
+  g.add(mk(cy(.03,.03,1,6),MAT.yellow,x+1.7,6.5,z-1.7));
+  g.add(mk(cy(.03,.03,1,6),MAT.yellow,x-1.7,6.5,z+1.7));
+  g.add(mk(cy(.03,.03,1,6),MAT.yellow,x-1.7,6.5,z-1.7));
+  // Ladder
+  for(let i=0;i<12;i++){
+    g.add(mk(bx(.4,.03,.05),MAT.steel,x+1.5,.5+i*.5,z+1.5));
+  }
+  scene.add(g);
+  register(key,g,new THREE.Vector3(x,10,z));
+}
+
+// ── COMPRESSION TRAINS ──
+function buildTrainA(){buildCompressionTrain('trainA','driverA','compressorA',-12,0,-10)}
+function buildTrainB(){buildCompressionTrain('trainB','driverB','compressorB',-12,0,10)}
+
+function buildCompressionTrain(trainKey,driverKey,compKey,cx,cy_,cz){
+  const tg=grp();
+  // Main pad 30x15m
+  tg.add(mk(bx(30,.25,14),MAT.concreteLight,cx,.12,cz));
+
+  // ── DRIVER (turbine package) ──
+  const dg=grp();
+  // Turbine base/skid
+  dg.add(mk(bx(8,1,5),MAT.skid,cx-6,.5,cz));
+  // Turbine casing (cylindrical)
+  dg.add(mk(cy(1.6,1.6,7,20),MAT.darkSteel,cx-6,2.2,cz,0,0,Math.PI/2));
+  // Air intake filter module
+  dg.add(mk(bx(3,3,3),MAT.steel,cx-12,2.5,cz));
+  dg.add(mk(cy(1,1,.5,12),MAT.pipe,cx-12,4.2,cz));
+  // Exhaust stack
+  const exh=grp();
+  exh.add(mk(cy(.8,.6,6,12),MAT.exhaust,cx-2,6,cz));
+  exh.add(mk(cy(1,.8,1.5,12),MAT.exhaust,cx-2,9.5,cz));
+  // Silencer
+  exh.add(mk(cy(1.2,1.2,3,12),MAT.insulation,cx-2,4,cz));
+  dg.add(exh);
+  // Coupling guard
+  dg.add(mk(cy(.8,.8,2,12),MAT.yellow,cx-1.5,1.8,cz,0,0,Math.PI/2));
+  scene.add(dg);
+  register(driverKey,dg,new THREE.Vector3(cx-6,5,cz));
+
+  // ── COMPRESSOR (centrifugal) ──
+  const cg=grp();
+  // Compressor casing
+  cg.add(mk(cy(1.4,1.4,4,20),MAT.steel,cx+2,2.2,cz,0,0,Math.PI/2));
+  // Volute/scroll shape approximation
+  cg.add(mk(bx(2.5,2.5,3.5),MAT.pipe,cx+2,2.2,cz));
+  // Suction nozzle
+  cg.add(mk(cy(.5,.5,1.5,12),MAT.pipe,cx-.5,2.2,cz,0,0,Math.PI/2));
+  // Discharge nozzle (top)
+  cg.add(mk(cy(.45,.45,1.2,12),MAT.pipe,cx+2,3.6,cz));
+  // Seal gas connections
+  cg.add(mk(cy(.1,.1,.4,6),MAT.pipeGreen,cx+.5,3,cz+1.2));
+  cg.add(mk(cy(.1,.1,.4,6),MAT.pipeGreen,cx+3.5,3,cz+1.2));
+  // Base plate
+  cg.add(mk(bx(5,.2,4),MAT.darkSteel,cx+2,.1,cz));
+  // Local instruments
+  cg.add(mk(bx(.2,.4,.2),MAT.skid,cx+4.5,2.5,cz+1.5));// PT
+  cg.add(mk(bx(.2,.4,.2),MAT.skid,cx+4.5,2.5,cz-1.5));// TT
+  cg.add(mk(bx(.15,.3,.15),MAT.skid,cx+.5,3.2,cz-1.8));// VT-DE
+  cg.add(mk(bx(.15,.3,.15),MAT.skid,cx+3.5,3.2,cz-1.8));// VT-NDE
+  scene.add(cg);
+  register(compKey,cg,new THREE.Vector3(cx+2,4,cz));
+
+  // ── ANTISURGE RECYCLE LOOP ──
+  const rg=grp();
+  // Recycle line (visible pipe arching over)
+  const recycR=.2;
+  rg.add(mk(cy(recycR,recycR,8,8),MAT.pipeYel,cx+2,5,cz,0,0,Math.PI/2));
+  // Recycle valve
+  rg.add(mk(cy(.35,.35,.6,8),MAT.darkSteel,cx-2,5,cz,0,0,Math.PI/2));
+  rg.add(mk(cy(.12,.12,.5,6),MAT.steel,cx-2,5.5,cz));
+  rg.add(mk(bx(.4,.1,.4),MAT.yellow,cx-2,5.8,cz));
+  scene.add(rg);
+
+  // ── LUBE OIL SKID (per train) ──
+  const lo=grp();
+  lo.add(mk(bx(3,1.8,2.5),MAT.skid,cx+8,1,cz-5));
+  lo.add(mk(cy(.4,.4,1.2,12),MAT.motor,cx+7,1.8,cz-5));// pump
+  lo.add(mk(cy(.3,.3,.8,8),MAT.copper,cx+9,1.5,cz-5));// cooler
+  scene.add(lo);
+
+  // ── SEAL GAS PANEL (per train) ──
+  const sg=grp();
+  sg.add(mk(bx(2,2,1),MAT.buildingLight,cx+8,1,cz+5));
+  sg.add(mk(bx(1.8,.05,.8),MAT.grating,cx+8,2.1,cz+5));
+  // Tubing runs
+  for(let i=0;i<3;i++){
+    sg.add(mk(cy(.04,.04,1.5,6),MAT.pipeGreen,cx+7.2+i*.4,1,cz+4.2));
+  }
+  scene.add(sg);
+
+  // Register train group
+  register(trainKey,tg,new THREE.Vector3(cx,4,cz));
+}
+
+// ── GAS COOLERS ──
+function buildCoolers(){
+  buildCoolerUnit('coolerA',18,0,-10);
+  buildCoolerUnit('coolerB',18,0,10);
+}
+function buildCoolerUnit(key,x,y,z){
+  const g=grp();
+  // Pad
+  g.add(mk(bx(16,.2,10),MAT.concreteLight,x,.1,z));
+  // Header box (tube bundle approximation)
+  g.add(mk(bx(14,1.5,8),MAT.steel,x,1.5,z));
+  // Support structure
+  g.add(mk(bx(14,4,.15),MAT.darkSteel,x,3,z-4));
+  g.add(mk(bx(14,4,.15),MAT.darkSteel,x,3,z+4));
+  g.add(mk(bx(.15,4,8),MAT.darkSteel,x-7,3,z));
+  g.add(mk(bx(.15,4,8),MAT.darkSteel,x+7,3,z));
+  // Fans (2 per cooler)
+  const fanMat=M(0x5A6A7A,{m:.5,r:.4,t:true,o:.7});
+  g.add(mk(cy(2.5,.05,.15,6),fanMat,x-3.5,5.2,z,Math.PI/2,0,0));
+  g.add(mk(cy(2.5,.05,.15,6),fanMat,x+3.5,5.2,z,Math.PI/2,0,0));
+  // Fan motors
+  g.add(mk(cy(.4,.4,.8,12),MAT.motor,x-3.5,4.5,z));
+  g.add(mk(cy(.4,.4,.8,12),MAT.motor,x+3.5,4.5,z));
+  // Walkway on top
+  g.add(mk(bx(14,.06,2),MAT.grating,x,5.3,z-3));
+  // Handrails
+  g.add(mk(cy(.03,.03,1,6),MAT.yellow,x-7,5.8,z-4));
+  g.add(mk(cy(.03,.03,1,6),MAT.yellow,x+7,5.8,z-4));
+  // Inlet/outlet nozzles
+  g.add(mk(cy(.35,.35,1,10),MAT.pipe,x-7,1.5,z,0,0,Math.PI/2));
+  g.add(mk(cy(.35,.35,1,10),MAT.pipe,x+7,1.5,z,0,0,Math.PI/2));
+  scene.add(g);
+  register(key,g,new THREE.Vector3(x,6,z));
+}
+
+// ── DISCHARGE HEADER ──
+function buildDischargeHeader(){
+  const g=grp();
+  g.add(mk(bx(18,.2,12),MAT.concreteLight,38,.1,0));
+  g.add(mk(cy(.45,.45,16,16),MAT.pipe,38,1.5,0,0,0,Math.PI/2));
+  // Outlet valve
+  g.add(buildValve(44,1.5,0,.9));
+  // Instruments
+  g.add(mk(bx(.3,.6,.3),MAT.skid,40,2.4,1.5));
+  g.add(mk(bx(.3,.6,.3),MAT.skid,42,2.4,-1.5));
+  g.add(mk(cy(.25,.25,.5,8),MAT.steel,44,2,2));
+  scene.add(g);
+  register('dischargeHeader',g,new THREE.Vector3(38,3,0));
+}
+
+// ── FUEL GAS SKID ──
+function buildFuelGasSkid(){
+  const g=grp();
+  const x=-30,z=-24;
+  g.add(mk(bx(10,.2,8),MAT.concreteLight,x,.1,z));
+  // Skid frame
+  g.add(mk(bx(8,2.5,5),MAT.skid,x,1.25,z));
+  // Filter separator
+  g.add(mk(cy(.5,.5,2,12),MAT.vessel,x-2,2.5,z));
+  g.add(mk(sp(.5,12,8),MAT.vessel,x-2,3.6,z));
+  // PCV valve
+  g.add(mk(cy(.25,.25,.5,8),MAT.darkSteel,x,2,z,0,0,Math.PI/2));
+  g.add(mk(cy(.1,.1,.4,6),MAT.steel,x,2.4,z));
+  // Flow meter
+  g.add(mk(cy(.2,.2,.6,8),MAT.copper,x+2,2,z,0,0,Math.PI/2));
+  // Piping
+  g.add(mk(cy(.12,.12,6,8),MAT.pipeYel,x,2,z,0,0,Math.PI/2));
+  scene.add(g);
+  register('fuelGas',g,new THREE.Vector3(x,4,z));
+}
+
+// ── LUBE OIL SYSTEM ──
+function buildLubeOilSystem(){
+  const g=grp();
+  const x=-15,z=-24;
+  g.add(mk(bx(12,.2,10),MAT.concreteLight,x,.1,z));
+  // Tank
+  g.add(mk(cy(1.2,1.2,2,16),MAT.vessel,x-3,1,z));
+  g.add(mk(cy(1.2,1.2,.1,16),MAT.darkSteel,x-3,2.05,z));
+  // Main pump
+  g.add(mk(cy(.4,.4,.8,12),MAT.motor,x,1,z-2));
+  g.add(mk(bx(.6,.4,.4),MAT.steel,x+.5,1,z-2));
+  // Aux pump
+  g.add(mk(cy(.35,.35,.7,12),MAT.motor,x,1,z+2));
+  // Cooler
+  g.add(mk(bx(2,1.5,1.5),MAT.copper,x+3,1,z));
+  // Filter
+  g.add(mk(cy(.3,.3,1.2,8),MAT.steel,x+5,1,z));
+  scene.add(g);
+  register('lubeOil',g,new THREE.Vector3(x,3,z));
+}
+
+// ── SEAL GAS PANELS ──
+function buildSealGasPanels(){
+  const g=grp();
+  const x=0,z=-24;
+  g.add(mk(bx(8,.2,6),MAT.concreteLight,x,.1,z));
+  // Panel A
+  g.add(mk(bx(3,2.2,1),MAT.buildingLight,x-2,1.1,z));
+  // Panel B
+  g.add(mk(bx(3,2.2,1),MAT.buildingLight,x+2,1.1,z));
+  // Tubing
+  for(let i=0;i<6;i++){
+    g.add(mk(cy(.03,.03,1.8,6),MAT.pipeGreen,x-3+i*1,1,z-.6));
+  }
+  scene.add(g);
+  register('sealGasPanels',g,new THREE.Vector3(x,3,z));
+}
+
+// ── INSTRUMENT AIR ──
+function buildInstrumentAir(){
+  const g=grp();
+  const x=15,z=-24;
+  g.add(mk(bx(8,.2,6),MAT.concreteLight,x,.1,z));
+  // Compressor
+  g.add(mk(bx(2,1.8,2),MAT.motor,x-2,1,z));
+  g.add(mk(cy(.3,.3,.4,8),MAT.steel,x-2,2,z));
+  // Air receiver
+  g.add(mk(cy(.6,.6,2.5,12),MAT.vessel,x+2,1.25,z));
+  g.add(mk(sp(.6,12,8),MAT.vessel,x+2,2.55,z));
+  g.add(mk(sp(.6,12,8),MAT.vessel,x+2,0,z));
+  // Dryer
+  g.add(mk(bx(1,1.5,1),MAT.skid,x+2,1,z-2.5));
+  scene.add(g);
+  register('instrAir',g,new THREE.Vector3(x,3,z));
+}
+
+// ── ELECTRICAL ──
+function buildElectrical(){
+  const g=grp();
+  const x=30,z=-24;
+  // Generator pad
+  g.add(mk(bx(10,.2,8),MAT.concreteLight,x,.1,z));
+  // Generator
+  g.add(mk(bx(5,2.5,2.5),MAT.motor,x-2,1.25,z-1));
+  g.add(mk(cy(.8,.8,3,12),MAT.darkSteel,x-2,1.5,z-1,0,0,Math.PI/2));
+  // MCC/Switchgear
+  g.add(mk(bx(6,2.5,2),MAT.building,x+2,1.25,z+2));
+  // UPS
+  g.add(mk(bx(2,1.8,1.5),MAT.buildingLight,x+5,1,z));
+  // Battery bank
+  g.add(mk(bx(2,1,1.5),MAT.darkSteel,x+5,.5,z-2));
+  scene.add(g);
+  register('generator',g,new THREE.Vector3(x,4,z));
+}
+
+// ── CONTROL BUILDING ──
+function buildControlBuilding(){
+  const g=grp();
+  const x=0,z=28;
+  // Foundation
+  g.add(mk(bx(20,.3,10),MAT.concreteLight,x,.15,z));
+  // Building structure
+  g.add(mk(bx(20,4,10),MAT.building,x,2.15,z));
+  // Roof
+  g.add(mk(bx(21,.2,11),MAT.roof,x,4.25,z));
+  // Windows
+  for(let i=-3;i<=3;i++){
+    g.add(mk(bx(1.5,1.2,.05),MAT.glass,x+i*2.5,3,z-5.02));
+    g.add(mk(bx(1.5,1.2,.05),MAT.glass,x+i*2.5,3,z+5.02));
+  }
+  // Door
+  g.add(mk(bx(1.5,2.2,.05),M(0x4A3A2A),x-9,1.25,z-5.02));
+  g.add(mk(bx(1.5,2.2,.05),M(0x4A3A2A),x+9,1.25,z-5.02));
+  // HVAC units on roof
+  g.add(mk(bx(2,1,1.5),MAT.steel,x-5,5,z));
+  g.add(mk(bx(2,1,1.5),MAT.steel,x+5,5,z));
+  // Antenna/telecom
+  g.add(mk(cy(.05,.05,3,6),MAT.steel,x+8,5.5,z));
+  g.add(mk(bx(.6,.3,.1),MAT.white,x+8,7,z));
+  // Cable trays entering building
+  g.add(mk(bx(15,.08,.5),MAT.grating,x,4.3,z-4));
+  // Screen glow from windows at night
+  for(let i=-2;i<=2;i++){
+    g.add(mk(bx(1.2,.8,.02),MAT.screen,x+i*2.5,3,z-4.98));
+  }
+  scene.add(g);
+  register('controlBldg',g,new THREE.Vector3(x,5,z));
+}
+
+// ── BLOWDOWN STACK ──
+function buildBlowdownStack(){
+  const g=grp();
+  const x=45,z=20;
+  g.add(mk(bx(6,.2,6),MAT.concreteLight,x,.1,z));
+  // Stack
+  g.add(mk(cy(.6,.8,15,12),MAT.blowdown,x,7.5,z));
+  // Tip
+  g.add(mk(cy(.4,.6,2,12),MAT.darkSteel,x,15.5,z));
+  // Guy wires (simplified)
+  const wireMat=new THREE.LineBasicMaterial({color:0x888888});
+  const anchors=[[x-5,0,z-5],[x+5,0,z-5],[x-5,0,z+5],[x+5,0,z+5]];
+  anchors.forEach(a=>{
+    const geo=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(a[0],a[1],a[2]),new THREE.Vector3(x,14,z)]);
+    g.add(new THREE.Line(geo,wireMat));
+  });
+  // Base valve
+  g.add(buildValve(x-1.5,1.5,z,.6));
+  scene.add(g);
+  register('blowdown',g,new THREE.Vector3(x,16,z));
+}
+
+// ── FIRE & GAS DEVICES ──
+function buildFireGasDevices(){
+  const detMat=M(0xCC3333,{m:.3,r:.5,e:0xCC0000,ei:.3});
+  // Gas detectors scattered
+  const positions=[[-20,3,-16],[20,3,-16],[-20,3,16],[20,3,16],[0,3,-16],[0,3,16],[-40,3,0],[40,3,0]];
+  positions.forEach(p=>{
+    const d=grp();
+    d.add(mk(cy(.03,.03,3,6),MAT.steel,p[0],1.5,p[2]));
+    d.add(mk(bx(.3,.2,.2),detMat,p[0],p[1],p[2]));
+    scene.add(d);
+  });
+  // Emergency push buttons (red mushroom)
+  [[-50,1.2,-30],[50,1.2,-30],[-50,1.2,30],[50,1.2,30]].forEach(p=>{
+    const pb=grp();
+    pb.add(mk(cy(.04,.04,1.2,6),MAT.yellow,p[0],.6,p[2]));
+    pb.add(mk(bx(.3,.3,.15),MAT.yellow,p[0],1.2,p[2]));
+    pb.add(mk(cy(.12,.12,.08,12),MAT.red,p[0],1.38,p[2]));
+    scene.add(pb);
+  });
+}
+
+// ── LAYDOWN / CRANE PAD ──
+function buildLaydown(){
+  const g=grp();
+  const x=45,z=-10;
+  // Compacted gravel area
+  g.add(mk(bx(20,.1,15),M(0x807060,{m:0,r:1}),x,.05,z));
+  // Crane pad markings
+  g.add(mk(bx(5,.05,5),MAT.yellow,x,.11,z));
+  // Stacked containers/equipment
+  g.add(mk(bx(6,2.5,2.5),M(0x2244AA),x-4,1.25,z-4));
+  g.add(mk(bx(4,2.5,2.5),M(0xCC6622),x+5,1.25,z+3));
+  scene.add(g);
+}
+
+// ── PIPING NETWORK ──
+function buildPiping(){
+  const pg=grp();
+  // Suction header to scrubbers
+  addPipe(pg,-38,1.5,0,-32,1.5,-8,.4,MAT.pipe);
+  addPipe(pg,-38,1.5,0,-32,1.5,8,.4,MAT.pipe);
+  // Scrubbers to trains
+  addPipe(pg,-26,1.5,-8,-18,1.5,-10,.35,MAT.pipe);
+  addPipe(pg,-26,1.5,8,-18,1.5,10,.35,MAT.pipe);
+  // Trains to coolers
+  addPipe(pg,5,3,-10,12,1.5,-10,.35,MAT.pipe);
+  addPipe(pg,5,3,10,12,1.5,10,.35,MAT.pipe);
+  // Coolers to discharge
+  addPipe(pg,26,1.5,-10,32,1.5,0,.35,MAT.pipe);
+  addPipe(pg,26,1.5,10,32,1.5,0,.35,MAT.pipe);
+  // Fuel gas lines (yellow)
+  addPipe(pg,-30,2,-20,-12,2,-12,.12,MAT.pipeYel);
+  addPipe(pg,-30,2,-20,-12,2,8,.12,MAT.pipeYel);
+  // Lube oil (green)
+  addPipe(pg,-15,1,-20,-8,1,-12,.1,MAT.pipeGreen);
+  // Instrument air (cyan)
+  addPipe(pg,15,1.5,-20,0,1.5,-18,.08,MAT.pipeCyan);
+  // Blowdown (red)
+  addPipe(pg,5,2,0,45,2,20,.25,MAT.pipeRed);
+  scene.add(pg);
+}
+
+function addPipe(parent,x1,y1,z1,x2,y2,z2,r,mat){
+  const dx=x2-x1,dy=y2-y1,dz=z2-z1;
+  const len=Math.sqrt(dx*dx+dy*dy+dz*dz);
+  const pipe=mk(cy(r,r,len,8),mat,(x1+x2)/2,(y1+y2)/2,(z1+z2)/2);
+  pipe.lookAt(x2,y2,z2);
+  pipe.rotateX(Math.PI/2);
+  parent.add(pipe);
+}
+
+// ── SIGNAGE ──
+function buildSignage(){
+  // Zone signs
+  const signTexts=[
+    {x:-48,z:-8,t:'ZONA 1\nTIE-IN ENTRADA'},{x:-32,z:-16,t:'ZONA 2\nSEPARACIÓN'},
+    {x:-12,z:-20,t:'ZONA 3\nCOMPRESIÓN'},{x:18,z:-20,t:'ZONA 4\nENFRIAMIENTO'},
+    {x:38,z:-8,t:'ZONA 5\nDESCARGA'},{x:0,z:20,t:'ZONA 6\nCONTROL'}
+  ];
+  signTexts.forEach(s=>{
+    const sign=grp();
+    sign.add(mk(cy(.03,.03,2,6),MAT.steel,s.x,1,s.z));
+    sign.add(mk(bx(2,.8,.05),MAT.yellow,s.x,2.2,s.z));
+    scene.add(sign);
+  });
+}
+
+// ── 3D LABELS ──
+function buildLabels(){
+  const container=document.getElementById('labels3d');
+  const items=[
+    {pos:[-48,11,0],text:'HD-101 Inlet Header',cls:'cy'},
+    {pos:[-32,11,-8],text:'S-121 Scrubber A',cls:'cy'},
+    {pos:[-32,11,8],text:'S-122 Scrubber B',cls:'cy'},
+    {pos:[-18,7,-10],text:'A-201/K-201 Tren A',cls:'or'},
+    {pos:[-18,7,10],text:'A-301/K-301 Tren B',cls:'or'},
+    {pos:[18,7,-10],text:'AC-401 Cooler A',cls:'gr'},
+    {pos:[18,7,10],text:'AC-402 Cooler B',cls:'gr'},
+    {pos:[38,4,0],text:'HD-401 Discharge',cls:'cy'},
+    {pos:[-30,5,-24],text:'FG-501 Fuel Gas',cls:'ye'},
+    {pos:[-15,4,-24],text:'TK-601 Lube Oil',cls:'gr'},
+    {pos:[15,4,-24],text:'IA-701 Instr. Air',cls:'cy'},
+    {pos:[30,5,-24],text:'G-801 Generator',cls:'ye'},
+    {pos:[0,6,28],text:'CB-901 Control Bldg',cls:'wh'},
+    {pos:[45,17,20],text:'BD-951 Blowdown',cls:'re'}
+  ];
+  items.forEach(it=>{
+    const el=document.createElement('div');
+    el.className='lbl3d '+it.cls;
+    el.textContent=it.text;
+    container.appendChild(el);
+    labels3d.push({el,pos:new THREE.Vector3(...it.pos)});
+  });
+}
+
+// ── IoT LABELS ──
+function buildIoTLabels(){
+  const container=document.getElementById('iotLabels');
+  const items=[
+    {key:'compressorA',pos:[-8,6,-10],tag:'K-201',sensors:()=>[
+      {k:'Vib DE',v:SIM.trainA.vibDE.toFixed(1)+' mm/s',s:SIM.trainA.vibDE>6?'crit':SIM.trainA.vibDE>4?'warn':'ok'},
+      {k:'Bear DE',v:SIM.trainA.bearDE.toFixed(0)+'°C',s:SIM.trainA.bearDE>100?'crit':SIM.trainA.bearDE>85?'warn':'ok'},
+      {k:'AS Margin',v:SIM.trainA.asMargin.toFixed(0)+'%',s:SIM.trainA.asMargin<15?'warn':'ok'}
+    ]},
+    {key:'compressorB',pos:[-8,6,10],tag:'K-301',sensors:()=>[
+      {k:'Vib DE',v:SIM.trainB.vibDE.toFixed(1)+' mm/s',s:SIM.trainB.vibDE>4?'warn':'ok'},
+      {k:'Bear DE',v:SIM.trainB.bearDE.toFixed(0)+'°C',s:'ok'},
+      {k:'RPM',v:SIM.trainB.rpm,s:'ok'}
+    ]},
+    {key:'scrubberA',pos:[-32,12,-8],tag:'S-121',sensors:()=>[
+      {k:'Nivel',v:SIM.scrubberA.level.toFixed(0)+'%',s:SIM.scrubberA.level>60?'warn':'ok'},
+      {k:'DP',v:SIM.scrubberA.dp.toFixed(2)+' bar',s:'ok'}
+    ]},
+    {key:'coolerA',pos:[18,8,-10],tag:'AC-401',sensors:()=>[
+      {k:'In',v:SIM.coolerA.inT.toFixed(0)+'°C',s:'ok'},
+      {k:'Out',v:SIM.coolerA.outT.toFixed(0)+'°C',s:'ok'}
+    ]},
+    {key:'fuelGas',pos:[-30,6,-24],tag:'FG-501',sensors:()=>[
+      {k:'P out',v:SIM.fuelGas.pOut.toFixed(1)+' bar',s:'ok'},
+      {k:'Flow',v:SIM.fuelGas.flow+' Nm³/h',s:'ok'}
+    ]},
+    {key:'scrubberB',pos:[-32,12,8],tag:'S-122',sensors:()=>[
+      {k:'Nivel',v:SIM.scrubberB.level.toFixed(0)+'%',s:SIM.scrubberB.level>60?'warn':'ok'},
+      {k:'DP',v:SIM.scrubberB.dp.toFixed(2)+' bar',s:'ok'}
+    ]},
+    {key:'coolerB',pos:[18,8,10],tag:'AC-402',sensors:()=>[
+      {k:'In',v:SIM.coolerB.inT.toFixed(0)+'°C',s:'ok'},
+      {k:'Out',v:SIM.coolerB.outT.toFixed(0)+'°C',s:'ok'}
+    ]},
+    {key:'lubeOil',pos:[-15,4,-24],tag:'TK-601',sensors:()=>[
+      {k:'Nivel',v:SIM.lubeOil.level.toFixed(0)+'%',s:SIM.lubeOil.level<50?'warn':'ok'},
+      {k:'P',v:SIM.lubeOil.pressure.toFixed(1)+' bar',s:'ok'},
+      {k:'T',v:SIM.lubeOil.temp.toFixed(0)+'°C',s:SIM.lubeOil.temp>65?'warn':'ok'}
+    ]},
+    {key:'instrAir',pos:[15,4,-24],tag:'IA-701',sensors:()=>[
+      {k:'P',v:SIM.instrAir.pressure.toFixed(1)+' bar',s:'ok'},
+      {k:'Dew',v:SIM.instrAir.dewPoint+'°C',s:'ok'}
+    ]},
+    {key:'inletHeader',pos:[-48,4,0],tag:'HD-101',sensors:()=>[
+      {k:'P',v:SIM.inletP.toFixed(1)+' bar',s:'ok'},
+      {k:'Flow',v:SIM.flow.toFixed(1)+' MMSCFD',s:'ok'}
+    ]},
+    {key:'controlBldg',pos:[0,7,28],tag:'CB-901',sensors:()=>[
+      {k:'PLC',v:SIM.control.plcHealth?'OK':'FALLA',s:SIM.control.plcHealth?'ok':'crit'},
+      {k:'Latency',v:SIM.control.netLatency+'ms',s:'ok'}
+    ]},
+    {key:'generator',pos:[30,5,-24],tag:'G-801',sensors:()=>[
+      {k:'Utility',v:SIM.electrical.utilityOk?'OK':'FALLA',s:SIM.electrical.utilityOk?'ok':'crit'},
+      {k:'UPS',v:SIM.electrical.upsCharge+'%',s:'ok'}
+    ]}
+  ];
+  items.forEach(it=>{
+    const el=document.createElement('div');
+    el.className='iot-lbl';
+    el.style.display='none';
+    el.id='iot_'+it.key;
+    container.appendChild(el);
+    iotLabels.push({el,pos:new THREE.Vector3(...it.pos),tag:it.tag,sensors:it.sensors});
+  });
+}
+
+function updateIoTContent(){
+  iotLabels.forEach(l=>{
+    const data=l.sensors();
+    let h='<div class="iot-tag">'+l.tag+'</div>';
+    data.forEach(d=>{h+='<div class="iot-row"><span class="iot-k">'+d.k+'</span><span class="iot-v '+d.s+'">'+d.v+'</span></div>'});
+    l.el.innerHTML=h;
+  });
+}
+
+// ── GAS FLOW PARTICLES ──
+function buildFlowParticles(){
+  const partMat=M(0x00C8F0,{t:true,o:.7,e:0x00C8F0,ei:.5});
+  const paths=[
+    // Inlet to scrubbers
+    [[-55,1.5,0],[-38,1.5,0],[-32,1.5,-6]],
+    [[-55,1.5,0],[-38,1.5,0],[-32,1.5,6]],
+    // Scrubbers to trains
+    [[-26,1.5,-8],[-18,1.5,-10],[-10,2.2,-10]],
+    [[-26,1.5,8],[-18,1.5,10],[-10,2.2,10]],
+    // Trains to coolers (orange = compressed)
+    [[2,3,-10],[10,2,-10],[18,1.5,-10]],
+    [[2,3,10],[10,2,10],[18,1.5,10]],
+    // Coolers to discharge
+    [[26,1.5,-5],[32,1.5,0],[42,1.5,0]],
+  ];
+  paths.forEach((path,pi)=>{
+    for(let i=0;i<6;i++){
+      const s=mk(sp(.15),pi>=4?M(0xFF5500,{t:true,o:.7,e:0xFF5500,ei:.5}):partMat,0,0,0);
+      s.userData.path=path;
+      s.userData.t=i/6;
+      s.userData.speed=.003+Math.random()*.002;
+      scene.add(s);
+      flowParticles.push(s);
+    }
+  });
+}
+
+// ── ANIMATION ──
+function animate(){
+  requestAnimationFrame(animate);
+  controls.update();
+
+  // Update 3D labels
+  labels3d.forEach(l=>{
+    const v=l.pos.clone().project(camera);
+    if(v.z>1){l.el.style.display='none';return}
+    const wrap=document.querySelector('.canvas-wrap');
+    const x=(v.x+1)/2*wrap.clientWidth;
+    const y=(-v.y+1)/2*wrap.clientHeight;
+    l.el.style.left=x+'px';l.el.style.top=y+'px';
+    const dist=camera.position.distanceTo(l.pos);
+    l.el.style.opacity=dist>120?'0':dist>80?'.3':'1';
+    l.el.style.display=dist>120?'none':'block';
+  });
+
+  // Update IoT labels
+  if(iotVisible){
+    iotLabels.forEach(l=>{
+      const v=l.pos.clone().project(camera);
+      if(v.z>1){l.el.style.display='none';return}
+      const wrap=document.querySelector('.canvas-wrap');
+      const x=(v.x+1)/2*wrap.clientWidth;
+      const y=(-v.y+1)/2*wrap.clientHeight;
+      l.el.style.left=x+'px';l.el.style.top=y+'px';
+      const dist=camera.position.distanceTo(l.pos);
+      l.el.style.opacity=dist>100?'0':dist>60?'.5':'1';
+      l.el.style.display=dist>100?'none':'block';
+    });
+  }
+
+  // Animate flow particles
+  flowParticles.forEach(p=>{
+    p.userData.t+=p.userData.speed;
+    if(p.userData.t>=1)p.userData.t=0;
+    const path=p.userData.path;
+    const t=p.userData.t;
+    const totalSegs=path.length-1;
+    const segT=t*totalSegs;
+    const segI=Math.min(Math.floor(segT),totalSegs-1);
+    const localT=segT-segI;
+    const a=path[segI],b=path[segI+1];
+    p.position.set(a[0]+(b[0]-a[0])*localT,a[1]+(b[1]-a[1])*localT+Math.sin(t*Math.PI*4)*.15,a[2]+(b[2]-a[2])*localT);
+  });
+
+  // Anomaly highlight
+  if(anomalyActive && equipMeshes.compressorA){
+    const t=Date.now()*.005;
+    equipMeshes.compressorA.mesh.traverse(c=>{
+      if(c.isMesh && c.material===MAT.anomaly){
+        c.material.emissiveIntensity=.3+Math.sin(t)*.3;
+      }
+    });
+  }
+
+  renderer.render(scene,camera);
+}
+
+// ── SIMULATION TICK ──
+function simTick(){
+  // Small random variations
+  SIM.inletP=72.5+Math.random()*.6-.3;
+  SIM.flow=14.8+Math.random()*.4-.2;
+  SIM.trainA.rpm=9450+Math.floor(Math.random()*40-20);
+  SIM.trainA.load=78+Math.floor(Math.random()*4-2);
+  SIM.trainA.bearDE+=(Math.random()-.48)*.5;
+  SIM.trainA.bearNDE+=(Math.random()-.5)*.3;
+  SIM.trainB.rpm=9380+Math.floor(Math.random()*30-15);
+  SIM.trainB.load=74+Math.floor(Math.random()*4-2);
+  SIM.scrubberA.level=22+Math.random()*4-2;
+  SIM.scrubberB.level=18+Math.random()*3-1.5;
+  SIM.coolerA.outT=42+Math.random()*2-1;
+  SIM.coolerB.outT=41+Math.random()*2-1;
+  SIM.lubeOil.temp=52+Math.random()*2-1;
+  SIM.fuelGas.flow=850+Math.floor(Math.random()*50-25);
+
+  if(anomalyActive){
+    SIM.trainA.vibDE=Math.min(SIM.trainA.vibDE+.15+Math.random()*.2,9.5);
+    SIM.trainA.vibNDE=Math.min(SIM.trainA.vibNDE+.08+Math.random()*.1,6.5);
+    SIM.trainA.bearDE=Math.min(SIM.trainA.bearDE+.5,118);
+    SIM.trainA.health=Math.max(SIM.trainA.health-.5,62);
+  }
+
+  // Recalculate
+  SIM.outletP=(SIM.inletP*SIM.ratio).toFixed(1)*1;
+  SIM.trainA.dischP=SIM.outletP;
+  SIM.trainB.dischP=SIM.outletP-.3;
+
+  updateKPIs();
+  updateIoTContent();
+
+  // Alerts
+  if(Math.random()<.04){
+    const templates=[
+      {type:'warn',title:'Temperatura elevada AC-401',desc:'Salida gas cooler A por encima de setpoint: '+SIM.coolerA.outT.toFixed(0)+'°C'},
+      {type:'info',title:'Ciclo purga condensado S-121',desc:'Drenaje automático scrubber A completado'},
+      {type:'warn',title:'DP filtro fuel gas incrementando',desc:'FG-501 DP: '+SIM.fuelGas.filterDP.toFixed(2)+' bar'},
+      {type:'info',title:'Compresor aire instrumentos ON',desc:'IA-701 arrancó por baja presión receiver'},
+      {type:'warn',title:'Vibración compresor K-201',desc:'Radial DE: '+SIM.trainA.vibDE.toFixed(1)+' mm/s'}
+    ];
+    if(anomalyActive){
+      templates.push({type:'crit',title:'ALARMA: Vibración K-201 excede límite',desc:'VT-201 DE: '+SIM.trainA.vibDE.toFixed(1)+' mm/s > 6.0 mm/s. Bearing temp: '+SIM.trainA.bearDE.toFixed(0)+'°C'});
+    }
+    const tmpl=templates[Math.floor(Math.random()*templates.length)];
+    const now=new Date();
+    SIM.alerts.unshift({...tmpl,time:now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0')});
+    if(SIM.alerts.length>20)SIM.alerts.pop();
+    renderAlerts();
+  }
+
+  // Update right panel if selected
+  if(selectedKey)updateRightPanel(selectedKey);
+}
+
+function updateKPIs(){
+  const s=id=>document.getElementById(id);
+  if(s('kInletP'))s('kInletP').textContent=SIM.inletP.toFixed(1);
+  if(s('kOutletP'))s('kOutletP').textContent=SIM.outletP.toFixed?SIM.outletP.toFixed(1):SIM.outletP;
+  if(s('kFlow'))s('kFlow').textContent=SIM.flow.toFixed(1);
+  if(s('kRatio'))s('kRatio').textContent=SIM.ratio.toFixed(2);
+  if(s('trainASpd'))s('trainASpd').textContent=SIM.trainA.rpm.toLocaleString();
+  if(s('trainALoad'))s('trainALoad').textContent=SIM.trainA.load+'%';
+  if(s('trainAVib'))s('trainAVib').textContent=SIM.trainA.vibDE.toFixed(1);
+  if(s('trainBSpd'))s('trainBSpd').textContent=SIM.trainB.rpm.toLocaleString();
+  if(s('trainBLoad'))s('trainBLoad').textContent=SIM.trainB.load+'%';
+  if(s('trainBVib'))s('trainBVib').textContent=SIM.trainB.vibDE.toFixed(1);
+  if(s('kLube'))s('kLube').textContent=SIM.lubeOil.pressure.toFixed(1);
+  if(s('kSeal'))s('kSeal').textContent=SIM.trainA.sealP.toFixed(1);
+  if(s('kIA'))s('kIA').textContent=SIM.instrAir.pressure.toFixed(1);
+  if(s('kFuel'))s('kFuel').textContent=SIM.fuelGas.pOut.toFixed(1);
+
+  // Update train status colors
+  const tAst=document.getElementById('trainAStatus');
+  if(tAst){
+    if(SIM.trainA.vibDE>6){tAst.textContent='ALARMA';tAst.className='train-status crit'}
+    else if(SIM.trainA.vibDE>4){tAst.textContent='ALERTA';tAst.className='train-status warn'}
+    else{tAst.textContent='OPERATIVO';tAst.className='train-status ok'}
+  }
+  // System status
+  const dot=document.getElementById('sysDot');
+  const badge=document.getElementById('sysBadge');
+  if(anomalyActive&&SIM.trainA.vibDE>6){dot.className='sys-dot al';badge.textContent='ALARMA';badge.className='sys-badge sb-al'}
+  else{dot.className='sys-dot';badge.textContent='OPERATIVA';badge.className='sys-badge sb-ok'}
+}
+
+// ── ALERTS ──
+function renderAlerts(){
+  document.getElementById('alertCnt').textContent=SIM.alerts.length;
+  const html=SIM.alerts.map(a=>`<div class="alert-item ${a.type}"><div class="al-title ${a.type}">${a.title}</div><div class="al-desc">${a.desc}</div><div class="al-time">${a.time}</div></div>`).join('');
+  document.getElementById('alertList').innerHTML=html;
+  document.getElementById('sideAlertList').innerHTML=html;
+}
+
+function toggleAlertPanel(){
+  document.getElementById('alertOverlay').classList.toggle('open');
+}
+
+// ── EQUIPMENT SELECTION ──
+function onCanvasClick(e){
+  const wrap=document.querySelector('.canvas-wrap');
+  const rect=wrap.getBoundingClientRect();
+  mouse.x=((e.clientX-rect.left)/rect.width)*2-1;
+  mouse.y=-((e.clientY-rect.top)/rect.height)*2+1;
+  raycaster.setFromCamera(mouse,camera);
+  const meshes=[];
+  scene.traverse(c=>{if(c.isMesh&&c.userData.eqKey)meshes.push(c)});
+  const hits=raycaster.intersectObjects(meshes);
+  if(hits.length>0){
+    selectEquipment(hits[0].object.userData.eqKey);
+  } else {
+    clearSelection();
+  }
+}
+
+function selectEquipment(key){
+  clearSelection();
+  selectedKey=key;
+  const eq=equipMeshes[key];
+  if(eq){
+    eq.mesh.traverse(c=>{
+      if(c.isMesh){
+        c.userData.origMat=c.material;
+        c.material=MAT.highlight;
+      }
+    });
+  }
+  updateRightPanel(key);
+  // Highlight in sidebar
+  document.querySelectorAll('.asset-item').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.train-card').forEach(el=>el.classList.remove('active'));
+}
+
+function clearSelection(){
+  if(selectedKey&&equipMeshes[selectedKey]){
+    equipMeshes[selectedKey].mesh.traverse(c=>{
+      if(c.isMesh&&c.userData.origMat){
+        c.material=anomalyActive&&selectedKey==='compressorA'?MAT.anomaly:c.userData.origMat;
+      }
+    });
+  }
+  selectedKey=null;
+  document.getElementById('rightPanel').innerHTML='<div class="rp-empty"><div class="rp-empty-icon">&#9881;</div><div class="rp-empty-text">Selecciona un equipo</div><div class="rp-empty-hint">Click en el modelo 3D o en la lista de activos</div></div>';
+}
+
+function updateRightPanel(key){
+  const eq=EQUIP[key];
+  if(!eq)return;
+  let h='<div class="rp-header"><div class="rp-tag">'+eq.tag+' &bull; '+eq.system+'</div><div class="rp-name">'+eq.name+'</div>';
+  const st=anomalyActive&&(key==='compressorA'||key==='trainA')?'crit':(typeof eq.status==='function'?eq.status():eq.status);
+  const stText=st==='ok'?'OPERATIVO':st==='warn'?'ALERTA':'ALARMA';
+  h+='<span class="rp-status '+st+'">'+stText+'</span></div><div class="rp-body">';
+
+  // Tech sheet
+  h+='<div class="rp-sec">Ficha Técnica</div>';
+  h+='<div class="rp-row"><span class="k">Criticidad</span><span class="v">'+eq.crit+'</span></div>';
+  h+='<div class="rp-row"><span class="k">Fabricante</span><span class="v">'+eq.brand+'</span></div>';
+  h+='<div class="rp-row"><span class="k">Capacidad</span><span class="v">'+eq.cap+'</span></div>';
+
+  // Sensors
+  h+='<div class="rp-sec">Sensores en Tiempo Real</div>';
+  eq.sensors.forEach(s=>{
+    const val=typeof s.v==='function'?s.v():s.v;
+    const sts=typeof s.s==='function'?s.s():(s.s||'ok');
+    h+='<div class="rp-sensor"><span class="sn">'+s.n+'</span><span class="sv '+sts+'">'+val+'</span></div>';
+  });
+
+  // Health gauge for compressors/trains
+  if(key.includes('compressor')||key.includes('train')){
+    const train=key.includes('A')||key==='trainA'?SIM.trainA:SIM.trainB;
+    h+='<div class="rp-sec">Índice de Salud</div>';
+    h+='<div class="rp-gauge"><div class="rp-gauge-bar"><div class="rp-gauge-fill" style="width:'+train.health+'%;background:'+(train.health>80?'var(--gr)':train.health>60?'var(--ye)':'var(--re)')+'"></div></div><div class="rp-gauge-val" style="color:'+(train.health>80?'var(--gr)':train.health>60?'var(--ye)':'var(--re)')+'">'+train.health+'%</div></div>';
+  }
+
+  // Trend chart
+  h+='<div class="rp-sec">Tendencia</div><div class="trend-wrap"><canvas class="trend-canvas" id="trendCanvas"></canvas></div>';
+
+  // QR
+  h+='<div class="rp-sec">QR Datasheet</div><div class="qr-wrap" id="qrTarget"></div>';
+
+  // Documents
+  h+='<div class="rp-sec">Documentos</div>';
+  h+='<div style="display:flex;flex-direction:column;gap:4px">';
+  h+='<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:var(--s2);border-radius:4px;cursor:pointer;border:1px solid var(--b0)" onclick="openACC()"><span style="font-size:14px">&#128196;</span><div><div style="font-size:10px;font-weight:600">P&ID General</div><div style="font-size:8px;color:var(--t2)">CS01-PID-001 Rev.C &bull; PDF</div></div></div>';
+  h+='<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:var(--s2);border-radius:4px;cursor:pointer;border:1px solid var(--b0)" onclick="openACC()"><span style="font-size:14px">&#128295;</span><div><div style="font-size:10px;font-weight:600">Manual de Operación</div><div style="font-size:8px;color:var(--t2)">CS01-MAN-001 &bull; PDF</div></div></div>';
+  h+='<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:var(--s2);border-radius:4px;cursor:pointer;border:1px solid var(--b0)" onclick="openACC()"><span style="font-size:14px">&#128200;</span><div><div style="font-size:10px;font-weight:600">Datasheet '+eq.tag+'</div><div style="font-size:8px;color:var(--t2)">Vendor spec &bull; PDF</div></div></div>';
+  h+='</div>';
+
+  // SAP Work Orders
+  h+='<div class="rp-sec">Órdenes SAP</div>';
+  h+='<table class="wo-table"><tr><th>Orden</th><th>Desc</th><th>Estado</th></tr>';
+  if(key==='compressorA'||key==='trainA'){
+    h+='<tr><td>PM-CS01-4001</td><td>Insp. vibración bearing</td><td><span class="wo-status prog">EN PROC</span></td></tr>';
+  }
+  h+='<tr><td>PM-CS01-4010</td><td>Preventivo programado</td><td><span class="wo-status open">ABIERTA</span></td></tr>';
+  h+='</table>';
+
+  // Actions - 2 column grid
+  h+='<div class="rp-sec">Acciones</div>';
+  h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">';
+  h+='<button class="rp-btn" onclick="openSAP()">Abrir en SAP</button>';
+  h+='<button class="rp-btn" onclick="openACC()" style="border-color:var(--cy);color:var(--cy)">Ver Documentos</button>';
+  h+='<button class="rp-btn" onclick="openSAP()" style="border-color:var(--ye);color:var(--ye)">Crear OT</button>';
+  h+='<button class="rp-btn" onclick="openTandem()" style="border-color:var(--gr);color:var(--gr)">Ver en Tandem</button>';
+  h+='</div>';
+  if(anomalyActive&&(key==='compressorA'||key==='trainA')){
+    h+='<button class="rp-btn" style="border-color:var(--re);color:var(--re);margin-top:6px" onclick="showAnomalyModal()">&#9888; Ver Anomalía Detectada</button>';
+  }
+  h+='</div>';
+  document.getElementById('rightPanel').innerHTML=h;
+
+  // Generate QR + Trend chart
+  setTimeout(()=>{
+    const target=document.getElementById('qrTarget');
+    if(target&&typeof qrcode!=='undefined'){
+      const qr=qrcode(0,'M');
+      qr.addData('https://dt.example.com/asset/'+eq.tag);
+      qr.make();
+      target.innerHTML=qr.createSvgTag(4,0);
+      const svg=target.querySelector('svg');
+      if(svg){svg.style.width='100px';svg.style.height='100px'}
+    }
+    // Trend chart with simulated historical data
+    const trendCv=document.getElementById('trendCanvas');
+    if(trendCv){
+      const data=[];for(let i=0;i<60;i++){
+        if(key.includes('compressor')||key.includes('train')){
+          const base=key.includes('A')||key==='trainA'?SIM.trainA.vibDE:SIM.trainB.vibDE;
+          data.push(base-.5+Math.random()*1+(anomalyActive&&(key.includes('A')||key==='trainA')?i*.03:0));
+        } else {
+          data.push(SIM.inletP-1+Math.random()*2);
+        }
+      }
+      drawTrendChart('trendCanvas',data,(key.includes('compressor')||key.includes('train'))?'rgb(255,85,0)':'rgb(0,200,240)');
+    }
+  },80);
+}
+
+// ── UI CONTROLS ──
+function switchTab(n){
+  document.querySelectorAll('.stab').forEach((t,i)=>t.classList.toggle('on',i===n));
+  document.querySelectorAll('.spanel').forEach((p,i)=>p.classList.toggle('on',i===n));
+  if(n===1)openSAP();
+}
+
+function openSAP(){document.getElementById('sapOverlay').classList.add('open');initSAPStream();buildAPMCards()}
+function closeSAP(){document.getElementById('sapOverlay').classList.remove('open')}
+function switchSapTab(n){
+  document.querySelectorAll('#sapOverlay .fs-nav-item').forEach((t,i)=>{t.classList.toggle('active',i===n)});
+  for(let i=0;i<4;i++){const s=document.getElementById('sapSec'+i);if(s)s.classList.toggle('active',i===n)}
+}
+
+function buildAPMCards(){
+  const assets=[
+    {tag:'K-201',name:'Compresor Centrífugo A',health:SIM.trainA.health,risk:SIM.trainA.health<80?'ALTO':'MEDIO'},
+    {tag:'K-301',name:'Compresor Centrífugo B',health:SIM.trainB.health,risk:'BAJO'},
+    {tag:'A-201',name:'Driver Unit A',health:89,risk:'BAJO'},
+    {tag:'A-301',name:'Driver Unit B',health:91,risk:'BAJO'},
+    {tag:'AC-401',name:'Gas Cooler A',health:94,risk:'BAJO'},
+    {tag:'AC-402',name:'Gas Cooler B',health:96,risk:'BAJO'}
+  ];
+  const el=document.getElementById('apmCards');
+  if(!el)return;
+  el.innerHTML=assets.map(a=>{
+    const col=a.health>85?'#2E7D32':a.health>70?'#E65100':'#CC1919';
+    return `<div class="sap-health-card"><div class="sap-health-score" style="color:${col}">${a.health}%</div><div class="sap-health-info"><div class="sap-health-name">${a.name}</div><div class="sap-health-tag">${a.tag} &bull; Riesgo: <strong style="color:${a.risk==='ALTO'?'#CC1919':a.risk==='MEDIO'?'#E65100':'#2E7D32'}">${a.risk}</strong></div><div class="sap-health-bar"><div class="sap-health-fill" style="width:${a.health}%;background:${col}"></div></div></div></div>`;
+  }).join('');
+}
+
+let sapStreamInterval;
+function initSAPStream(){
+  if(sapStreamInterval)return;
+  const el=document.getElementById('sapStream');
+  const msgs=['[OPC-UA] K-201 VT-201 vibration='+SIM.trainA.vibDE.toFixed(1)+' mm/s → SAP IoT','[SAP PM] Auto-notification NF-5001 created for K-201','[Edge] Lube oil sample result: Fe=12ppm Cu=3ppm → SAP QM','[SAP APM] RUL recalculated K-201: 340 hrs','[MQTT] 142 tags published to SAP IS broker','[SAP MM] Stock check MAT-4401: 1 unit available','[Tandem] 3D asset sync completed: 68 assets updated','[SAP BTP] Predictive model v3.2 score: bearing=0.73'];
+  let idx=0;
+  sapStreamInterval=setInterval(()=>{
+    const now=new Date();
+    const ts=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0')+':'+now.getSeconds().toString().padStart(2,'0');
+    const msg=msgs[idx%msgs.length].replace(/vibration=[\d.]+/,'vibration='+SIM.trainA.vibDE.toFixed(1));
+    el.innerHTML='<div class="sap-stream-line"><span class="sap-stream-ts">'+ts+'</span> '+msg+'</div>'+el.innerHTML;
+    if(el.children.length>30)el.removeChild(el.lastChild);
+    idx++;
+  },4000);
+}
+
+// ── IoT TOGGLE ──
+function toggleIoT(){
+  iotVisible=!iotVisible;
+  iotLabels.forEach(l=>l.el.style.display=iotVisible?'block':'none');
+  const btn=document.getElementById('iotBtn');
+  if(btn){btn.classList.toggle('active',iotVisible);btn.innerHTML=iotVisible?'&#9881; IoT ON':'&#9881; IoT OFF'}
+  if(iotVisible)updateIoTContent();
+}
+
+// ── ANOMALY ──
+function triggerAnomaly(){
+  anomalyActive=true;
+  // Set initial anomaly values
+  SIM.trainA.vibDE=5.5;
+  SIM.trainA.vibNDE=4.0;
+  SIM.trainA.bearDE=95;
+  SIM.trainA.health=78;
+
+  // Turn compressor A red
+  if(equipMeshes.compressorA){
+    equipMeshes.compressorA.mesh.traverse(c=>{
+      if(c.isMesh){
+        c.userData.origMat=c.material;
+        c.material=MAT.anomaly;
+      }
+    });
+  }
+
+  // Update sidebar dot
+  const dot=document.getElementById('dotCompA');
+  if(dot){dot.className='ai-dot crit'}
+
+  // Add critical alert
+  const now=new Date();
+  SIM.alerts.unshift({type:'crit',title:'ALARMA CRÍTICA: Vibración K-201',desc:'Incremento anormal de vibración radial en bearing DE del compresor K-201. Posible deterioro de bearing o seal. Iniciar protocolo de inspección.',time:now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0')});
+  renderAlerts();
+
+  // Show anomaly modal after brief delay
+  setTimeout(showAnomalyModal,1500);
+
+  // Camera fly to compressor A
+  flyTo(-8,8,-10);
+}
+
+function showAnomalyModal(){
+  document.getElementById('anVibDE').textContent=SIM.trainA.vibDE.toFixed(1)+' mm/s';
+  document.getElementById('anVibNDE').textContent=SIM.trainA.vibNDE.toFixed(1)+' mm/s';
+  document.getElementById('anBearDE').textContent=SIM.trainA.bearDE.toFixed(0)+' °C';
+  document.getElementById('anBearNDE').textContent=SIM.trainA.bearNDE.toFixed(0)+' °C';
+  document.getElementById('anomalyOverlay').classList.add('open');
+}
+
+function closeAnomaly(){
+  document.getElementById('anomalyOverlay').classList.remove('open');
+}
+
+function flyTo(x,y,z){
+  const target={x,y:y+10,z:z+20};
+  const start={x:camera.position.x,y:camera.position.y,z:camera.position.z};
+  let t=0;
+  const anim=()=>{
+    t+=.02;if(t>1)t=1;
+    const e=1-(1-t)*(1-t);// ease out
+    camera.position.set(start.x+(target.x-start.x)*e,start.y+(target.y-start.y)*e,start.z+(target.z-start.z)*e);
+    controls.target.set(x,y,z);
+    if(t<1)requestAnimationFrame(anim);
+  };
+  anim();
+}
+
+function resetCamera(){
+  flyTo(0,5,0);
+  setTimeout(()=>{camera.position.set(80,55,90);controls.target.set(0,5,0)},800);
+}
+
+// ── CLOCK ──
+function updateClock(){
+  const now=new Date();
+  const ts=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0')+':'+now.getSeconds().toString().padStart(2,'0');
+  document.getElementById('clock').textContent=ts+' | '+now.toLocaleDateString('es-MX');
+}
+setInterval(updateClock,1000);updateClock();
+
+// ── ORBIT CONTROLS (inline) ──
+THREE.OrbitControls=function(camera,domElement){
+  this.camera=camera;this.domElement=domElement;this.target=new THREE.Vector3();
+  this.enableDamping=false;this.dampingFactor=.05;
+  this.minDistance=0;this.maxDistance=Infinity;
+  this.maxPolarAngle=Math.PI;
+  let spherical=new THREE.Spherical();let sphericalDelta=new THREE.Spherical();
+  let scale=1;let panOffset=new THREE.Vector3();
+  let rotateStart=new THREE.Vector2();let rotateEnd=new THREE.Vector2();let rotateDelta=new THREE.Vector2();
+  let panStart=new THREE.Vector2();let panEnd=new THREE.Vector2();let panDelta=new THREE.Vector2();
+  let state=0;// 0=none,1=rotate,2=zoom,3=pan
+  const ROTATE_SPEED=.5;const PAN_SPEED=.4;const ZOOM_SPEED=.6;
+  const scope=this;
+  function getAutoRotationAngle(){return 2*Math.PI/60/60}
+  function getZoomScale(){return Math.pow(.95,ZOOM_SPEED)}
+  function rotateLeft(angle){sphericalDelta.theta-=angle}
+  function rotateUp(angle){sphericalDelta.phi-=angle}
+  function panLeft(distance,objectMatrix){const v=new THREE.Vector3();v.setFromMatrixColumn(objectMatrix,0);v.multiplyScalar(-distance);panOffset.add(v)}
+  function panUp(distance,objectMatrix){const v=new THREE.Vector3();v.setFromMatrixColumn(objectMatrix,1);v.multiplyScalar(distance);panOffset.add(v)}
+  function pan(deltaX,deltaY){const element=scope.domElement;const offset=new THREE.Vector3();offset.copy(scope.camera.position).sub(scope.target);let targetDistance=offset.length();targetDistance*=Math.tan((scope.camera.fov/2)*Math.PI/180);panLeft(2*deltaX*targetDistance/element.clientHeight,scope.camera.matrix);panUp(2*deltaY*targetDistance/element.clientHeight,scope.camera.matrix)}
+  function onMouseDown(event){event.preventDefault();
+    if(event.button===0){state=1;rotateStart.set(event.clientX,event.clientY)}
+    else if(event.button===1){state=3;panStart.set(event.clientX,event.clientY)}
+    else if(event.button===2){state=3;panStart.set(event.clientX,event.clientY)}
+    document.addEventListener('mousemove',onMouseMove,false);document.addEventListener('mouseup',onMouseUp,false)}
+  function onMouseMove(event){event.preventDefault();
+    if(state===1){rotateEnd.set(event.clientX,event.clientY);rotateDelta.subVectors(rotateEnd,rotateStart);rotateLeft(2*Math.PI*rotateDelta.x/domElement.clientHeight*ROTATE_SPEED);rotateUp(2*Math.PI*rotateDelta.y/domElement.clientHeight*ROTATE_SPEED);rotateStart.copy(rotateEnd)}
+    else if(state===3){panEnd.set(event.clientX,event.clientY);panDelta.subVectors(panEnd,panStart);pan(panDelta.x*PAN_SPEED,panDelta.y*PAN_SPEED);panStart.copy(panEnd)}}
+  function onMouseUp(){state=0;document.removeEventListener('mousemove',onMouseMove);document.removeEventListener('mouseup',onMouseUp)}
+  function onWheel(event){event.preventDefault();if(event.deltaY<0){scale/=getZoomScale()}else{scale*=getZoomScale()}}
+  function onTouchStart(event){
+    if(event.touches.length===1){state=1;rotateStart.set(event.touches[0].pageX,event.touches[0].pageY)}
+    else if(event.touches.length===2){state=2;const dx=event.touches[0].pageX-event.touches[1].pageX;const dy=event.touches[0].pageY-event.touches[1].pageY;panStart.set(0,Math.sqrt(dx*dx+dy*dy))}}
+  function onTouchMove(event){event.preventDefault();
+    if(event.touches.length===1&&state===1){rotateEnd.set(event.touches[0].pageX,event.touches[0].pageY);rotateDelta.subVectors(rotateEnd,rotateStart);rotateLeft(2*Math.PI*rotateDelta.x/domElement.clientHeight*ROTATE_SPEED);rotateUp(2*Math.PI*rotateDelta.y/domElement.clientHeight*ROTATE_SPEED);rotateStart.copy(rotateEnd)}
+    else if(event.touches.length===2&&state===2){const dx=event.touches[0].pageX-event.touches[1].pageX;const dy=event.touches[0].pageY-event.touches[1].pageY;panEnd.set(0,Math.sqrt(dx*dx+dy*dy));panDelta.subVectors(panEnd,panStart);if(panDelta.y>0){scale/=getZoomScale()}else{scale*=getZoomScale()};panStart.copy(panEnd)}}
+  function onTouchEnd(){state=0}
+  this.update=function(){
+    const offset=new THREE.Vector3();offset.copy(camera.position).sub(this.target);
+    spherical.setFromVector3(offset);
+    spherical.theta+=sphericalDelta.theta;spherical.phi+=sphericalDelta.phi;
+    spherical.phi=Math.max(.01,Math.min(this.maxPolarAngle,spherical.phi));
+    spherical.radius*=scale;
+    spherical.radius=Math.max(this.minDistance,Math.min(this.maxDistance,spherical.radius));
+    this.target.add(panOffset);
+    offset.setFromSpherical(spherical);
+    camera.position.copy(this.target).add(offset);
+    camera.lookAt(this.target);
+    if(this.enableDamping){sphericalDelta.theta*=(1-this.dampingFactor);sphericalDelta.phi*=(1-this.dampingFactor);panOffset.multiplyScalar(1-this.dampingFactor)}else{sphericalDelta.set(0,0,0);panOffset.set(0,0,0)}
+    scale=1;
+  };
+  domElement.addEventListener('contextmenu',e=>e.preventDefault());
+  domElement.addEventListener('mousedown',onMouseDown);
+  domElement.addEventListener('wheel',onWheel,{passive:false});
+  domElement.addEventListener('touchstart',onTouchStart,{passive:false});
+  domElement.addEventListener('touchmove',onTouchMove,{passive:false});
+  domElement.addEventListener('touchend',onTouchEnd);
+};
+
+// ── CAMERA PRESETS ──
+const CAM_PRESETS=[
+  {pos:[80,55,90],target:[0,5,0],label:'General'},
+  {pos:[-5,12,-25],target:[-12,3,-10],label:'Tren A'},
+  {pos:[-5,12,25],target:[-12,3,10],label:'Tren B'},
+  {pos:[30,15,0],target:[18,3,0],label:'Coolers'},
+  {pos:[15,12,45],target:[0,3,28],label:'Control'},
+  {pos:[55,14,25],target:[45,5,20],label:'Seguridad'}
+];
+function camPreset(n){
+  const p=CAM_PRESETS[n];
+  flyTo(p.target[0],p.target[1],p.target[2]);
+  setTimeout(()=>{camera.position.set(...p.pos);controls.target.set(...p.target)},800);
+  document.querySelectorAll('.cam-btn').forEach((b,i)=>b.classList.toggle('active',i===n));
+}
+
+// ── ACC / TANDEM ──
+function openACC(){document.getElementById('accOverlay').classList.add('open')}
+function closeACC(){document.getElementById('accOverlay').classList.remove('open')}
+function switchAccTab(n){
+  document.querySelectorAll('#accOverlay .fs-nav-item').forEach((t,i)=>t.classList.toggle('active',i===n));
+  for(let i=0;i<4;i++){const s=document.getElementById('accSec'+i);if(s)s.classList.toggle('active',i===n)}
+}
+function openTandem(){document.getElementById('tandemOverlay').classList.add('open');buildTandemStreams()}
+function closeTandem(){document.getElementById('tandemOverlay').classList.remove('open')}
+function switchTandemTab(n){
+  document.querySelectorAll('#tandemOverlay .fs-nav-item').forEach((t,i)=>t.classList.toggle('active',i===n));
+  for(let i=0;i<3;i++){const s=document.getElementById('tandemSec'+i);if(s)s.classList.toggle('active',i===n)}
+}
+function buildTandemStreams(){
+  const el=document.getElementById('tandemStreams');if(!el)return;
+  const streams=[
+    {tag:'PT-101',name:'Inlet Pressure',val:SIM.inletP.toFixed(1)+' bar',color:'#1565C0'},
+    {tag:'TT-101',name:'Inlet Temp',val:SIM.trainA.suctT.toFixed(1)+' °C',color:'#2E7D32'},
+    {tag:'FT-101',name:'Station Flow',val:SIM.flow.toFixed(1)+' MMSCFD',color:'#6A1B9A'},
+    {tag:'VT-201',name:'Vib K-201 DE',val:SIM.trainA.vibDE.toFixed(1)+' mm/s',color:SIM.trainA.vibDE>6?'#CC1919':SIM.trainA.vibDE>4?'#E65100':'#2E7D32'},
+    {tag:'BT-201',name:'Bear K-201 DE',val:SIM.trainA.bearDE.toFixed(0)+' °C',color:SIM.trainA.bearDE>100?'#CC1919':'#2E7D32'},
+    {tag:'PT-201',name:'Suction P A',val:SIM.trainA.suctP.toFixed(1)+' bar',color:'#1565C0'},
+    {tag:'PT-202',name:'Discharge P A',val:SIM.trainA.dischP.toFixed(1)+' bar',color:'#E65100'},
+    {tag:'VT-301',name:'Vib K-301 DE',val:SIM.trainB.vibDE.toFixed(1)+' mm/s',color:'#2E7D32'},
+    {tag:'TT-401',name:'Cooler A Out',val:SIM.coolerA.outT.toFixed(0)+' °C',color:'#1565C0'},
+    {tag:'PT-601',name:'Lube Oil P',val:SIM.lubeOil.pressure.toFixed(1)+' bar',color:'#2E7D32'},
+    {tag:'PT-701',name:'Instr Air P',val:SIM.instrAir.pressure.toFixed(1)+' bar',color:'#2E7D32'},
+    {tag:'GD-951',name:'Gas Detector',val:SIM.fireGas.gasDetPPM+' ppm',color:'#2E7D32'}
+  ];
+  el.innerHTML=streams.map(s=>`<div style="background:#FAFBFC;border:1px solid #E0E0E0;border-radius:6px;padding:10px"><div style="font-family:'IBM Plex Mono',monospace;font-size:8px;color:#777;letter-spacing:1px">${s.tag}</div><div style="font-size:10px;color:#333;margin:2px 0">${s.name}</div><div style="font-size:18px;font-weight:700;color:${s.color}">${s.val}</div></div>`).join('');
+}
+
+// ── KEYBOARD SHORTCUTS ──
+document.addEventListener('keydown',e=>{
+  const k=e.key.toLowerCase();
+  if(k==='r')resetCamera();
+  else if(k==='1')camPreset(0);
+  else if(k==='2')camPreset(1);
+  else if(k==='3')camPreset(2);
+  else if(k==='4')camPreset(3);
+  else if(k==='5')camPreset(4);
+  else if(k==='i')toggleIoT();
+});
+
+// ── TREND CHART ──
+const trendData=[];
+function drawTrendChart(canvasId,data,color){
+  const cv=document.getElementById(canvasId);if(!cv)return;
+  const ctx=cv.getContext('2d');
+  const w=cv.width=cv.parentElement.clientWidth;
+  const h=cv.height=60;
+  ctx.clearRect(0,0,w,h);
+  ctx.fillStyle='rgba(14,26,42,.8)';ctx.fillRect(0,0,w,h);
+  if(data.length<2)return;
+  const min=Math.min(...data)*.98;const max=Math.max(...data)*1.02;
+  const range=max-min||1;
+  ctx.beginPath();ctx.strokeStyle=color;ctx.lineWidth=1.5;
+  data.forEach((v,i)=>{
+    const x=i/(data.length-1)*w;
+    const y=h-(v-min)/range*h;
+    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  });
+  ctx.stroke();
+  // Fill under
+  ctx.lineTo(w,h);ctx.lineTo(0,h);ctx.closePath();
+  ctx.fillStyle=color.replace(')',',0.1)').replace('rgb','rgba');
+  ctx.fill();
+}
+
+// ── INIT ──
+window.addEventListener('DOMContentLoaded',()=>{
+  initScene();
+  buildFlowParticles();
+  // IoT ON by default
+  iotVisible=true;
+  iotLabels.forEach(l=>l.el.style.display='block');
+  updateIoTContent();
+  renderAlerts();
+});
+</script>
+</body>
+</html>

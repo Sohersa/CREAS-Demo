@@ -1,0 +1,1335 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Digital Twin | Fulfillment Center</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500&family=Barlow:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#060a10;--surface:#0c1018;--surface2:#141c28;--surface3:#1c2636;--primary:#0078FF;--primary2:#339CFF;--primary-dim:rgba(0,120,255,.15);--orange:#FF6B00;--orange-dim:rgba(255,107,0,.15);--green:#00D68F;--green-dim:rgba(0,214,143,.12);--red:#FF3B5C;--red-dim:rgba(255,59,92,.15);--yellow:#FFB800;--yellow-dim:rgba(255,184,0,.12);--cyan:#00C8F0;--cyan-dim:rgba(0,200,240,.12);--leed:#4CAF50;--leed-dim:rgba(76,175,80,.12);--text:#E8EDF5;--text2:#8B9AB5;--text3:#4A5A72;--border:rgba(255,255,255,.06);--border2:rgba(255,255,255,.1)}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:'Barlow',sans-serif}
+::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+#header{height:52px;background:var(--surface);border-bottom:1px solid var(--border2);display:flex;align-items:center;padding:0 20px;gap:14px;flex-shrink:0;position:relative;z-index:100}
+.hamburger{display:none;width:36px;height:36px;border-radius:6px;border:1px solid var(--border2);background:var(--surface2);color:var(--text);font-size:18px;cursor:pointer;align-items:center;justify-content:center;flex-shrink:0}
+.h-logo{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:800;letter-spacing:.05em;color:var(--primary)}.h-logo span{color:var(--text2);font-weight:300}
+.h-sep{width:1px;height:24px;background:var(--border2)}.h-plant{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text2)}
+.h-status{display:flex;align-items:center;gap:6px;margin-left:auto}
+.h-dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:pd 2s infinite}
+@keyframes pd{0%,100%{opacity:1}50%{opacity:.4}}
+.h-status-txt{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--green)}
+.h-time{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text3)}
+.demo-badge{position:absolute;top:8px;right:80px;background:var(--red);color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:.12em;padding:2px 8px;border-radius:2px}
+.h-alert-btn{background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:6px 12px;color:var(--text2);cursor:pointer;font-size:13px;display:flex;align-items:center;gap:6px;transition:all .2s}
+.h-alert-btn:hover{background:var(--surface3);color:var(--primary);border-color:var(--primary)}
+.h-alert-cnt{background:var(--red);color:#fff;font-size:9px;font-weight:700;padding:1px 5px;border-radius:8px;font-family:'JetBrains Mono',monospace}
+#app{display:flex;height:calc(100vh - 52px);overflow:hidden}
+#sidebar-left{width:240px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.sl-section{padding:12px 14px 8px;border-bottom:1px solid var(--border)}.sl-label{font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:600;letter-spacing:.15em;color:var(--text3);text-transform:uppercase;margin-bottom:8px}
+.zone-item{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:5px;cursor:pointer;transition:all .2s;margin-bottom:1px;border:1px solid transparent}
+.zone-item:hover{background:var(--surface2)}.zone-item.active{background:var(--primary-dim);border-color:rgba(0,120,255,.3)}
+.zi-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}.zi-dot.ok{background:var(--green);box-shadow:0 0 5px var(--green)}.zi-dot.warn{background:var(--yellow);box-shadow:0 0 5px var(--yellow);animation:pd 1.5s infinite}.zi-dot.crit{background:var(--red);box-shadow:0 0 5px var(--red);animation:pd .8s infinite}
+.zi-name{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:600;color:var(--text)}.zi-sub{font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--text3)}
+.kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:10px 14px}
+.kpi-card{background:var(--surface2);border-radius:6px;padding:8px;border:1px solid var(--border)}
+.kpi-val{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;color:var(--primary);line-height:1}.kpi-unit{font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--text3);margin-left:2px}
+.kpi-lbl{font-family:'Barlow',sans-serif;font-size:9px;color:var(--text2);margin-top:2px}
+.integration-flow{padding:12px 14px;flex:1;overflow-y:auto}
+.if-step{display:flex;align-items:center;gap:7px;margin-bottom:4px}
+.if-num{width:16px;height:16px;border-radius:50%;background:var(--primary-dim);border:1px solid var(--primary);color:var(--primary);font-family:'JetBrains Mono',monospace;font-size:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.if-txt{font-family:'Barlow Condensed',sans-serif;font-size:10px;color:var(--text2)}.if-arrow{font-size:9px;color:var(--text3);margin-left:22px;margin-bottom:1px}
+#center{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
+#tabs{display:flex;gap:0;padding:0 12px;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0;overflow-x:auto}
+.tab{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:600;letter-spacing:.05em;padding:10px 11px;cursor:pointer;color:var(--text3);border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap}
+.tab:hover{color:var(--text2)}.tab.active{color:var(--primary);border-bottom-color:var(--primary)}
+.view{flex:1;overflow:hidden;position:relative;display:none!important}.view.active{display:flex!important;flex-direction:column}
+#view-3d{position:relative}#view-3d canvas{width:100%!important;height:100%!important;display:block}
+.view-3d-overlay{position:absolute;top:10px;left:10px;display:flex;flex-direction:column;gap:4px;z-index:10}
+.sys-toggle{display:flex;align-items:center;gap:6px;padding:5px 10px;background:rgba(12,16,24,.92);border:1px solid var(--border2);border-radius:5px;cursor:pointer;transition:all .2s;font-size:10px;font-family:'Barlow Condensed',sans-serif;font-weight:600;color:var(--text2);backdrop-filter:blur(8px)}
+.sys-toggle:hover{border-color:var(--primary);color:var(--text)}.sys-toggle.active{border-color:var(--primary);color:var(--primary);background:rgba(0,120,255,.08)}
+.sys-toggle .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+#equip-panel{position:absolute;top:10px;right:10px;width:340px;background:rgba(12,16,24,.96);border:1px solid var(--border2);border-radius:10px;padding:14px;display:none;overflow-y:auto;max-height:calc(100% - 20px);backdrop-filter:blur(12px);z-index:10}
+.ep-close{position:absolute;top:6px;right:10px;cursor:pointer;color:var(--text3);font-size:16px;background:none;border:none}.ep-close:hover{color:var(--text)}
+.ep-tag{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--primary);margin-bottom:2px}
+.ep-name{font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;margin-bottom:4px}
+.ep-conf{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:9px;padding:2px 6px;border-radius:3px;margin-bottom:8px}
+.ep-conf.life-safety{background:var(--red-dim);color:var(--red)}.ep-conf.throughput{background:var(--orange-dim);color:var(--orange)}.ep-conf.business{background:var(--yellow-dim);color:var(--yellow)}.ep-conf.comfort{background:var(--cyan-dim);color:var(--cyan)}.ep-conf.support{background:var(--primary-dim);color:var(--primary)}
+.ep-section{font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:600;letter-spacing:.1em;color:var(--text3);text-transform:uppercase;margin:10px 0 5px;border-bottom:1px solid var(--border);padding-bottom:3px}
+.ep-row{display:flex;justify-content:space-between;font-size:11px;padding:2px 0}.ep-row .k{color:var(--text2)}.ep-row .v{color:var(--text);font-family:'JetBrains Mono',monospace;font-size:10px}
+.ep-sensor{display:flex;justify-content:space-between;align-items:center;padding:3px 7px;background:var(--surface2);border-radius:3px;margin-bottom:2px;font-size:10px}
+.ep-sensor .sn{color:var(--text2)}.ep-sensor .sv{font-family:'JetBrains Mono',monospace;font-weight:600}.ep-sensor .sv.ok{color:var(--green)}.ep-sensor .sv.warn{color:var(--yellow)}.ep-sensor .sv.crit{color:var(--red)}
+.ep-btn{width:100%;padding:7px;border-radius:5px;border:1px solid var(--primary);background:transparent;color:var(--primary);font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:600;cursor:pointer;margin-top:4px;transition:all .2s}.ep-btn:hover{background:var(--primary);color:#fff}
+.dash-view{overflow-y:auto;padding:18px;gap:14px}
+.dash-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.dash-title{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700}.dash-sub{font-size:11px;color:var(--text2)}
+.dash-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:14px}
+.dk-card{background:var(--surface);border-radius:8px;padding:14px;border:1px solid var(--border)}
+.dk-val{font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:700}.dk-val.ok{color:var(--green)}.dk-val.warn{color:var(--yellow)}.dk-val.crit{color:var(--red)}.dk-val.info{color:var(--primary)}.dk-val.leed{color:var(--leed)}
+.dk-lbl{font-size:11px;color:var(--text2);margin-top:3px}.dk-sub{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text3);margin-top:2px}
+.dash-section{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;color:var(--text2);letter-spacing:.05em;margin:14px 0 8px}
+.dash-grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.dash-grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.dash-card{background:var(--surface);border-radius:8px;padding:14px;border:1px solid var(--border)}
+.dash-card-title{font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;margin-bottom:8px}
+.dt-table{width:100%;border-collapse:collapse;font-size:11px}
+.dt-table th{text-align:left;padding:7px 10px;font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:600;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;border-bottom:1px solid var(--border);background:var(--surface2)}
+.dt-table td{padding:7px 10px;border-bottom:1px solid var(--border);color:var(--text2)}
+.status-badge{font-family:'JetBrains Mono',monospace;font-size:9px;padding:2px 6px;border-radius:3px}.status-badge.ok{background:var(--green-dim);color:var(--green)}.status-badge.warn{background:var(--yellow-dim);color:var(--yellow)}.status-badge.crit{background:var(--red-dim);color:var(--red)}.status-badge.info{background:var(--primary-dim);color:var(--primary)}
+.health-bar{flex:1;height:5px;background:var(--surface3);border-radius:3px;overflow:hidden}.health-fill{height:100%;border-radius:3px;transition:width .5s}.health-fill.ok{background:var(--green)}.health-fill.warn{background:var(--yellow)}.health-fill.crit{background:var(--red)}
+.alert-card{background:var(--surface);border-radius:8px;padding:14px 16px;border-left:4px solid;display:flex;gap:14px;align-items:flex-start;margin-bottom:6px}
+.alert-card.crit{border-color:var(--red);background:rgba(255,59,92,.03)}.alert-card.warn{border-color:var(--yellow);background:rgba(255,184,0,.03)}.alert-card.ok{border-color:var(--green);background:rgba(0,214,143,.03)}
+.ac-icon{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;flex-shrink:0}
+.alert-card.crit .ac-icon{background:var(--red-dim);color:var(--red);border:1px solid var(--red)}.alert-card.warn .ac-icon{background:var(--yellow-dim);color:var(--yellow);border:1px solid var(--yellow)}
+.ac-body{flex:1}.ac-title{font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;margin-bottom:3px}.ac-title.crit{color:var(--red)}.ac-title.warn{color:var(--yellow)}
+.ac-desc{font-size:12px;color:var(--text2);line-height:1.5}.ac-meta{display:flex;gap:14px;margin-top:6px}.ac-tag{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text3)}.ac-tag span{color:var(--text2)}
+.sap-module{background:var(--surface);border-radius:8px;padding:14px;border:1px solid var(--border);margin-bottom:10px}
+.sap-mod-hdr{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.sap-mod-icon{width:34px;height:34px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;font-family:'JetBrains Mono',monospace}
+.sap-mod-name{font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700}.sap-mod-tag{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text3)}
+.sap-kv{display:flex;justify-content:space-between;padding:3px 0;font-size:11px;border-bottom:1px solid var(--border)}.sap-kv .sk{color:var(--text2)}.sap-kv .sv{color:var(--text);font-family:'JetBrains Mono',monospace;font-size:10px}
+#v-acc.active{background:#1c1c1c;overflow:hidden}
+.acc-topbar{height:38px;background:#141414;border-bottom:1px solid #2a2a2a;display:flex;align-items:center;padding:0 10px;gap:8px;flex-shrink:0}
+.acc-proj-pill{display:flex;align-items:center;gap:6px;background:#222;border:1px solid #333;border-radius:4px;padding:3px 9px;font-size:10px;color:#ccc;font-family:'Barlow Condensed',sans-serif;font-weight:600}
+.acc-content{flex:1;display:flex;overflow:hidden}
+.acc-sidebar{width:140px;flex-shrink:0;background:#111;border-right:1px solid #222;display:flex;flex-direction:column;overflow-y:auto}
+.acc-mod-hdr{padding:10px 10px 4px;font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;letter-spacing:.16em;color:#444;text-transform:uppercase}
+.acc-mod-item{display:flex;align-items:center;gap:6px;padding:7px 10px;cursor:pointer;transition:background .12s;font-size:11px;color:#888;border-left:2px solid transparent}
+.acc-mod-item:hover{background:rgba(255,255,255,.04);color:#ccc}.acc-mod-item.active{background:rgba(0,102,204,.12);color:#4d94ff;border-left-color:#0066CC}
+.acc-body{flex:1;display:flex;overflow:hidden;background:#1c1c1c}
+.acc-tree{width:200px;flex-shrink:0;background:#161616;border-right:1px solid #222;overflow-y:auto}
+.acc-tree-hdr{padding:8px 10px;border-bottom:1px solid #222}.acc-tree-proj{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;color:#ddd}
+.ti{display:flex;align-items:center;gap:4px;padding:4px 7px;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-size:11px;color:#aaa;transition:background .1s}.ti:hover{background:rgba(255,255,255,.04)}.ti.sel{background:rgba(0,102,204,.18);color:#8bb8f0}
+.ti-ico{font-size:11px;flex-shrink:0;width:14px;text-align:center}.indent1{padding-left:24px}.indent2{padding-left:44px}
+.acc-main{flex:1;display:flex;flex-direction:column;overflow:hidden}.acc-viewer{flex:1;overflow:auto;padding:12px;display:flex;align-items:flex-start;justify-content:center}
+.ft-card{background:#1a1a1a;border:1px solid #2a2a2a;border-radius:8px;padding:18px;max-width:680px;width:100%}
+.ft-header{display:flex;gap:14px;margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid #2a2a2a}
+.ft-photo{width:100px;height:75px;background:#222;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#666;border:1px solid #333;font-family:'JetBrains Mono',monospace}
+.ft-name{font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;color:#e0e0e0}
+.ft-tag{font-family:'JetBrains Mono',monospace;font-size:9px;color:#666;margin-top:2px}.ft-sap{font-family:'JetBrains Mono',monospace;font-size:9px;color:#0066CC;margin-top:3px}
+.ft-section{font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:.12em;color:#555;text-transform:uppercase;margin:12px 0 6px}
+.ft-table{width:100%;border-collapse:collapse}.ft-table td{padding:5px 8px;border-bottom:1px solid #222;font-size:11px}.ft-table td:first-child{color:#888;width:40%}.ft-table td:last-child{color:#ddd;font-family:'JetBrains Mono',monospace;font-size:10px}
+.ft-live{display:flex;align-items:center;gap:5px}.ft-live-dot{width:5px;height:5px;border-radius:50%;animation:pd 2s infinite}.ft-live-dot.ok{background:var(--green)}.ft-live-dot.warn{background:var(--yellow)}.ft-live-dot.crit{background:var(--red)}
+.int-diagram{background:var(--surface);border-radius:10px;padding:20px;border:1px solid var(--border2);margin-bottom:14px}
+.int-title{font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;margin-bottom:16px;text-align:center}
+.int-level{display:flex;align-items:center;gap:14px;margin-bottom:8px;padding:10px 14px;border-radius:7px;border:1px solid var(--border)}
+.int-level-num{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;flex-shrink:0}
+.int-level-name{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700}.int-level-desc{font-size:10px;color:var(--text2)}.int-arrow{text-align:center;color:var(--text3);font-size:12px;margin:2px 0}
+.sim-card{background:var(--surface);border-radius:10px;padding:18px;border:1px solid var(--border2);margin-bottom:10px}
+.sim-card-title{font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;margin-bottom:3px}.sim-card-sub{font-size:12px;color:var(--text2);margin-bottom:14px}
+.sim-controls{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+.sim-btn{padding:7px 14px;border-radius:5px;border:1px solid var(--border2);background:var(--surface2);color:var(--text2);font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s}.sim-btn:hover{background:var(--surface3);color:var(--text)}.sim-btn.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+.sim-flow{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.sim-flow-node{padding:5px 10px;border-radius:5px;background:var(--surface2);border:1px solid var(--border2);font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:600}
+.sim-flow-node.active{background:var(--primary-dim);border-color:var(--primary);color:var(--primary)}.sim-flow-arr{color:var(--text3);font-size:12px}
+.leed-score{display:flex;align-items:center;justify-content:center;width:120px;height:120px;border-radius:50%;border:4px solid var(--leed);font-family:'Barlow Condensed',sans-serif;font-size:36px;font-weight:800;color:var(--leed);margin:0 auto 14px;position:relative}
+.leed-score-label{position:absolute;bottom:-8px;font-size:10px;background:var(--leed);color:#fff;padding:2px 10px;border-radius:10px;font-weight:700;letter-spacing:.1em}
+.leed-credit{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)}
+.leed-credit-name{flex:1;font-size:12px;color:var(--text2)}.leed-credit-pts{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:var(--leed);min-width:40px;text-align:right}
+.leed-credit-bar{width:100px;height:6px;background:var(--surface3);border-radius:3px;overflow:hidden}.leed-credit-fill{height:100%;background:var(--leed);border-radius:3px}
+#view-chat.active{display:flex!important;flex-direction:column}
+.chat-container{flex:1;overflow-y:auto;padding:18px}
+.chat-msg{max-width:80%;margin-bottom:10px;padding:10px 14px;border-radius:8px;font-size:12px;line-height:1.6}
+.chat-msg.bot{background:var(--surface);border:1px solid var(--border);margin-right:auto;color:var(--text2)}.chat-msg.user{background:var(--primary-dim);border:1px solid rgba(0,120,255,.3);margin-left:auto;color:var(--text)}
+.chat-input-bar{display:flex;gap:8px;padding:10px 18px;border-top:1px solid var(--border);background:var(--surface)}
+.chat-input{flex:1;background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:8px 12px;color:var(--text);font-family:'Barlow',sans-serif;font-size:12px;outline:none}.chat-input:focus{border-color:var(--primary)}
+.chat-send{padding:8px 16px;border-radius:6px;border:none;background:var(--primary);color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;cursor:pointer}
+.chat-suggestions{display:flex;gap:5px;flex-wrap:wrap;padding:0 18px 10px}
+.chat-sug{padding:5px 10px;border-radius:14px;border:1px solid var(--border2);background:var(--surface2);color:var(--text2);font-size:10px;cursor:pointer;transition:all .2s}.chat-sug:hover{border-color:var(--primary);color:var(--primary)}
+.modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.7);z-index:200;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px)}.modal-overlay.open{display:flex}
+.modal{background:var(--surface);border-radius:12px;width:90%;max-width:860px;max-height:85vh;overflow-y:auto;padding:24px;border:1px solid var(--border2)}
+#toast{position:fixed;bottom:18px;right:18px;z-index:300;background:var(--surface);border:1px solid var(--border2);border-radius:8px;padding:10px 16px;min-width:280px;display:flex;gap:10px;transform:translateY(120%);transition:transform .3s;box-shadow:0 8px 32px rgba(0,0,0,.5)}
+#toast.show{transform:translateY(0)}#toast.sap{border-left:4px solid var(--primary)}#toast.iot{border-left:4px solid var(--green)}#toast.alert{border-left:4px solid var(--red)}#toast.wms{border-left:4px solid var(--cyan)}#toast.leed{border-left:4px solid var(--leed)}
+.toast-body{flex:1}.toast-src{font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:600;color:var(--text3)}
+.toast-msg{font-size:12px;color:var(--text);margin-top:2px}.toast-val{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text2);margin-top:2px}
+.sidebar-overlay{display:none;position:fixed;top:52px;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:89}.sidebar-overlay.open{display:block}
+@media(max-width:900px){.hamburger{display:flex}#sidebar-left{display:none}#sidebar-left.open{display:flex;position:fixed;top:52px;left:0;bottom:0;z-index:90;width:270px;background:var(--surface);border-right:1px solid var(--border);flex-direction:column;overflow:hidden}#tabs{padding:0 6px}.tab{padding:9px 8px;font-size:10px}.dash-kpis{grid-template-columns:1fr 1fr}.dash-grid2,.dash-grid3{grid-template-columns:1fr}#equip-panel{width:90%;right:5%;left:5%;top:56px}.acc-content{flex-direction:column}.acc-sidebar{width:100%;flex-direction:row;overflow-x:auto;border-right:none;border-bottom:1px solid #222}.acc-body{flex-direction:column}.acc-tree{width:100%;max-height:180px;border-right:none;border-bottom:1px solid #222}.alert-card{flex-direction:column;gap:6px}.modal{width:95%;padding:16px}.sim-controls{flex-wrap:wrap}}
+@media(max-width:480px){#header{padding:0 10px;gap:6px}.h-logo{font-size:14px}.h-plant{display:none}.demo-badge{right:46px}.dash-kpis{grid-template-columns:1fr}.chat-msg{max-width:95%}}
+</style>
+</head>
+<body>
+<div id="header">
+  <button class="hamburger" onclick="toggleSidebar()">&#9776;</button>
+  <div class="h-logo" style="background:none;width:auto;height:auto;border-radius:0"><img src="ey-logo.svg" alt="EY" width="64" height="38" style="display:block"></div>
+  <div class="h-sep"></div>
+  <div class="h-plant">FULFILLMENT CENTER · 85,000 m2 · Edo. de Mexico, MX</div>
+  <div class="demo-badge">DEMO</div>
+  <div class="h-status"><div class="h-dot"></div><div class="h-status-txt">TWIN LIVE</div><div class="h-sep"></div><div class="h-time" id="h-time">--:--:--</div><div class="h-sep"></div><button class="h-alert-btn" onclick="showTab('alertas')"><span class="h-alert-cnt" id="alert-cnt">5</span></button></div>
+</div>
+<div id="app">
+  <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+  <div id="sidebar-left">
+    <div class="sl-section"><div class="sl-label">Zonas Operativas</div><div id="zone-list"></div></div>
+    <div class="kpi-grid" id="sidebar-kpis"></div>
+    <div class="integration-flow">
+      <div class="sl-label">Arquitectura de Plataforma</div>
+      <div class="if-step"><div class="if-num">1</div><div class="if-txt">Sensores IoT / PLC (OPC-UA)</div></div><div class="if-arrow">|</div>
+      <div class="if-step"><div class="if-num">2</div><div class="if-txt">Edge Gateway / Historian</div></div><div class="if-arrow">|</div>
+      <div class="if-step"><div class="if-num">3</div><div class="if-txt">SAP Integration Suite</div></div><div class="if-arrow">|</div>
+      <div class="if-step"><div class="if-num">4</div><div class="if-txt">SAP EWM / S/4HANA / APM</div></div><div class="if-arrow">|</div>
+      <div class="if-step"><div class="if-num">5</div><div class="if-txt">Autodesk Tandem (Twin)</div></div><div class="if-arrow">|</div>
+      <div class="if-step"><div class="if-num">6</div><div class="if-txt">ACC (As-Built / P&ID)</div></div><div class="if-arrow">|</div>
+      <div class="if-step"><div class="if-num">7</div><div class="if-txt">WMS / WES / WCS / PLC</div></div>
+    </div>
+  </div>
+  <div id="center">
+    <div id="tabs">
+      <div class="tab active" onclick="showTab('3d',this)">3D MODELO</div>
+      <div class="tab" onclick="showTab('operacion',this)">OPERACION</div>
+      <div class="tab" onclick="showTab('energia',this)">ENERGIA</div>
+      <div class="tab" onclick="showTab('confiabilidad',this)">CONFIABILIDAD</div>
+      <div class="tab" onclick="showTab('alertas',this)">ALERTAS</div>
+      <div class="tab" onclick="showTab('integracion',this)">INTEGRACION</div>
+      <div class="tab" onclick="showTab('om',this)">O&M</div>
+      <div class="tab" onclick="showTab('sap',this)">SAP</div>
+      <div class="tab" onclick="showTab('acc',this)">ACC</div>
+      <div class="tab" onclick="showTab('sim',this)">SIMULACION</div>
+      <div class="tab" onclick="showTab('leed',this)">LEED / ESG</div>
+      <div class="tab" onclick="showTab('chat',this)">AI CHAT</div>
+    </div>
+    <div id="view-3d" class="view active"><canvas id="c3d"></canvas><div class="view-3d-overlay" id="sys-toggles"></div><div id="equip-panel"></div></div>
+    <div id="view-operacion" class="view dash-view"></div>
+    <div id="view-energia" class="view dash-view"></div>
+    <div id="view-confiabilidad" class="view dash-view"></div>
+    <div id="view-alertas" class="view dash-view"></div>
+    <div id="view-integracion" class="view dash-view"></div>
+    <div id="view-om" class="view dash-view"></div>
+    <div id="view-sap" class="view dash-view"></div>
+    <div id="v-acc" class="view"></div>
+    <div id="view-sim" class="view dash-view"></div>
+    <div id="view-leed" class="view dash-view"></div>
+    <div id="view-chat" class="view"></div>
+  </div>
+</div>
+<div id="toast"><div class="toast-body"><div class="toast-src" id="t-src"></div><div class="toast-msg" id="t-msg"></div><div class="toast-val" id="t-val"></div></div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+/* ═══════════════════════════════════════════════════════
+   DATA: ZONES, EQUIPMENT, STRUCTURAL ELEMENTS
+   ═══════════════════════════════════════════════════════ */
+var ZONES=[
+{id:'Z01',name:'Recepcion / Docks',x:-120,z:80,w:80,d:30,h:14,col:0x3B6EA0,status:'ok'},
+{id:'Z02',name:'Inbound / Decant',x:-120,z:48,w:80,d:30,h:14,col:0x4A7FB5,status:'ok'},
+{id:'Z03',name:'Reserva Pallet Rack',x:-38,z:48,w:70,d:62,h:14,col:0x2D5F8A,status:'ok'},
+{id:'Z04',name:'ASRS / Goods-to-Person',x:34,z:80,w:50,d:30,h:14,col:0x1A73E8,status:'warn'},
+{id:'Z05',name:'Picking',x:34,z:48,w:50,d:30,h:14,col:0x2196F3,status:'ok'},
+{id:'Z06',name:'Packing / SLAM',x:86,z:48,w:40,d:30,h:14,col:0x0D47A1,status:'ok'},
+{id:'Z07',name:'Sortation',x:86,z:80,w:40,d:30,h:14,col:0x1565C0,status:'crit'},
+{id:'Z08',name:'Outbound / Staging',x:128,z:48,w:30,d:62,h:14,col:0x0277BD,status:'ok'},
+{id:'Z09',name:'Cuartos Tecnicos',x:-120,z:16,w:50,d:30,h:6,col:0x455A64,status:'ok'},
+{id:'Z10',name:'Edge Data Center',x:-68,z:16,w:28,d:30,h:6,col:0x37474F,status:'ok'},
+{id:'Z11',name:'Subestacion / Generador',x:-140,z:-20,w:40,d:25,h:5,col:0x546E7A,status:'ok'},
+{id:'Z12',name:'Cuarto Bombas PCI',x:-98,z:-20,w:30,d:25,h:5,col:0xB71C1C,status:'ok'},
+{id:'Z13',name:'WWTP Planta Tratamiento',x:-50,z:-20,w:50,d:30,h:4,col:0x2E7D32,status:'ok'}
+];
+
+var STRUCT=[
+{id:'COL-A1',profile:'W14x48',len:'14.0 m',weight:'998 kg',brand:'AHMSA',finish:'Primario rojo',axis:'A-1'},
+{id:'COL-A2',profile:'W14x48',len:'14.0 m',weight:'998 kg',brand:'AHMSA',finish:'Primario rojo',axis:'A-2'},
+{id:'TRB-01',profile:'W24x68',len:'25.0 m',weight:'2,530 kg',brand:'Ternium',finish:'Primario rojo',axis:'A 1-2'},
+{id:'LRG-01',profile:'C8x11.5',len:'8.0 m',weight:'137 kg',brand:'AHMSA',finish:'Galvanizado',axis:'1 A-B'},
+{id:'MEZZ-V1',profile:'HSS 6x6x1/4',len:'7.0 m',weight:'232 kg',brand:'Ternium',finish:'Primario gris',axis:'Mezzanine'},
+{id:'MEZZ-B1',profile:'W12x26',len:'12.0 m',weight:'464 kg',brand:'AHMSA',finish:'Primario gris',axis:'Mezzanine'}
+];
+
+var CAM={overview:{t:0.7,p:0.75,r:200,lx:0,lz:50},Z01:{t:0.5,p:0.7,r:60,lx:-130,lz:88},Z02:{t:0.6,p:0.65,r:55,lx:-120,lz:55},Z03:{t:0.8,p:0.7,r:70,lx:-10,lz:75},Z04:{t:0.5,p:0.65,r:50,lx:52,lz:88},Z05:{t:0.6,p:0.65,r:50,lx:52,lz:58},Z06:{t:0.4,p:0.7,r:45,lx:100,lz:58},Z07:{t:0.5,p:0.65,r:50,lx:100,lz:88},Z08:{t:0.3,p:0.7,r:45,lx:138,lz:62},Z09:{t:0.8,p:0.65,r:40,lx:-105,lz:25},Z10:{t:0.9,p:0.65,r:30,lx:-58,lz:26},Z11:{t:1.0,p:0.6,r:45,lx:-120,lz:-10},Z12:{t:1.1,p:0.6,r:35,lx:-83,lz:-10},Z13:{t:1.2,p:0.55,r:50,lx:-25,lz:-10}};
+
+var G={activeZone:null,activeTab:'3d',sysLayers:{pci:true,hvac:true,elec:true,data:true,conv:true},sens:{
+ordersPerHour:2450,linesPerHour:8200,picksPerHour:6800,packRate:2100,sorterThru:11200,bufferOcc:72,dwellTimeTrailers:48,
+sorterJams:3,conveyorStops:1,asrsHealth:94,amrFleet:11,mtbfSorter:720,mttrSorter:18,mtbfConveyor:1200,mttrConveyor:12,
+kwTotal:1850,kwhPerOrder:0.42,demandPeak:2100,powerFactor:0.94,thd:3.2,
+kwhByZone:{Z01:85,Z02:120,Z03:180,Z04:420,Z05:210,Z06:155,Z07:380,Z08:60,Z09:95,Z10:85,Z11:30,Z12:30,Z13:15},
+tempInter:24.5,humidity:52,co2:620,noise:72,lux:450,
+pciPressure:155,pciBombState:'AUTO',pciAlarms:0,pciTankLevel:92,
+hvacSupplyTemp:14.2,hvacReturnTemp:22.8,hvacFilterDP:1.2,
+latency:2.8,networkUp:99.97,wifiCoverage:98.2,plcHealth:100,
+amrBatAvg:72,amrMissions:342,amrNearMiss:0,
+palletOcc:78,binOcc:85,asrsOcc:91,
+waterDaily:52000,waterReuse:68,wwEffluent:94,wasteDiversion:78,
+co2Scope1:145,co2Scope2:680,euiYear:135,
+}};
+
+/* ═══════════════════════════════════════════════════════
+   THREE.JS SCENE
+   ═══════════════════════════════════════════════════════ */
+var scene,camera,renderer,raycaster,mouse,sph={t:0.7,p:0.75,r:200},lk={x:0,y:0,z:50},lerp=null,isDragging=false,prevMouse={x:0,y:0};
+var allClickable=[],MAT={},mepGroups={pci:[],hvac:[],elec:[],data:[]},fanBlades=[],iotSprites=[];
+
+function makeIoTSprite(txt,col){
+var c2=document.createElement('canvas');c2.width=256;c2.height=64;var ctx=c2.getContext('2d');
+ctx.fillStyle='rgba(6,10,16,0.88)';ctx.fillRect(0,0,256,64);
+ctx.strokeStyle=col||'#0078FF';ctx.lineWidth=2;ctx.strokeRect(1,1,254,62);
+ctx.fillStyle=col||'#0078FF';ctx.beginPath();ctx.arc(14,32,4,0,Math.PI*2);ctx.fill();
+ctx.font='bold 18px Barlow Condensed, sans-serif';ctx.fillStyle='#E8EDF5';ctx.fillText(txt,26,38);
+var tex=new THREE.CanvasTexture(c2);tex.needsUpdate=true;
+var sp=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true,depthTest:false}));
+sp.scale.set(14,3.5,1);return sp;
+}
+
+function initThree(){
+var canvas=document.getElementById('c3d');
+scene=new THREE.Scene();scene.background=new THREE.Color(0x070b12);scene.fog=new THREE.Fog(0x070b12,350,600);
+camera=new THREE.PerspectiveCamera(50,1,0.5,600);
+try{renderer=new THREE.WebGLRenderer({canvas:canvas,antialias:true})}catch(e){renderer=new THREE.WebGLRenderer({canvas:canvas,antialias:false})}
+renderer.shadowMap.enabled=false;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.0;renderer.outputEncoding=THREE.sRGBEncoding;
+raycaster=new THREE.Raycaster();mouse=new THREE.Vector2();
+
+// === LIGHTING ===
+scene.add(new THREE.AmbientLight(0x8899BB,0.35));
+var sun=new THREE.DirectionalLight(0xFFF0D8,1.4);sun.position.set(80,120,50);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);
+sun.shadow.camera.left=-220;sun.shadow.camera.right=220;sun.shadow.camera.top=200;sun.shadow.camera.bottom=-100;sun.shadow.camera.far=500;sun.shadow.bias=-0.0005;scene.add(sun);
+var fill=new THREE.DirectionalLight(0xAABBDD,0.3);fill.position.set(-60,80,-40);scene.add(fill);
+var rim=new THREE.PointLight(0x0078FF,0.6,300);rim.position.set(0,80,100);scene.add(rim);
+scene.add(new THREE.HemisphereLight(0x1a2040,0x332211,0.25));
+
+// === MATERIALS ===
+MAT.concrete=new THREE.MeshStandardMaterial({color:0xC8C8C8,roughness:0.85,metalness:0});
+MAT.steel=new THREE.MeshStandardMaterial({color:0xAAB4C4,roughness:0.35,metalness:0.6});
+MAT.steelDark=new THREE.MeshStandardMaterial({color:0x556070,roughness:0.5,metalness:0.5});
+MAT.yellow=new THREE.MeshStandardMaterial({color:0xFFCC00,roughness:0.5,metalness:0.2});
+MAT.orange=new THREE.MeshStandardMaterial({color:0xFF6B00,roughness:0.5,metalness:0.2});
+MAT.red=new THREE.MeshStandardMaterial({color:0xDD2222,roughness:0.5,metalness:0.2});
+MAT.blue=new THREE.MeshStandardMaterial({color:0x2266DD,roughness:0.5,metalness:0.3});
+MAT.green=new THREE.MeshStandardMaterial({color:0x22AA44,roughness:0.5,metalness:0.2});
+MAT.asphalt=new THREE.MeshStandardMaterial({color:0x2A2A2A,roughness:0.95,metalness:0});
+MAT.rack=new THREE.MeshStandardMaterial({color:0x0055AA,roughness:0.45,metalness:0.5,emissive:0x001133,emissiveIntensity:0.08});
+MAT.rackBeam=new THREE.MeshStandardMaterial({color:0xFF8800,roughness:0.45,metalness:0.3,emissive:0x331800,emissiveIntensity:0.1});
+MAT.belt=new THREE.MeshStandardMaterial({color:0x1a1a1a,roughness:0.85,metalness:0.05});
+MAT.pci=new THREE.MeshStandardMaterial({color:0xCC2222,roughness:0.4,metalness:0.3,emissive:0x440808,emissiveIntensity:0.15});
+MAT.hvacDuct=new THREE.MeshStandardMaterial({color:0x889DAD,roughness:0.3,metalness:0.5,emissive:0x112233,emissiveIntensity:0.05});
+MAT.cableTray=new THREE.MeshStandardMaterial({color:0x888855,roughness:0.5,metalness:0.4});
+MAT.sorterTrack=new THREE.MeshStandardMaterial({color:0x1155CC,roughness:0.3,metalness:0.5,emissive:0x051133,emissiveIntensity:0.12});
+MAT.screen=new THREE.MeshStandardMaterial({color:0x00AAFF,emissive:0x004488,emissiveIntensity:0.4,roughness:0.2});
+MAT.ledGreen=new THREE.MeshStandardMaterial({color:0x00FF44,emissive:0x00AA22,emissiveIntensity:0.6});
+MAT.ground=new THREE.MeshStandardMaterial({color:0x1a2a1a,roughness:0.95});
+MAT.parking=new THREE.MeshStandardMaterial({color:0x333333,roughness:0.9});
+MAT.white=new THREE.MeshStandardMaterial({color:0xE8E8E8,roughness:0.6,metalness:0.1});
+MAT.waterTreat=new THREE.MeshStandardMaterial({color:0x2E7D32,roughness:0.6,metalness:0.2});
+MAT.waterSurface=new THREE.MeshStandardMaterial({color:0x1a6644,roughness:0.2,metalness:0.1,transparent:true,opacity:0.6});
+MAT.structSteel=new THREE.MeshStandardMaterial({color:0x993322,roughness:0.6,metalness:0.4});
+MAT.glass=new THREE.MeshStandardMaterial({color:0x88BBDD,roughness:0.1,metalness:0.1,transparent:true,opacity:0.25});
+MAT.galvanized=new THREE.MeshStandardMaterial({color:0x9EAAB4,roughness:0.3,metalness:0.6});
+MAT.roller=new THREE.MeshStandardMaterial({color:0xBBC4D0,roughness:0.2,metalness:0.7});
+MAT.tiltup=new THREE.MeshStandardMaterial({color:0xD0CCC4,roughness:0.75,metalness:0.02});
+
+function m(g,mt,x,y,z,ud){var mesh=new THREE.Mesh(g,mt);mesh.position.set(x,y,z);mesh.castShadow=true;mesh.receiveShadow=true;if(ud)mesh.userData=ud;scene.add(mesh);return mesh;}
+function addSprite(txt,col,x,y,z){var sp=makeIoTSprite(txt,col);sp.position.set(x,y,z);scene.add(sp);iotSprites.push(sp);return sp;}
+
+// ═══ GROUND & SITE ═══
+var gFloor=new THREE.PlaneGeometry(500,500);var mFloor=m(gFloor,MAT.ground,0,-0.1,40);mFloor.rotation.x=-Math.PI/2;mFloor.receiveShadow=true;
+// Concrete apron around building
+var apron=m(new THREE.BoxGeometry(310,0.3,180),MAT.concrete,0,0,48);apron.receiveShadow=true;
+// Parking lot
+m(new THREE.BoxGeometry(280,0.15,50),MAT.parking,0,0,-30);
+// Truck court
+m(new THREE.BoxGeometry(310,0.2,30),MAT.asphalt,0,0,140);
+
+// ═══ BUILDING DIMENSIONS ═══
+// Main warehouse: 280m x 140m centered around (0,0,48)
+// Clear height: 14m. Column grid: 25m x 25m
+var BW=280, BD=140, BH=14, BX=-140, BZ=-22, CG=25;
+
+// ═══ CONCRETE FLOOR SLAB ═══
+var slab=m(new THREE.BoxGeometry(BW,0.25,BD),MAT.concrete,0,0.12,BZ+BD/2);slab.receiveShadow=true;
+// Floor joint lines (reduced density for performance)
+var jMat=new THREE.MeshStandardMaterial({color:0x999999,roughness:0.9});
+for(var fj=BX;fj<=BX+BW;fj+=25){m(new THREE.BoxGeometry(0.08,0.02,BD),jMat,fj,0.26,BZ+BD/2);}
+for(var fk=BZ;fk<=BZ+BD;fk+=25){m(new THREE.BoxGeometry(BW,0.02,0.08),jMat,0,0.26,fk);}
+
+// ═══ COLUMNS — W14 WIDE-FLANGE (H-PROFILE, NOT BOXES) ═══
+var colPositions=[];
+for(var cx=BX;cx<=BX+BW;cx+=CG*2){
+  for(var cz=BZ;cz<=BZ+BD;cz+=CG*2){
+    colPositions.push({x:cx,z:cz});
+  }
+}
+// Columns: single cross-shaped profile per column (optimized)
+var colGeoW=new THREE.BoxGeometry(0.15,BH,0.36);
+var colGeoF=new THREE.BoxGeometry(0.36,BH,0.15);
+var baseGeo=new THREE.BoxGeometry(0.45,1,0.45);
+colPositions.forEach(function(cp,ci){
+  // Single merged column representation
+  var col=m(colGeoW,MAT.steel,cp.x,BH/2+0.25,cp.z);
+  col.userData={struct:true,tag:'COL-'+(ci<10?'0':'')+ci,profile:'W14x48',len:'14.0 m',weight:'998 kg',brand:'AHMSA',finish:'Primario rojo / RAL 7035',axis:'Grid '+(Math.floor(ci/7)+1)+'-'+(ci%7+1)};
+  allClickable.push(col);
+  // Yellow safety base
+  m(baseGeo,MAT.yellow,cp.x,0.75,cp.z);
+});
+
+// ═══ WALLS — TILT-UP CONCRETE PANELS — FULL HEIGHT (14m), FLUSH WITH COLUMNS ═══
+// North wall
+m(new THREE.BoxGeometry(BW,BH,0.25),MAT.tiltup,0,BH/2+0.25,BZ);
+// South wall
+m(new THREE.BoxGeometry(BW,BH,0.25),MAT.tiltup,0,BH/2+0.25,BZ+BD);
+// West wall (with dock door openings implied)
+m(new THREE.BoxGeometry(0.25,BH,BD),MAT.tiltup,BX,BH/2+0.25,BZ+BD/2);
+// East wall
+m(new THREE.BoxGeometry(0.25,BH,BD),MAT.tiltup,BX+BW,BH/2+0.25,BZ+BD/2);
+// Wall panel reveals (decorative grooves on exterior)
+var revMat=new THREE.MeshStandardMaterial({color:0xA8A49C});
+for(var wr=0;wr<5;wr++){
+  var wy=2+wr*2.5;
+  m(new THREE.BoxGeometry(BW+0.5,0.03,0.02),revMat,0,wy,BZ-0.15);
+  m(new THREE.BoxGeometry(BW+0.5,0.03,0.02),revMat,0,wy,BZ+BD+0.15);
+}
+
+// ═══ NO ROOF — OPEN TO SEE INSIDE ═══
+// Instead of roof, just structural ring beam at top of walls for realism
+m(new THREE.BoxGeometry(BW,0.3,0.6),MAT.steelDark,0,BH+0.25,BZ);
+m(new THREE.BoxGeometry(BW,0.3,0.6),MAT.steelDark,0,BH+0.25,BZ+BD);
+m(new THREE.BoxGeometry(0.6,0.3,BD),MAT.steelDark,BX,BH+0.25,BZ+BD/2);
+m(new THREE.BoxGeometry(0.6,0.3,BD),MAT.steelDark,BX+BW,BH+0.25,BZ+BD/2);
+
+// ═══ TRUSSES — SIMPLIFIED WARREN (top+bottom chord + key verticals) ═══
+var td=1.8,ty=BH-td-0.5;// bottom chord at 11.7, top chord at 13.5 — INSIDE building
+for(var tz=BZ;tz<=BZ+BD;tz+=CG){
+  // Top chord
+  m(new THREE.BoxGeometry(BW,0.12,0.12),MAT.structSteel,0,ty+td,tz);
+  // Bottom chord
+  m(new THREE.BoxGeometry(BW,0.12,0.12),MAT.structSteel,0,ty,tz);
+  // Key vertical posts (every 25m)
+  for(var vi=BX;vi<=BX+BW;vi+=CG){
+    m(new THREE.BoxGeometry(0.08,td,0.08),MAT.structSteel,vi,ty+td/2,tz);
+  }
+  // Warren diagonals — panels of ~3m width, alternating up/down
+  var panelW=5, diagLen2=Math.sqrt(panelW*panelW+td*td), diagAng2=Math.atan2(td,panelW);
+  for(var di=BX;di<BX+BW;di+=panelW){
+    var upDown=(Math.round((di-BX)/panelW))%2===0;
+    var dg=new THREE.Mesh(new THREE.BoxGeometry(0.04,diagLen2,0.04),MAT.structSteel);
+    dg.position.set(di+panelW/2,ty+td/2,tz);
+    dg.rotation.z=upDown?diagAng2:-diagAng2;
+    scene.add(dg);
+  }
+}
+
+// ═══ PURLINS (Z-purlins perpendicular to trusses, reduced for perf) ═══
+for(var px=BX+5;px<BX+BW;px+=15){
+  m(new THREE.BoxGeometry(0.06,0.2,BD),MAT.galvanized,px,ty+td-0.1,BZ+BD/2);
+}
+
+// ═══ DOCK DOORS — SOUTH & NORTH WALLS ═══
+// South wall dock doors (outbound)
+for(var dd=BX+10;dd<BX+BW-10;dd+=8){
+  // Door opening (dark recess)
+  m(new THREE.BoxGeometry(2.4,3,0.4),new THREE.MeshStandardMaterial({color:0x111111}),dd,1.75,BZ+BD);
+  // Dock bumpers (yellow)
+  m(new THREE.BoxGeometry(0.3,0.6,0.3),MAT.yellow,dd-0.9,1.5,BZ+BD+0.2);
+  m(new THREE.BoxGeometry(0.3,0.6,0.3),MAT.yellow,dd+0.9,1.5,BZ+BD+0.2);
+}
+// North wall dock doors (inbound)
+for(var dd2=BX+10;dd2<BX+BW-10;dd2+=8){
+  m(new THREE.BoxGeometry(2.4,3,0.4),new THREE.MeshStandardMaterial({color:0x111111}),dd2,1.75,BZ);
+  m(new THREE.BoxGeometry(0.3,0.6,0.3),MAT.yellow,dd2-0.9,1.5,BZ-0.2);
+  m(new THREE.BoxGeometry(0.3,0.6,0.3),MAT.yellow,dd2+0.9,1.5,BZ-0.2);
+}
+
+// ═══ ZONE 1: INBOUND / RECEIVING (north side) ═══
+// Staging area floor markings
+for(var sl=0;sl<8;sl++){
+  m(new THREE.BoxGeometry(10,0.02,0.1),MAT.yellow,BX+20+sl*15,0.26,BZ+8);
+}
+addSprite('DOCK-IB  32 trailers | 48 min dwell','#00D68F',BX+70,8,BZ+5);
+
+// ═══ ZONE 2: DECANT / STOW ═══
+// Work tables (simplified for perf)
+var legGeo=new THREE.CylinderGeometry(0.04,0.04,1,4);
+var tableGeo=new THREE.BoxGeometry(1.4,0.05,1);
+for(var dt=0;dt<8;dt++){
+  var dtx=BX+10+dt*11, dtz=BZ+20;
+  m(legGeo,MAT.steel,dtx-0.5,0.75,dtz-0.3);m(legGeo,MAT.steel,dtx+0.5,0.75,dtz+0.3);
+  m(tableGeo,MAT.white,dtx,1.25,dtz);
+  m(new THREE.BoxGeometry(0.2,0.25,0.15),MAT.steelDark,dtx+0.4,1.4,dtz);
+}
+addSprite('DECANT  8,200 lines/h | 12 estaciones','#0078FF',BX+50,6,BZ+20);
+
+// ═══ ZONE 3: PALLET RACK STORAGE ═══
+// Optimized rack: uses few meshes — uprights as end columns, beams as long bars per level
+var wireMat=new THREE.MeshStandardMaterial({color:0x999999,roughness:0.4,metalness:0.5,transparent:true,opacity:0.3});
+function buildPalletRack(rx,rz,rw,rd,levels){
+  var rGrp=new THREE.Group();
+  var uH=levels*1.6+0.5;
+  // Two end uprights (blue)
+  rGrp.add(new THREE.Mesh(new THREE.BoxGeometry(0.08,uH,0.08),MAT.rack).translateY(uH/2));
+  rGrp.add(new THREE.Mesh(new THREE.BoxGeometry(0.08,uH,0.08),MAT.rack).translateX(rw).translateY(uH/2));
+  rGrp.add(new THREE.Mesh(new THREE.BoxGeometry(0.08,uH,0.08),MAT.rack).translateZ(rd).translateY(uH/2));
+  rGrp.add(new THREE.Mesh(new THREE.BoxGeometry(0.08,uH,0.08),MAT.rack).translateX(rw).translateZ(rd).translateY(uH/2));
+  // Middle uprights (every 5m)
+  for(var mu=5;mu<rw;mu+=5){
+    rGrp.add(new THREE.Mesh(new THREE.BoxGeometry(0.06,uH,0.06),MAT.rack).translateX(mu).translateY(uH/2));
+    rGrp.add(new THREE.Mesh(new THREE.BoxGeometry(0.06,uH,0.06),MAT.rack).translateX(mu).translateZ(rd).translateY(uH/2));
+  }
+  // Beams + decking per level (single long mesh per level)
+  for(var lv=1;lv<=levels;lv++){
+    var by=lv*1.6;
+    rGrp.add(new THREE.Mesh(new THREE.BoxGeometry(rw,0.1,0.06),MAT.rackBeam).translateX(rw/2).translateY(by));
+    rGrp.add(new THREE.Mesh(new THREE.BoxGeometry(rw,0.1,0.06),MAT.rackBeam).translateX(rw/2).translateZ(rd).translateY(by));
+    rGrp.add(new THREE.Mesh(new THREE.BoxGeometry(rw,0.02,rd),wireMat).translateX(rw/2).translateY(by+0.06));
+  }
+  rGrp.position.set(rx,0.25,rz);scene.add(rGrp);return rGrp;
+}
+// Main pallet rack storage - multiple aisles
+for(var pr=0;pr<6;pr++){
+  var rack1=buildPalletRack(BX+20+pr*10,BZ+35,24,1.2,5);
+  rack1.userData={tag:'RACK-'+String.fromCharCode(65+pr),name:'Pallet Rack Row '+String.fromCharCode(65+pr),sys:'Storage',crit:'business',brand:'Mecalux',cap:'4,800 pallets/row',profile:'Selective',weight:'12,400 kg',material:'Acero A36'};
+  allClickable.push(rack1.children[0]);rack1.children[0].userData=rack1.userData;
+}
+addSprite('RACK  78% occ | 19,968 / 25,600 pallets','#FF8800',BX+50,10,BZ+42);
+
+// ═══ ZONE 4: ASRS / GOODS-TO-PERSON ═══
+// Dense racking wall (taller, narrower aisles)
+for(var ar=0;ar<4;ar++){
+  var asrsR=buildPalletRack(40+ar*6,BZ+30,20,0.8,8);
+  asrsR.userData={tag:'ASRS-0'+(ar+1),name:'ASRS Module '+(ar+1),sys:'ASRS',crit:'throughput',brand:'Dematic',cap:'16,000 bins',profile:'Mini-load shuttle',material:'Acero galvanizado'};
+  allClickable.push(asrsR.children[0]);asrsR.children[0].userData=asrsR.userData;
+}
+// Shuttle rails (horizontal tracks between racks)
+for(var sh=0;sh<4;sh++){
+  for(var sl2=0;sl2<8;sl2++){
+    m(new THREE.BoxGeometry(20,0.04,0.04),MAT.sorterTrack,50+sh*6,sl2*1.6+1.6,BZ+35);
+  }
+}
+// Shuttle carts (small moving platforms on rails)
+for(var sc=0;sc<8;sc++){
+  var scart=m(new THREE.BoxGeometry(0.8,0.15,0.5),MAT.orange,42+sc*3,3.2+Math.random()*5,BZ+35);
+  scart.userData={tag:'SHUTTLE-'+(sc+1)};
+  // LED indicator on shuttle
+  m(new THREE.SphereGeometry(0.06,8,8),MAT.ledGreen,42+sc*3,3.4+Math.random()*5,BZ+35);
+}
+addSprite('ASRS  91% occ | 11/12 shuttles | 880 bins/h','#1A73E8',55,12,BZ+35);
+
+// ═══ ZONE 5: PICKING MEZZANINE ═══
+// Mezzanine structure (steel frame platform, not a cube)
+var mezzY=4;
+// Mezzanine floor deck
+m(new THREE.BoxGeometry(30,0.12,25),new THREE.MeshStandardMaterial({color:0x444444,roughness:0.8,metalness:0.3}),45,mezzY,BZ+65);
+// Mezzanine support columns (tubular HSS, reduced)
+var mezzColGeo=new THREE.CylinderGeometry(0.08,0.08,mezzY,6);
+for(var mc=0;mc<4;mc++){for(var mcc=0;mcc<3;mcc++){
+  m(mezzColGeo,MAT.yellow,34+mc*8,mezzY/2,BZ+55+mcc*10);
+}}
+// Mezzanine beams
+m(new THREE.BoxGeometry(30,0.2,0.1),MAT.steelDark,45,mezzY-0.1,BZ+55);
+m(new THREE.BoxGeometry(30,0.2,0.1),MAT.steelDark,45,mezzY-0.1,BZ+75);
+// Shelving on mezzanine
+for(var ms=0;ms<4;ms++){buildPalletRack(35+ms*7,BZ+57,10,0.6,3);}
+// Staircase (simplified)
+for(var stair=0;stair<8;stair++){
+  m(new THREE.BoxGeometry(1.5,0.08,0.4),MAT.galvanized,30,0.5*stair,BZ+53+stair*0.4);
+}
+// Guardrails on mezzanine edge
+m(new THREE.BoxGeometry(30,0.04,0.04),MAT.yellow,45,mezzY+1.1,BZ+53);
+addSprite('PICK  6,800 picks/h | GTP + mezzanine','#2196F3',45,8,BZ+65);
+
+// ═══ ZONE 6: CONVEYOR NETWORK ═══
+// Realistic conveyors with individual rollers
+function buildConveyor(cx,cz,len,dir,tag){
+  var cGrp=new THREE.Group();
+  var cH=1.1, fw=0.08, rW=0.7;
+  var isX=dir==='x';
+  // Frame rails (C-channel profile)
+  var fLen=isX?len:0.08, fDep=isX?0.08:len;
+  cGrp.add(new THREE.Mesh(new THREE.BoxGeometry(fLen,0.08,fw),MAT.steelDark).translateY(cH).translateZ(-rW/2));
+  cGrp.add(new THREE.Mesh(new THREE.BoxGeometry(fLen,0.08,fw),MAT.steelDark).translateY(cH).translateZ(rW/2));
+  // Support legs
+  var nLegs=Math.max(2,Math.floor(len/8));
+  for(var lg=0;lg<nLegs;lg++){
+    var lx=isX?(-len/2+lg*(len/(nLegs-1))):0;
+    var lz=isX?0:(-len/2+lg*(len/(nLegs-1)));
+    cGrp.add(new THREE.Mesh(new THREE.BoxGeometry(0.04,cH,0.04),MAT.steelDark).translateX(lx).translateY(cH/2).translateZ(-rW/2-0.05));
+    cGrp.add(new THREE.Mesh(new THREE.BoxGeometry(0.04,cH,0.04),MAT.steelDark).translateX(lx).translateY(cH/2).translateZ(rW/2+0.05));
+    // Cross brace
+    cGrp.add(new THREE.Mesh(new THREE.BoxGeometry(0.02,0.02,rW+0.1),MAT.steelDark).translateX(lx).translateY(0.3));
+  }
+  // Individual rollers (galvanized cylinders, representative density)
+  var rollerSpacing=1.2, nRollers=Math.min(Math.floor(len/rollerSpacing),20);
+  for(var r=0;r<nRollers;r++){
+    var rx=isX?(-len/2+r*rollerSpacing):0;
+    var rz=isX?0:(-len/2+r*rollerSpacing);
+    var roller=new THREE.Mesh(new THREE.CylinderGeometry(0.03,0.03,rW,6),MAT.roller);
+    roller.rotation.x=Math.PI/2;
+    roller.position.set(rx,cH+0.05,rz);
+    cGrp.add(roller);
+  }
+  // Motor drive at one end (cylindrical motor with gearbox)
+  var motorGrp=new THREE.Group();
+  var motor=new THREE.Mesh(new THREE.CylinderGeometry(0.1,0.1,0.25,12),MAT.steelDark);
+  motor.rotation.z=Math.PI/2;motorGrp.add(motor);
+  var gearbox=new THREE.Mesh(new THREE.BoxGeometry(0.15,0.12,0.15),MAT.orange);
+  gearbox.position.x=0.18;motorGrp.add(gearbox);
+  motorGrp.position.set(isX?len/2:0,cH-0.1,isX?0:len/2);
+  motorGrp.position.z+=rW/2+0.15;
+  cGrp.add(motorGrp);
+
+  cGrp.position.set(cx,0.25,cz);
+  scene.add(cGrp);
+  if(tag){
+    cGrp.children[0].userData={tag:tag,name:'Conveyor '+tag,sys:'Material Handling',crit:'throughput',brand:'Dematic',cap:'2,400 UPH',profile:'Roller conveyor MDR',weight:'850 kg',material:'Acero galvanizado'};
+    allClickable.push(cGrp.children[0]);
+  }
+  return cGrp;
+}
+// Main inbound conveyor line (X direction)
+buildConveyor(BX+80,BZ+15,40,'x','CVY-IB-01');
+buildConveyor(BX+80,BZ+25,60,'x','CVY-IB-02');
+// Decant to stow
+buildConveyor(BX+50,BZ+28,30,'z','CVY-STOW-01');
+// Stow to ASRS feed
+buildConveyor(20,BZ+45,50,'x','CVY-ASRS-FEED');
+// Pick to pack
+buildConveyor(60,BZ+70,40,'x','CVY-PICK-PACK');
+// Pack to SLAM
+buildConveyor(90,BZ+60,20,'x','CVY-SLAM-01');
+// SLAM to sorter
+buildConveyor(100,BZ+50,30,'z','CVY-SORT-FEED');
+// Outbound lanes
+buildConveyor(BX+200,BZ+100,60,'x','CVY-OB-01');
+buildConveyor(BX+200,BZ+108,60,'x','CVY-OB-02');
+
+addSprite('CVY-IB  2,400 UPH | 1.2 m/s | 0 jams','#00D68F',BX+80,4,BZ+15);
+addSprite('CVY-OB  2,100 UPH | 1.1 m/s','#00D68F',BX+200,4,BZ+104);
+
+// ═══ ZONE 7: CROSSBELT SORTER ═══
+// Oval track with individual carts
+var sortCX=90,sortCZ=BZ+85,sortRX=18,sortRZ=8,sortH=2.5;
+// Track frame (oval)
+var trackPts=[];
+for(var ta=0;ta<64;ta++){
+  var ang=ta/64*Math.PI*2;
+  var tx2=sortCX+sortRX*Math.cos(ang);
+  var tz2=sortCZ+sortRZ*Math.sin(ang);
+  trackPts.push(new THREE.Vector3(tx2,sortH,tz2));
+}
+trackPts.push(trackPts[0].clone());
+var trackCurve=new THREE.CatmullRomCurve3(trackPts);
+var trackGeo=new THREE.TubeGeometry(trackCurve,128,0.08,6,true);
+var trackMesh=new THREE.Mesh(trackGeo,MAT.sorterTrack);scene.add(trackMesh);
+// Support structure (steel legs under track)
+for(var ts=0;ts<16;ts++){
+  var tsAng=ts/16*Math.PI*2;
+  var tsx=sortCX+sortRX*Math.cos(tsAng);
+  var tsz=sortCZ+sortRZ*Math.sin(tsAng);
+  m(new THREE.CylinderGeometry(0.05,0.05,sortH,6),MAT.steelDark,tsx,sortH/2,tsz);
+  // Cross brace
+  m(new THREE.BoxGeometry(0.03,0.03,1.5),MAT.steelDark,tsx,sortH*0.4,tsz);
+}
+// Individual crossbelt carts (small platforms circling)
+for(var cart=0;cart<24;cart++){
+  var cAng=cart/24*Math.PI*2;
+  var cartX=sortCX+sortRX*Math.cos(cAng);
+  var cartZ=sortCZ+sortRZ*Math.sin(cAng);
+  var cartMesh=m(new THREE.BoxGeometry(0.7,0.12,0.45),MAT.blue,cartX,sortH+0.12,cartZ);
+  // Belt on cart (darker)
+  m(new THREE.BoxGeometry(0.6,0.03,0.35),MAT.belt,cartX,sortH+0.2,cartZ);
+}
+// Discharge chutes (angled sheet metal)
+for(var ch=0;ch<12;ch++){
+  var chAng=(ch/12)*Math.PI;
+  var chX=sortCX+sortRX*Math.cos(chAng)+2;
+  var chZ=sortCZ+sortRZ*Math.sin(chAng);
+  var chute=m(new THREE.BoxGeometry(0.5,0.04,1.5),MAT.galvanized,chX+1,sortH-0.5,chZ);
+  chute.rotation.z=-0.5;
+  // Collection bin at end
+  m(new THREE.BoxGeometry(0.8,0.8,0.6),MAT.steelDark,chX+2.5,0.65,chZ);
+}
+// Sorter clickable
+trackMesh.userData={tag:'SRT-01',name:'Crossbelt Sorter Dematic',sys:'Sortation',crit:'throughput',brand:'Dematic',cap:'12,000 UPH',profile:'Crossbelt 24 destinos',weight:'18,500 kg',material:'Acero + polimero'};
+allClickable.push(trackMesh);
+addSprite('SRT-01  11,200 UPH | 3 jams | Motor 48.2C','#FF3B5C',sortCX,sortH+4,sortCZ);
+
+// ═══ ZONE 8: PACK STATIONS (simplified) ═══
+var packTableGeo=new THREE.BoxGeometry(1.4,0.05,0.8);var packScreenGeo=new THREE.BoxGeometry(0.3,0.2,0.02);
+for(var ps=0;ps<8;ps++){
+  var psx=70+ps*5,psz=BZ+60;
+  m(new THREE.BoxGeometry(0.04,1,0.04),MAT.steel,psx-0.5,0.75,psz);
+  m(new THREE.BoxGeometry(0.04,1,0.04),MAT.steel,psx+0.5,0.75,psz);
+  m(packTableGeo,MAT.white,psx,1.25,psz);
+  m(packScreenGeo,MAT.screen,psx+0.3,1.7,psz);
+}
+addSprite('PACK  2,100/h | 10 estaciones activas','#0D47A1',90,4,BZ+60);
+
+// ═══ SLAM STATIONS ═══
+for(var sl3=0;sl3<3;sl3++){
+  var slx=100+sl3*5,slz=BZ+55;
+  // Conveyor section
+  buildConveyor(slx,slz,4,'x');
+  // Overhead scanner (bridge frame with scanner box)
+  m(new THREE.BoxGeometry(0.04,1.5,0.04),MAT.steelDark,slx-1,2,slz-0.5);
+  m(new THREE.BoxGeometry(0.04,1.5,0.04),MAT.steelDark,slx-1,2,slz+0.5);
+  m(new THREE.BoxGeometry(0.04,0.04,1.2),MAT.steelDark,slx-1,2.7,slz);
+  // Scanner unit
+  m(new THREE.BoxGeometry(0.3,0.15,0.2),MAT.orange,slx-1,2.55,slz);
+  // Scale (under conveyor section)
+  m(new THREE.BoxGeometry(1,0.06,0.8),MAT.yellow,slx,0.3,slz);
+  // Print-and-apply labeler
+  var labeler=m(new THREE.BoxGeometry(0.35,0.5,0.25),MAT.steelDark,slx+1,1.5,slz+0.6);
+  labeler.userData={tag:'SLAM-0'+(sl3+1),name:'SLAM Station '+(sl3+1),sys:'SLAM',crit:'throughput',brand:'Honeywell',cap:'30 pkg/min',profile:'Scan-Label-Apply-Manifest'};
+  allClickable.push(labeler);
+}
+addSprite('SLAM  30 pkg/min | 99.8% label accuracy','#0078FF',105,4,BZ+55);
+
+// ═══ PCI — FIRE PROTECTION (RED PIPES + SPRINKLER HEADS) ═══
+// Main cross mains (6" red pipe running east-west at ceiling)
+for(var pcz=BZ+10;pcz<BZ+BD;pcz+=CG){
+  var pipe=m(new THREE.CylinderGeometry(0.12,0.12,BW,8),MAT.pci,0,BH-0.3,pcz);
+  pipe.rotation.z=Math.PI/2;
+  mepGroups.pci.push(pipe);
+  pipe.userData={tag:'PCI-CM-'+Math.floor((pcz-BZ)/CG),name:'Cross Main '+Math.floor((pcz-BZ)/CG),sys:'PCI',crit:'life-safety',brand:'Victaulic',cap:'155 PSI',profile:'6" Sch.10 negro',material:'Acero negro ASTM A53'};
+  allClickable.push(pipe);
+}
+// Branch lines (perpendicular, reduced)
+for(var bx2=BX+10;bx2<BX+BW;bx2+=20){
+  for(var bz2=BZ+10;bz2<BZ+BD;bz2+=CG){
+    var blLen=CG-2;
+    var bl=m(new THREE.CylinderGeometry(0.04,0.04,blLen,6),MAT.pci,bx2,BH-0.5,bz2+blLen/2);
+    bl.rotation.x=Math.PI/2;
+    mepGroups.pci.push(bl);
+  }
+}
+// Sprinkler heads (pendant type, reduced density for perf)
+var brassMat=new THREE.MeshStandardMaterial({color:0xDDAA33,metalness:0.8,roughness:0.2});
+for(var shx=BX+5;shx<BX+BW;shx+=15){
+  for(var shz=BZ+5;shz<BZ+BD;shz+=15){
+    var drop=m(new THREE.CylinderGeometry(0.015,0.015,0.5,4),MAT.pci,shx,BH-0.8,shz);mepGroups.pci.push(drop);
+    var defl=m(new THREE.CylinderGeometry(0.06,0.06,0.015,6),MAT.pci,shx,BH-1.05,shz);mepGroups.pci.push(defl);
+    m(new THREE.SphereGeometry(0.02,4,4),brassMat,shx,BH-0.95,shz);
+  }
+}
+// Fire pump room indicator
+addSprite('PCI  155 PSI | AUTO | Cisterna 92%','#CC2222',BX+20,10,BZ+50);
+
+// ═══ HVAC — DUCTWORK + HVLS FANS + RTU ═══
+// Main rectangular ducts (galvanized sheet metal, running east-west at ceiling-3m)
+for(var hz=BZ+15;hz<BZ+BD;hz+=35){
+  var duct=m(new THREE.BoxGeometry(BW-20,0.8,1.2),MAT.hvacDuct,0,BH-2,hz);
+  mepGroups.hvac.push(duct);
+  duct.userData={tag:'DUCT-'+Math.floor((hz-BZ)/35),name:'Main Supply Duct',sys:'HVAC',crit:'comfort',brand:'Sheet metal local',cap:'45,000 CFM',profile:'1200x800mm galvanizado'};
+  allClickable.push(duct);
+  // Duct supports (trapeze hangers, reduced)
+  for(var dh=BX+20;dh<BX+BW-20;dh+=40){
+    m(new THREE.CylinderGeometry(0.015,0.015,2,4),MAT.galvanized,dh,BH-1,hz-0.7);
+    m(new THREE.CylinderGeometry(0.015,0.015,2,4),MAT.galvanized,dh,BH-1,hz+0.7);
+  }
+  // Branch ducts
+  for(var bd=BX+20;bd<BX+BW;bd+=40){
+    var bduct=m(new THREE.BoxGeometry(0.6,0.5,8),MAT.hvacDuct,bd,BH-3,hz);
+    mepGroups.hvac.push(bduct);
+    // Diffuser at end (rectangular register)
+    m(new THREE.BoxGeometry(0.6,0.04,0.6),MAT.white,bd,BH-3.3,hz+4);
+  }
+}
+// HVLS Fans (large industrial ceiling fans with real blade shapes)
+var fanPositions=[];
+for(var fx=BX+30;fx<BX+BW-20;fx+=40){
+  for(var fz2=BZ+25;fz2<BZ+BD-20;fz2+=40){
+    fanPositions.push({x:fx,z:fz2});
+  }
+}
+fanPositions.forEach(function(fp,fi){
+  // Hub motor (barrel shape) — hangs from bottom chord of truss
+  m(new THREE.CylinderGeometry(0.4,0.4,0.6,12),MAT.steelDark,fp.x,ty-1,fp.z);
+  // Mounting rod from truss bottom chord
+  m(new THREE.CylinderGeometry(0.04,0.04,0.8,4),MAT.galvanized,fp.x,ty-0.3,fp.z);
+  // Blades (6 airfoil-shaped blades)
+  var bladeGrp=new THREE.Group();
+  for(var bl2=0;bl2<6;bl2++){
+    var bAng=bl2/6*Math.PI*2;
+    // Each blade: thin tapered plate
+    var bladeGeo=new THREE.BoxGeometry(4,0.03,0.35);
+    var blade=new THREE.Mesh(bladeGeo,MAT.galvanized);
+    blade.position.set(Math.cos(bAng)*2.2,0,Math.sin(bAng)*2.2);
+    blade.rotation.y=-bAng;
+    blade.rotation.x=0.05;// slight pitch
+    bladeGrp.add(blade);
+  }
+  bladeGrp.position.set(fp.x,ty-1.3,fp.z);
+  scene.add(bladeGrp);
+  fanBlades.push(bladeGrp);
+  bladeGrp.children[0].userData={tag:'HVLS-0'+(fi+1),name:'HVLS Fan '+(fi+1),sys:'HVAC',crit:'comfort',brand:'Big Ass Fans',cap:'7.3m diametro',profile:'Powerfoil X3.0'};
+  allClickable.push(bladeGrp.children[0]);
+});
+addSprite('HVAC  24.5C | 52% HR | CO2 620 ppm','#00C8F0',0,BH-1,BZ+60);
+
+// ═══ ELECTRICAL — CABLE TRAYS + PANELS + LIGHTING ═══
+// Ladder-type cable trays (reduced to key runs)
+for(var etz=BZ+15;etz<BZ+BD;etz+=50){
+  var tray=m(new THREE.BoxGeometry(BW-10,0.08,0.6),MAT.cableTray,0,BH-1.5,etz);
+  mepGroups.elec.push(tray);
+  // Side rails
+  m(new THREE.BoxGeometry(BW-10,0.15,0.03),MAT.cableTray,0,BH-1.45,etz-0.28);
+  m(new THREE.BoxGeometry(BW-10,0.15,0.03),MAT.cableTray,0,BH-1.45,etz+0.28);
+  mepGroups.elec.push(tray);
+  // Rungs (ladder pattern)
+  for(var rung=BX+10;rung<BX+BW-10;rung+=20){
+    var rungM=m(new THREE.BoxGeometry(0.04,0.04,0.56),MAT.cableTray,rung,BH-1.48,etz);
+    mepGroups.elec.push(rungM);
+  }
+  // Cable bundles in tray (colored conduits)
+  m(new THREE.CylinderGeometry(0.05,0.05,BW-12,6),new THREE.MeshStandardMaterial({color:0x222222}),0,BH-1.38,etz-0.1);
+  m(new THREE.CylinderGeometry(0.03,0.03,BW-12,6),new THREE.MeshStandardMaterial({color:0x2244AA}),0,BH-1.38,etz+0.1);
+}
+
+// LED high-bay fixtures (UFO style, reduced density for perf)
+for(var lx2=BX+10;lx2<BX+BW-5;lx2+=20){
+  for(var lz2=BZ+10;lz2<BZ+BD-5;lz2+=20){
+    // Fixture body (disc/UFO shape)
+    var fix=m(new THREE.CylinderGeometry(0.3,0.35,0.08,12),MAT.steelDark,lx2,BH-1,lz2);
+    mepGroups.elec.push(fix);
+    // LED lens (glowing disc)
+    var lens=m(new THREE.CylinderGeometry(0.25,0.25,0.02,12),new THREE.MeshStandardMaterial({color:0xFFFFEE,emissive:0xFFFFCC,emissiveIntensity:0.3}),lx2,BH-1.05,lz2);
+    mepGroups.elec.push(lens);
+    // Pendant chain
+    m(new THREE.CylinderGeometry(0.008,0.008,0.5,4),MAT.galvanized,lx2,BH-0.7,lz2);
+  }
+}
+
+// Motor Control Center (MCC) — tall gray cabinets
+var mccX=BX+15,mccZ=BZ+BD-15;
+for(var mcab=0;mcab<6;mcab++){
+  var cab=m(new THREE.BoxGeometry(0.8,2.2,0.6),MAT.steelDark,mccX+mcab*1,1.35,mccZ);
+  mepGroups.elec.push(cab);
+  // Red/green indicators on doors
+  m(new THREE.SphereGeometry(0.03,6,6),MAT.ledGreen,mccX+mcab*1,1.8,mccZ+0.32);
+  // Tag label
+  if(mcab===0){
+    cab.userData={tag:'MCC-01',name:'Motor Control Center',sys:'Electrico',crit:'business',brand:'Schneider',cap:'480V 3000A',profile:'Blokset',weight:'4,200 kg',material:'Acero NEMA 1'};
+    allClickable.push(cab);
+  }
+}
+addSprite('ELEC  1,850 kW | PF 0.94 | THD 3.2%','#FFB800',mccX+3,4,mccZ);
+
+// Transformer (outdoor, south-west corner)
+var xfmrX=BX-8,xfmrZ=BZ+BD+12;
+// Tank with radiator fins
+m(new THREE.BoxGeometry(2.5,2.2,1.5),MAT.green,xfmrX,1.35,xfmrZ);
+// Radiator fins
+for(var fin=0;fin<8;fin++){
+  m(new THREE.BoxGeometry(0.04,1.8,1.3),MAT.steelDark,xfmrX-1.4+fin*0.35,1.35,xfmrZ);
+}
+// Bushings on top
+m(new THREE.CylinderGeometry(0.06,0.08,0.5,8),MAT.white,xfmrX-0.5,2.7,xfmrZ);
+m(new THREE.CylinderGeometry(0.06,0.08,0.5,8),MAT.white,xfmrX,2.7,xfmrZ);
+m(new THREE.CylinderGeometry(0.06,0.08,0.5,8),MAT.white,xfmrX+0.5,2.7,xfmrZ);
+// Fence around transformer
+for(var ff=0;ff<4;ff++){
+  var fenceAng=ff/4*Math.PI*2;
+  m(new THREE.CylinderGeometry(0.03,0.03,2.5,4),MAT.galvanized,xfmrX+3*Math.cos(fenceAng),1.25,xfmrZ+2.5*Math.sin(fenceAng));
+}
+addSprite('XFMR  2000 kVA | 68.2% carga | 55.3C','#FFB800',xfmrX,5,xfmrZ);
+
+// Emergency Generator
+var genX=xfmrX+8,genZ=xfmrZ;
+m(new THREE.BoxGeometry(4,2,1.8),new THREE.MeshStandardMaterial({color:0x445544,roughness:0.7,metalness:0.3}),genX,1.25,genZ);
+// Exhaust stack
+m(new THREE.CylinderGeometry(0.08,0.1,1.5,8),MAT.steelDark,genX+1.5,2.75,genZ);
+// Fuel tank (cylindrical, horizontal)
+var genTank=m(new THREE.CylinderGeometry(0.4,0.4,3,12),MAT.green,genX+4,0.65,genZ);
+genTank.rotation.z=Math.PI/2;
+addSprite('GEN  1500 kW Diesel | STANDBY | Fuel 85%','#FFB800',genX,5,genZ);
+
+// ═══ FIRE PUMP ROOM (south-west) ═══
+// Room enclosure
+m(new THREE.BoxGeometry(8,4,6),MAT.concrete,BX+10,2.25,BZ+BD+10);
+// Electric fire pump (horizontal split-case)
+m(new THREE.CylinderGeometry(0.35,0.35,1.2,12),MAT.blue,BX+8,1,BZ+BD+10);
+// Motor
+m(new THREE.CylinderGeometry(0.25,0.25,0.8,12),new THREE.MeshStandardMaterial({color:0x225588,metalness:0.5,roughness:0.4}),BX+9.5,1,BZ+BD+10);
+// Jockey pump
+m(new THREE.CylinderGeometry(0.12,0.12,0.5,8),MAT.blue,BX+12,0.6,BZ+BD+10);
+// Controller (red cabinet)
+var fpCtrl=m(new THREE.BoxGeometry(0.8,1.5,0.4),MAT.red,BX+13,1,BZ+BD+8);
+fpCtrl.userData={tag:'FP-CTRL',name:'Fire Pump Controller',sys:'PCI',crit:'life-safety',brand:'Firetrol',cap:'100 HP',profile:'FTA1100'};
+allClickable.push(fpCtrl);
+addSprite('PCI PUMP  155 PSI | AUTO | Tank 92%','#CC2222',BX+10,5,BZ+BD+10);
+
+// ═══ WWTP (DETAILED water treatment plant) ═══
+var wX=BX+80,wZ=BZ+BD+18;
+// Primary clarifier — cylindrical tank with walkway
+m(new THREE.CylinderGeometry(6,6,0.3,24),MAT.waterTreat,wX,0.4,wZ);// base pad
+m(new THREE.TorusGeometry(6,0.3,8,24),MAT.waterTreat,wX,2.5,wZ);// tank rim
+m(new THREE.CylinderGeometry(5.8,5.8,2.2,24,1,true),new THREE.MeshStandardMaterial({color:0x2E7D32,roughness:0.6,metalness:0.2,side:THREE.DoubleSide}),wX,1.5,wZ);// tank wall open-top
+m(new THREE.CylinderGeometry(5.5,5.5,0.08,24),MAT.waterSurface,wX,2.2,wZ);// water
+// Central drive column + scraper arm
+m(new THREE.CylinderGeometry(0.2,0.2,3.5,8),MAT.steelDark,wX,2,wZ);
+m(new THREE.BoxGeometry(5.5,0.06,0.12),MAT.steelDark,wX+2.7,2.4,wZ);// rake arm
+m(new THREE.CylinderGeometry(0.08,0.08,0.15,6),MAT.yellow,wX,3.6,wZ);// motor on top
+// Walkway bridge across clarifier
+m(new THREE.BoxGeometry(12,0.06,0.8),MAT.galvanized,wX,2.7,wZ);
+m(new THREE.BoxGeometry(12,0.5,0.04),MAT.yellow,wX,3,wZ-0.38);// guardrail
+m(new THREE.BoxGeometry(12,0.5,0.04),MAT.yellow,wX,3,wZ+0.38);
+// Aeration basin — rectangular concrete tank
+m(new THREE.BoxGeometry(10,2.5,5),new THREE.MeshStandardMaterial({color:0x3A7A3A,roughness:0.7}),wX+14,1.5,wZ);
+m(new THREE.BoxGeometry(9.6,0.08,4.6),MAT.waterSurface,wX+14,2.6,wZ);// water
+// Aeration diffusers (bubbles implied by small spheres)
+for(var ad=0;ad<5;ad++){m(new THREE.SphereGeometry(0.15,6,6),MAT.white,wX+11+ad*1.5,2.5,wZ);}
+// Blower building
+m(new THREE.BoxGeometry(3,2,2.5),MAT.concrete,wX+22,1.25,wZ);
+m(new THREE.CylinderGeometry(0.4,0.4,1.2,8),MAT.blue,wX+22,1.5,wZ-1.5);// blower motor
+m(new THREE.CylinderGeometry(0.3,0.3,0.6,8),MAT.steelDark,wX+22,2.3,wZ-1.5);// intake
+// Sludge thickener (smaller cylinder)
+m(new THREE.CylinderGeometry(2.5,2.5,1.5,16),MAT.waterTreat,wX+8,1,wZ+10);
+m(new THREE.CylinderGeometry(2.3,2.3,0.06,16),new THREE.MeshStandardMaterial({color:0x4A3520,roughness:0.8}),wX+8,1.65,wZ+10);// sludge surface
+// Pipe runs between tanks (green PVC)
+var pvcMat=new THREE.MeshStandardMaterial({color:0x228B22,roughness:0.5,metalness:0.2});
+m(new THREE.CylinderGeometry(0.08,0.08,8,6),pvcMat,wX+7,1,wZ);// clarifier to aeration (rotated)
+var wwPipe1=m(new THREE.CylinderGeometry(0.08,0.08,10,6),pvcMat,wX+7,1,wZ);wwPipe1.rotation.z=Math.PI/2;
+var wwPipe2=m(new THREE.CylinderGeometry(0.06,0.06,6,6),pvcMat,wX+14,1,wZ+5);wwPipe2.rotation.x=Math.PI/2;
+// Chemical dosing station
+m(new THREE.CylinderGeometry(0.5,0.5,1.2,8),MAT.white,wX+20,0.85,wZ+5);// tank 1
+m(new THREE.CylinderGeometry(0.5,0.5,1.2,8),MAT.white,wX+21.5,0.85,wZ+5);// tank 2
+m(new THREE.CylinderGeometry(0.3,0.3,0.8,6),MAT.blue,wX+20.75,0.65,wZ+6.5);// dosing pump
+// Effluent discharge weir
+m(new THREE.BoxGeometry(2,0.8,0.15),MAT.concrete,wX-6,0.65,wZ);
+addSprite('WWTP  85 m3/dia | 94% efic | pH 7.2 | DBO<20','#4CAF50',wX+5,5,wZ);
+addSprite('LEED WEc  Reuso 68% | Meta >70%','#4CAF50',wX+14,5,wZ);
+
+// ═══ SUBESTACION ELECTRICA (DETAILED) ═══
+var ssX=BX-15,ssZ=BZ+BD+18;
+// Concrete pad
+m(new THREE.BoxGeometry(20,0.3,14),MAT.concrete,ssX,0.15,ssZ);
+// Gravel bed
+m(new THREE.BoxGeometry(18,0.1,12),new THREE.MeshStandardMaterial({color:0x8B7355,roughness:0.95}),ssX,0.22,ssZ);
+// Chain-link fence posts (perimeter)
+var fencePostGeo=new THREE.CylinderGeometry(0.04,0.04,2.8,4);
+for(var fp2=0;fp2<8;fp2++){m(fencePostGeo,MAT.galvanized,ssX-9+fp2*2.6,1.4,ssZ-6.5);}
+for(var fp3=0;fp3<8;fp3++){m(fencePostGeo,MAT.galvanized,ssX-9+fp3*2.6,1.4,ssZ+6.5);}
+for(var fp4=0;fp4<5;fp4++){m(fencePostGeo,MAT.galvanized,ssX-9.5,1.4,ssZ-5+fp4*2.5);}
+for(var fp5=0;fp5<5;fp5++){m(fencePostGeo,MAT.galvanized,ssX+9.5,1.4,ssZ-5+fp5*2.5);}
+// Fence top rail
+m(new THREE.BoxGeometry(20,0.03,0.03),MAT.galvanized,ssX,2.6,ssZ-6.5);
+m(new THREE.BoxGeometry(20,0.03,0.03),MAT.galvanized,ssX,2.6,ssZ+6.5);
+// Main power transformer (oil-filled, with radiator fins)
+m(new THREE.BoxGeometry(3,2.5,2),MAT.green,ssX-3,1.5,ssZ);// tank body
+// Radiator wing banks (corrugated cooling fins)
+for(var rf=0;rf<6;rf++){
+  m(new THREE.BoxGeometry(0.06,2,1.6),MAT.steelDark,ssX-4.8+rf*0.4,1.5,ssZ);
+}
+for(var rf2=0;rf2<6;rf2++){
+  m(new THREE.BoxGeometry(0.06,2,1.6),MAT.steelDark,ssX-1+rf2*0.4,1.5,ssZ);
+}
+// HV Bushings on top (porcelain insulators)
+var bushMat=new THREE.MeshStandardMaterial({color:0xE8DDD0,roughness:0.3,metalness:0.1});
+for(var hb=0;hb<3;hb++){
+  m(new THREE.CylinderGeometry(0.05,0.08,0.8,8),bushMat,ssX-3.5+hb*0.7,3.2,ssZ);
+  m(new THREE.CylinderGeometry(0.03,0.03,0.2,6),MAT.steelDark,ssX-3.5+hb*0.7,3.65,ssZ);
+}
+// LV Bushings
+for(var lb=0;lb<4;lb++){
+  m(new THREE.CylinderGeometry(0.04,0.06,0.5,8),bushMat,ssX-3.8+lb*0.6,2.95,ssZ+1.2);
+}
+// Conservator tank (cylindrical, on top)
+var consT=m(new THREE.CylinderGeometry(0.25,0.25,2,8),MAT.green,ssX-3,3.4,ssZ);
+consT.rotation.z=Math.PI/2;
+// MV Switchgear lineup
+for(var sg=0;sg<4;sg++){
+  m(new THREE.BoxGeometry(0.8,2.2,1),MAT.steelDark,ssX+4+sg*1,1.35,ssZ-2);
+  m(new THREE.SphereGeometry(0.04,6,6),MAT.ledGreen,ssX+4+sg*1,2.2,ssZ-2.52);// status LEDs
+}
+// Capacitor bank
+m(new THREE.BoxGeometry(2,1.8,0.8),MAT.steelDark,ssX+4,1.15,ssZ+3);
+// Bus duct (overhead aluminum)
+m(new THREE.BoxGeometry(8,0.15,0.3),MAT.galvanized,ssX,3.5,ssZ);
+// Support insulators for bus
+for(var bi=0;bi<4;bi++){
+  m(new THREE.CylinderGeometry(0.04,0.06,0.4,6),bushMat,ssX-3+bi*2,3.15,ssZ);
+}
+// Danger signs (small red planes)
+m(new THREE.BoxGeometry(0.5,0.4,0.02),MAT.red,ssX-9.4,1.6,ssZ);
+addSprite('XFMR  2000kVA | 68% carga | 55C | PF 0.94','#FFB800',ssX-3,5,ssZ);
+addSprite('LEED EAc  1,850 kW | EUI 135 kWh/m2','#FFB800',ssX+4,5,ssZ);
+
+// ═══ EDGE DATA CENTER (inside building, detailed) ═══
+var edcX=BX+30,edcZ=BZ+BD-8;
+var dcMat=new THREE.MeshStandardMaterial({color:0x111111,roughness:0.6,metalness:0.4});
+for(var sr=0;sr<6;sr++){
+  m(new THREE.BoxGeometry(0.6,2.2,1),dcMat,edcX+sr*1.2,1.35,edcZ);
+  m(new THREE.BoxGeometry(0.02,1.8,0.03),MAT.screen,edcX+sr*1.2+0.32,1.35,edcZ-0.5);// LED strip
+  m(new THREE.BoxGeometry(0.5,0.02,0.9),MAT.steelDark,edcX+sr*1.2,0.15,edcZ);// raised floor tile
+}
+// CRAC units (2x)
+m(new THREE.BoxGeometry(1.2,2,0.8),MAT.white,edcX+8,1.25,edcZ);
+m(new THREE.BoxGeometry(1.2,2,0.8),MAT.white,edcX+9.5,1.25,edcZ);
+// UPS cabinet
+m(new THREE.BoxGeometry(1,2.2,0.8),new THREE.MeshStandardMaterial({color:0x1a3355,roughness:0.5,metalness:0.4}),edcX-2,1.35,edcZ);
+addSprite('EDGE DC  72% | 28.3C | 2.8ms | UPS 28min','#0078FF',edcX+3,5,edcZ);
+
+// ═══ ADDITIONAL INTERIOR EQUIPMENT (DENSIFY) ═══
+
+// MORE PALLET RACKS — fill the storage zone more densely
+for(var pr2=0;pr2<4;pr2++){
+  buildPalletRack(BX+80+pr2*8,BZ+35,20,1.2,5);
+}
+for(var pr3=0;pr3<3;pr3++){
+  buildPalletRack(BX+120+pr3*8,BZ+65,15,1.2,4);
+}
+
+// PALLETS on floor (staging areas, scattered throughout)
+var palletGeo=new THREE.BoxGeometry(1.2,0.15,1);
+var palletMat=new THREE.MeshStandardMaterial({color:0x8B6914,roughness:0.85});
+var cartonMat=new THREE.MeshStandardMaterial({color:0xC4A26B,roughness:0.8});
+var cartonGeo=new THREE.BoxGeometry(1,0.6,0.8);
+// Inbound staging pallets
+for(var ip=0;ip<12;ip++){
+  var ipx=BX+10+ip*5,ipz=BZ+10;
+  m(palletGeo,palletMat,ipx,0.32,ipz);
+  m(cartonGeo,cartonMat,ipx,0.75,ipz);// carton on pallet
+}
+// Outbound staging pallets
+for(var op=0;op<10;op++){
+  m(palletGeo,palletMat,BX+200+Math.random()*40,0.32,BZ+BD-15+Math.random()*10);
+  m(cartonGeo,cartonMat,BX+200+Math.random()*40,0.75,BZ+BD-15+Math.random()*10);
+}
+
+// TOTES / BINS (yellow and gray plastic, scattered on conveyors and staging)
+var toteGeo=new THREE.BoxGeometry(0.6,0.35,0.4);
+var toteMat1=new THREE.MeshStandardMaterial({color:0xCCCC22,roughness:0.7});
+var toteMat2=new THREE.MeshStandardMaterial({color:0x666666,roughness:0.7});
+for(var tt=0;tt<20;tt++){
+  var tx=BX+30+Math.random()*200,tz2=BZ+20+Math.random()*80;
+  m(toteGeo,tt%2===0?toteMat1:toteMat2,tx,1.3+Math.random()*0.3,tz2);
+}
+
+// AMR ROBOTS (autonomous mobile robots — low flat platforms with wheels)
+var amrMat=new THREE.MeshStandardMaterial({color:0xFF6600,roughness:0.5,metalness:0.3});
+for(var amr=0;amr<8;amr++){
+  var ax=BX+50+amr*15+Math.random()*10,az=BZ+40+Math.random()*40;
+  // Flat platform body
+  m(new THREE.BoxGeometry(1,0.25,0.7),amrMat,ax,0.4,az);
+  // Wheels (4 small cylinders)
+  var whlGeo=new THREE.CylinderGeometry(0.1,0.1,0.08,8);
+  var wm=m(whlGeo,MAT.steelDark,ax-0.35,0.15,az-0.3);wm.rotation.z=Math.PI/2;
+  var wm2=m(whlGeo,MAT.steelDark,ax+0.35,0.15,az-0.3);wm2.rotation.z=Math.PI/2;
+  var wm3=m(whlGeo,MAT.steelDark,ax-0.35,0.15,az+0.3);wm3.rotation.z=Math.PI/2;
+  var wm4=m(whlGeo,MAT.steelDark,ax+0.35,0.15,az+0.3);wm4.rotation.z=Math.PI/2;
+  // LIDAR sensor on top
+  m(new THREE.CylinderGeometry(0.08,0.08,0.06,8),MAT.steelDark,ax,0.56,az);
+  // LED indicator
+  m(new THREE.SphereGeometry(0.04,6,6),MAT.ledGreen,ax+0.4,0.55,az);
+  // Tote being carried
+  if(amr%2===0) m(toteGeo,toteMat1,ax,0.7,az);
+}
+
+// FORKLIFTS (simplified but recognizable shape)
+var forkMat=new THREE.MeshStandardMaterial({color:0xDD8800,roughness:0.5,metalness:0.3});
+for(var fk2=0;fk2<4;fk2++){
+  var fkx=BX+15+fk2*35,fkz=BZ+30+Math.random()*20;
+  m(new THREE.BoxGeometry(1.2,1.5,2),forkMat,fkx,1,fkz);// body
+  m(new THREE.BoxGeometry(1.4,0.08,0.15),MAT.steelDark,fkx,0.6,fkz-1.2);// fork tines
+  m(new THREE.BoxGeometry(1.4,0.08,0.15),MAT.steelDark,fkx,0.6,fkz-1.5);
+  m(new THREE.BoxGeometry(0.15,2.5,0.15),MAT.steelDark,fkx-0.5,1.5,fkz-1);// mast
+  m(new THREE.BoxGeometry(0.15,2.5,0.15),MAT.steelDark,fkx+0.5,1.5,fkz-1);
+  m(new THREE.CylinderGeometry(0.25,0.25,0.15,8),MAT.steelDark,fkx-0.5,0.15,fkz+0.6);// rear wheels
+  m(new THREE.CylinderGeometry(0.25,0.25,0.15,8),MAT.steelDark,fkx+0.5,0.15,fkz+0.6);
+  // Warning light on top
+  m(new THREE.SphereGeometry(0.08,6,6),new THREE.MeshStandardMaterial({color:0xFFAA00,emissive:0xFF8800,emissiveIntensity:0.5}),fkx,2,fkz);
+}
+
+// PACKING MATERIAL DISPENSERS (overhead at pack stations)
+for(var pd=0;pd<4;pd++){
+  m(new THREE.CylinderGeometry(0.3,0.3,0.8,8),MAT.white,75+pd*10,2.5,BZ+58);// paper roll
+  m(new THREE.BoxGeometry(0.06,1.2,0.06),MAT.steelDark,75+pd*10-0.3,2,BZ+58);// support arm
+}
+
+// STRETCH WRAPPER MACHINE (outbound area)
+m(new THREE.CylinderGeometry(1,1,0.2,16),MAT.steelDark,BX+210,0.35,BZ+BD-20);// turntable
+m(new THREE.BoxGeometry(0.15,3,0.15),MAT.steelDark,BX+211.2,1.75,BZ+BD-20);// mast
+m(new THREE.BoxGeometry(0.8,0.3,0.15),MAT.steelDark,BX+211.2,3,BZ+BD-20);// film carriage
+
+// WEIGH STATIONS (floor scales)
+for(var ws=0;ws<3;ws++){
+  m(new THREE.BoxGeometry(2,0.08,1.5),MAT.yellow,BX+190+ws*8,0.3,BZ+BD-25);
+  m(new THREE.BoxGeometry(0.3,1.2,0.2),MAT.steelDark,BX+191+ws*8,0.85,BZ+BD-25.8);// display post
+  m(new THREE.BoxGeometry(0.25,0.18,0.04),MAT.screen,BX+191+ws*8,1.3,BZ+BD-25.9);// display
+}
+
+// CHARGING STATION (for AMRs and forklifts)
+var chgX=BX+140,chgZ=BZ+BD-5;
+m(new THREE.BoxGeometry(8,0.05,3),MAT.yellow,chgX,0.28,chgZ);// floor marking
+for(var cs=0;cs<4;cs++){
+  m(new THREE.BoxGeometry(0.4,1.2,0.3),MAT.steelDark,chgX-3+cs*2,0.85,chgZ);// charger unit
+  m(new THREE.BoxGeometry(0.3,0.15,0.04),MAT.screen,chgX-3+cs*2,1.2,chgZ-0.17);// display
+  m(new THREE.SphereGeometry(0.04,6,6),MAT.ledGreen,chgX-3+cs*2+0.15,1.35,chgZ-0.17);
+}
+addSprite('CHARGING  4 bays | 2 active | Fleet 72% bat','#FF6B00',chgX,3,chgZ);
+
+// WASTE COMPACTORS / RECYCLING (near outbound)
+var wcX=BX+230,wcZ=BZ+BD-5;
+m(new THREE.BoxGeometry(3,2.5,2),new THREE.MeshStandardMaterial({color:0x336633}),wcX,1.5,wcZ);// cardboard compactor
+m(new THREE.BoxGeometry(2,2,1.5),new THREE.MeshStandardMaterial({color:0x3333AA}),wcX+5,1.25,wcZ);// plastics bin
+m(new THREE.BoxGeometry(2,2,1.5),MAT.steelDark,wcX+8,1.25,wcZ);// general waste
+addSprite('WASTE  78% diversion | Carton 65%','#4CAF50',wcX+4,5,wcZ);
+
+// TRAILER YARD (more detailed trailers — body + wheels)
+var trailerBodyMat=new THREE.MeshStandardMaterial({color:0xE0E0E0,roughness:0.6});
+for(var tr=0;tr<10;tr++){
+  var trx=BX+20+tr*25,trz=BZ+BD+25;
+  m(new THREE.BoxGeometry(2.5,3,13),trailerBodyMat,trx,1.75,trz);// body
+  m(new THREE.BoxGeometry(2.6,0.5,1),MAT.steelDark,trx,0.25,trz+5.5);// rear axle
+  // Wheels
+  var twGeo=new THREE.CylinderGeometry(0.4,0.4,0.15,8);
+  var tw1=m(twGeo,MAT.steelDark,trx-1.2,0.4,trz+5);tw1.rotation.z=Math.PI/2;
+  var tw2=m(twGeo,MAT.steelDark,trx+1.2,0.4,trz+5);tw2.rotation.z=Math.PI/2;
+  var tw3=m(twGeo,MAT.steelDark,trx-1.2,0.4,trz+6);tw3.rotation.z=Math.PI/2;
+  var tw4=m(twGeo,MAT.steelDark,trx+1.2,0.4,trz+6);tw4.rotation.z=Math.PI/2;
+}
+
+// LIGHT POLES (parking + truck court)
+var poleMat=MAT.galvanized;
+for(var lp=0;lp<6;lp++){
+  m(new THREE.CylinderGeometry(0.06,0.1,10,6),poleMat,BX+30+lp*45,5,-28);
+  m(new THREE.BoxGeometry(0.6,0.3,0.4),MAT.steelDark,BX+30+lp*45,9.5,-28);
+}
+for(var lp2=0;lp2<6;lp2++){
+  m(new THREE.CylinderGeometry(0.06,0.1,8,6),poleMat,BX+30+lp2*45,4,BZ+BD+35);
+  m(new THREE.BoxGeometry(0.6,0.3,0.4),MAT.steelDark,BX+30+lp2*45,7.5,BZ+BD+35);
+}
+
+// GUARDHOUSE at entrance
+m(new THREE.BoxGeometry(3,2.8,2.5),MAT.white,BX-5,1.65,-28);// booth
+m(new THREE.BoxGeometry(2.5,1.5,0.08),MAT.glass,BX-5,2.2,-27);// window
+m(new THREE.BoxGeometry(0.15,0.15,5),MAT.red,BX-2,1,BZ-25);// barrier arm
+m(new THREE.CylinderGeometry(0.08,0.1,1.2,6),MAT.yellow,BX-2,0.6,-28);// bollard
+
+// ═══ LEED / SUSTAINABILITY SPRITES (visible from 3D) ═══
+addSprite('LEED GOLD  72 pts | EUI 135 kWh/m2/yr','#4CAF50',0,BH+3,BZ+BD/2);
+addSprite('CO2  S1+S2: 825 tCO2e/mes | Meta <700','#4CAF50',BX+100,BH+3,BZ+20);
+addSprite('kWh/orden  0.42 | Best-in-class <0.50','#FFB800',BX+100,BH+3,BZ+BD-20);
+addSprite('IEQ  24.5C | 52%HR | 620ppm CO2 | 450lx','#00C8F0',BX+50,5,BZ+70);
+addSprite('TEMP Z01  23.8C | HR 51%','#00D68F',BX+40,4,BZ+8);
+addSprite('TEMP Z04  25.1C | HR 54%','#FFB800',55,4,BZ+40);
+addSprite('AMR Fleet  11/12 | Bat 72% | 342 misiones','#FF6B00',30,3,BZ+50);
+addSprite('WATER  52 m3/dia | Reuso 68%','#4CAF50',wX,3,wZ+12);
+addSprite('NOISE  72 dBA | OSHA < 85 dBA','#00C8F0',BX+80,4,BZ+60);
+
+// ═══ SYSTEM LAYER TOGGLES ═══
+var sysToggles=[
+  {id:'pci',name:'PCI / Fire',color:'#CC2222'},
+  {id:'hvac',name:'HVAC',color:'#00C8F0'},
+  {id:'elec',name:'Electrico',color:'#FFB800'},
+  {id:'data',name:'Data / OT',color:'#22CC66'}
+];
+var stHTML='';
+sysToggles.forEach(function(st){
+  stHTML+='<div class="sys-toggle active" onclick="toggleLayer(\''+st.id+'\',this)"><div class="dot" style="background:'+st.color+'"></div>'+st.name+'</div>';
+});
+document.getElementById('sys-toggles').innerHTML=stHTML;
+
+canvas.addEventListener('mousedown',function(e){isDragging=true;prevMouse.x=e.clientX;prevMouse.y=e.clientY;});
+canvas.addEventListener('mouseup',function(e){if(Math.abs(e.clientX-prevMouse.x)<5&&Math.abs(e.clientY-prevMouse.y)<5)onClick3D(e);isDragging=false;});
+canvas.addEventListener('mousemove',function(e){if(!isDragging)return;sph.t-=(e.clientX-prevMouse.x)*0.005;sph.p=Math.max(0.1,Math.min(1.5,sph.p-(e.clientY-prevMouse.y)*0.005));prevMouse.x=e.clientX;prevMouse.y=e.clientY;lerp=null;});
+canvas.addEventListener('wheel',function(e){sph.r=Math.max(15,Math.min(350,sph.r+e.deltaY*0.06));lerp=null;e.preventDefault();},{passive:false});
+canvas.addEventListener('touchstart',function(e){if(e.touches.length===1){isDragging=true;prevMouse.x=e.touches[0].clientX;prevMouse.y=e.touches[0].clientY;}},{passive:true});
+canvas.addEventListener('touchmove',function(e){if(!isDragging||e.touches.length!==1)return;sph.t-=(e.touches[0].clientX-prevMouse.x)*0.008;sph.p=Math.max(0.1,Math.min(1.5,sph.p-(e.touches[0].clientY-prevMouse.y)*0.008));prevMouse.x=e.touches[0].clientX;prevMouse.y=e.touches[0].clientY;lerp=null;},{passive:true});
+canvas.addEventListener('touchend',function(){isDragging=false;},{passive:true});
+
+updateCameraSize();window.addEventListener('resize',updateCameraSize);animate();
+}
+
+function toggleLayer(layer,el){
+  G.sysLayers[layer]=!G.sysLayers[layer];el.classList.toggle('active');
+  var grp=mepGroups[layer]||[];grp.forEach(function(m2){m2.visible=G.sysLayers[layer];});
+}
+
+function updateCameraSize(){var w=document.getElementById('view-3d').clientWidth||window.innerWidth,h=document.getElementById('view-3d').clientHeight||window.innerHeight;camera.aspect=w/h;camera.updateProjectionMatrix();renderer.setSize(w,h);renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));}
+
+function animate(){
+  requestAnimationFrame(animate);
+  if(lerp){sph.t+=(lerp.t-sph.t)*0.06;sph.p+=(lerp.p-sph.p)*0.06;sph.r+=(lerp.r-sph.r)*0.06;lk.x+=(lerp.lx-lk.x)*0.06;lk.z+=(lerp.lz-lk.z)*0.06;}
+  camera.position.set(lk.x+sph.r*Math.sin(sph.p)*Math.cos(sph.t),sph.r*Math.cos(sph.p),lk.z+sph.r*Math.sin(sph.p)*Math.sin(sph.t));
+  camera.lookAt(lk.x,4,lk.z);
+  // HVLS fan rotation
+  fanBlades.forEach(function(fb){fb.rotation.y+=0.008;});
+  renderer.render(scene,camera);
+}
+
+function flyTo(p){var c=CAM[p]||CAM.overview;lerp={t:c.t,p:c.p,r:c.r,lx:c.lx,lz:c.lz};}
+
+function onClick3D(e){
+  var rect=renderer.domElement.getBoundingClientRect();
+  mouse.x=((e.clientX-rect.left)/rect.width)*2-1;mouse.y=-((e.clientY-rect.top)/rect.height)*2+1;
+  raycaster.setFromCamera(mouse,camera);var hits=raycaster.intersectObjects(allClickable);
+  if(hits.length>0){var ud=hits[0].object.userData;
+    if(ud.zone)selectZone(ud.zone);
+    else if(ud.tag)showEquipPanel(ud.tag,ud);
+    else if(ud.struct)showStructPanel(ud);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════
+   UI FUNCTIONS
+   ═══════════════════════════════════════════════════════ */
+function toggleSidebar(){document.getElementById('sidebar-left').classList.toggle('open');document.getElementById('sidebar-overlay').classList.toggle('open');}
+function selectZone(zid){G.activeZone=zid;flyTo(zid);buildZoneList();}
+
+function buildZoneList(){
+  var html='';ZONES.forEach(function(z){
+    var act=G.activeZone===z.id?' active':'';
+    html+='<div class="zone-item'+act+'" onclick="selectZone(\''+z.id+'\')"><div class="zi-dot '+z.status+'"></div><div><div class="zi-name">'+z.name+'</div><div class="zi-sub">'+z.id+'</div></div></div>';
+  });document.getElementById('zone-list').innerHTML=html;
+}
+
+function buildSidebarKPIs(){
+  var s=G.sens,html='';
+  [{v:s.ordersPerHour,u:'/h',l:'Ordenes'},{v:s.picksPerHour,u:'/h',l:'Picks'},{v:s.sorterThru,u:'UPH',l:'Sorter'},{v:s.kwTotal,u:'kW',l:'Potencia'}].forEach(function(k){
+    html+='<div class="kpi-card"><div class="kpi-val">'+k.v+'<span class="kpi-unit">'+k.u+'</span></div><div class="kpi-lbl">'+k.l+'</div></div>';
+  });document.getElementById('sidebar-kpis').innerHTML=html;
+}
+
+function showTab(id,el){
+  G.activeTab=id;document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active')});document.querySelectorAll('.view').forEach(function(v){v.classList.remove('active')});
+  if(el)el.classList.add('active');else document.querySelectorAll('.tab').forEach(function(t){if(t.onclick&&t.onclick.toString().indexOf("'"+id+"'")>=0)t.classList.add('active')});
+  var vm={'3d':'view-3d',operacion:'view-operacion',energia:'view-energia',confiabilidad:'view-confiabilidad',alertas:'view-alertas',integracion:'view-integracion',om:'view-om',sap:'view-sap',acc:'v-acc',sim:'view-sim',leed:'view-leed',chat:'view-chat'};
+  if(vm[id])document.getElementById(vm[id]).classList.add('active');
+  var renders={operacion:renderOperacion,energia:renderEnergia,confiabilidad:renderConfiabilidad,alertas:renderAlertas,integracion:renderIntegracion,om:renderOM,sap:renderSAP,acc:renderACC,sim:renderSim,leed:renderLEED,chat:renderChat};
+  if(renders[id])renders[id]();if(id==='3d')updateCameraSize();
+}
+
+function showEquipPanel(tag,ud){
+  var panel=document.getElementById('equip-panel');
+  var critClass=(ud.crit||'').toLowerCase().replace(/[\s-]/g,'-');
+  var html='<button class="ep-close" onclick="document.getElementById(\'equip-panel\').style.display=\'none\'">X</button>';
+  html+='<div class="ep-tag">'+tag+' · '+(ud.sys||'')+'</div><div class="ep-name">'+(ud.name||tag)+'</div>';
+  html+='<div class="ep-conf '+critClass+'">'+(ud.crit||'N/A')+'</div>';
+  html+='<div class="ep-section">Especificaciones</div>';
+  html+='<div class="ep-row"><span class="k">Sistema</span><span class="v">'+(ud.sys||'-')+'</span></div>';
+  html+='<div class="ep-row"><span class="k">Fabricante</span><span class="v">'+(ud.brand||'-')+'</span></div>';
+  html+='<div class="ep-row"><span class="k">Capacidad</span><span class="v">'+(ud.cap||'-')+'</span></div>';
+  html+='<div class="ep-row"><span class="k">Perfil / Tipo</span><span class="v">'+(ud.profile||'-')+'</span></div>';
+  html+='<div class="ep-row"><span class="k">Peso</span><span class="v">'+(ud.weight||'-')+'</span></div>';
+  html+='<div class="ep-row"><span class="k">Material</span><span class="v">'+(ud.material||'-')+'</span></div>';
+  html+='<div class="ep-section">IoT en Tiempo Real</div>';
+  var sensors=getSensorsFor(tag);
+  sensors.forEach(function(s2){html+='<div class="ep-sensor"><span class="sn">'+s2.name+'</span><span class="sv '+s2.status+'">'+s2.value+'</span></div>';});
+  html+='<div class="ep-section">Mantenimiento</div>';
+  html+='<div class="ep-row"><span class="k">Proximo PM</span><span class="v">'+(8+Math.floor(Math.random()*20))+' dias</span></div>';
+  html+='<div class="ep-row"><span class="k">Horas operacion</span><span class="v">'+(3000+Math.floor(Math.random()*4000))+' h</span></div>';
+  html+='<div class="ep-row"><span class="k">Health Score</span><span class="v" style="color:var(--green)">'+(84+Math.floor(Math.random()*15))+'%</span></div>';
+  html+='<button class="ep-btn" onclick="showTab(\'sap\')">Ver en SAP EAM</button>';
+  html+='<button class="ep-btn" onclick="showTab(\'acc\')">Ver Ficha Tecnica ACC</button>';
+  panel.innerHTML=html;panel.style.display='block';
+}
+
+function showStructPanel(ud){
+  var panel=document.getElementById('equip-panel');
+  var html='<button class="ep-close" onclick="document.getElementById(\'equip-panel\').style.display=\'none\'">X</button>';
+  html+='<div class="ep-tag">'+ud.tag+' · Estructura</div><div class="ep-name">Elemento Estructural</div>';
+  html+='<div class="ep-conf support">ESTRUCTURA</div>';
+  html+='<div class="ep-section">Especificaciones</div>';
+  html+='<div class="ep-row"><span class="k">Perfil</span><span class="v">'+ud.profile+'</span></div>';
+  html+='<div class="ep-row"><span class="k">Longitud</span><span class="v">'+ud.len+'</span></div>';
+  html+='<div class="ep-row"><span class="k">Peso</span><span class="v">'+ud.weight+'</span></div>';
+  html+='<div class="ep-row"><span class="k">Fabricante</span><span class="v">'+ud.brand+'</span></div>';
+  html+='<div class="ep-row"><span class="k">Acabado</span><span class="v">'+ud.finish+'</span></div>';
+  html+='<div class="ep-row"><span class="k">Eje / Ubicacion</span><span class="v">'+ud.axis+'</span></div>';
+  html+='<div class="ep-row"><span class="k">Norma</span><span class="v">ASTM A992 / A500</span></div>';
+  html+='<div class="ep-row"><span class="k">Fy</span><span class="v">345 MPa (50 ksi)</span></div>';
+  panel.innerHTML=html;panel.style.display='block';
+}
+
+function getSensorsFor(tag){
+  var s=G.sens;
+  if(tag.startsWith('SRT'))return[{name:'Throughput',value:s.sorterThru+' UPH',status:'ok'},{name:'Jams hoy',value:s.sorterJams,status:s.sorterJams>2?'warn':'ok'},{name:'Motor temp',value:(45+Math.random()*10).toFixed(1)+'C',status:'ok'},{name:'VFD freq',value:'58.2 Hz',status:'ok'}];
+  if(tag.startsWith('ASRS'))return[{name:'Health',value:s.asrsHealth+'%',status:s.asrsHealth<90?'warn':'ok'},{name:'Bins/h',value:'880',status:'ok'},{name:'Shuttles',value:'11/12',status:'warn'},{name:'Temp modulo',value:'28.3C',status:'ok'}];
+  if(tag.startsWith('CVY'))return[{name:'Estado',value:'RUN',status:'ok'},{name:'Velocidad',value:'1.2 m/s',status:'ok'},{name:'Motor I',value:'12.5 A',status:'ok'},{name:'Jams',value:s.conveyorStops,status:'ok'}];
+  if(tag.startsWith('GTP'))return[{name:'Picks/h',value:'440',status:'ok'},{name:'Operador',value:'Activo',status:'ok'},{name:'Buffer',value:'72%',status:'ok'}];
+  if(tag.startsWith('FP')||tag==='CISTERNA')return[{name:'Presion',value:s.pciPressure+' PSI',status:'ok'},{name:'Bombas',value:s.pciBombState,status:'ok'},{name:'Cisterna',value:s.pciTankLevel+'%',status:'ok'},{name:'Alarmas',value:s.pciAlarms,status:'ok'}];
+  if(tag.startsWith('XFMR')||tag==='GEN-01'||tag==='ATS-01')return[{name:'Carga',value:(60+Math.random()*25).toFixed(1)+'%',status:'ok'},{name:'Temp',value:(55+Math.random()*15).toFixed(1)+'C',status:'ok'},{name:'Estado',value:'NORMAL',status:'ok'}];
+  if(tag.startsWith('RTU')||tag.startsWith('HVLS'))return[{name:'Temp zona',value:s.tempInter.toFixed(1)+'C',status:'ok'},{name:'HR',value:s.humidity+'%',status:'ok'},{name:'Estado',value:'ON',status:'ok'}];
+  if(tag.startsWith('WWTP'))return[{name:'Influente',value:'85 m3/dia',status:'ok'},{name:'Efluente',value:s.wwEffluent+'% efic.',status:'ok'},{name:'pH salida',value:'7.2',status:'ok'},{name:'DBO',value:'<20 mg/L',status:'ok'}];
+  return[{name:'Estado',value:'RUN',status:'ok'},{name:'Consumo',value:(10+Math.floor(Math.random()*40))+' kW',status:'ok'}];
+}
+
+/* ═══════════════════════════════════════════════════════
+   DASHBOARDS
+   ═══════════════════════════════════════════════════════ */
+function dkCard(v,u,l,c,sub){return'<div class="dk-card"><div class="dk-val '+c+'">'+v+(u?'<span class="kpi-unit">'+u+'</span>':'')+'</div><div class="dk-lbl">'+l+'</div>'+(sub?'<div class="dk-sub">'+sub+'</div>':'')+'</div>';}
+function dkCI(t,v,st){return'<div class="dash-card"><div class="dash-card-title">'+t+'</div><div class="dk-val '+(st||'info')+'" style="font-size:18px;margin-top:5px">'+v+'</div></div>';}
+function alertCard(sv,t,d,z,time,tag){return'<div class="alert-card '+sv+'"><div class="ac-icon">!</div><div class="ac-body"><div class="ac-title '+sv+'">'+t+'</div><div class="ac-desc">'+d+'</div><div class="ac-meta"><div class="ac-tag">Zona: <span>'+z+'</span></div><div class="ac-tag">Activo: <span>'+tag+'</span></div><div class="ac-tag">'+time+'</div></div></div></div>';}
+function riskRow(tag,sys,h,lf,st){return'<tr><td style="font-family:\'JetBrains Mono\';font-size:10px;color:var(--primary)">'+tag+'</td><td>'+sys+'</td><td><div style="display:flex;align-items:center;gap:6px"><div class="health-bar" style="width:50px"><div class="health-fill '+(h>92?'ok':h>85?'warn':'crit')+'" style="width:'+h+'%"></div></div><span style="font-family:\'JetBrains Mono\';font-size:10px">'+h+'%</span></div></td><td style="font-size:10px;color:var(--text3)">'+lf+'</td><td><span class="status-badge '+st+'">'+st.toUpperCase()+'</span></td></tr>';}
+
+function renderOperacion(){var s=G.sens;document.getElementById('view-operacion').innerHTML='<div class="dash-header"><div><div class="dash-title">Dashboard Operativo</div><div class="dash-sub">Fulfillment Center · Flujo de material en tiempo real</div></div></div><div class="dash-kpis">'+dkCard(s.ordersPerHour,'/h','Ordenes por hora','ok','Meta: 2,500')+dkCard(s.linesPerHour,'/h','Lineas por hora','ok','Meta: 8,500')+dkCard(s.picksPerHour,'/h','Picks por hora','ok','Meta: 7,000')+dkCard(s.packRate,'/h','Pack rate','ok','Meta: 2,200')+dkCard(s.sorterThru,'UPH','Sorter throughput','warn','Cap: 12,000')+dkCard(s.bufferOcc+'%','','Ocupacion buffers','ok','< 80%')+dkCard(s.dwellTimeTrailers+' min','','Dwell time trailers','ok','< 60 min')+dkCard(s.palletOcc+'%','','Pallet rack',s.palletOcc>85?'warn':'ok','25,600 pos')+'</div><div class="dash-section">Flujo de Material</div><div class="sim-flow"><div class="sim-flow-node active">Recepcion</div><div class="sim-flow-arr">-></div><div class="sim-flow-node active">Decant</div><div class="sim-flow-arr">-></div><div class="sim-flow-node active">Stow</div><div class="sim-flow-arr">-></div><div class="sim-flow-node active">ASRS/Reserve</div><div class="sim-flow-arr">-></div><div class="sim-flow-node active">Pick</div><div class="sim-flow-arr">-></div><div class="sim-flow-node active">Pack</div><div class="sim-flow-arr">-></div><div class="sim-flow-node" style="border-color:var(--yellow);color:var(--yellow)">SLAM</div><div class="sim-flow-arr">-></div><div class="sim-flow-node" style="border-color:var(--red);color:var(--red)">Sort (!)</div><div class="sim-flow-arr">-></div><div class="sim-flow-node active">Stage</div><div class="sim-flow-arr">-></div><div class="sim-flow-node active">Outbound</div></div><div class="dash-section">Inventario</div><div class="dash-grid3">'+dkCI('Pallet Rack',s.palletOcc+'% (19,968/25,600)','ok')+dkCI('Bin Shelving',s.binOcc+'% (20,400/24,000)','warn')+dkCI('ASRS',s.asrsOcc+'% (14,560/16,000)','warn')+'</div><div class="dash-section">Robotica AMR</div><div class="dash-grid3">'+dkCI('Fleet',s.amrFleet+' / 12 activos','warn')+dkCI('Misiones hoy',s.amrMissions,'ok')+dkCI('Bateria prom.',s.amrBatAvg+'%','ok')+'</div>';}
+
+function renderEnergia(){var s=G.sens;var ezHtml='';ZONES.forEach(function(z){var kw=s.kwhByZone[z.id]||0;ezHtml+='<div class="dash-card" style="padding:8px 12px"><div style="display:flex;justify-content:space-between"><span style="font-family:\'Barlow Condensed\';font-size:11px;font-weight:600">'+z.name+'</span><span style="font-family:\'JetBrains Mono\';font-size:11px;color:var(--primary)">'+kw+' kW</span></div><div style="margin-top:4px"><div class="health-bar"><div class="health-fill ok" style="width:'+Math.round(kw/s.kwTotal*100)+'%;background:var(--primary)"></div></div></div></div>';});document.getElementById('view-energia').innerHTML='<div class="dash-header"><div><div class="dash-title">Dashboard de Energia</div><div class="dash-sub">Consumo electrico y calidad de potencia</div></div></div><div class="dash-kpis">'+dkCard(s.kwTotal,'kW','Potencia total','info','')+dkCard(s.kwhPerOrder,'kWh','Energia por orden','ok','Meta: <0.50')+dkCard(s.demandPeak,'kW','Demanda pico','warn','Contrato: 2,200 kW')+dkCard(s.powerFactor,'','Factor de potencia','ok','Min: 0.92')+dkCard(s.thd+'%','','THD voltaje','ok','Max: 5%')+dkCard(s.euiYear,'kWh/m2','EUI anual','ok','Benchmark: 135')+'</div><div class="dash-section">Consumo por Zona</div><div class="dash-grid2">'+ezHtml+'</div><div class="dash-section">Calidad de Potencia</div><div class="dash-grid3">'+dkCI('Desbalance','1.2%','ok')+dkCI('Carga critica','420 kW','ok')+dkCI('UPS autonomia','28 min','ok')+'</div>';}
+
+function renderConfiabilidad(){var s=G.sens;document.getElementById('view-confiabilidad').innerHTML='<div class="dash-header"><div><div class="dash-title">Dashboard de Confiabilidad</div><div class="dash-sub">MTBF, MTTR, health score por activo</div></div></div><div class="dash-kpis">'+dkCard(s.mtbfSorter+' h','','MTBF Sorter','ok','>600 h')+dkCard(s.mttrSorter+' min','','MTTR Sorter','ok','<25 min')+dkCard(s.mtbfConveyor+' h','','MTBF Conveyors','ok','>1,000 h')+dkCard(s.sorterJams,'','Jams Sorter','warn','Limite: 5')+dkCard(s.asrsHealth+'%','','Health ASRS',s.asrsHealth<90?'warn':'ok','Min: 90%')+dkCard(s.conveyorStops,'','Paros Conveyor','ok','Limite: 3')+'</div><div class="dash-section">Top 10 Activos por Riesgo</div><table class="dt-table"><thead><tr><th>Activo</th><th>Sistema</th><th>Health</th><th>Ultimo fallo</th><th>Status</th></tr></thead><tbody>'+riskRow('SRT-01','Sortation',87,'3 dias','warn')+riskRow('ASRS-01','ASRS',91,'7 dias','ok')+riskRow('ASRS-02','ASRS',89,'5 dias','warn')+riskRow('CVY-IB-MAIN','Conveyors',94,'12 dias','ok')+riskRow('GEN-01','Electrico',96,'Sin registro','ok')+riskRow('FP-ELEC','PCI',98,'Sin registro','ok')+riskRow('SLAM-01','SLAM',92,'8 dias','ok')+riskRow('PLC-01','OT',99,'Sin registro','ok')+riskRow('UPS-01','Electrico',95,'Sin registro','ok')+riskRow('AMR-Fleet','Robotica',88,'2 dias','warn')+'</tbody></table><div class="dash-section">Ambiente y Confort</div><div class="dash-kpis">'+dkCard(s.tempInter.toFixed(1)+'C','','Temperatura','ok','18-28C')+dkCard(s.humidity+'%','','Humedad','ok','40-60%')+dkCard(s.co2+' ppm','','CO2','ok','<1,000 ppm')+dkCard(s.noise+' dBA','','Ruido','ok','<85 dBA')+dkCard(s.lux+' lx','','Iluminancia','ok','>300 lx')+'</div>';}
+
+function renderAlertas(){document.getElementById('view-alertas').innerHTML='<div class="dash-header"><div><div class="dash-title">Centro de Alertas</div><div class="dash-sub">Eventos life-safety, operacion y mantenimiento</div></div></div>'+alertCard('crit','Jam en Crossbelt Sorter SRT-01','Chute #7 bloqueado — throughput reducido a 9,800 UPH. 3 jams en ultima hora.','Z07 Sortation','Hace 8 min','SRT-01')+alertCard('crit','ASRS Shuttle #8 offline','Falla de comunicacion en modulo ASRS-02. 11/12 shuttles activos.','Z04 ASRS','Hace 22 min','ASRS-02')+alertCard('warn','Demanda electrica cerca del limite','2,100 kW — 95% del contrato (2,200 kW). Riesgo penalizacion CFE.','Z11 Electrico','Hace 35 min','XFMR-01')+alertCard('warn','Temperatura Edge DC elevada','Rack 3 a 32.5C — sobre limite 30C.','Z10 TI','Hace 1 h','EDGE-COOL')+alertCard('warn','Ocupacion ASRS al 91%','Capacidad acercandose al limite. Redirigir stow a pallet rack.','Z04 ASRS','Hace 2 h','ASRS-01')+alertCard('ok','PM VFD Bank completado','24/24 drives en estado OK.','Z09 Electrico','Hace 3 h','VFD-BANK')+alertCard('ok','Prueba bomba PCI OK','Presion: 155 PSI. Bomba diesel OK.','Z12 PCI','Hace 4 h','FP-DIES');}
+
+function renderIntegracion(){document.getElementById('view-integracion').innerHTML='<div class="dash-header"><div><div class="dash-title">Arquitectura de Integracion</div><div class="dash-sub">Stack tecnologico del Digital Twin</div></div></div><div class="int-diagram"><div class="int-title">Capas del Gemelo Digital — Fulfillment Center</div>'+intLvl(1,'Campo / Edge','Sensores IoT, PLCs Siemens S7-1500, OPC-UA, MQTT, gateways, historian','var(--green)')+intArr()+intLvl(2,'WCS / WES / WMS','Control conveyors, ejecucion olas, gestion inventario','var(--cyan)')+intArr()+intLvl(3,'SAP Integration Suite','EWM, S/4HANA EAM, APM, Digital Manufacturing, BTP','var(--primary)')+intArr()+intLvl(4,'Autodesk Tandem','Gemelo 3D, streams IoT, asset taxonomy, navegacion espacial','var(--orange)')+intArr()+intLvl(5,'ACC','Planos as-built, P&IDs, fichas tecnicas, modelos BIM','var(--yellow)')+intArr()+intLvl(6,'Analitica e IA','Predictive maintenance, demand forecasting, energy optimization','var(--red)')+intArr()+intLvl(7,'LEED / ESG','Sustentabilidad, certificacion LEED, reporteo ESG, emisiones CO2','var(--leed)')+'</div>';}
+function intLvl(n,nm,d,c){return'<div class="int-level"><div class="int-level-num" style="background:'+c+'22;color:'+c+';border:1px solid '+c+'">'+n+'</div><div style="flex:1"><div class="int-level-name">'+nm+'</div><div class="int-level-desc">'+d+'</div></div></div>';}
+function intArr(){return'<div class="int-arrow">|</div>';}
+
+function renderOM(){document.getElementById('view-om').innerHTML='<div class="dash-header"><div><div class="dash-title">Operacion y Mantenimiento</div><div class="dash-sub">Salud de activos, OTs y planificacion</div></div></div><div class="dash-kpis">'+dkCard('94%','','Disponibilidad','ok','Meta: 95%')+dkCard('12','','OTs abiertas','warn','')+dkCard('3','','PMs vencidos','crit','')+dkCard('847','','Activos gestionados','info','')+'</div><div class="dash-section">Ordenes de Trabajo Activas</div><table class="dt-table"><thead><tr><th>OT</th><th>Activo</th><th>Tipo</th><th>Prioridad</th><th>Status</th></tr></thead><tbody><tr><td style="font-family:\'JetBrains Mono\';font-size:10px">WO-3401</td><td style="color:var(--primary)">SRT-01</td><td>Correctivo</td><td>1-URGENTE</td><td><span class="status-badge crit">CRIT</span></td></tr><tr><td style="font-family:\'JetBrains Mono\';font-size:10px">WO-3402</td><td style="color:var(--primary)">ASRS-02</td><td>Correctivo</td><td>1-URGENTE</td><td><span class="status-badge crit">CRIT</span></td></tr><tr><td style="font-family:\'JetBrains Mono\';font-size:10px">WO-3389</td><td style="color:var(--primary)">VFD-BANK</td><td>Preventivo</td><td>3-NORMAL</td><td><span class="status-badge ok">OK</span></td></tr><tr><td style="font-family:\'JetBrains Mono\';font-size:10px">WO-3390</td><td style="color:var(--primary)">RTU-01</td><td>Preventivo</td><td>3-NORMAL</td><td><span class="status-badge warn">WARN</span></td></tr></tbody></table><div class="dash-section">Health Score por Sistema</div><div class="dash-grid2">'+sysH('Sortation',87,'warn')+sysH('ASRS / Robotica',91,'ok')+sysH('Conveyors',96,'ok')+sysH('Electrico',95,'ok')+sysH('PCI',98,'ok')+sysH('HVAC',93,'ok')+sysH('TI / OT',97,'ok')+sysH('WWTP',96,'ok')+'</div>';}
+function sysH(n,p,s){return'<div class="dash-card"><div style="display:flex;justify-content:space-between"><span class="dash-card-title">'+n+'</span><span style="font-family:\'JetBrains Mono\';font-size:14px;font-weight:700;color:var(--'+(p>92?'green':p>80?'yellow':'red')+')">'+p+'%</span></div><div style="margin-top:6px"><div class="health-bar"><div class="health-fill '+s+'" style="width:'+p+'%"></div></div></div></div>';}
+
+function renderSAP(){document.getElementById('view-sap').innerHTML='<div class="dash-header"><div><div class="dash-title">Integracion SAP</div><div class="dash-sub">S/4HANA · EWM · EAM · APM · DM</div></div></div>'+sapMod('SAP EWM','Extended Warehouse Management','EWM','var(--cyan)',[['Warehouse #','FC-MX-001'],['Ordenes/h','2,450'],['Olas activas','12'],['Precision inv.','99.7%'],['Cycle count pend.','340']])+sapMod('SAP S/4HANA EAM','Enterprise Asset Management','EAM','var(--primary)',[['Activos','847'],['OTs abiertas','12'],['PMs mes','58'],['Costo YTD','$2.4M MXN'],['MTBF prom.','920 h']])+sapMod('SAP APM','Asset Performance Management','APM','var(--green)',[['Health global','94.2%'],['Modelos pred.','12'],['Alertas pred.','3'],['Accuracy','89%']])+sapMod('SAP DM','Digital Manufacturing','DM','var(--orange)',[['Throughput vs plan','98.2%'],['OEE Sort','91.3%'],['OEE Pack','94.1%'],['Ordenes hoy','18,420']]);}
+function sapMod(n,d,ic,c,rows){var h='<div class="sap-module"><div class="sap-mod-hdr"><div class="sap-mod-icon" style="background:'+c+'22;color:'+c+';border:1px solid '+c+'">'+ic+'</div><div><div class="sap-mod-name">'+n+'</div><div class="sap-mod-tag">'+d+'</div></div></div>';rows.forEach(function(r){h+='<div class="sap-kv"><span class="sk">'+r[0]+'</span><span class="sv">'+r[1]+'</span></div>';});return h+'</div>';}
+
+function renderACC(){document.getElementById('v-acc').innerHTML='<div class="acc-topbar"><div class="acc-proj-pill">FC-MX-001 Fulfillment Center</div><span style="font-size:10px;color:#666;margin-left:8px">Autodesk Construction Cloud</span></div><div class="acc-content"><div class="acc-sidebar"><div class="acc-mod-hdr">Modulos</div><div class="acc-mod-item active">DOC Docs</div><div class="acc-mod-item">SHT Sheets</div><div class="acc-mod-item">3D Models</div><div class="acc-mod-item">ISS Issues</div></div><div class="acc-body"><div class="acc-tree"><div class="acc-tree-hdr"><div class="acc-tree-proj">FC-MX-001</div></div><div class="ti sel"><span class="ti-ico" style="color:#888">&#9654;</span>01-Arquitectonico</div><div class="ti indent1"><span class="ti-ico" style="color:#555">-</span>A-001 Planta General</div><div class="ti indent1"><span class="ti-ico" style="color:#555">-</span>A-002 Cortes</div><div class="ti"><span class="ti-ico" style="color:#888">&#9654;</span>02-Estructural</div><div class="ti indent1"><span class="ti-ico" style="color:#555">-</span>S-001 Cimentacion</div><div class="ti indent1"><span class="ti-ico" style="color:#555">-</span>S-002 Marcos acero</div><div class="ti"><span class="ti-ico" style="color:#888">&#9654;</span>03-MEP</div><div class="ti indent1"><span class="ti-ico" style="color:#555">-</span>E-001 Diagrama unifilar</div><div class="ti indent1"><span class="ti-ico" style="color:#555">-</span>M-001 HVAC planta</div><div class="ti indent1"><span class="ti-ico" style="color:#555">-</span>P-001 Red PCI</div><div class="ti"><span class="ti-ico" style="color:#888">&#9654;</span>04-Automatizacion</div><div class="ti indent1"><span class="ti-ico" style="color:#555">-</span>AU-001 Layout conveyors</div><div class="ti indent1"><span class="ti-ico" style="color:#555">-</span>AU-002 ASRS modules</div><div class="ti indent1"><span class="ti-ico" style="color:#555">-</span>AU-003 Sortation P&ID</div><div class="ti"><span class="ti-ico" style="color:#888">&#9654;</span>05-TI/OT</div><div class="ti"><span class="ti-ico" style="color:#888">&#9654;</span>06-WWTP</div><div class="ti"><span class="ti-ico" style="color:#888">&#9654;</span>07-Fichas Tecnicas</div></div><div class="acc-main"><div class="acc-viewer"><div class="ft-card"><div class="ft-header"><div class="ft-photo">SRT</div><div style="flex:1"><div class="ft-name">Crossbelt Sorter — Dematic</div><div class="ft-tag">SRT-01</div><div class="ft-sap">SAP: SORTER-001</div></div></div><div class="ft-section">Especificaciones</div><table class="ft-table"><tr><td>Capacidad</td><td>12,000 UPH</td></tr><tr><td>Tipo</td><td>Crossbelt</td></tr><tr><td>Longitud</td><td>30 m loop</td></tr><tr><td>Destinos</td><td>24 chutes</td></tr><tr><td>Marca</td><td>Dematic</td></tr><tr><td>Peso max paquete</td><td>30 kg</td></tr></table><div class="ft-section">Datos IoT</div><table class="ft-table"><tr><td>Throughput</td><td><div class="ft-live"><div class="ft-live-dot ok"></div>'+G.sens.sorterThru+' UPH</div></td></tr><tr><td>Jams hoy</td><td><div class="ft-live"><div class="ft-live-dot warn"></div>3</div></td></tr><tr><td>Motor temp</td><td><div class="ft-live"><div class="ft-live-dot ok"></div>48.2 C</div></td></tr></table></div></div></div></div></div>';}
+
+function renderSim(){document.getElementById('view-sim').innerHTML='<div class="dash-header"><div><div class="dash-title">Simulacion What-If</div><div class="dash-sub">Modelado de escenarios operativos</div></div></div><div class="sim-controls"><div class="sim-btn active">Congestion Sorter</div><div class="sim-btn">Cierre de Linea</div><div class="sim-btn">Pico Demanda</div><div class="sim-btn">Falla Electrica</div></div><div class="sim-card"><div class="sim-card-title">Escenario: Congestion en Sortation</div><div class="sim-card-sub">Crossbelt sorter SRT-01 pierde 30% capacidad por jams recurrentes</div><div class="dash-kpis">'+dkCard('8,400','UPH','Throughput reducido','crit','Normal: 12,000')+dkCard('-23%','','Reduccion ordenes/h','crit','')+dkCard('+45 min','','Incremento lead time','warn','')+dkCard('$18,500','MXN/h','Costo estimado','crit','')+'</div><div class="dash-section">Mitigacion</div><div class="dash-grid2"><div class="dash-card"><div class="dash-card-title" style="color:var(--green)">Opcion A: Manual sort</div><div style="font-size:11px;color:var(--text2);line-height:1.5">4 estaciones manuales para absorber 2,000 UPH. Requiere 8 operadores.</div></div><div class="dash-card"><div class="dash-card-title" style="color:var(--primary)">Opcion B: Mant. express</div><div style="font-size:11px;color:var(--text2);line-height:1.5">Parar sorter 25 min para limpieza chutes. Recupera 95% capacidad.</div></div></div></div>';}
+
+function renderLEED(){
+  var s=G.sens;var score=72;var maxPts=110;
+  var credits=[
+    {cat:'Energia (EAc)',earned:24,max:38,items:[{n:'Energy Performance',p:18,m:25},{n:'Advanced Metering',p:4,m:5},{n:'Demand Response',p:1,m:3},{n:'Renewable Energy',p:1,m:5}]},
+    {cat:'Agua (WAc)',earned:8,max:12,items:[{n:'Indoor Water Use',p:4,m:6},{n:'Outdoor Water Use',p:2,m:2},{n:'Water Metering',p:2,m:4}]},
+    {cat:'Calidad Aire (IEQ)',earned:12,max:17,items:[{n:'IAQ Management',p:3,m:5},{n:'Thermal Comfort',p:3,m:4},{n:'Interior Lighting',p:4,m:4},{n:'Daylight',p:2,m:4}]},
+    {cat:'Materiales (MRc)',earned:6,max:10,items:[{n:'Purchasing',p:2,m:4},{n:'Waste Performance',p:4,m:6}]},
+    {cat:'Sitio Sustentable (SSc)',earned:8,max:14,items:[{n:'Site Management',p:2,m:3},{n:'Rainwater Mgmt',p:3,m:5},{n:'Heat Island',p:2,m:3},{n:'Light Pollution',p:1,m:3}]},
+    {cat:'Transporte (LTc)',earned:6,max:9,items:[{n:'Alt. Transport',p:4,m:6},{n:'Parking',p:2,m:3}]},
+    {cat:'Innovacion (INc)',earned:4,max:6,items:[{n:'Innovation',p:4,m:5},{n:'LEED AP',p:0,m:1}]}
+  ];
+  var totalEarned=0;credits.forEach(function(c){totalEarned+=c.earned;});
+  var level=totalEarned>=80?'Platinum':totalEarned>=60?'Gold':totalEarned>=50?'Silver':'Certified';
+
+  var html='<div class="dash-header"><div><div class="dash-title">LEED v4.1 O+M / ESG</div><div class="dash-sub">Sustentabilidad, certificacion LEED y reporteo ESG</div></div></div>';
+  html+='<div class="leed-score">'+totalEarned+'<div class="leed-score-label">LEED '+level.toUpperCase()+'</div></div>';
+  html+='<div class="dash-kpis">'+dkCard(s.euiYear,'kWh/m2','EUI Anual','leed','Benchmark: 135')+dkCard((s.waterDaily/1000).toFixed(1),'m3/dia','Agua potable','leed','Meta: <50 m3')+dkCard(s.co2+' ppm','','CO2 interior','leed','<1,000 ppm')+dkCard(s.wasteDiversion+'%','','Waste Diversion','leed','Meta: >80%')+dkCard((s.co2Scope1+s.co2Scope2),'tCO2e/mes','Emisiones S1+S2','leed','Meta: <700')+dkCard(s.waterReuse+'%','','Reuso agua tratada','leed','Meta: >70%')+'</div>';
+
+  html+='<div class="dash-section">Desglose de Creditos LEED</div>';
+  credits.forEach(function(c){
+    html+='<div class="dash-card" style="margin-bottom:8px"><div class="dash-card-title" style="color:var(--leed)">'+c.cat+' — '+c.earned+'/'+c.max+' pts</div>';
+    c.items.forEach(function(it){
+      html+='<div class="leed-credit"><div class="leed-credit-name">'+it.n+'</div><div class="leed-credit-bar"><div class="leed-credit-fill" style="width:'+Math.round(it.p/it.m*100)+'%"></div></div><div class="leed-credit-pts">'+it.p+'/'+it.m+'</div></div>';
+    });
+    html+='</div>';
+  });
+
+  html+='<div class="dash-section">Metricas ESG</div><div class="dash-grid3">'+
+    dkCI('Scope 1 (Directo)',s.co2Scope1+' tCO2e/mes','ok')+
+    dkCI('Scope 2 (Electr.)',s.co2Scope2+' tCO2e/mes','warn')+
+    dkCI('kWh/orden',s.kwhPerOrder,'ok')+
+    dkCI('Efluente WWTP',s.wwEffluent+'% eficiencia','ok')+
+    dkCI('TRIR (seguridad)','1.8 (Meta: <2.0)','ok')+
+    dkCI('Turnover','22% anual','warn')+'</div>';
+
+  html+='<div class="dash-section">Valor del Digital Twin para LEED</div><div class="dash-card"><div style="font-size:12px;color:var(--text2);line-height:1.7">'+
+    '<b style="color:var(--leed)">Monitoreo continuo:</b> El gemelo digital mantiene un dashboard vivo de todas las metricas LEED — energia (EUI), agua, calidad de aire, residuos — eliminando la compilacion manual de datos.<br><br>'+
+    '<b style="color:var(--leed)">Documentacion automatica:</b> LEED O+M requiere 12+ meses de datos de energia, lecturas de agua, logs de calidad de aire. El twin automatiza la recoleccion desde sensores IoT.<br><br>'+
+    '<b style="color:var(--leed)">Optimizacion energetica:</b> Simulacion what-if de setpoints HVAC, schedules de iluminacion, peak demand management — mejorando el score ENERGY STAR.<br><br>'+
+    '<b style="color:var(--leed)">Recertificacion automatica:</b> LEED O+M requiere recertificacion cada 5 anos. Con el twin, el proceso es casi automatico vs. meses de compilacion manual.'+
+    '</div></div>';
+
+  document.getElementById('view-leed').innerHTML=html;
+}
+
+function renderChat(){document.getElementById('view-chat').innerHTML='<div class="chat-container" id="chat-msgs"><div class="chat-msg bot">Soy el asistente IA del Digital Twin del Fulfillment Center. Puedo ayudarte con operacion, energia, mantenimiento, alertas, LEED/ESG o cualquier activo del sitio.</div></div><div class="chat-suggestions" id="chat-sugs"></div><div class="chat-input-bar"><input class="chat-input" id="chat-in" placeholder="Pregunta sobre el fulfillment center..." onkeypress="if(event.key===\'Enter\')sendChat()"><button class="chat-send" onclick="sendChat()">ENVIAR</button></div>';
+  var sugs=['Estado del sorter?','Throughput actual?','Alertas activas?','Energia hoy?','Score LEED?','Estado WWTP?'];
+  var sh='';sugs.forEach(function(s2){sh+='<div class="chat-sug" onclick="document.getElementById(\'chat-in\').value=\''+s2+'\';sendChat()">'+s2+'</div>';});
+  document.getElementById('chat-sugs').innerHTML=sh;
+}
+function sendChat(){var input=document.getElementById('chat-in'),msg=input.value.trim();if(!msg)return;var msgs=document.getElementById('chat-msgs');msgs.innerHTML+='<div class="chat-msg user">'+msg+'</div>';input.value='';var r=genResp(msg);setTimeout(function(){msgs.innerHTML+='<div class="chat-msg bot">'+r+'</div>';msgs.scrollTop=msgs.scrollHeight;},400);}
+function genResp(q){var l=q.toLowerCase(),s=G.sens;if(l.indexOf('sorter')>=0||l.indexOf('srt')>=0)return'Crossbelt Sorter SRT-01: <b>'+s.sorterThru+' UPH</b> (cap 12,000). '+s.sorterJams+' jams hoy. Chute #7 bloqueado hace 8 min. Health: 87%.';if(l.indexOf('alerta')>=0)return'<b>5 alertas</b>: 2 criticas (sorter jam, shuttle offline), 3 warnings (demanda electrica, temp edge DC, ASRS ocupacion).';if(l.indexOf('throughput')>=0||l.indexOf('orden')>=0)return'<b>'+s.ordersPerHour+' ordenes/h</b> (meta 2,500). Picks: '+s.picksPerHour+'/h. Pack: '+s.packRate+'/h. Cuello de botella: sortation.';if(l.indexOf('energia')>=0||l.indexOf('electr')>=0)return'Consumo: <b>'+s.kwTotal+' kW</b>. kWh/orden: '+s.kwhPerOrder+'. PF: '+s.powerFactor+'. Demanda pico: '+s.demandPeak+' kW (contrato 2,200).';if(l.indexOf('leed')>=0||l.indexOf('esg')>=0||l.indexOf('sustent')>=0)return'Score LEED estimado: <b>72 pts (Gold)</b>. EUI: '+s.euiYear+' kWh/m2/ano. Waste diversion: '+s.wasteDiversion+'%. CO2: '+(s.co2Scope1+s.co2Scope2)+' tCO2e/mes. Agua reuso: '+s.waterReuse+'%.';if(l.indexOf('wwtp')>=0||l.indexOf('agua')>=0||l.indexOf('tratamiento')>=0)return'WWTP procesa <b>85 m3/dia</b>. Eficiencia: '+s.wwEffluent+'%. DBO salida <20 mg/L. Reuso: '+s.waterReuse+'% del efluente tratado.';if(l.indexOf('asrs')>=0)return'ASRS: Health <b>'+s.asrsHealth+'%</b>. Ocupacion: '+s.asrsOcc+'%. Shuttle #8 offline (ASRS-02). Fleet: 11/12.';return'FC opera a <b>'+s.ordersPerHour+' ordenes/h</b>, '+s.kwTotal+' kW. Score LEED: 72 (Gold). 5 alertas activas.';}
+
+/* ═══════════════════════════════════════════════════════
+   SIMULATION & TOASTS
+   ═══════════════════════════════════════════════════════ */
+function updateSensors(){var s=G.sens;s.ordersPerHour=2400+Math.floor(Math.random()*100);s.linesPerHour=8100+Math.floor(Math.random()*200);s.picksPerHour=6700+Math.floor(Math.random()*200);s.packRate=2050+Math.floor(Math.random()*100);s.sorterThru=11e3+Math.floor(Math.random()*400);s.bufferOcc=68+Math.floor(Math.random()*10);s.kwTotal=1800+Math.floor(Math.random()*100);s.tempInter=23.5+Math.random()*2;s.humidity=48+Math.floor(Math.random()*8);s.amrBatAvg=68+Math.floor(Math.random()*10);s.amrMissions+=Math.floor(Math.random()*5);buildSidebarKPIs();}
+var toastMsgs=[['wms','WMS/WES','Ola #4521 completada — 340 ordenes',''],['iot','IoT SRT-01','Throughput: 11,200 UPH — normal',''],['sap','SAP EWM','Cycle count B-03 completado — 99.8%',''],['alert','ASRS-02','Shuttle #8 reconexion fallida',''],['iot','IoT Energia','Demanda: 1,920 kW — 87% contrato',''],['sap','SAP APM','Alerta pred: VFD-12 degradacion',''],['leed','LEED Monitor','EUI mensual: 11.2 kWh/m2 — en meta',''],['iot','WWTP','Efluente: DBO 18 mg/L — dentro de norma','']],toastIdx=0;
+function showToast(c,sr,ms,v){var el=document.getElementById('toast');el.className=c;document.getElementById('t-src').textContent=sr;document.getElementById('t-msg').textContent=ms;document.getElementById('t-val').textContent=v||new Date().toLocaleTimeString('es-MX');el.classList.add('show');setTimeout(function(){el.classList.remove('show')},4500);}
+function cycleToasts(){var t=toastMsgs[toastIdx%toastMsgs.length];showToast(t[0],t[1],t[2],t[3]||new Date().toLocaleTimeString('es-MX'));toastIdx++;}
+
+function init(){buildZoneList();buildSidebarKPIs();initThree();flyTo('overview');setInterval(function(){document.getElementById('h-time').textContent=new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit',second:'2-digit'})},1e3);setInterval(updateSensors,8e3);setTimeout(function(){cycleToasts();setInterval(cycleToasts,15e3)},4e3);}
+init();
+</script>
+</body>
+</html>

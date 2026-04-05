@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="35 2 50 50" width="100" height="100">
+  <!-- Yellow beam - thin diagonal sliver -->
+  <polygon points="81,5.8 39,21 81,13.6" fill="#FFE600"/>
+  <!-- E letter with angled top-right cut -->
+  <path d="M45.8,43.4v-3.5h7.7v-4.4h-7.7V32h8.5l-2.8-4.8H39.4v21.1h17v-4.8H45.8z" fill="#FFFFFF"/>
+  <!-- Y letter -->
+  <path d="M67.7,27.1L64.1,34l-3.6-6.9h-7l7.4,12.7v8.3h6.4v-8.3l7.4-12.7H67.7z" fill="#FFFFFF"/>
+</svg>

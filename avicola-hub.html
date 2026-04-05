@@ -1,0 +1,2352 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EY CREAS - Plataforma Nacional Gemelos Digitales - Sector Avicola</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@300;400;500;600&family=Barlow:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+<style>
+/* ====== VARIABLES ====== */
+:root {
+    --bg: #060D18;
+    --s1: #0A1420;
+    --s2: #0E1A2A;
+    --or: #FF5500;
+    --cy: #00C8F0;
+    --gr: #10D858;
+    --t0: #E8F4FF;
+    --t1: #E0E8F0;
+    --t2: #D0D8E0;
+    --re: #E02020;
+    --ye: #F0A000;
+    --pu: #A855F7;
+    --pk: #EC4899;
+    --tl: #14B8A6;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: 'Space Grotesk', sans-serif;
+    background: var(--bg);
+    color: var(--t0);
+    overflow-x: hidden;
+    min-height: 100vh;
+}
+
+/* Scanline overlay */
+body::after {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    pointer-events: none;
+    z-index: 9999;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,200,240,0.015) 2px, rgba(0,200,240,0.015) 4px);
+}
+
+/* Grid background */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    pointer-events: none;
+    z-index: 0;
+    background-image:
+        linear-gradient(rgba(58,96,122,0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(58,96,122,0.06) 1px, transparent 1px);
+    background-size: 40px 40px;
+}
+
+/* ====== TOPBAR ====== */
+.topbar {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 52px;
+    background: linear-gradient(180deg, rgba(10,20,32,0.98), rgba(6,13,24,0.95));
+    border-bottom: 1px solid rgba(0,200,240,0.15);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    z-index: 1000;
+    backdrop-filter: blur(10px);
+}
+
+.topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.logo-box {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.topbar-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--t0);
+    letter-spacing: 0.3px;
+}
+
+.topbar-title span { color: var(--or); font-weight: 600; }
+
+.topbar-center {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--t1);
+    letter-spacing: 0.5px;
+    text-align: center;
+}
+
+.topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--t1);
+}
+
+.status-dot {
+    width: 8px; height: 8px;
+    background: var(--gr);
+    border-radius: 50%;
+    animation: pulse-dot 2s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(16,216,88,0.4); }
+    50% { box-shadow: 0 0 0 6px rgba(16,216,88,0); }
+}
+
+.clock {
+    font-weight: 500;
+    color: var(--cy);
+    min-width: 65px;
+    text-align: right;
+}
+
+/* ====== BREADCRUMB ====== */
+.breadcrumb-bar {
+    position: fixed;
+    top: 52px; left: 0; right: 0;
+    height: 36px;
+    background: rgba(10,20,32,0.95);
+    border-bottom: 1px solid rgba(58,96,122,0.15);
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    gap: 8px;
+    z-index: 999;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+}
+
+.breadcrumb-item {
+    color: var(--t2);
+    cursor: pointer;
+    transition: color 0.2s;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.breadcrumb-item:hover { color: var(--cy); }
+.breadcrumb-item.active { color: var(--cy); cursor: default; }
+
+.breadcrumb-sep {
+    color: var(--t2);
+    font-size: 10px;
+}
+
+.breadcrumb-sep svg {
+    width: 10px;
+    height: 10px;
+    fill: var(--t2);
+    vertical-align: middle;
+}
+
+/* ====== MAIN CONTAINER ====== */
+.main-content {
+    margin-top: 88px;
+    min-height: calc(100vh - 88px - 36px);
+    position: relative;
+    z-index: 1;
+    padding: 20px;
+}
+
+/* ====== LEVEL TRANSITIONS ====== */
+.level-view {
+    display: none;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+}
+
+.level-view.visible {
+    display: block;
+}
+
+.level-view.active {
+    opacity: 1;
+}
+
+/* ====== SECTION HEADERS ====== */
+.section-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(58,96,122,0.2);
+}
+
+.section-header h2 {
+    font-size: 15px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--t1);
+}
+
+.section-header .accent-line {
+    width: 4px;
+    height: 20px;
+    background: var(--or);
+    border-radius: 2px;
+}
+
+.section-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--t2);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+}
+
+/* ====== LEVEL 1 — CADENA DE VALOR ====== */
+.l1-container {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.l1-hero {
+    text-align: center;
+    margin-bottom: 40px;
+    padding: 30px 0 20px;
+}
+
+.l1-hero h1 {
+    font-family: 'Barlow', sans-serif;
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--t0);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+}
+
+.l1-hero h1 span { color: var(--or); }
+
+.l1-hero p {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--t2);
+    letter-spacing: 1px;
+}
+
+/* Business Lines Grid */
+.biz-lines-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 40px;
+}
+
+.biz-card {
+    background: linear-gradient(135deg, var(--s1), var(--s2));
+    border: 1px solid rgba(58,96,122,0.25);
+    border-radius: 8px;
+    padding: 24px 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.biz-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 3px;
+    background: var(--or);
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.biz-card:hover {
+    border-color: var(--or);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(255,85,0,0.1);
+}
+
+.biz-card:hover::before { opacity: 1; }
+
+.biz-card-icon {
+    width: 44px; height: 44px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 14px;
+    background: rgba(255,85,0,0.08);
+    border: 1px solid rgba(255,85,0,0.2);
+}
+
+.biz-card-icon svg {
+    width: 22px; height: 22px;
+    fill: var(--or);
+}
+
+.biz-card h3 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--t0);
+    margin-bottom: 6px;
+    letter-spacing: 0.3px;
+}
+
+.biz-card p {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--t2);
+    line-height: 1.5;
+}
+
+.biz-card .card-arrow {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.biz-card:hover .card-arrow { opacity: 1; }
+
+.card-arrow svg {
+    width: 16px; height: 16px;
+    fill: var(--or);
+}
+
+/* Core Processes */
+.processes-section {
+    margin-bottom: 30px;
+}
+
+.process-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+}
+
+.process-chip {
+    background: var(--s1);
+    border: 1px solid rgba(0,200,240,0.2);
+    border-radius: 4px;
+    padding: 8px 16px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--cy);
+    letter-spacing: 0.5px;
+    transition: all 0.2s;
+    cursor: default;
+}
+
+.process-chip:hover {
+    border-color: var(--cy);
+    background: rgba(0,200,240,0.06);
+}
+
+.process-chip.backoffice {
+    border-color: rgba(168,85,247,0.3);
+    color: var(--pu);
+}
+
+.process-chip.backoffice:hover {
+    border-color: var(--pu);
+    background: rgba(168,85,247,0.06);
+}
+
+.process-chip.support {
+    border-color: rgba(58,96,122,0.3);
+    color: var(--t1);
+}
+
+.process-chip.support:hover {
+    border-color: var(--t1);
+    background: rgba(122,170,200,0.06);
+}
+
+/* Architecture layers */
+.arch-layers {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.arch-layer {
+    background: var(--s1);
+    border: 1px solid rgba(58,96,122,0.2);
+    border-radius: 4px;
+    padding: 12px 14px;
+    text-align: center;
+}
+
+.arch-layer-title {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--t1);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+}
+
+.arch-layer-icon {
+    margin-bottom: 6px;
+}
+
+.arch-layer-icon svg {
+    width: 18px; height: 18px;
+    fill: var(--t2);
+}
+
+/* ====== LEVEL 2 — UNIDADES OPERATIVAS ====== */
+.l2-container {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.l2-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+}
+
+.l2-title-block h2 {
+    font-family: 'Barlow', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--t0);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+}
+
+.l2-title-block p {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--t2);
+    margin-top: 4px;
+}
+
+.back-btn {
+    background: var(--s1);
+    border: 1px solid var(--t2);
+    color: var(--t1);
+    padding: 8px 16px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+}
+
+.back-btn:hover { border-color: var(--cy); color: var(--cy); }
+
+.back-btn svg {
+    width: 12px; height: 12px;
+    fill: currentColor;
+}
+
+/* Unit category sections */
+.unit-category {
+    margin-bottom: 28px;
+}
+
+.unit-category-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--or);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+    padding-left: 12px;
+    border-left: 3px solid var(--or);
+}
+
+.units-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 12px;
+}
+
+.unit-card {
+    background: var(--s1);
+    border: 1px solid rgba(58,96,122,0.25);
+    border-radius: 6px;
+    padding: 16px;
+    cursor: pointer;
+    transition: all 0.3s;
+    position: relative;
+}
+
+.unit-card:hover {
+    border-color: var(--cy);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 20px rgba(0,200,240,0.08);
+}
+
+.unit-card-top {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.unit-icon {
+    width: 36px; height: 36px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.unit-icon svg {
+    width: 18px; height: 18px;
+}
+
+.unit-card h4 {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--t0);
+    line-height: 1.3;
+}
+
+.unit-card .unit-count {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--t2);
+    margin-top: 4px;
+}
+
+.unit-card .unit-badge {
+    position: absolute;
+    top: 8px; right: 8px;
+    background: rgba(0,200,240,0.1);
+    border: 1px solid rgba(0,200,240,0.2);
+    border-radius: 10px;
+    padding: 2px 8px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--cy);
+    font-weight: 600;
+}
+
+/* Sub-hierarchy tree */
+.sub-tree {
+    margin-left: 20px;
+    padding-left: 12px;
+    border-left: 1px dashed rgba(58,96,122,0.3);
+}
+
+.sub-tree .unit-card {
+    margin-bottom: 8px;
+}
+
+/* ====== LEVEL 3 — MAPA ====== */
+.l3-container {
+    display: flex;
+    height: calc(100vh - 88px - 36px - 40px);
+    gap: 16px;
+}
+
+.l3-sidebar {
+    width: 300px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    overflow-y: auto;
+}
+
+.l3-sidebar::-webkit-scrollbar { width: 4px; }
+.l3-sidebar::-webkit-scrollbar-track { background: transparent; }
+.l3-sidebar::-webkit-scrollbar-thumb { background: var(--t2); border-radius: 2px; }
+
+.kpi-panel {
+    background: var(--s1);
+    border: 1px solid rgba(58,96,122,0.25);
+    border-radius: 6px;
+    padding: 16px;
+}
+
+.kpi-panel-title {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--t2);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+}
+
+.kpi-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.kpi-item {
+    text-align: center;
+}
+
+.kpi-value {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--cy);
+}
+
+.kpi-label {
+    font-size: 10px;
+    color: var(--t2);
+    margin-top: 2px;
+}
+
+.kpi-value.orange { color: var(--or); }
+.kpi-value.green { color: var(--gr); }
+.kpi-value.purple { color: var(--pu); }
+
+/* Filter list sidebar */
+.filter-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.filter-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 11px;
+    color: var(--t1);
+    transition: all 0.2s;
+}
+
+.filter-item:hover { background: rgba(58,96,122,0.1); }
+.filter-item.active { background: rgba(0,200,240,0.08); color: var(--cy); }
+
+.filter-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.filter-count {
+    margin-left: auto;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--t2);
+}
+
+/* Map area */
+.l3-map-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.map-filter-bar {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    flex-shrink: 0;
+}
+
+.map-filter-btn {
+    background: var(--s1);
+    border: 1px solid rgba(58,96,122,0.25);
+    color: var(--t1);
+    padding: 5px 12px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.map-filter-btn:hover { border-color: var(--cy); color: var(--t0); }
+.map-filter-btn.active { background: rgba(0,200,240,0.1); border-color: var(--cy); color: var(--cy); }
+
+#map {
+    flex: 1;
+    border-radius: 6px;
+    border: 1px solid rgba(58,96,122,0.25);
+    overflow: hidden;
+}
+
+/* Leaflet popup override */
+.leaflet-popup-content-wrapper {
+    background: rgba(10,20,32,0.96) !important;
+    border: 1px solid rgba(0,200,240,0.3) !important;
+    border-radius: 6px !important;
+    color: var(--t0) !important;
+    font-family: 'Space Grotesk', sans-serif !important;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5) !important;
+}
+
+.leaflet-popup-content {
+    margin: 12px 16px !important;
+    font-size: 12px !important;
+    min-width: 200px;
+}
+
+.leaflet-popup-tip {
+    background: rgba(10,20,32,0.96) !important;
+    border: 1px solid rgba(0,200,240,0.3) !important;
+}
+
+.popup-title {
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--or);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.popup-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 3px 0;
+    font-size: 11px;
+    border-bottom: 1px solid rgba(58,96,122,0.15);
+}
+
+.popup-row:last-of-type { border-bottom: none; }
+
+.popup-row span:first-child { color: var(--t1); }
+.popup-row span:last-child { color: var(--cy); font-family: 'IBM Plex Mono', monospace; font-weight: 600; }
+
+.popup-btn {
+    display: block;
+    margin-top: 10px;
+    background: var(--or);
+    color: #fff;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 4px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: background 0.2s;
+    text-decoration: none;
+}
+
+.popup-btn:hover { background: #E04A00; }
+
+/* Marker cluster override */
+.marker-cluster-small, .marker-cluster-medium, .marker-cluster-large {
+    background: rgba(0,200,240,0.15) !important;
+}
+
+.marker-cluster-small div, .marker-cluster-medium div, .marker-cluster-large div {
+    background: rgba(0,200,240,0.4) !important;
+    color: #fff !important;
+    font-family: 'IBM Plex Mono', monospace !important;
+    font-weight: 600 !important;
+    font-size: 12px !important;
+}
+
+/* ====== FOOTER ====== */
+.footer {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    height: 36px;
+    background: linear-gradient(0deg, rgba(10,20,32,0.98), rgba(6,13,24,0.95));
+    border-top: 1px solid rgba(58,96,122,0.15);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    z-index: 1000;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--t2);
+}
+
+.footer-badges {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+}
+
+.footer-badge {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    background: rgba(58,96,122,0.08);
+    border: 1px solid rgba(58,96,122,0.15);
+    border-radius: 3px;
+    color: var(--t1);
+    letter-spacing: 0.3px;
+}
+
+.footer-badge svg {
+    width: 10px; height: 10px;
+    fill: var(--gr);
+}
+
+.footer-badge.warning svg { fill: var(--ye); }
+
+/* ====== ANIMATIONS ====== */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+    animation: fadeIn 0.4s ease forwards;
+}
+
+.stagger-1 { animation-delay: 0.05s; }
+.stagger-2 { animation-delay: 0.1s; }
+.stagger-3 { animation-delay: 0.15s; }
+.stagger-4 { animation-delay: 0.2s; }
+.stagger-5 { animation-delay: 0.25s; }
+.stagger-6 { animation-delay: 0.3s; }
+
+/* ====== DASHBOARD EJECUTIVO ====== */
+#dashboard-section {
+    margin-bottom: 40px;
+    margin-top: 10px;
+}
+
+.dash-title {
+    font-family: 'Barlow', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--t1);
+    padding-left: 14px;
+    border-left: 4px solid var(--or);
+    margin-bottom: 20px;
+}
+
+.dash-title span {
+    display: block;
+    width: 40px;
+    height: 2px;
+    background: var(--or);
+    margin-top: 6px;
+}
+
+/* Row 1: Top KPI cards */
+.dash-kpi-row {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.dash-kpi {
+    background: var(--s1);
+    border: 1px solid rgba(0,200,240,0.12);
+    border-radius: 6px;
+    padding: 16px 14px;
+    text-align: center;
+    transition: all 0.25s ease;
+}
+
+.dash-kpi:hover {
+    border-color: rgba(0,200,240,0.35);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 24px rgba(0,200,240,0.06);
+}
+
+.dash-kpi-value {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 26px;
+    font-weight: 600;
+    color: var(--cy);
+    line-height: 1.1;
+    margin-bottom: 6px;
+}
+
+.dash-kpi-value.green { color: var(--gr); }
+.dash-kpi-value.orange { color: var(--or); }
+
+.dash-kpi-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    color: var(--t2);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    line-height: 1.4;
+}
+
+/* Row 2: Business line breakdown */
+.dash-biz-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.dash-biz-card {
+    background: var(--s1);
+    border: 1px solid rgba(58,96,122,0.2);
+    border-radius: 6px;
+    padding: 18px 16px;
+    transition: all 0.25s ease;
+}
+
+.dash-biz-card:hover {
+    border-color: rgba(0,200,240,0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 24px rgba(0,200,240,0.05);
+}
+
+.dash-biz-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+}
+
+.dash-biz-name {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--t0);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    line-height: 1.3;
+}
+
+.dash-biz-count {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--cy);
+}
+
+.dash-biz-subs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 10px;
+    margin-bottom: 12px;
+}
+
+.dash-biz-sub {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    color: var(--t2);
+    letter-spacing: 0.3px;
+}
+
+.dash-biz-sub b {
+    color: var(--t1);
+    font-weight: 500;
+}
+
+.dash-cap-bar {
+    height: 6px;
+    background: rgba(58,96,122,0.15);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-top: 4px;
+}
+
+.dash-cap-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.6s ease;
+}
+
+.dash-cap-label {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 4px;
+}
+
+.dash-cap-label span {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    color: var(--t2);
+}
+
+.dash-cap-label .cap-pct {
+    color: var(--gr);
+    font-weight: 600;
+}
+
+/* National Map */
+#national-map-section {
+    margin-top: 32px;
+    margin-bottom: 24px;
+}
+#national-map-section .dash-title {
+    margin-bottom: 16px;
+}
+.nmf-btn:hover {
+    border-color: var(--or) !important;
+    color: var(--or) !important;
+    background: rgba(255,85,0,0.1) !important;
+}
+.nmf-btn.active {
+    border-color: var(--or) !important;
+    color: var(--or) !important;
+    background: rgba(255,85,0,0.15) !important;
+}
+#national-map .leaflet-popup-content-wrapper {
+    background: #0A1420;
+    color: #E0E8F0;
+    border: 1px solid rgba(0,200,240,0.2);
+    border-radius: 8px;
+}
+#national-map .leaflet-popup-tip { background: #0A1420; }
+
+/* Row 3: Regional bars */
+.dash-region-section {
+    background: var(--s1);
+    border: 1px solid rgba(58,96,122,0.2);
+    border-radius: 6px;
+    padding: 18px 20px;
+    margin-bottom: 16px;
+}
+
+.dash-region-title {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--t2);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 14px;
+}
+
+.dash-region-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.dash-region-row {
+    display: grid;
+    grid-template-columns: 120px 1fr 50px;
+    align-items: center;
+    gap: 10px;
+}
+
+.dash-region-name {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--t1);
+    text-align: right;
+    letter-spacing: 0.3px;
+}
+
+.dash-region-bar-bg {
+    height: 14px;
+    background: rgba(58,96,122,0.1);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.dash-region-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.8s ease;
+}
+
+.dash-region-val {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--cy);
+    font-weight: 600;
+}
+
+/* Row 4: Quick stats */
+.dash-quick-row {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 12px;
+}
+
+.dash-quick {
+    background: var(--s1);
+    border: 1px solid rgba(58,96,122,0.15);
+    border-radius: 6px;
+    padding: 14px 12px;
+    text-align: center;
+    transition: all 0.25s ease;
+}
+
+.dash-quick:hover {
+    border-color: rgba(0,200,240,0.25);
+    transform: translateY(-1px);
+}
+
+.dash-quick-val {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--cy);
+    margin-bottom: 4px;
+}
+
+.dash-quick-val.green { color: var(--gr); }
+.dash-quick-val.orange { color: var(--or); }
+.dash-quick-val.red { color: var(--re); }
+
+.dash-quick-lbl {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    color: var(--t2);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    line-height: 1.3;
+}
+
+/* Alert pulse animation */
+@keyframes alert-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+}
+
+.dash-alert-pulse {
+    animation: alert-pulse 1.5s ease-in-out infinite;
+}
+
+/* Region bar colors */
+.region-color-0 { background: #00C8F0; }
+.region-color-1 { background: #FF5500; }
+.region-color-2 { background: #10D858; }
+.region-color-3 { background: #F0A000; }
+.region-color-4 { background: #A855F7; }
+.region-color-5 { background: #EC4899; }
+.region-color-6 { background: #14B8A6; }
+.region-color-7 { background: #7AAAC8; }
+.region-color-8 { background: #E02020; }
+.region-color-9 { background: #3A607A; }
+
+/* ====== RESPONSIVE ====== */
+@media (max-width: 1024px) {
+    .biz-lines-grid { grid-template-columns: repeat(2, 1fr); }
+    .l3-container { flex-direction: column; }
+    .l3-sidebar { width: 100%; max-height: 200px; flex-direction: row; overflow-x: auto; }
+    .arch-layers { grid-template-columns: repeat(2, 1fr); }
+    .dash-kpi-row { grid-template-columns: repeat(3, 1fr); }
+    .dash-biz-row { grid-template-columns: repeat(2, 1fr); }
+    .dash-quick-row { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (max-width: 768px) {
+    .biz-lines-grid { grid-template-columns: 1fr; }
+    .topbar-center { display: none; }
+    .dash-kpi-row { grid-template-columns: repeat(2, 1fr); }
+    .dash-biz-row { grid-template-columns: 1fr; }
+    .dash-quick-row { grid-template-columns: repeat(2, 1fr); }
+    .dash-region-row { grid-template-columns: 80px 1fr 40px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ====== TOPBAR ====== -->
+<div class="topbar">
+    <div class="topbar-left">
+        <div class="logo-box"><img src="ey-logo.svg" alt="EY" width="64" height="38" style="display:block"></div>
+        <div class="topbar-title"><span>CREAS</span> | Plataforma Nacional de Gemelos Digitales - Sector Avicola</div>
+    </div>
+    <div class="topbar-center">GRUPO AVICOLA // CADENA DE VALOR INTEGRADA</div>
+    <div class="topbar-right">
+        <div class="status-dot"></div>
+        <span>SISTEMA OPERATIVO</span>
+        <div class="clock" id="clock">--:--:--</div>
+    </div>
+</div>
+
+<!-- ====== BREADCRUMB ====== -->
+<div class="breadcrumb-bar">
+    <span class="breadcrumb-item" onclick="goToLevel(1)" id="bc-l1">Cadena de Valor</span>
+    <span class="breadcrumb-sep" id="bc-sep1" style="display:none;">
+        <svg viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
+    </span>
+    <span class="breadcrumb-item" id="bc-l2" style="display:none;"></span>
+    <span class="breadcrumb-sep" id="bc-sep2" style="display:none;">
+        <svg viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
+    </span>
+    <span class="breadcrumb-item active" id="bc-l3" style="display:none;"></span>
+</div>
+
+<!-- ====== MAIN CONTENT ====== -->
+<div class="main-content">
+
+    <!-- ====== LEVEL 1 — CADENA DE VALOR ====== -->
+    <div class="level-view" id="level-1" style="display:block;opacity:1;">
+        <div class="l1-container">
+            <div class="l1-hero">
+                <h1>Grupo Avicola - <span>Cadena de Valor</span></h1>
+                <p>PLATAFORMA INTEGRADA DE GEMELOS DIGITALES // OPERACIONES AVICOLA Y PORCINA</p>
+            </div>
+
+            <!-- Business Lines -->
+            <div class="section-header">
+                <div class="accent-line"></div>
+                <h2>Lineas de Negocio</h2>
+            </div>
+
+            <div class="biz-lines-grid" id="biz-grid">
+                <!-- Cards generated by JS -->
+            </div>
+
+            <!-- ====== DASHBOARD EJECUTIVO ====== -->
+            <div id="dashboard-section">
+                <div class="dash-title">DASHBOARD EJECUTIVO<span></span></div>
+
+                <!-- Row 1: Top KPI Cards -->
+                <div class="dash-kpi-row">
+                    <div class="dash-kpi">
+                        <div class="dash-kpi-value">876</div>
+                        <div class="dash-kpi-label">Total Instalaciones</div>
+                    </div>
+                    <div class="dash-kpi">
+                        <div class="dash-kpi-value green">831</div>
+                        <div class="dash-kpi-label">Granjas Activas</div>
+                    </div>
+                    <div class="dash-kpi">
+                        <div class="dash-kpi-value">16</div>
+                        <div class="dash-kpi-label">Regiones MX</div>
+                    </div>
+                    <div class="dash-kpi">
+                        <div class="dash-kpi-value">4</div>
+                        <div class="dash-kpi-label">Regiones USA</div>
+                    </div>
+                    <div class="dash-kpi">
+                        <div class="dash-kpi-value orange">12.4M</div>
+                        <div class="dash-kpi-label">Produccion Diaria Huevo (unidades)</div>
+                    </div>
+                    <div class="dash-kpi">
+                        <div class="dash-kpi-value orange">8.2M</div>
+                        <div class="dash-kpi-label">Produccion Semanal Pollo (aves)</div>
+                    </div>
+                </div>
+
+                <!-- Row 2: Business Line Breakdown -->
+                <div class="dash-biz-row">
+                    <!-- Produccion de Pollo -->
+                    <div class="dash-biz-card">
+                        <div class="dash-biz-header">
+                            <div class="dash-biz-name">Produccion de Pollo</div>
+                            <div class="dash-biz-count">735</div>
+                        </div>
+                        <div class="dash-biz-subs">
+                            <div class="dash-biz-sub">Crianza Progenitora: <b>7</b></div>
+                            <div class="dash-biz-sub">Postura Progenitora: <b>14</b></div>
+                            <div class="dash-biz-sub">Incubadoras Progenitora: <b>3</b></div>
+                            <div class="dash-biz-sub">Crianza Reproductora: <b>81</b></div>
+                            <div class="dash-biz-sub">Postura Reproductora: <b>162</b></div>
+                            <div class="dash-biz-sub">Incubadoras Reproductora: <b>15</b></div>
+                            <div class="dash-biz-sub">Engorde: <b>420</b></div>
+                        </div>
+                        <div class="dash-cap-label"><span>Capacidad Utilizada</span><span class="cap-pct">87%</span></div>
+                        <div class="dash-cap-bar"><div class="dash-cap-fill" style="width:87%;background:var(--gr)"></div></div>
+                    </div>
+
+                    <!-- Produccion Huevo de Plato -->
+                    <div class="dash-biz-card">
+                        <div class="dash-biz-header">
+                            <div class="dash-biz-name">Produccion Huevo de Plato</div>
+                            <div class="dash-biz-count">176</div>
+                        </div>
+                        <div class="dash-biz-subs">
+                            <div class="dash-biz-sub">Crianza Ligera: <b>2</b></div>
+                            <div class="dash-biz-sub">Postura Ligera: <b>6</b></div>
+                            <div class="dash-biz-sub">Incubadora Ligera: <b>2</b></div>
+                            <div class="dash-biz-sub">Crianza Comercial: <b>22</b></div>
+                            <div class="dash-biz-sub">Postura Comercial: <b>122</b></div>
+                            <div class="dash-biz-sub">CDH: <b>20</b></div>
+                            <div class="dash-biz-sub">Pelecha: <b>2</b></div>
+                        </div>
+                        <div class="dash-cap-label"><span>Capacidad Utilizada</span><span class="cap-pct">92%</span></div>
+                        <div class="dash-cap-bar"><div class="dash-cap-fill" style="width:92%;background:var(--gr)"></div></div>
+                    </div>
+
+                    <!-- Produccion Porcina -->
+                    <div class="dash-biz-card">
+                        <div class="dash-biz-header">
+                            <div class="dash-biz-name">Produccion Porcina</div>
+                            <div class="dash-biz-count" style="color:var(--t2)">--</div>
+                        </div>
+                        <div class="dash-biz-subs">
+                            <div class="dash-biz-sub">Sitio 1: <b>--</b></div>
+                            <div class="dash-biz-sub">Sitio 2: <b>--</b></div>
+                            <div class="dash-biz-sub">Sitio 3: <b>--</b></div>
+                            <div class="dash-biz-sub">PPC: <b>--</b></div>
+                        </div>
+                        <div class="dash-cap-label"><span>Capacidad Utilizada</span><span class="cap-pct" style="color:var(--ye)">78%</span></div>
+                        <div class="dash-cap-bar"><div class="dash-cap-fill" style="width:78%;background:var(--ye)"></div></div>
+                    </div>
+
+                    <!-- Infraestructura -->
+                    <div class="dash-biz-card">
+                        <div class="dash-biz-header">
+                            <div class="dash-biz-name">Infraestructura</div>
+                            <div class="dash-biz-count">45+</div>
+                        </div>
+                        <div class="dash-biz-subs">
+                            <div class="dash-biz-sub">Tiendas: <b>45</b></div>
+                            <div class="dash-biz-sub">Lab Pecuarius: <b>1</b></div>
+                            <div class="dash-biz-sub">CEDIS: <b>--</b></div>
+                            <div class="dash-biz-sub">PPA: <b>--</b></div>
+                            <div class="dash-biz-sub">Silos: <b>--</b></div>
+                        </div>
+                        <div class="dash-cap-label"><span>Capacidad Utilizada</span><span class="cap-pct">95%</span></div>
+                        <div class="dash-cap-bar"><div class="dash-cap-fill" style="width:95%;background:var(--cy)"></div></div>
+                    </div>
+                </div>
+
+                <!-- Row 3: Regional Distribution -->
+                <div class="dash-region-section">
+                    <div class="dash-region-title">Distribucion Regional -- Top 10 por Instalaciones</div>
+                    <div class="dash-region-bars">
+                        <div class="dash-region-row">
+                            <div class="dash-region-name">Fort Smith (USA)</div>
+                            <div class="dash-region-bar-bg"><div class="dash-region-bar-fill region-color-1" style="width:100%"></div></div>
+                            <div class="dash-region-val">167</div>
+                        </div>
+                        <div class="dash-region-row">
+                            <div class="dash-region-name">Bajio</div>
+                            <div class="dash-region-bar-bg"><div class="dash-region-bar-fill region-color-0" style="width:97%"></div></div>
+                            <div class="dash-region-val">162</div>
+                        </div>
+                        <div class="dash-region-row">
+                            <div class="dash-region-name">Merida</div>
+                            <div class="dash-region-bar-bg"><div class="dash-region-bar-fill region-color-2" style="width:76.6%"></div></div>
+                            <div class="dash-region-val">128</div>
+                        </div>
+                        <div class="dash-region-row">
+                            <div class="dash-region-name">Torreon</div>
+                            <div class="dash-region-bar-bg"><div class="dash-region-bar-fill region-color-3" style="width:40.7%"></div></div>
+                            <div class="dash-region-val">68</div>
+                        </div>
+                        <div class="dash-region-row">
+                            <div class="dash-region-name">Obregon</div>
+                            <div class="dash-region-bar-bg"><div class="dash-region-bar-fill region-color-4" style="width:31.1%"></div></div>
+                            <div class="dash-region-val">52</div>
+                        </div>
+                        <div class="dash-region-row">
+                            <div class="dash-region-name">Sureste</div>
+                            <div class="dash-region-bar-bg"><div class="dash-region-bar-fill region-color-8" style="width:30.5%"></div></div>
+                            <div class="dash-region-val">51</div>
+                        </div>
+                        <div class="dash-region-row">
+                            <div class="dash-region-name">Culiacan</div>
+                            <div class="dash-region-bar-bg"><div class="dash-region-bar-fill region-color-5" style="width:26.3%"></div></div>
+                            <div class="dash-region-val">44</div>
+                        </div>
+                        <div class="dash-region-row">
+                            <div class="dash-region-name">Mexicali</div>
+                            <div class="dash-region-bar-bg"><div class="dash-region-bar-fill region-color-6" style="width:18%"></div></div>
+                            <div class="dash-region-val">30</div>
+                        </div>
+                        <div class="dash-region-row">
+                            <div class="dash-region-name">Tuxpan</div>
+                            <div class="dash-region-bar-bg"><div class="dash-region-bar-fill region-color-7" style="width:13.8%"></div></div>
+                            <div class="dash-region-val">23</div>
+                        </div>
+                        <div class="dash-region-row">
+                            <div class="dash-region-name">Mochis</div>
+                            <div class="dash-region-bar-bg"><div class="dash-region-bar-fill region-color-9" style="width:7.8%"></div></div>
+                            <div class="dash-region-val">13</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Row 4: Quick Stats -->
+                <div class="dash-quick-row">
+                    <div class="dash-quick">
+                        <div class="dash-quick-val">23</div>
+                        <div class="dash-quick-lbl">Sociedades Activas</div>
+                    </div>
+                    <div class="dash-quick">
+                        <div class="dash-quick-val green">35,000+</div>
+                        <div class="dash-quick-lbl">Empleados Estimados</div>
+                    </div>
+                    <div class="dash-quick">
+                        <div class="dash-quick-val green">Activa</div>
+                        <div class="dash-quick-lbl">Integracion SAP S/4HANA</div>
+                    </div>
+                    <div class="dash-quick">
+                        <div class="dash-quick-val">12,400+</div>
+                        <div class="dash-quick-lbl">IoT Sensores Desplegados</div>
+                    </div>
+                    <div class="dash-quick">
+                        <div class="dash-quick-val red dash-alert-pulse">3</div>
+                        <div class="dash-quick-lbl">Alertas Activas</div>
+                    </div>
+                    <div class="dash-quick">
+                        <div class="dash-quick-val green">99.7%</div>
+                        <div class="dash-quick-lbl">Uptime Plataforma</div>
+                    </div>
+                </div>
+            </div>
+            <!-- /DASHBOARD EJECUTIVO -->
+
+            <!-- ====== MAPA NACIONAL COMPLETO ====== -->
+            <div id="national-map-section">
+                <div class="dash-title">MAPA NACIONAL DE OPERACIONES<span></span></div>
+                <div id="national-map-filters" style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;"></div>
+                <div id="national-map" style="width:100%;height:520px;border-radius:10px;border:1px solid rgba(0,200,240,0.12);overflow:hidden;"></div>
+                <div id="national-map-legend" style="display:flex;gap:16px;flex-wrap:wrap;margin-top:10px;font-size:11px;font-family:'IBM Plex Mono',monospace;"></div>
+            </div>
+
+            <!-- Core Processes -->
+            <div class="processes-section">
+                <div class="section-header">
+                    <div class="accent-line"></div>
+                    <h2>Procesos Core de Negocio</h2>
+                </div>
+                <div class="process-row" id="core-processes"></div>
+
+                <div class="section-label">Backoffice</div>
+                <div class="process-row" id="backoffice-processes"></div>
+
+                <div class="section-label">Capas de Soporte</div>
+                <div class="arch-layers" id="support-layers"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ====== LEVEL 2 — UNIDADES OPERATIVAS ====== -->
+    <div class="level-view" id="level-2">
+        <div class="l2-container">
+            <div class="l2-header">
+                <div class="l2-title-block">
+                    <h2 id="l2-title"></h2>
+                    <p id="l2-subtitle"></p>
+                </div>
+                <button class="back-btn" onclick="goToLevel(1)">
+                    <svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+                    VOLVER
+                </button>
+            </div>
+            <div id="l2-content"></div>
+        </div>
+    </div>
+
+    <!-- ====== LEVEL 3 — MAPA ====== -->
+    <div class="level-view" id="level-3">
+        <div class="l3-container">
+            <div class="l3-sidebar">
+                <div class="kpi-panel">
+                    <div class="kpi-panel-title">Resumen de Instalaciones</div>
+                    <div class="kpi-grid" id="kpi-grid">
+                        <!-- filled by JS -->
+                    </div>
+                </div>
+                <div class="kpi-panel">
+                    <div class="kpi-panel-title">Filtrar por Tipo</div>
+                    <div class="filter-list" id="filter-list">
+                        <!-- filled by JS -->
+                    </div>
+                </div>
+            </div>
+            <div class="l3-map-area">
+                <div class="map-filter-bar" id="map-filter-bar">
+                    <!-- filled by JS -->
+                </div>
+                <div id="map"></div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- ====== FOOTER ====== -->
+<div class="footer">
+    <div class="footer-badges">
+        <div class="footer-badge">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/></svg>
+            SAP S/4HANA
+        </div>
+        <div class="footer-badge">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/></svg>
+            SCADA / OT
+        </div>
+        <div class="footer-badge">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/></svg>
+            IoT SENSORES
+        </div>
+        <div class="footer-badge">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/></svg>
+            DATA LAKE
+        </div>
+        <div class="footer-badge warning">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/></svg>
+            MES / SCADA
+        </div>
+    </div>
+    <div>EY CREAS // GRUPO AVICOLA // PLATAFORMA GEMELOS DIGITALES v2.1</div>
+</div>
+
+<script>
+// ====== CLOCK ======
+function updateClock() {
+    const now = new Date();
+    document.getElementById('clock').textContent =
+        now.toLocaleTimeString('es-MX', { hour12: false });
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ====== DATA ======
+const businessLines = [
+    {
+        id: 'alimentos-autoconsumo',
+        name: 'Alimentos Autoconsumo',
+        desc: 'Produccion de alimento balanceado para consumo interno de granjas',
+        icon: '<svg viewBox="0 0 24 24"><path d="M12 3L4 9v12h16V9l-8-6zm0 2.3L18 9.8V19H6V9.8L12 5.3zM11 13h2v4h-2v-4zm-3 0h2v4H8v-4zm6 0h2v4h-2v-4z"/></svg>',
+        hasUnits: true
+    },
+    {
+        id: 'alimentos-comerciales',
+        name: 'Alimentos Comerciales',
+        desc: 'Produccion y venta de alimento balanceado para mercado externo',
+        icon: '<svg viewBox="0 0 24 24"><path d="M20 4H4v2h16V4zm1 10v-2l-1-5H4l-1 5v2h1v6h10v-6h4v6h2v-6h1zm-9 4H6v-4h6v4z"/></svg>',
+        hasUnits: true
+    },
+    {
+        id: 'procesos-avicola',
+        name: 'Procesos Avicola',
+        desc: 'Cadena completa de produccion avicola: granjas, incubadoras, procesadoras',
+        icon: '<svg viewBox="0 0 24 24"><path d="M8.5 4A4.5 4.5 0 004 8.5c0 1.06.37 2.03.98 2.8L3.2 18.6a1 1 0 001.13 1.36l3.63-.73 1.12 1.12a1 1 0 001.5-.13l2.14-3.21A4.5 4.5 0 008.5 4zm0 2a2.5 2.5 0 110 5 2.5 2.5 0 010-5zM17 7a3 3 0 00-2.83 2H15a2 2 0 110 4h-.83A3 3 0 0017 15a3 3 0 100-8z"/></svg>',
+        hasUnits: true
+    },
+    {
+        id: 'procesos-porcinos',
+        name: 'Procesos Porcinos',
+        desc: 'Cadena de produccion porcina: sitios 1, 2, 3 y procesamiento',
+        icon: '<svg viewBox="0 0 24 24"><path d="M18 6c-1.5 0-2.7.9-3.2 2.2C14.1 8.1 13.1 8 12 8s-2.1.1-2.8.2C8.7 6.9 7.5 6 6 6 4.3 6 3 7.3 3 9c0 1.1.6 2.1 1.4 2.6C4.2 12.1 4 12.5 4 13v3c0 1.7 3.6 3 8 3s8-1.3 8-3v-3c0-.5-.2-.9-.4-1.4C20.4 11.1 21 10.1 21 9c0-1.7-1.3-3-3-3z"/></svg>',
+        hasUnits: true
+    },
+    {
+        id: 'productos-valor-agregado',
+        name: 'Productos Valor Agregado',
+        desc: 'Procesamiento avanzado: empanizados, marinados, productos listos',
+        icon: '<svg viewBox="0 0 24 24"><path d="M12 2L4.5 20.3l.7.7L12 18l6.8 3 .7-.7L12 2zm0 3.5l5.3 13.1L12 16l-5.3 2.6L12 5.5z"/></svg>',
+        hasUnits: true
+    },
+    {
+        id: 'otros-negocios',
+        name: 'Otros Negocios',
+        desc: 'Tiendas, logistica, laboratorio y unidades de soporte complementarias',
+        icon: '<svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>',
+        hasUnits: true
+    }
+];
+
+const coreProcesses = [
+    { code: 'DTS', name: 'Demanda a Suministro' },
+    { code: 'PTP', name: 'Planificacion a Produccion' },
+    { code: 'STP', name: 'Suministro a Pago' },
+    { code: 'OTC', name: 'Pedido a Cobro' },
+    { code: 'STS', name: 'Almacenamiento al Envio' }
+];
+
+const backoffice = [
+    { code: 'RTR', name: 'Registro a Informe' }
+];
+
+const supportLayers = [
+    { name: 'Integracion de Sistemas', icon: '<svg viewBox="0 0 24 24"><path d="M17 16l-4-4V8.82C14.16 8.4 15 7.3 15 6c0-1.66-1.34-3-3-3S9 4.34 9 6c0 1.3.84 2.4 2 2.82V12l-4 4H3v5h5v-3.05l4-4.2 4 4.2V21h5v-5h-4z"/></svg>' },
+    { name: 'Gestion de Datos', icon: '<svg viewBox="0 0 24 24"><path d="M12 3C7 3 3 4.8 3 7v10c0 2.2 4 4 9 4s9-1.8 9-4V7c0-2.2-4-4-9-4zm0 2c4.4 0 7 1.5 7 2s-2.6 2-7 2S5 7.5 5 7s2.6-2 7-2zM5 17V9.5C6.8 10.4 9.2 11 12 11s5.2-.6 7-1.5V17c0 .5-2.6 2-7 2s-7-1.5-7-2z"/></svg>' },
+    { name: 'Analiticos', icon: '<svg viewBox="0 0 24 24"><path d="M5 9.2h3V19H5V9.2zM10.6 5h2.8v14h-2.8V5zm5.6 8H19v6h-2.8v-6z"/></svg>' },
+    { name: 'Tecnologia / Seguridad', icon: '<svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg>' }
+];
+
+// Avicola unit data
+const avicolaUnits = {
+    polloProduction: {
+        title: 'Produccion de Pollo',
+        units: [
+            { id: 'crianza-prepostura-progenitora', name: 'Crianza Pre-postura y Postura Progenitora', count: '7 crianza + 14 postura', total: 21, color: '#EC4899' },
+            { id: 'incubadora-progenitora', name: 'Incubadora Progenitora', count: '3 incubadoras', total: 3, color: '#A855F7' },
+            { id: 'crianza-prepostura-reproductoras', name: 'Crianza Pre-postura y Postura Reproductoras', count: '81 crianza + 162 postura', total: 243, color: '#F59E0B' },
+            { id: 'incubadora-reproductoras', name: 'Incubadora Reproductoras', count: '15 incubadoras', total: 15, color: '#8B5CF6' },
+            { id: 'engorde-pollo', name: 'Engorde de Pollo', count: '420 granjas', total: 420, color: '#10B981' }
+        ]
+    },
+    huevoProduction: {
+        title: 'Produccion de Huevo de Plato',
+        units: [
+            { id: 'crianza-postura-ligera', name: 'Crianza Pre-postura y Postura Ligera', count: '2 crianza + 6 postura', total: 8, color: '#F472B6' },
+            { id: 'incubadora-ligera', name: 'Incubadora Linea Ligera', count: '2 incubadoras', total: 2, color: '#C084FC' },
+            { id: 'crianza-postura-comercial', name: 'Crianza Pre-postura y Postura Comercial', count: '22 crianza + 122 postura', total: 144, color: '#FBBF24' },
+            { id: 'cdh', name: 'Centro Distribucion de Huevo CDH', count: '20 centros', total: 20, color: '#34D399' },
+            { id: 'pelecha', name: 'Pelecha', count: 'Variable', total: 0, color: '#94A3B8' },
+            { id: 'postura-comercial-2', name: 'Postura Comercial 2do Ciclo', count: 'Variable', total: 0, color: '#94A3B8' }
+        ]
+    },
+    processing: {
+        title: 'Procesamiento e Infraestructura',
+        units: [
+            { id: 'ppa', name: 'Procesadora de Aves PPA', count: 'Plantas principales', total: 5, color: '#EF4444' },
+            { id: 'silos', name: 'Silos', count: 'Almacenamiento de granos', total: 10, color: '#78716C' },
+            { id: 'planta-autoconsumo', name: 'Planta de Autoconsumo', count: 'Alimento balanceado', total: 4, color: '#F97316' },
+            { id: 'planta-comercial', name: 'Planta Alimentos Comercial', count: 'Produccion comercial', total: 3, color: '#FB923C' },
+            { id: 'pva', name: 'Planta de Valor Agregado PVA', count: 'Productos procesados', total: 3, color: '#E11D48' },
+            { id: 'congeladoras', name: 'Congeladoras', count: 'Cadena de frio', total: 6, color: '#06B6D4' },
+            { id: 'tiendas', name: 'Tiendas', count: '45 tiendas', total: 45, color: '#14B8A6' }
+        ]
+    }
+};
+
+const porcinosUnits = {
+    granjas: {
+        title: 'Granjas Porcinas',
+        units: [
+            { id: 'sitio-1', name: 'Granja Sitio 1', count: 'Postas, rep-gestacion y maternidad', total: 8, color: '#EC4899' },
+            { id: 'sitio-2', name: 'Granja Sitio 2', count: 'WIP to Finish', total: 6, color: '#A855F7' },
+            { id: 'sitio-3', name: 'Granja Sitio 3', count: 'Engorde de cerdos', total: 10, color: '#F59E0B' }
+        ]
+    },
+    processing: {
+        title: 'Procesamiento Porcino',
+        units: [
+            { id: 'ppc', name: 'Procesadora de Cerdos PPC', count: 'Plantas de procesamiento', total: 2, color: '#EF4444' },
+            { id: 'planta-rendimiento', name: 'Planta de Rendimiento', count: 'Subproductos', total: 1, color: '#78716C' }
+        ]
+    }
+};
+
+const commonUnits = {
+    soporte: {
+        title: 'Unidades Comunes / Soporte',
+        units: [
+            { id: 'lab-pecuarius', name: 'Lab. Pecuarius', count: '1 - Celaya, Guanajuato', total: 1, color: '#818CF8' },
+            { id: 'cedis', name: 'Centros de Distribucion CEDIS', count: 'Red nacional de distribucion', total: 12, color: '#2DD4BF' },
+            { id: 'taller-vehiculos', name: 'Taller de Vehiculos', count: 'Mantenimiento de flota', total: 5, color: '#A3A3A3' }
+        ]
+    }
+};
+
+// ====== MAP DATA ======
+const regions = {
+    'Obregon': { lat: 27.49, lng: -109.94, country: 'MX' },
+    'Hermosillo': { lat: 29.07, lng: -110.96, country: 'MX' },
+    'Culiacan': { lat: 24.81, lng: -107.39, country: 'MX' },
+    'Mochis': { lat: 25.79, lng: -108.99, country: 'MX' },
+    'Mexicali': { lat: 32.62, lng: -115.45, country: 'MX' },
+    'MTY': { lat: 25.67, lng: -100.31, country: 'MX' },
+    'Saltillo': { lat: 25.42, lng: -100.99, country: 'MX' },
+    'Torreon': { lat: 25.54, lng: -103.41, country: 'MX' },
+    'Bajio': { lat: 20.53, lng: -100.81, country: 'MX' },
+    'Celaya': { lat: 20.53, lng: -100.81, country: 'MX' },
+    'Merida': { lat: 20.97, lng: -89.59, country: 'MX' },
+    'Cuernavaca': { lat: 18.92, lng: -99.23, country: 'MX' },
+    'Coatza': { lat: 18.15, lng: -94.44, country: 'MX' },
+    'Olutea': { lat: 18.09, lng: -94.50, country: 'MX' },
+    'Veracruz': { lat: 19.17, lng: -96.13, country: 'MX' },
+    'Tuxpan': { lat: 20.96, lng: -97.40, country: 'MX' },
+    'Sureste': { lat: 16.75, lng: -93.12, country: 'MX' },
+    'Chiapas': { lat: 16.75, lng: -93.12, country: 'MX' },
+    'Occidente': { lat: 20.67, lng: -103.35, country: 'MX' },
+    'FortSmith': { lat: 35.39, lng: -94.40, country: 'US' },
+    'Heavener': { lat: 34.89, lng: -94.60, country: 'US' },
+    'Baldwin': { lat: 33.07, lng: -83.53, country: 'US' },
+    'Hermitage': { lat: 33.44, lng: -91.41, country: 'US' }
+};
+
+const facilityTypes = {
+    'engorde-pollo': { name: 'Engorde de Pollo', color: '#10B981', icon: 'EP' },
+    'crianza-reproductoras': { name: 'Crianza Reproductoras', color: '#F59E0B', icon: 'CR' },
+    'postura-reproductoras': { name: 'Postura Reproductoras', color: '#F97316', icon: 'PR' },
+    'incubadora-reproductoras': { name: 'Incubadora Reproductoras', color: '#8B5CF6', icon: 'IR' },
+    'crianza-progenitora': { name: 'Crianza Progenitora', color: '#EC4899', icon: 'CP' },
+    'postura-progenitora': { name: 'Postura Progenitora', color: '#F472B6', icon: 'PP' },
+    'incubadora-progenitora': { name: 'Incubadora Progenitora', color: '#A855F7', icon: 'IP' },
+    'crianza-ligera': { name: 'Crianza Ligera', color: '#38BDF8', icon: 'CL' },
+    'postura-ligera': { name: 'Postura Ligera', color: '#7DD3FC', icon: 'PL' },
+    'incubadora-ligera': { name: 'Incubadora Ligera', color: '#C084FC', icon: 'IL' },
+    'crianza-comercial': { name: 'Crianza Comercial', color: '#FBBF24', icon: 'CC' },
+    'postura-comercial': { name: 'Postura Comercial', color: '#FDE047', icon: 'PC' },
+    'cdh': { name: 'CDH', color: '#34D399', icon: 'CD' },
+    'tiendas': { name: 'Tiendas', color: '#14B8A6', icon: 'TI' },
+    'lab': { name: 'Lab Pecuarius', color: '#818CF8', icon: 'LP' },
+    'engorde-pollo-usa': { name: 'Engorde Pollo (USA)', color: '#059669', icon: 'EU' },
+    'reproductoras-crianza-usa': { name: 'Reproductoras Crianza (USA)', color: '#D97706', icon: 'RU' },
+    'reproductoras-postura-usa': { name: 'Reproductoras Postura (USA)', color: '#EA580C', icon: 'PU' }
+};
+
+// Distribution data: { facilityType: { region: count } }
+const distribution = {
+    'engorde-pollo': { Bajio: 142, Coatza: 24, Merida: 58, Culiacan: 44, Sureste: 49, Cuernavaca: 22, Hermosillo: 12, MTY: 15, Chiapas: 22, Veracruz: 32 },
+    'crianza-reproductoras': { Obregon: 11, Merida: 12, Saltillo: 14 },
+    'postura-reproductoras': { Obregon: 25, Merida: 24, Saltillo: 24 },
+    'incubadora-reproductoras': { Bajio: 3, Coatza: 1, Olutea: 1, Merida: 2, Culiacan: 1, Occidente: 2, Sureste: 2, Hermosillo: 1, MTY: 1, Torreon: 1 },
+    'crianza-progenitora': { Obregon: 2, Saltillo: 2, Merida: 3 },
+    'postura-progenitora': { Merida: 6, Obregon: 4, Saltillo: 4 },
+    'incubadora-progenitora': { Obregon: 1, Merida: 1, Saltillo: 1 },
+    'crianza-ligera': { Obregon: 1, Torreon: 1 },
+    'postura-ligera': { Obregon: 3, Torreon: 3 },
+    'incubadora-ligera': { Obregon: 1, Torreon: 1 },
+    'crianza-comercial': { Bajio: 3, Mexicali: 4, Torreon: 4, Obregon: 1, Merida: 5, Tuxpan: 3, Mochis: 1 },
+    'postura-comercial': { Bajio: 18, Mexicali: 19, Torreon: 39, Obregon: 7, Merida: 18, Tuxpan: 16, Mochis: 10 },
+    'cdh': { Mexicali: 7, Obregon: 2, Mochis: 2, Torreon: 2, Celaya: 1, Tuxpan: 4, Merida: 2 },
+    'tiendas': { Bajio: 8, Merida: 6, Culiacan: 5, MTY: 5, Torreon: 4, Obregon: 4, Mexicali: 3, Tuxpan: 3, Mochis: 3, Coatza: 2, Veracruz: 2 },
+    'lab': { Celaya: 1 },
+    'engorde-pollo-usa': { FortSmith: 121, Heavener: 66 },
+    'reproductoras-crianza-usa': { Baldwin: 22, Hermitage: 12, FortSmith: 14 },
+    'reproductoras-postura-usa': { Baldwin: 33, Hermitage: 24, FortSmith: 32 }
+};
+
+// ====== STATE ======
+let currentLevel = 1;
+let currentBizLine = null;
+let currentUnitType = null;
+let leafletMap = null;
+let markersGroup = null;
+let activeFilters = new Set();
+
+// ====== LEVEL 1 RENDER ======
+function renderLevel1() {
+    const grid = document.getElementById('biz-grid');
+    grid.innerHTML = businessLines.map((bl, i) => `
+        <div class="biz-card fade-in stagger-${i+1}" onclick="selectBusinessLine('${bl.id}')">
+            <div class="biz-card-icon">${bl.icon}</div>
+            <h3>${bl.name}</h3>
+            <p>${bl.desc}</p>
+            <div class="card-arrow">
+                <svg viewBox="0 0 24 24"><path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/></svg>
+            </div>
+        </div>
+    `).join('');
+
+    const coreRow = document.getElementById('core-processes');
+    coreRow.innerHTML = coreProcesses.map(p => `
+        <div class="process-chip"><strong>${p.code}</strong> - ${p.name}</div>
+    `).join('');
+
+    const boRow = document.getElementById('backoffice-processes');
+    boRow.innerHTML = backoffice.map(p => `
+        <div class="process-chip backoffice"><strong>${p.code}</strong> - ${p.name}</div>
+    `).join('');
+
+    const layers = document.getElementById('support-layers');
+    layers.innerHTML = supportLayers.map(l => `
+        <div class="arch-layer">
+            <div class="arch-layer-icon">${l.icon}</div>
+            <div class="arch-layer-title">${l.name}</div>
+        </div>
+    `).join('');
+}
+
+// ====== LEVEL 2 RENDER ======
+function renderLevel2(bizLineId) {
+    const content = document.getElementById('l2-content');
+    const titleEl = document.getElementById('l2-title');
+    const subtitleEl = document.getElementById('l2-subtitle');
+
+    const bl = businessLines.find(b => b.id === bizLineId);
+    titleEl.textContent = bl.name;
+    subtitleEl.textContent = 'UNIDADES OPERATIVAS // SELECCIONE UNA UNIDAD PARA VER EL MAPA';
+
+    let html = '';
+
+    if (bizLineId === 'procesos-avicola') {
+        // Produccion de Pollo
+        html += '<div class="unit-category"><div class="unit-category-title">Produccion de Pollo</div>';
+        html += '<div class="units-grid">';
+        avicolaUnits.polloProduction.units.forEach(u => {
+            html += renderUnitCard(u);
+        });
+        html += '</div></div>';
+
+        // Produccion de Huevo de Plato
+        html += '<div class="unit-category"><div class="unit-category-title">Produccion de Huevo de Plato</div>';
+        html += '<div class="units-grid">';
+        avicolaUnits.huevoProduction.units.forEach(u => {
+            html += renderUnitCard(u);
+        });
+        html += '</div></div>';
+
+        // Infraestructura y Servicios
+        html += '<div class="unit-category"><div class="unit-category-title">Infraestructura y Servicios</div>';
+        html += '<div class="units-grid">';
+        avicolaUnits.processing.units.forEach(u => {
+            html += renderUnitCard(u);
+        });
+        html += '</div></div>';
+
+        // Unidades Comunes / Soporte
+        html += '<div class="unit-category"><div class="unit-category-title">Unidades Comunes / Soporte</div>';
+        html += '<div class="units-grid">';
+        commonUnits.soporte.units.forEach(u => {
+            html += renderUnitCard(u);
+        });
+        html += '</div></div>';
+
+    } else if (bizLineId === 'procesos-porcinos') {
+        html += '<div class="unit-category"><div class="unit-category-title">Granjas Porcinas</div>';
+        html += '<div class="units-grid">';
+        porcinosUnits.granjas.units.forEach(u => {
+            html += renderUnitCard(u);
+        });
+        html += '</div></div>';
+
+        html += '<div class="unit-category"><div class="unit-category-title">Procesamiento Porcino</div>';
+        html += '<div class="units-grid">';
+        porcinosUnits.processing.units.forEach(u => {
+            html += renderUnitCard(u);
+        });
+        html += '</div></div>';
+
+        html += '<div class="unit-category"><div class="unit-category-title">Unidades Comunes / Soporte</div>';
+        html += '<div class="units-grid">';
+        commonUnits.soporte.units.forEach(u => {
+            html += renderUnitCard(u);
+        });
+        html += '</div></div>';
+
+    } else if (bizLineId === 'otros-negocios') {
+        html += '<div class="unit-category"><div class="unit-category-title">Otros Negocios</div>';
+        html += '<div class="units-grid">';
+        commonUnits.soporte.units.forEach(u => {
+            html += renderUnitCard(u);
+        });
+        avicolaUnits.processing.units.filter(u => u.id === 'tiendas').forEach(u => {
+            html += renderUnitCard(u);
+        });
+        html += '</div></div>';
+
+    } else if (bizLineId === 'alimentos-autoconsumo') {
+        html += '<div class="unit-category"><div class="unit-category-title">Plantas de Alimento para Autoconsumo</div>';
+        html += '<div class="units-grid">';
+        avicolaUnits.processing.units.filter(u => u.id === 'planta-autoconsumo' || u.id === 'silos').forEach(u => {
+            html += renderUnitCard(u);
+        });
+        html += '</div></div>';
+
+    } else if (bizLineId === 'alimentos-comerciales') {
+        html += '<div class="unit-category"><div class="unit-category-title">Plantas de Alimento Comercial</div>';
+        html += '<div class="units-grid">';
+        avicolaUnits.processing.units.filter(u => u.id === 'planta-comercial' || u.id === 'silos').forEach(u => {
+            html += renderUnitCard(u);
+        });
+        html += '</div></div>';
+
+    } else if (bizLineId === 'productos-valor-agregado') {
+        html += '<div class="unit-category"><div class="unit-category-title">Plantas de Valor Agregado y Cadena de Frio</div>';
+        html += '<div class="units-grid">';
+        avicolaUnits.processing.units.filter(u => u.id === 'pva' || u.id === 'congeladoras').forEach(u => {
+            html += renderUnitCard(u);
+        });
+        html += '</div></div>';
+
+    } else {
+        html = '<div style="text-align:center; padding:60px 0;"><div style="font-size:20px; font-weight:600; color:var(--t1);">' + bl.name + '</div><div style="font-family:IBM Plex Mono,monospace; font-size:11px; color:var(--t2); margin-top:8px;">Unidades operativas en desarrollo.</div></div>';
+    }
+
+    content.innerHTML = html;
+}
+
+function renderUnitCard(u) {
+    const bgColor = u.color + '15';
+    const borderColor = u.color + '40';
+    return `
+        <div class="unit-card fade-in" onclick="selectUnitType('${u.id}', '${u.name}')">
+            <div class="unit-card-top">
+                <div class="unit-icon" style="background:${bgColor}; border:1px solid ${borderColor};">
+                    <svg viewBox="0 0 24 24" style="fill:${u.color}; width:18px; height:18px;">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                    </svg>
+                </div>
+                <h4>${u.name}</h4>
+            </div>
+            <div class="unit-count">${u.count}</div>
+            ${u.total > 0 ? `<div class="unit-badge">${u.total}</div>` : ''}
+        </div>
+    `;
+}
+
+// ====== LEVEL 3 RENDER ======
+function renderLevel3(unitTypeId, unitName) {
+    // Render KPIs
+    const totalMX = Object.values(distribution).reduce((sum, dist) => {
+        return sum + Object.entries(dist).reduce((s, [region, count]) => {
+            return s + (regions[region] && regions[region].country === 'MX' ? count : 0);
+        }, 0);
+    }, 0);
+
+    const totalUSA = Object.values(distribution).reduce((sum, dist) => {
+        return sum + Object.entries(dist).reduce((s, [region, count]) => {
+            return s + (regions[region] && regions[region].country === 'US' ? count : 0);
+        }, 0);
+    }, 0);
+
+    const totalTypes = Object.keys(facilityTypes).length;
+    const totalRegions = Object.keys(regions).length;
+
+    document.getElementById('kpi-grid').innerHTML = `
+        <div class="kpi-item"><div class="kpi-value">${totalMX}</div><div class="kpi-label">Instalaciones MX</div></div>
+        <div class="kpi-item"><div class="kpi-value orange">${totalUSA}</div><div class="kpi-label">Instalaciones USA</div></div>
+        <div class="kpi-item"><div class="kpi-value green">${totalTypes}</div><div class="kpi-label">Tipos de Unidad</div></div>
+        <div class="kpi-item"><div class="kpi-value purple">${totalRegions}</div><div class="kpi-label">Regiones</div></div>
+    `;
+
+    // Render filter list
+    const filterList = document.getElementById('filter-list');
+    filterList.innerHTML = Object.entries(facilityTypes).map(([key, ft]) => {
+        const total = distribution[key] ? Object.values(distribution[key]).reduce((a, b) => a + b, 0) : 0;
+        return `
+            <div class="filter-item active" data-type="${key}" onclick="toggleMapFilter('${key}', this)">
+                <div class="filter-dot" style="background:${ft.color}"></div>
+                <span>${ft.name}</span>
+                <span class="filter-count">${total}</span>
+            </div>
+        `;
+    }).join('');
+
+    // Render top filter bar
+    const bar = document.getElementById('map-filter-bar');
+    bar.innerHTML = `
+        <button class="map-filter-btn active" onclick="filterAll(this)">TODOS</button>
+        <button class="map-filter-btn" onclick="filterCategory('pollo', this)">POLLO</button>
+        <button class="map-filter-btn" onclick="filterCategory('huevo', this)">HUEVO</button>
+        <button class="map-filter-btn" onclick="filterCategory('usa', this)">USA</button>
+        <button class="map-filter-btn" onclick="filterCategory('infraestructura', this)">INFRAESTRUCTURA</button>
+    `;
+
+    // Initialize map
+    setTimeout(() => initMap(), 100);
+}
+
+function initMap() {
+    if (leafletMap) {
+        leafletMap.remove();
+        leafletMap = null;
+    }
+
+    leafletMap = L.map('map', {
+        center: [24.0, -102.0],
+        zoom: 5,
+        zoomControl: true,
+        attributionControl: false
+    });
+
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        subdomains: 'abcd',
+        maxZoom: 19
+    }).addTo(leafletMap);
+
+    activeFilters = new Set(Object.keys(facilityTypes));
+    renderMarkers();
+
+    // Ensure map renders correctly after container is visible
+    setTimeout(() => leafletMap.invalidateSize(), 300);
+}
+
+function renderMarkers() {
+    if (markersGroup) {
+        leafletMap.removeLayer(markersGroup);
+    }
+
+    markersGroup = L.markerClusterGroup({
+        maxClusterRadius: 40,
+        spiderfyOnMaxZoom: true,
+        showCoverageOnHover: false,
+        iconCreateFunction: function(cluster) {
+            const count = cluster.getChildCount();
+            let size = count < 20 ? 'small' : count < 100 ? 'medium' : 'large';
+            return L.divIcon({
+                html: '<div>' + count + '</div>',
+                className: 'marker-cluster marker-cluster-' + size,
+                iconSize: L.point(40, 40)
+            });
+        }
+    });
+
+    // Aggregate data by region
+    const regionData = {};
+
+    Object.entries(distribution).forEach(([typeKey, regionDist]) => {
+        if (!activeFilters.has(typeKey)) return;
+
+        Object.entries(regionDist).forEach(([regionKey, count]) => {
+            if (!regions[regionKey]) return;
+            if (!regionData[regionKey]) {
+                regionData[regionKey] = { facilities: {}, total: 0 };
+            }
+            regionData[regionKey].facilities[typeKey] = (regionData[regionKey].facilities[typeKey] || 0) + count;
+            regionData[regionKey].total += count;
+        });
+    });
+
+    Object.entries(regionData).forEach(([regionKey, data]) => {
+        const reg = regions[regionKey];
+        if (!reg) return;
+
+        // Determine dominant type for color
+        let maxType = '';
+        let maxCount = 0;
+        Object.entries(data.facilities).forEach(([type, count]) => {
+            if (count > maxCount) { maxCount = count; maxType = type; }
+        });
+
+        const color = facilityTypes[maxType] ? facilityTypes[maxType].color : '#00C8F0';
+        const countryLabel = reg.country === 'US' ? ' (USA)' : '';
+        const regionName = regionKey + countryLabel;
+
+        // Create individual markers per facility type at slight offsets
+        let offsetIndex = 0;
+        Object.entries(data.facilities).forEach(([typeKey, count]) => {
+            const ft = facilityTypes[typeKey];
+            if (!ft) return;
+
+            const offset = offsetIndex * 0.02;
+            offsetIndex++;
+
+            const icon = L.divIcon({
+                className: '',
+                html: `<div style="
+                    width:28px; height:28px;
+                    background:${ft.color};
+                    border:2px solid rgba(255,255,255,0.3);
+                    border-radius:50%;
+                    display:flex; align-items:center; justify-content:center;
+                    font-family:'IBM Plex Mono',monospace;
+                    font-size:8px; font-weight:700; color:#fff;
+                    box-shadow:0 2px 8px ${ft.color}60;
+                ">${ft.icon}</div>`,
+                iconSize: [28, 28],
+                iconAnchor: [14, 14]
+            });
+
+            const marker = L.marker([reg.lat + offset, reg.lng + offset], { icon });
+
+            // Build popup
+            let popupHtml = `<div class="popup-title">${regionName}</div>`;
+            Object.entries(data.facilities).forEach(([tk, tc]) => {
+                const ftn = facilityTypes[tk];
+                if (ftn) {
+                    popupHtml += `<div class="popup-row"><span>${ftn.name}</span><span>${tc}</span></div>`;
+                }
+            });
+            popupHtml += `<a class="popup-btn" href="avicola-DT-v2.html?type=${typeKey}&region=${regionKey}" target="_blank">Abrir Gemelo Digital</a>`;
+
+            marker.bindPopup(popupHtml, { maxWidth: 280 });
+            markersGroup.addLayer(marker);
+        });
+    });
+
+    leafletMap.addLayer(markersGroup);
+}
+
+function toggleMapFilter(typeKey, el) {
+    if (activeFilters.has(typeKey)) {
+        activeFilters.delete(typeKey);
+        el.classList.remove('active');
+        el.style.opacity = '0.4';
+    } else {
+        activeFilters.add(typeKey);
+        el.classList.add('active');
+        el.style.opacity = '1';
+    }
+    renderMarkers();
+}
+
+function filterAll(btn) {
+    document.querySelectorAll('.map-filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeFilters = new Set(Object.keys(facilityTypes));
+    document.querySelectorAll('.filter-item').forEach(el => {
+        el.classList.add('active');
+        el.style.opacity = '1';
+    });
+    renderMarkers();
+}
+
+function filterCategory(cat, btn) {
+    document.querySelectorAll('.map-filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+
+    const catMap = {
+        pollo: ['engorde-pollo', 'crianza-reproductoras', 'postura-reproductoras', 'incubadora-reproductoras', 'crianza-progenitora', 'postura-progenitora', 'incubadora-progenitora'],
+        huevo: ['crianza-ligera', 'postura-ligera', 'incubadora-ligera', 'crianza-comercial', 'postura-comercial', 'cdh'],
+        usa: ['engorde-pollo-usa', 'reproductoras-crianza-usa', 'reproductoras-postura-usa'],
+        infraestructura: ['tiendas', 'lab']
+    };
+
+    const allowed = new Set(catMap[cat] || []);
+    activeFilters = allowed;
+
+    document.querySelectorAll('.filter-item').forEach(el => {
+        const type = el.dataset.type;
+        if (allowed.has(type)) {
+            el.classList.add('active');
+            el.style.opacity = '1';
+        } else {
+            el.classList.remove('active');
+            el.style.opacity = '0.4';
+        }
+    });
+
+    renderMarkers();
+
+    // Zoom to relevant area
+    if (cat === 'usa') {
+        leafletMap.setView([34.5, -90.0], 5);
+    } else {
+        leafletMap.setView([24.0, -102.0], 5);
+    }
+}
+
+// ====== NAVIGATION ======
+function goToLevel(level) {
+    // Hide all levels immediately
+    document.querySelectorAll('.level-view').forEach(v => {
+        v.classList.remove('active', 'visible');
+        v.style.display = 'none';
+        v.style.opacity = '0';
+    });
+
+    // Show target level
+    const view = document.getElementById('level-' + level);
+    view.style.display = 'block';
+    // Force reflow then animate
+    void view.offsetHeight;
+    view.style.opacity = '1';
+
+    // Invalidate map size when switching to Level 3
+    if (level === 3 && leafletMap) {
+        setTimeout(() => leafletMap.invalidateSize(), 300);
+    }
+
+    currentLevel = level;
+    updateBreadcrumb();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function selectBusinessLine(id) {
+    currentBizLine = id;
+    renderLevel2(id);
+    goToLevel(2);
+}
+
+function selectUnitType(id, name) {
+    currentUnitType = { id, name };
+    renderLevel3(id, name);
+    goToLevel(3);
+}
+
+function updateBreadcrumb() {
+    const bcL1 = document.getElementById('bc-l1');
+    const bcSep1 = document.getElementById('bc-sep1');
+    const bcL2 = document.getElementById('bc-l2');
+    const bcSep2 = document.getElementById('bc-sep2');
+    const bcL3 = document.getElementById('bc-l3');
+
+    bcL1.classList.toggle('active', currentLevel === 1);
+
+    if (currentLevel >= 2 && currentBizLine) {
+        const bl = businessLines.find(b => b.id === currentBizLine);
+        bcSep1.style.display = 'inline';
+        bcL2.style.display = 'inline';
+        bcL2.textContent = bl ? bl.name : '';
+        bcL2.classList.toggle('active', currentLevel === 2);
+        bcL2.onclick = () => goToLevel(2);
+    } else {
+        bcSep1.style.display = 'none';
+        bcL2.style.display = 'none';
+    }
+
+    if (currentLevel >= 3 && currentUnitType) {
+        bcSep2.style.display = 'inline';
+        bcL3.style.display = 'inline';
+        bcL3.textContent = currentUnitType.name;
+        bcL3.classList.add('active');
+    } else {
+        bcSep2.style.display = 'none';
+        bcL3.style.display = 'none';
+    }
+}
+
+// ====== NATIONAL MAP (Level 1) ======
+var nationalMap = null;
+var nationalMarkers = null;
+var nationalActiveFilters = new Set(['all']);
+
+function initNationalMap() {
+    if (nationalMap) return;
+    var container = document.getElementById('national-map');
+    if (!container) return;
+
+    nationalMap = L.map('national-map', {
+        center: [28.0, -99.0],
+        zoom: 4,
+        minZoom: 3,
+        maxZoom: 12,
+        zoomControl: true
+    });
+
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        subdomains: 'abcd', maxZoom: 19,
+        attribution: ''
+    }).addTo(nationalMap);
+
+    nationalMarkers = L.layerGroup();
+
+    renderNationalMarkers('all');
+    nationalMap.addLayer(nationalMarkers);
+    renderNationalFilters();
+    renderNationalLegend();
+
+    setTimeout(function(){ nationalMap.invalidateSize(); }, 200);
+}
+
+function renderNationalMarkers(filter) {
+    nationalMarkers.clearLayers();
+
+    // Aggregate by region first
+    var regionAgg = {};
+    Object.entries(distribution).forEach(function([typeKey, regionDist]) {
+        var ft = facilityTypes[typeKey];
+        if (!ft) return;
+        if (filter !== 'all') {
+            var category = getTypeCategory(typeKey);
+            if (category !== filter) return;
+        }
+        Object.entries(regionDist).forEach(function([regionKey, count]) {
+            if (!regions[regionKey]) return;
+            if (!regionAgg[regionKey]) regionAgg[regionKey] = { total: 0, types: {} };
+            regionAgg[regionKey].total += count;
+            if (!regionAgg[regionKey].types[typeKey]) regionAgg[regionKey].types[typeKey] = 0;
+            regionAgg[regionKey].types[typeKey] += count;
+        });
+    });
+
+    // One marker per region
+    Object.entries(regionAgg).forEach(function([regionKey, data]) {
+        var reg = regions[regionKey];
+        if (!reg) return;
+
+        // Find dominant color
+        var maxType = '', maxCount = 0;
+        Object.entries(data.types).forEach(function([tk, tc]) {
+            if (tc > maxCount) { maxCount = tc; maxType = tk; }
+        });
+        var color = facilityTypes[maxType] ? facilityTypes[maxType].color : '#FF5500';
+        var size = data.total > 100 ? 42 : data.total > 30 ? 34 : 26;
+
+        var icon = L.divIcon({
+            html: '<div style="background:' + color + 'DD;color:#fff;border-radius:50%;width:' + size + 'px;height:' + size + 'px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:' + (size > 34 ? 13 : 10) + 'px;font-family:IBM Plex Mono,monospace;border:2px solid rgba(255,255,255,0.3);box-shadow:0 0 12px ' + color + '66;">' + data.total + '</div>',
+            className: '', iconSize: [size, size], iconAnchor: [size/2, size/2]
+        });
+
+        var marker = L.marker([reg.lat, reg.lng], { icon: icon });
+
+        // Build popup
+        var popupHtml = '<div style="font-family:Barlow,sans-serif;min-width:200px;">' +
+            '<div style="font-weight:700;font-size:15px;margin-bottom:2px;">' + regionKey + '</div>' +
+            '<div style="font-size:11px;color:#999;margin-bottom:8px;">' + (reg.country === 'US' ? 'Estados Unidos' : 'Mexico') + ' -- ' + data.total + ' instalaciones</div>';
+
+        Object.entries(data.types).forEach(function([tk, tc]) {
+            var ft = facilityTypes[tk];
+            if (!ft) return;
+            popupHtml += '<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;">' +
+                '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:' + ft.color + ';flex-shrink:0;"></span>' +
+                '<span style="font-size:11px;">' + ft.name + ': <b>' + tc + '</b></span></div>';
+        });
+
+        popupHtml += '<a href="avicola-DT-v2.html?region=' + encodeURIComponent(regionKey) + '" style="display:inline-block;margin-top:8px;padding:5px 14px;background:#FF5500;color:#fff;border-radius:4px;text-decoration:none;font-size:11px;font-weight:600;">Abrir Gemelo Digital</a></div>';
+
+        marker.bindPopup(popupHtml, { maxWidth: 300 });
+        nationalMarkers.addLayer(marker);
+    });
+}
+
+function getTypeCategory(typeKey) {
+    if (typeKey.includes('usa')) return 'usa';
+    if (typeKey.includes('engorde') || typeKey.includes('progenitora') || typeKey.includes('reproductora') && !typeKey.includes('usa')) return 'pollo';
+    if (typeKey.includes('ligera') || typeKey.includes('comercial') || typeKey === 'cdh') return 'huevo';
+    if (typeKey === 'tiendas' || typeKey === 'lab') return 'infra';
+    return 'pollo';
+}
+
+function filterNationalMap(category, el) {
+    document.querySelectorAll('#national-map-filters .nmf-btn').forEach(function(b){ b.classList.remove('active'); });
+    el.classList.add('active');
+    renderNationalMarkers(category);
+    nationalMap.addLayer(nationalMarkers);
+}
+
+function renderNationalFilters() {
+    var filters = [
+        { id: 'all', label: 'Todas las Instalaciones' },
+        { id: 'pollo', label: 'Produccion de Pollo' },
+        { id: 'huevo', label: 'Huevo de Plato' },
+        { id: 'usa', label: 'Operaciones USA' },
+        { id: 'infra', label: 'Infraestructura' }
+    ];
+    var html = '';
+    filters.forEach(function(f, i) {
+        html += '<button class="nmf-btn' + (i === 0 ? ' active' : '') + '" onclick="filterNationalMap(\'' + f.id + '\', this)" style="padding:6px 14px;border:1px solid rgba(0,200,240,0.2);background:' + (i === 0 ? 'rgba(255,85,0,0.15)' : 'rgba(0,200,240,0.05)') + ';color:' + (i === 0 ? '#FF5500' : 'var(--t1)') + ';border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;font-family:Barlow,sans-serif;transition:all .15s;">' + f.label + '</button>';
+    });
+    document.getElementById('national-map-filters').innerHTML = html;
+}
+
+function renderNationalLegend() {
+    var types = ['engorde-pollo', 'crianza-reproductoras', 'postura-reproductoras', 'incubadora-reproductoras', 'postura-comercial', 'crianza-comercial', 'cdh', 'tiendas', 'engorde-pollo-usa'];
+    var html = '';
+    types.forEach(function(t) {
+        var ft = facilityTypes[t];
+        if (!ft) return;
+        html += '<div style="display:flex;align-items:center;gap:4px;"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:' + ft.color + ';"></span><span style="color:var(--t1);">' + ft.name + '</span></div>';
+    });
+    document.getElementById('national-map-legend').innerHTML = html;
+}
+
+// ====== INIT ======
+renderLevel1();
+updateBreadcrumb();
+
+// Init national map after a small delay to let DOM settle
+setTimeout(initNationalMap, 500);
+</script>
+</body>
+</html>

@@ -9,12 +9,12 @@
 *{box-sizing:border-box;margin:0;padding:0;}
 :root{--bg:#060D18;--s1:#0A1420;--or:#FF5500;--cy:#00C8F0;--gr:#10D858;--t0:#E8F4FF;--t1:#7AAAC8;--t2:#3A607A;}
 html,body{height:100%;background:var(--bg);color:var(--t0);font-family:'Space Grotesk',sans-serif;}
-body{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;text-align:center;}
+body{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:40px 20px;text-align:center;overflow-y:auto;}
 .logo{width:64px;height:64px;background:var(--or);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:900;color:#fff;margin:0 auto 20px;letter-spacing:-1px;}
 h1{font-size:28px;font-weight:700;letter-spacing:-.5px;margin-bottom:6px;}
 .sub{font-size:13px;color:var(--t1);margin-bottom:40px;}
-.cards{display:flex;gap:20px;flex-wrap:wrap;justify-content:center;max-width:700px;margin-bottom:40px;}
-.card{flex:1;min-width:260px;max-width:320px;background:var(--s1);border:1px solid rgba(255,255,255,.06);border-radius:14px;padding:28px 24px;text-align:left;transition:border-color .2s,transform .2s;cursor:pointer;text-decoration:none;color:inherit;display:block;}
+.cards{display:flex;gap:20px;flex-wrap:wrap;justify-content:center;max-width:1100px;margin-bottom:40px;}
+.card{flex:1;min-width:240px;max-width:280px;background:var(--s1);border:1px solid rgba(255,255,255,.06);border-radius:14px;padding:28px 24px;text-align:left;transition:border-color .2s,transform .2s;cursor:pointer;text-decoration:none;color:inherit;display:block;}
 .card:hover{border-color:rgba(255,85,0,.3);transform:translateY(-3px);}
 .card-icon{font-size:36px;margin-bottom:14px;}
 .card-title{font-size:18px;font-weight:700;margin-bottom:6px;}
@@ -22,33 +22,63 @@ h1{font-size:28px;font-weight:700;letter-spacing:-.5px;margin-bottom:6px;}
 .card-tag{display:inline-block;font-size:9px;font-weight:700;letter-spacing:1px;padding:3px 8px;border-radius:4px;margin-top:14px;}
 .tag-mobile{background:rgba(42,171,238,.1);color:#2AABEE;border:1px solid rgba(42,171,238,.2);}
 .tag-desktop{background:rgba(255,85,0,.1);color:var(--or);border:1px solid rgba(255,85,0,.2);}
-.hint{max-width:500px;background:rgba(16,216,88,.06);border:1px solid rgba(16,216,88,.15);border-radius:10px;padding:14px 20px;font-size:12px;color:var(--gr);line-height:1.6;}
+.hint{max-width:600px;background:rgba(16,216,88,.06);border:1px solid rgba(16,216,88,.15);border-radius:10px;padding:14px 20px;font-size:12px;color:var(--gr);line-height:1.6;}
 .hint strong{color:#fff;}
 .footer{margin-top:40px;font-size:10px;color:var(--t2);letter-spacing:.5px;}
 </style>
 </head>
 <body>
-<div class="logo">EY</div>
+<div class="logo" style="background:none;width:auto;height:auto"><img src="ey-logo.svg" alt="EY" width="120" height="70" style="display:block"></div>
 <h1>Digital Twin Demo</h1>
 <div class="sub">CREAS &middot; Capital Projects, Risk, Engineering, Analytics &amp; Solutions</div>
 
 <div class="cards">
-  <a class="card" href="demo-desktop.html" target="_blank">
-    <div class="card-icon">🖥</div>
+  <a class="card" href="avicola-DT.html" target="_blank">
+    <div class="card-icon" style="font-size:28px;font-weight:900;color:var(--or);font-family:monospace">DT</div>
     <div class="card-title">Dashboard Desktop</div>
     <div class="card-desc">Vista 3D de la granja, monitoreo IoT en tiempo real, integraciones SAP, CCTV con IA, simulaciones y analytics.</div>
-    <div class="card-tag tag-desktop">SUPERVISOR / GERENCIA</div>
+    <div class="card-tag tag-desktop">AVICOLA · SUPERVISOR</div>
   </a>
-  <a class="card" href="demo-mobile.html" target="_blank">
-    <div class="card-icon">📱</div>
+  <a class="card" href="avicola-mobile.html" target="_blank">
+    <div class="card-icon" style="font-size:28px;font-weight:900;color:#2AABEE;font-family:monospace">APP</div>
     <div class="card-title">App Mobile</div>
     <div class="card-desc">Rondas de campo, escaneo QR de activos, alertas operativas, chat con equipo y notificaciones Telegram.</div>
-    <div class="card-tag tag-mobile">TECNICO DE CAMPO</div>
+    <div class="card-tag tag-mobile">AVICOLA · TECNICO</div>
+  </a>
+  <a class="card" href="tequilera-DT.html" target="_blank" style="border-color:rgba(184,115,51,.2);">
+    <div class="card-icon" style="font-size:28px;font-weight:900;color:#b87333;font-family:monospace">TEQ</div>
+    <div class="card-title">Tequilera Digital Twin</div>
+    <div class="card-desc">Gemelo digital industrial con 6 capas: 3D detallado, SAP S/4HANA + APM + DM, ACC con P&IDs y fichas tecnicas, IoT y O&M.</div>
+    <div class="card-tag" style="background:rgba(184,115,51,.1);color:#b87333;border:1px solid rgba(184,115,51,.2);">TEQUILERA · ENTERPRISE</div>
+  </a>
+  <a class="card" href="fulfillment-DT.html" target="_blank" style="border-color:rgba(0,120,255,.2);">
+    <div class="card-icon" style="font-size:28px;font-weight:900;color:#0078FF;font-family:monospace">FC</div>
+    <div class="card-title">Fulfillment Center Twin</div>
+    <div class="card-desc">Nave 85,000 m², 12 zonas, racks, conveyors, crossbelt sorter, ASRS, SAP EWM, ACC, PCI, HVAC, IT/OT, edge DC y simulacion.</div>
+    <div class="card-tag" style="background:rgba(0,120,255,.1);color:#0078FF;border:1px solid rgba(0,120,255,.2);">FULFILLMENT · ENTERPRISE</div>
+  </a>
+  <a class="card" href="estacion-compresora-DT.html" target="_blank" style="border-color:rgba(0,200,240,.2);">
+    <div class="card-icon" style="font-size:28px;font-weight:900;color:#00C8F0;font-family:monospace">CS</div>
+    <div class="card-title">Estación Compresora Gas</div>
+    <div class="card-desc">Estación compresora de transmisión: 2 trenes centrífugos, scrubbers, gas coolers, fuel gas, lube oil, seal gas, SCADA, blowdown, F&G. SAP, ACC, Tandem, anomalía predictiva.</div>
+    <div class="card-tag" style="background:rgba(0,200,240,.1);color:#00C8F0;border:1px solid rgba(0,200,240,.2);">COMPRESORA · ENTERPRISE</div>
+  </a>
+  <a class="card" href="gas-hub.html" target="_blank" style="border-color:rgba(240,160,0,.3);flex:1;min-width:520px;max-width:600px;background:linear-gradient(135deg,#0A1420 0%,#0f1d2e 100%);">
+    <div class="card-icon" style="font-size:28px;font-weight:900;color:#F0A000;font-family:monospace">GAS</div>
+    <div class="card-title" style="font-size:20px;">Plataforma Nacional de Gemelos Digitales</div>
+    <div class="card-desc">33 plantas en Mexico: TAS (Gas LP), GNC, LNG, Ductos y Fotovoltaico. Mapa interactivo, dashboard global, 5 gemelos digitales 3D, IoT, SAP, ACC y Tandem.</div>
+    <div style="display:flex;gap:6px;margin-top:12px;flex-wrap:wrap;">
+      <span class="card-tag" style="background:rgba(240,160,0,.1);color:#F0A000;border:1px solid rgba(240,160,0,.2);">TAS · 10</span>
+      <span class="card-tag" style="background:rgba(0,200,240,.1);color:#00C8F0;border:1px solid rgba(0,200,240,.2);">GNC · 8</span>
+      <span class="card-tag" style="background:rgba(255,85,0,.1);color:#FF5500;border:1px solid rgba(255,85,0,.2);">LNG · 5</span>
+      <span class="card-tag" style="background:rgba(122,170,200,.1);color:#7AAAC8;border:1px solid rgba(122,170,200,.2);">DUCTOS · 4</span>
+      <span class="card-tag" style="background:rgba(16,216,88,.1);color:#10D858;border:1px solid rgba(16,216,88,.2);">FV · 6</span>
+    </div>
   </a>
 </div>
 
 <div class="hint">
-  <strong>Conexion en tiempo real:</strong> Abre ambas aplicaciones en pestanas separadas del mismo navegador. Los datos capturados en Mobile (rondas, alertas) apareceran automaticamente en el Dashboard Desktop.
+  <strong>Demos interactivas:</strong> Cada proyecto incluye modelo 3D navegable, integracion con SAP, datos IoT simulados en tiempo real y dashboards operativos. El demo avicola incluye conexion mobile-desktop en tiempo real.
 </div>
 
 <div class="footer">EY CREAS &middot; DEMO &middot; DATOS SIMULADOS</div>

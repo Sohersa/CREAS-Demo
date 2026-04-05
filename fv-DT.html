@@ -1,0 +1,2713 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Digital Twin | Planta Solar FV-SON-01</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#060D18;--s1:#0A1420;--s2:#111E2E;--s3:#182838;
+  --or:#FF5500;--cy:#00C8F0;--gr:#10D858;--re:#E02020;--ye:#F0A000;
+  --t0:#E8F4FF;--t1:#7AAAC8;--t2:#3A607A;--t3:#253A50;
+  --border:rgba(255,255,255,.06);--border2:rgba(255,255,255,.1);
+  --solar:#F0A000;--solar2:#FFB833;--solar-dim:rgba(240,160,0,.15);
+  --panel:#1a2744;--panel2:#243458;
+  --cy-dim:rgba(0,200,240,.12);--gr-dim:rgba(16,216,88,.12);
+  --re-dim:rgba(224,32,32,.15);--ye-dim:rgba(240,160,0,.12);--or-dim:rgba(255,85,0,.12);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--t0);font-family:'Space Grotesk',sans-serif}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+/* HEADER */
+#header{
+  height:52px;background:var(--s1);border-bottom:1px solid var(--border2);
+  display:flex;align-items:center;padding:0 20px;gap:14px;flex-shrink:0;
+  position:relative;z-index:100;
+}
+.h-logo{
+  width:34px;height:34px;background:var(--or);border-radius:7px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;font-weight:900;color:#fff;letter-spacing:-.5px;flex-shrink:0;
+}
+.h-sep{width:1px;height:24px;background:var(--border2)}
+.h-plant{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--t1)}
+.h-plant b{color:var(--solar);font-weight:600}
+.h-status{display:flex;align-items:center;gap:6px;margin-left:auto}
+.h-dot{width:7px;height:7px;border-radius:50%;background:var(--gr);box-shadow:0 0 8px var(--gr);animation:pd 2s infinite}
+@keyframes pd{0%,100%{opacity:1}50%{opacity:.4}}
+.h-status-txt{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--gr)}
+.h-time{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--t2)}
+.demo-badge{
+  background:var(--re);color:#fff;font-family:'Space Grotesk',sans-serif;
+  font-size:9px;font-weight:700;letter-spacing:.12em;padding:2px 8px;border-radius:3px;
+}
+.h-btn{
+  background:var(--s2);border:1px solid var(--border2);border-radius:6px;
+  padding:6px 12px;color:var(--t1);cursor:pointer;font-size:12px;
+  font-family:'Space Grotesk',sans-serif;font-weight:500;
+  display:flex;align-items:center;gap:6px;transition:all .2s;text-decoration:none;
+}
+.h-btn:hover{background:var(--s3);color:var(--solar);border-color:var(--solar)}
+.h-alert-cnt{
+  background:var(--re);color:#fff;font-size:9px;font-weight:700;
+  padding:1px 5px;border-radius:8px;font-family:'IBM Plex Mono',monospace;
+}
+
+/* LAYOUT */
+#app{display:flex;height:calc(100vh - 52px);overflow:hidden}
+
+/* LEFT SIDEBAR */
+#sidebar-left{
+  width:280px;flex-shrink:0;background:var(--s1);
+  border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;
+}
+.sl-section{padding:12px 16px 8px;border-bottom:1px solid var(--border)}
+.sl-label{
+  font-family:'Space Grotesk',sans-serif;font-size:10px;font-weight:600;
+  letter-spacing:.15em;color:var(--t2);text-transform:uppercase;margin-bottom:8px;
+}
+
+/* Asset items */
+.asset-item{
+  display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:6px;
+  cursor:pointer;transition:all .2s;margin-bottom:2px;border:1px solid transparent;
+}
+.asset-item:hover{background:var(--s2)}
+.asset-item.active{background:var(--solar-dim);border-color:rgba(240,160,0,.3)}
+.ai-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.ai-dot.ok{background:var(--gr);box-shadow:0 0 5px var(--gr)}
+.ai-dot.warn{background:var(--ye);box-shadow:0 0 5px var(--ye);animation:pd 1.5s infinite}
+.ai-dot.crit{background:var(--re);box-shadow:0 0 5px var(--re);animation:pd .8s infinite}
+.ai-info{flex:1;min-width:0}
+.ai-name{font-size:12px;font-weight:600;color:var(--t0)}
+.ai-sub{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--t2)}
+
+/* KPI cards */
+.kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:10px 16px}
+.kpi-card{background:var(--s2);border-radius:7px;padding:8px 10px;border:1px solid var(--border)}
+.kpi-val{font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:700;color:var(--solar);line-height:1}
+.kpi-unit{font-family:'IBM Plex Mono',monospace;font-size:8px;color:var(--t2);margin-left:2px}
+.kpi-lbl{font-size:10px;color:var(--t1);margin-top:3px}
+.kpi-val.cyan{color:var(--cy)}.kpi-val.green{color:var(--gr)}.kpi-val.red{color:var(--re)}
+
+/* Asset list scroll */
+.asset-list{flex:1;overflow-y:auto;padding:8px 16px}
+.asset-group-label{
+  font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;
+  letter-spacing:.1em;color:var(--t2);margin:10px 0 4px;text-transform:uppercase;
+}
+
+/* CENTER */
+#center{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
+
+/* TABS */
+#tabs{
+  display:flex;gap:0;padding:0 16px;border-bottom:1px solid var(--border);
+  background:var(--s1);flex-shrink:0;overflow-x:auto;
+}
+.tab{
+  font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:600;
+  letter-spacing:.04em;padding:11px 14px;cursor:pointer;
+  color:var(--t2);border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap;
+}
+.tab:hover{color:var(--t1)}
+.tab.active{color:var(--solar);border-bottom-color:var(--solar)}
+
+/* VIEWS */
+.view{flex:1;overflow:hidden;position:relative;display:none!important}
+.view.active{display:flex!important;flex-direction:column}
+#view-3d{position:relative}
+#view-3d canvas{width:100%!important;height:100%!important;display:block}
+
+/* 3D overlay toggles */
+.overlay-controls{
+  position:absolute;top:10px;left:10px;display:flex;flex-direction:column;gap:4px;z-index:10;
+}
+.sys-toggle{
+  display:flex;align-items:center;gap:6px;padding:5px 10px;
+  background:rgba(10,20,32,.92);border:1px solid var(--border2);border-radius:5px;
+  cursor:pointer;transition:all .2s;font-size:10px;font-family:'Space Grotesk',sans-serif;
+  font-weight:600;color:var(--t1);backdrop-filter:blur(8px);
+}
+.sys-toggle:hover{border-color:var(--solar);color:var(--t0)}
+.sys-toggle.active{border-color:var(--solar);color:var(--solar);background:rgba(240,160,0,.08)}
+.sys-toggle .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+
+/* Equipment panel - RICH version */
+#equip-panel{
+  position:absolute;top:10px;right:10px;width:360px;
+  background:rgba(10,20,32,.97);border:1px solid var(--border2);border-radius:10px;
+  padding:0;display:none;overflow-y:auto;max-height:calc(100% - 20px);
+  backdrop-filter:blur(12px);z-index:10;
+}
+.ep-header{padding:14px 16px 10px;border-bottom:1px solid var(--border)}
+.ep-close{
+  position:absolute;top:8px;right:12px;cursor:pointer;color:var(--t2);
+  font-size:18px;background:none;border:none;
+}
+.ep-close:hover{color:var(--t0)}
+.ep-tag{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--solar);margin-bottom:2px}
+.ep-name{font-family:'Space Grotesk',sans-serif;font-size:16px;font-weight:700;margin-bottom:4px}
+.ep-conf{
+  display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:9px;
+  padding:2px 6px;border-radius:3px;margin-bottom:4px;
+}
+.ep-conf.gen{background:var(--solar-dim);color:var(--solar)}
+.ep-conf.dist{background:var(--cy-dim);color:var(--cy)}
+.ep-conf.prot{background:var(--re-dim);color:var(--re)}
+.ep-conf.ctrl{background:var(--gr-dim);color:var(--gr)}
+.ep-body{padding:10px 16px 14px}
+.ep-section{
+  font-family:'Space Grotesk',sans-serif;font-size:10px;font-weight:600;
+  letter-spacing:.1em;color:var(--t2);text-transform:uppercase;
+  margin:10px 0 5px;border-bottom:1px solid var(--border);padding-bottom:3px;
+}
+.ep-row{display:flex;justify-content:space-between;font-size:11px;padding:2px 0}
+.ep-row .k{color:var(--t1)}.ep-row .v{color:var(--t0);font-family:'IBM Plex Mono',monospace;font-size:10px}
+.ep-sensor{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:3px 7px;background:var(--s2);border-radius:3px;margin-bottom:2px;font-size:10px;
+}
+.ep-sensor .sn{color:var(--t1)}
+.ep-sensor .sv{font-family:'IBM Plex Mono',monospace;font-weight:600}
+.ep-sensor .sv.ok{color:var(--gr)}.ep-sensor .sv.warn{color:var(--ye)}.ep-sensor .sv.crit{color:var(--re)}
+.ep-btn{
+  width:100%;padding:7px;border-radius:5px;border:1px solid var(--solar);
+  background:transparent;color:var(--solar);font-family:'Space Grotesk',sans-serif;
+  font-size:11px;font-weight:600;cursor:pointer;margin-top:4px;transition:all .2s;
+}
+.ep-btn:hover{background:var(--solar);color:#fff}
+.ep-btn-row{display:flex;gap:6px;margin-top:6px}
+.ep-btn-row .ep-btn{flex:1}
+.ep-trend-canvas{width:100%;height:80px;border-radius:4px;background:var(--s2);margin-top:4px}
+.ep-qr{width:60px;height:60px;background:var(--s2);border-radius:4px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:8px;color:var(--t2)}
+.qr-container{display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px;background:rgba(10,20,32,.6);border-radius:6px;border:1px solid rgba(255,255,255,.06)}
+.qr-label{font-family:'IBM Plex Mono',monospace;font-size:9px;color:rgba(255,255,255,.4)}
+.ep-doc-item{
+  display:flex;align-items:center;gap:8px;padding:4px 7px;background:var(--s2);
+  border-radius:3px;margin-bottom:2px;font-size:10px;color:var(--t1);cursor:pointer;
+  transition:all .2s;
+}
+.ep-doc-item:hover{background:var(--s3);color:var(--t0)}
+.ep-wo-item{
+  display:flex;align-items:center;justify-content:space-between;padding:4px 7px;
+  background:var(--s2);border-radius:3px;margin-bottom:2px;font-size:10px;
+}
+
+/* DASHBOARD VIEWS */
+.dash-view{overflow-y:auto;padding:18px;gap:14px}
+.dash-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.dash-title{font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:700}
+.dash-sub{font-size:11px;color:var(--t1)}
+.dash-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:10px;margin-bottom:14px}
+.dk-card{background:var(--s1);border-radius:8px;padding:14px;border:1px solid var(--border)}
+.dk-val{font-family:'Space Grotesk',sans-serif;font-size:26px;font-weight:700}
+.dk-val.ok{color:var(--gr)}.dk-val.warn{color:var(--ye)}.dk-val.crit{color:var(--re)}
+.dk-val.info{color:var(--cy)}.dk-val.solar{color:var(--solar)}
+.dk-lbl{font-size:11px;color:var(--t1);margin-top:3px}
+.dk-sub{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--t2);margin-top:2px}
+
+.dash-section{
+  font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:700;
+  color:var(--t1);letter-spacing:.05em;margin:14px 0 8px;
+}
+.dash-grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.dash-grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.dash-card{background:var(--s1);border-radius:8px;padding:14px;border:1px solid var(--border)}
+.dash-card-title{font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:700;margin-bottom:8px}
+
+/* Tables */
+.dt-table{width:100%;border-collapse:collapse;font-size:11px}
+.dt-table th{
+  text-align:left;padding:7px 10px;font-family:'Space Grotesk',sans-serif;
+  font-size:10px;font-weight:600;color:var(--t2);letter-spacing:.08em;
+  text-transform:uppercase;border-bottom:1px solid var(--border);background:var(--s2);
+}
+.dt-table td{padding:7px 10px;border-bottom:1px solid var(--border);color:var(--t1)}
+.status-badge{font-family:'IBM Plex Mono',monospace;font-size:9px;padding:2px 6px;border-radius:3px}
+.status-badge.ok{background:var(--gr-dim);color:var(--gr)}
+.status-badge.warn{background:var(--ye-dim);color:var(--ye)}
+.status-badge.crit{background:var(--re-dim);color:var(--re)}
+.status-badge.info{background:var(--cy-dim);color:var(--cy)}
+
+/* Health bar */
+.health-bar{flex:1;height:5px;background:var(--s3);border-radius:3px;overflow:hidden}
+.health-fill{height:100%;border-radius:3px;transition:width .5s}
+.health-fill.ok{background:var(--gr)}.health-fill.warn{background:var(--ye)}.health-fill.crit{background:var(--re)}
+
+/* Alert cards */
+.alert-card{
+  background:var(--s1);border-radius:8px;padding:12px 14px;
+  border-left:4px solid;display:flex;gap:12px;align-items:flex-start;margin-bottom:6px;
+}
+.alert-card.crit{border-color:var(--re);background:rgba(224,32,32,.03)}
+.alert-card.warn{border-color:var(--ye);background:rgba(240,160,0,.03)}
+.alert-card.ok{border-color:var(--gr);background:rgba(16,216,88,.03)}
+.ac-icon{
+  width:24px;height:24px;border-radius:50%;display:flex;align-items:center;
+  justify-content:center;font-size:11px;font-weight:900;flex-shrink:0;
+}
+.ac-icon.crit{background:var(--re-dim);color:var(--re)}
+.ac-icon.warn{background:var(--ye-dim);color:var(--ye)}
+.ac-icon.ok{background:var(--gr-dim);color:var(--gr)}
+.ac-body{flex:1;min-width:0}
+.ac-title{font-size:12px;font-weight:600;margin-bottom:2px}
+.ac-desc{font-size:10px;color:var(--t1)}
+.ac-time{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--t2);margin-top:3px}
+
+/* Charts CSS */
+.bar-chart{display:flex;align-items:flex-end;gap:3px;height:100px;padding-top:10px}
+.bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px}
+.bar-fill{width:100%;border-radius:2px 2px 0 0;transition:height .5s;min-height:2px}
+.bar-label{font-family:'IBM Plex Mono',monospace;font-size:7px;color:var(--t2)}
+
+/* Inverter grid */
+.inv-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.inv-card{
+  background:var(--s2);border-radius:6px;padding:8px;border:1px solid var(--border);
+  text-align:center;cursor:pointer;transition:all .2s;
+}
+.inv-card:hover{border-color:var(--solar)}
+.inv-card.active{border-color:var(--solar);background:var(--solar-dim)}
+.inv-id{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--t2);margin-bottom:3px}
+.inv-pwr{font-size:14px;font-weight:700;color:var(--solar)}
+.inv-eff{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--gr)}
+.inv-status{width:6px;height:6px;border-radius:50%;margin:4px auto 0}
+
+/* Right sidebar */
+#sidebar-right{
+  width:320px;flex-shrink:0;background:var(--s1);
+  border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;
+}
+.sr-header{
+  padding:12px 16px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.sr-title{font-size:14px;font-weight:700}
+.sr-tag{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--solar)}
+.sr-body{flex:1;overflow-y:auto;padding:10px 16px}
+.sr-section{
+  font-size:10px;font-weight:600;letter-spacing:.1em;color:var(--t2);
+  text-transform:uppercase;margin:12px 0 6px;border-bottom:1px solid var(--border);padding-bottom:3px;
+}
+.sr-row{display:flex;justify-content:space-between;font-size:11px;padding:3px 0}
+.sr-row .k{color:var(--t1)}.sr-row .v{color:var(--t0);font-family:'IBM Plex Mono',monospace;font-size:10px}
+.sr-sensor{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:4px 8px;background:var(--s2);border-radius:4px;margin-bottom:3px;font-size:10px;
+}
+.sr-sensor .sn{color:var(--t1)}
+.sr-sensor .sv{font-family:'IBM Plex Mono',monospace;font-weight:600}
+.sr-sensor .sv.ok{color:var(--gr)}.sr-sensor .sv.warn{color:var(--ye)}.sr-sensor .sv.crit{color:var(--re)}
+.sr-btn{
+  width:100%;padding:7px;border-radius:5px;border:1px solid var(--solar);
+  background:transparent;color:var(--solar);font-family:'Space Grotesk',sans-serif;
+  font-size:11px;font-weight:600;cursor:pointer;margin-top:6px;transition:all .2s;
+}
+.sr-btn:hover{background:var(--solar);color:#fff}
+
+/* Sparkline mini */
+.sparkline{display:flex;align-items:flex-end;gap:1px;height:24px}
+.spark-bar{flex:1;background:var(--solar);border-radius:1px;opacity:.6;min-height:1px}
+
+/* Power gauge */
+.power-gauge{
+  position:relative;width:100%;height:18px;background:var(--s3);border-radius:9px;
+  overflow:hidden;margin:6px 0;
+}
+.pg-fill{height:100%;border-radius:9px;transition:width .5s;background:linear-gradient(90deg,var(--solar),var(--ye))}
+.pg-text{
+  position:absolute;top:0;left:0;right:0;bottom:0;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;color:var(--t0);
+}
+
+/* ====== FULLSCREEN OVERLAYS ====== */
+.fs-overlay{
+  position:fixed;top:0;left:0;width:100%;height:100%;z-index:500;
+  display:none;flex-direction:column;
+}
+.fs-overlay.active{display:flex}
+
+/* SAP Overlay */
+.sap-overlay{background:#F0F2F5}
+.sap-fs-header{
+  height:48px;background:#354A5F;display:flex;align-items:center;padding:0 20px;gap:14px;flex-shrink:0;
+}
+.sap-fs-header-title{font-size:14px;font-weight:600;color:#fff;font-family:'Space Grotesk',sans-serif}
+.sap-fs-close{
+  margin-left:auto;width:32px;height:32px;background:rgba(255,255,255,.1);border:none;
+  border-radius:4px;color:#fff;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:all .2s;
+}
+.sap-fs-close:hover{background:rgba(255,255,255,.2)}
+.sap-fs-body{display:flex;flex:1;overflow:hidden}
+.sap-fs-nav{
+  width:200px;background:#2C3E50;flex-shrink:0;display:flex;flex-direction:column;
+  padding:8px 0;overflow-y:auto;
+}
+.sap-fs-nav-item{
+  padding:10px 20px;font-size:12px;font-weight:600;color:rgba(255,255,255,.6);
+  cursor:pointer;transition:all .2s;font-family:'Space Grotesk',sans-serif;
+  border-left:3px solid transparent;
+}
+.sap-fs-nav-item:hover{background:rgba(255,255,255,.05);color:rgba(255,255,255,.9)}
+.sap-fs-nav-item.active{background:rgba(255,255,255,.08);color:#fff;border-left-color:#E8710A}
+.sap-fs-content{flex:1;overflow-y:auto;padding:20px}
+
+/* SAP Fiori Tables */
+.sap-table{width:100%;border-collapse:collapse;font-size:12px;font-family:'Space Grotesk',sans-serif}
+.sap-table th{
+  text-align:left;padding:10px 14px;font-size:10px;font-weight:700;
+  color:#354A5F;letter-spacing:.06em;text-transform:uppercase;
+  background:#F5F6FA;border-bottom:2px solid #ddd;
+}
+.sap-table td{padding:10px 14px;border-bottom:1px solid #eee;color:#333}
+.sap-table tr:hover td{background:#F8F9FC}
+.sap-prio{font-size:10px;font-weight:600;padding:2px 8px;border-radius:3px}
+.sap-prio-urgente{background:#FFEBEE;color:#CC3333}
+.sap-prio-alta{background:#FFF3E0;color:#E8710A}
+.sap-prio-media{background:#E3F2FD;color:#1A6B8A}
+.sap-prio-baja{background:#F5F5F5;color:#666}
+.sap-estado{font-size:10px;font-weight:600;padding:2px 8px;border-radius:3px}
+.sap-est-abierta{background:#FFEBEE;color:#CC3333}
+.sap-est-prog{background:#E3F2FD;color:#1A6B8A}
+.sap-est-cert{background:#E8F5E9;color:#2B7D2B}
+.sap-est-ok{background:#E8F5E9;color:#2B7D2B}
+.sap-est-warn{background:#FFF3E0;color:#E8710A}
+.sap-est-proceso{background:#E3F2FD;color:#1A6B8A}
+.sap-action-btn{
+  font-family:'Space Grotesk',sans-serif;font-size:10px;font-weight:600;
+  padding:3px 10px;border-radius:3px;border:1px solid #1A6B8A;
+  background:transparent;color:#1A6B8A;cursor:pointer;transition:all .2s;
+}
+.sap-action-btn:hover{background:#1A6B8A;color:#fff}
+
+/* SAP Fiori tiles */
+.fiori-tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
+.fiori-tile{
+  background:#fff;border-radius:8px;padding:16px;border:1px solid #ddd;
+  cursor:pointer;transition:all .2s;min-height:100px;display:flex;flex-direction:column;
+  justify-content:space-between;
+}
+.fiori-tile:hover{box-shadow:0 2px 12px rgba(0,0,0,.1);border-color:#1A6B8A}
+.fiori-tile-val{font-size:28px;font-weight:700;color:#354A5F}
+.fiori-tile-lbl{font-size:11px;color:#666;margin-top:4px}
+.fiori-tile-sub{font-size:9px;color:#999;margin-top:auto}
+.fiori-tile-val.ok{color:#2B7D2B}
+.fiori-tile-val.warn{color:#E8710A}
+.fiori-tile-val.crit{color:#CC3333}
+
+/* SAP eq cards */
+.sap-eq-card{
+  background:#fff;border-radius:6px;border:1px solid #ddd;padding:14px;
+  transition:box-shadow .2s;
+}
+.sap-eq-card:hover{box-shadow:0 2px 8px rgba(0,0,0,.1)}
+.sap-eq-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.sap-eq-tag{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;color:#354A5F}
+.sap-eq-status{font-size:10px;font-weight:600;padding:2px 8px;border-radius:3px}
+.sap-st-ok{background:#E8F5E9;color:#2B7D2B}
+.sap-st-warn{background:#FFF3E0;color:#E8710A}
+.sap-st-crit{background:#FFEBEE;color:#CC3333}
+.sap-eq-title{font-size:13px;font-weight:600;color:#333;margin-bottom:8px}
+.sap-eq-rows{display:flex;flex-direction:column;gap:4px}
+.sap-eq-row{display:flex;justify-content:space-between;font-size:11px;color:#666;padding:2px 0}
+
+/* ACC Overlay */
+.acc-overlay{background:#1B2838}
+.acc-fs-header{
+  height:48px;background:#0D1B2A;display:flex;align-items:center;padding:0 20px;gap:14px;flex-shrink:0;
+  border-bottom:1px solid rgba(255,255,255,.1);
+}
+.acc-fs-nav{
+  width:220px;background:#0D1B2A;flex-shrink:0;border-right:1px solid rgba(255,255,255,.08);
+  padding:16px 0;overflow-y:auto;
+}
+.acc-fs-nav-item{
+  padding:8px 20px;font-size:11px;color:rgba(255,255,255,.5);cursor:pointer;
+  transition:all .2s;font-family:'Space Grotesk',sans-serif;
+  border-left:3px solid transparent;display:flex;align-items:center;gap:8px;
+}
+.acc-fs-nav-item:hover{background:rgba(255,255,255,.03);color:rgba(255,255,255,.8)}
+.acc-fs-nav-item.active{background:rgba(0,200,240,.05);color:#00C8F0;border-left-color:#00C8F0}
+.acc-fs-content{flex:1;overflow-y:auto;padding:20px;background:#1B2838}
+.acc-doc-table{width:100%;border-collapse:collapse;font-size:11px}
+.acc-doc-table th{
+  text-align:left;padding:10px 14px;font-size:10px;font-weight:600;color:rgba(255,255,255,.4);
+  letter-spacing:.06em;text-transform:uppercase;border-bottom:1px solid rgba(255,255,255,.08);
+}
+.acc-doc-table td{padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.05);color:rgba(255,255,255,.7)}
+.acc-doc-table tr:hover td{background:rgba(255,255,255,.03)}
+
+/* Tandem Overlay */
+.tandem-overlay{background:#0A0E14}
+.tandem-fs-header{
+  height:48px;background:#151B24;display:flex;align-items:center;padding:0 20px;gap:14px;flex-shrink:0;
+  border-bottom:1px solid rgba(255,255,255,.08);
+}
+.tandem-tree{
+  width:260px;background:#0E1318;flex-shrink:0;border-right:1px solid rgba(255,255,255,.06);
+  padding:12px 0;overflow-y:auto;
+}
+.tandem-tree-item{
+  padding:6px 12px 6px;font-size:11px;color:rgba(255,255,255,.5);cursor:pointer;
+  transition:all .15s;font-family:'IBM Plex Mono',monospace;
+  display:flex;align-items:center;gap:6px;
+}
+.tandem-tree-item:hover{background:rgba(255,255,255,.03);color:rgba(255,255,255,.8)}
+.tandem-tree-item.active{background:rgba(0,200,240,.06);color:#00C8F0}
+.tandem-tree-item .indent{display:inline-block}
+.tandem-content{flex:1;overflow-y:auto;padding:20px;background:#0A0E14}
+.tandem-stream-log{
+  background:#0E1318;border-radius:6px;padding:12px;max-height:200px;overflow-y:auto;
+  font-family:'IBM Plex Mono',monospace;font-size:10px;border:1px solid rgba(255,255,255,.06);
+}
+
+/* CSS2D Labels for IoT on 3D */
+.iot-label{
+  background:rgba(6,13,24,.92);border:1px solid rgba(255,255,255,.15);
+  border-radius:6px;padding:6px 10px;pointer-events:none;
+  font-family:'IBM Plex Mono',monospace;font-size:10px;color:#E8F4FF;
+  white-space:nowrap;backdrop-filter:blur(6px);
+  box-shadow:0 2px 8px rgba(0,0,0,.4);
+}
+.iot-label.inv{border-left:3px solid #00C8F0}
+.iot-label.trf{border-left:3px solid #10D858}
+.iot-label.sub{border-left:3px solid #E02020}
+.iot-label.wea{border-left:3px solid #F0A000}
+.iot-label .lbl-tag{font-weight:700;color:var(--solar);margin-right:4px}
+.iot-label .lbl-sep{color:rgba(255,255,255,.2);margin:0 3px}
+
+/* HAMBURGER MENU */
+#hamburger-btn{
+  display:none;width:36px;height:36px;background:var(--s2);border:1px solid var(--border2);
+  border-radius:6px;cursor:pointer;flex-direction:column;align-items:center;
+  justify-content:center;gap:4px;flex-shrink:0;
+}
+#hamburger-btn span{display:block;width:18px;height:2px;background:var(--t1);border-radius:1px;transition:all .3s}
+#hamburger-btn.active span:nth-child(1){transform:rotate(45deg) translate(4px,4px)}
+#hamburger-btn.active span:nth-child(2){opacity:0}
+#hamburger-btn.active span:nth-child(3){transform:rotate(-45deg) translate(4px,-4px)}
+.mobile-overlay{
+  display:none;position:fixed;top:52px;left:0;right:0;bottom:0;
+  background:rgba(0,0,0,.5);z-index:90;
+}
+.mobile-overlay.active{display:block}
+
+/* SAP WO Modal */
+.sap-wo-modal{
+  display:none;position:fixed;top:0;left:0;right:0;bottom:0;
+  background:rgba(0,0,0,.5);z-index:600;align-items:center;justify-content:center;
+}
+.sap-wo-modal.active{display:flex}
+
+/* MOBILE RESPONSIVE */
+@media(max-width:900px){
+  #hamburger-btn{display:flex}
+  #sidebar-left{
+    position:fixed;top:52px;left:0;bottom:0;z-index:95;
+    transform:translateX(-100%);transition:transform .3s ease;
+    width:280px;
+  }
+  #sidebar-left.mobile-open{transform:translateX(0)}
+  #sidebar-right{display:none}
+  #center{width:100%}
+  #view-3d canvas{width:100%!important;height:100%!important}
+  #tabs{padding:0 8px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .tab{padding:10px 10px;font-size:11px}
+  .h-plant{display:none}
+  .h-sep:nth-child(2),.h-sep:nth-child(4){display:none}
+  .demo-badge{display:none}
+  .h-status-txt{display:none}
+  .h-time{display:none}
+  .h-btn{padding:5px 8px;font-size:11px}
+  #equip-panel{width:calc(100% - 20px);left:10px;right:10px}
+  .overlay-controls{top:6px;left:6px}
+  .sys-toggle{font-size:9px;padding:4px 8px}
+  .dash-kpis{grid-template-columns:1fr 1fr}
+  .dash-grid2,.dash-grid3{grid-template-columns:1fr}
+  .inv-grid{grid-template-columns:repeat(3,1fr)}
+  .kpi-grid{grid-template-columns:1fr 1fr}
+  .sap-fs-nav{width:160px}
+  .sap-fs-nav-item{padding:8px 12px;font-size:11px}
+  .fiori-tiles{grid-template-columns:1fr 1fr}
+  .acc-fs-nav{width:160px}
+  .tandem-tree{width:180px}
+}
+@media(max-width:600px){
+  .dash-kpis{grid-template-columns:1fr 1fr}
+  .inv-grid{grid-template-columns:repeat(2,1fr)}
+  .kpi-grid{grid-template-columns:1fr}
+  .dash-grid2,.dash-grid3{grid-template-columns:1fr}
+  #header{padding:0 8px;gap:6px}
+  .h-btn{padding:4px 6px;font-size:10px}
+  .h-logo{width:28px;height:28px;font-size:11px;border-radius:5px}
+  .h-alert-cnt{font-size:8px;padding:1px 4px}
+  .h-status-txt{display:none}
+  .h-time{display:none}
+  .h-plant{display:none}
+  .h-sep{display:none}
+  .demo-badge{display:none}
+  .sap-fs-nav{width:0;display:none}
+  .acc-fs-nav{width:0;display:none}
+  .tandem-tree{width:0;display:none}
+  .fiori-tiles{grid-template-columns:1fr}
+}
+@media(max-width:480px){
+  .dash-kpis{grid-template-columns:1fr}
+  .inv-grid{grid-template-columns:repeat(2,1fr)}
+  .kpi-grid{grid-template-columns:1fr}
+  #header{padding:0 10px;gap:8px}
+  .h-logo{width:28px;height:28px;font-size:11px;border-radius:5px}
+  .h-btn{padding:4px 6px;font-size:10px}
+  .h-alert-cnt{font-size:8px;padding:1px 4px}
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div id="header">
+  <button id="hamburger-btn" onclick="toggleMobileMenu()"><span></span><span></span><span></span></button>
+  <div class="h-logo">EY</div>
+  <div class="h-sep"></div>
+  <div class="h-plant"><b>Planta Solar</b> | FV-SON-01</div>
+  <div class="h-sep"></div>
+  <div class="demo-badge">DEMO</div>
+  <div class="h-status">
+    <div class="h-dot"></div>
+    <span class="h-status-txt">EN LINEA</span>
+  </div>
+  <div class="h-sep"></div>
+  <span class="h-time" id="clock">--:--:--</span>
+  <div class="h-sep"></div>
+  <button class="h-btn" onclick="showAlerts()">
+    <span>[!]</span> Alertas <span class="h-alert-cnt" id="alertCount">2</span>
+  </button>
+  <a class="h-btn" href="index.html">&lt;- Hub</a>
+</div>
+
+<!-- Mobile overlay -->
+<div class="mobile-overlay" id="mobileOverlay" onclick="toggleMobileMenu()"></div>
+
+<!-- APP -->
+<div id="app">
+
+<!-- LEFT SIDEBAR -->
+<div id="sidebar-left">
+
+  <!-- KPIs -->
+  <div class="sl-section">
+    <div class="sl-label">KPIs Planta</div>
+  </div>
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-val" id="kpi-cap">50<span class="kpi-unit">MWp</span></div>
+      <div class="kpi-lbl">Capacidad</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-val" id="kpi-gen">38.2<span class="kpi-unit">MW</span></div>
+      <div class="kpi-lbl">Generacion actual</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-val cyan" id="kpi-irr">920<span class="kpi-unit">W/m2</span></div>
+      <div class="kpi-lbl">Irradiancia</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-val" id="kpi-tmod">52<span class="kpi-unit">&deg;C</span></div>
+      <div class="kpi-lbl">Temp modulo</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-val cyan" id="kpi-tamb">34<span class="kpi-unit">&deg;C</span></div>
+      <div class="kpi-lbl">Temp ambiente</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-val green" id="kpi-pr">84.2<span class="kpi-unit">%</span></div>
+      <div class="kpi-lbl">Perf. Ratio</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-val green" id="kpi-disp">98.8<span class="kpi-unit">%</span></div>
+      <div class="kpi-lbl">Disponibilidad</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-val" id="kpi-ehoy">245<span class="kpi-unit">MWh</span></div>
+      <div class="kpi-lbl">Energia hoy</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-val" id="kpi-emes">7,850<span class="kpi-unit">MWh</span></div>
+      <div class="kpi-lbl">Energia mes</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-val green" id="kpi-inv">10/10</div>
+      <div class="kpi-lbl">Inversores</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-val cyan" id="kpi-curt">0<span class="kpi-unit">MW</span></div>
+      <div class="kpi-lbl">Curtailment</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-val green" id="kpi-fp">0.98</div>
+      <div class="kpi-lbl">Factor potencia</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-val" id="kpi-soiling">100<span class="kpi-unit">%</span></div>
+      <div class="kpi-lbl">Soiling Index</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-val cyan" id="kpi-cloud">Despejado</div>
+      <div class="kpi-lbl">Condicion cielo</div>
+    </div>
+  </div>
+
+  <!-- Asset list -->
+  <div class="sl-section">
+    <div class="sl-label">Activos</div>
+  </div>
+  <div class="asset-list" id="assetList">
+    <div class="asset-group-label">Generacion</div>
+    <div class="asset-item active" data-id="field" onclick="selectAsset('field')">
+      <div class="ai-dot ok"></div>
+      <div class="ai-info"><div class="ai-name">Campo Solar</div><div class="ai-sub">6 bloques | 48 filas</div></div>
+    </div>
+    <div class="asset-item" data-id="tracker" onclick="selectAsset('tracker')">
+      <div class="ai-dot ok"></div>
+      <div class="ai-info"><div class="ai-name">Trackers</div><div class="ai-sub">48 single-axis</div></div>
+    </div>
+
+    <div class="asset-group-label">Conversion</div>
+    <div class="asset-item" data-id="inv-str" onclick="selectAsset('inv-str')">
+      <div class="ai-dot ok"></div>
+      <div class="ai-info"><div class="ai-name">Inversores String</div><div class="ai-sub">6 unidades | 5 MW c/u</div></div>
+    </div>
+    <div class="asset-item" data-id="inv-cen" onclick="selectAsset('inv-cen')">
+      <div class="ai-dot ok"></div>
+      <div class="ai-info"><div class="ai-name">Inversor Central</div><div class="ai-sub">20 MW | INV-C01</div></div>
+    </div>
+    <div class="asset-item" data-id="combiner" onclick="selectAsset('combiner')">
+      <div class="ai-dot ok"></div>
+      <div class="ai-info"><div class="ai-name">Combiner Boxes</div><div class="ai-sub">24 unidades DC</div></div>
+    </div>
+
+    <div class="asset-group-label">Distribucion</div>
+    <div class="asset-item" data-id="trafo-mv" onclick="selectAsset('trafo-mv')">
+      <div class="ai-dot ok"></div>
+      <div class="ai-info"><div class="ai-name">Transformadores MV</div><div class="ai-sub">2 x 25 MVA</div></div>
+    </div>
+    <div class="asset-item" data-id="substation" onclick="selectAsset('substation')">
+      <div class="ai-dot ok"></div>
+      <div class="ai-info"><div class="ai-name">Subestacion</div><div class="ai-sub">115 kV | SE-01</div></div>
+    </div>
+    <div class="asset-item" data-id="cables" onclick="selectAsset('cables')">
+      <div class="ai-dot ok"></div>
+      <div class="ai-info"><div class="ai-name">Cableado MV</div><div class="ai-sub">Trincheras 34.5 kV</div></div>
+    </div>
+
+    <div class="asset-group-label">Auxiliares</div>
+    <div class="asset-item" data-id="weather" onclick="selectAsset('weather')">
+      <div class="ai-dot ok"></div>
+      <div class="ai-info"><div class="ai-name">Estacion Met.</div><div class="ai-sub">WS-01 | GHI, DHI, Temp</div></div>
+    </div>
+    <div class="asset-item" data-id="scada" onclick="selectAsset('scada')">
+      <div class="ai-dot ok"></div>
+      <div class="ai-info"><div class="ai-name">SCADA</div><div class="ai-sub">PLC + RTU + HMI</div></div>
+    </div>
+    <div class="asset-item" data-id="oym" onclick="selectAsset('oym')">
+      <div class="ai-dot ok"></div>
+      <div class="ai-info"><div class="ai-name">Edif. O&M</div><div class="ai-sub">Control + Almacen</div></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- CENTER -->
+<div id="center">
+  <div id="tabs">
+    <div class="tab active" data-tab="3d" onclick="switchTab('3d')">Modelo 3D</div>
+    <div class="tab" data-tab="monitor" onclick="switchTab('monitor')">Monitores</div>
+    <div class="tab" data-tab="sap" onclick="openSAPOverlay()">SAP PM</div>
+    <div class="tab" data-tab="tandem" onclick="openTandemOverlay()">Tandem</div>
+    <div class="tab" data-tab="acc" onclick="openACCOverlay()">ACC Docs</div>
+  </div>
+
+  <!-- 3D VIEW -->
+  <div class="view active" id="view-3d">
+    <div class="overlay-controls">
+      <div class="sys-toggle active" onclick="toggleLayer('panels')">
+        <span class="dot" style="background:var(--solar)"></span> Paneles
+      </div>
+      <div class="sys-toggle active" onclick="toggleLayer('trackers')">
+        <span class="dot" style="background:#aaa"></span> Trackers
+      </div>
+      <div class="sys-toggle active" onclick="toggleLayer('inverters')">
+        <span class="dot" style="background:var(--cy)"></span> Inversores
+      </div>
+      <div class="sys-toggle active" onclick="toggleLayer('transformers')">
+        <span class="dot" style="background:var(--gr)"></span> Transformadores
+      </div>
+      <div class="sys-toggle active" onclick="toggleLayer('substation')">
+        <span class="dot" style="background:var(--re)"></span> Subestacion
+      </div>
+      <div class="sys-toggle active" onclick="toggleLayer('cables')">
+        <span class="dot" style="background:var(--ye)"></span> Cableado
+      </div>
+      <div class="sys-toggle active" onclick="toggleLayer('auxiliary')">
+        <span class="dot" style="background:var(--t1)"></span> Auxiliares
+      </div>
+      <div class="sys-toggle active" onclick="toggleLayer('iotLabels')">
+        <span class="dot" style="background:#fff"></span> IoT Data
+      </div>
+    </div>
+    <div id="equip-panel">
+      <div class="ep-header">
+        <button class="ep-close" onclick="closeEquipPanel()">X</button>
+        <div class="ep-tag" id="ep-tag">--</div>
+        <div class="ep-name" id="ep-name">--</div>
+        <div class="ep-conf gen" id="ep-conf">--</div>
+      </div>
+      <div class="ep-body" id="ep-content"></div>
+    </div>
+  </div>
+
+  <!-- MONITOR VIEW -->
+  <div class="view" id="view-monitor">
+    <div class="dash-view">
+      <div class="dash-header">
+        <div>
+          <div class="dash-title">Monitoreo Solar FV-SON-01</div>
+          <div class="dash-sub">50 MWp | Sonora, Mexico | Datos simulados en tiempo real</div>
+        </div>
+        <div class="demo-badge">LIVE SIM</div>
+      </div>
+
+      <!-- Top KPIs -->
+      <div class="dash-kpis">
+        <div class="dk-card">
+          <div class="dk-val solar" id="mon-gen">38.2 MW</div>
+          <div class="dk-lbl">Generacion Actual</div>
+          <div class="dk-sub">Cap. 50 MWp | CF 76.4%</div>
+        </div>
+        <div class="dk-card">
+          <div class="dk-val info" id="mon-irr">920 W/m2</div>
+          <div class="dk-lbl">Irradiancia GHI</div>
+          <div class="dk-sub">POA: 945 W/m2</div>
+        </div>
+        <div class="dk-card">
+          <div class="dk-val warn" id="mon-tmod">52 &deg;C</div>
+          <div class="dk-lbl">Temp Modulo</div>
+          <div class="dk-sub">Amb: 34&deg;C | Coef: -0.4%/&deg;C</div>
+        </div>
+        <div class="dk-card">
+          <div class="dk-val ok" id="mon-pr">84.2%</div>
+          <div class="dk-lbl">Performance Ratio</div>
+          <div class="dk-sub">Target: 82% | +2.2%</div>
+        </div>
+        <div class="dk-card">
+          <div class="dk-val ok" id="mon-disp">98.8%</div>
+          <div class="dk-lbl">Disponibilidad</div>
+          <div class="dk-sub">Contract: 97%</div>
+        </div>
+        <div class="dk-card">
+          <div class="dk-val solar" id="mon-ehoy">245 MWh</div>
+          <div class="dk-lbl">Energia Hoy</div>
+          <div class="dk-sub">Mes: 7,850 MWh</div>
+        </div>
+      </div>
+
+      <!-- Irradiance chart -->
+      <div class="dash-section">Generacion horaria (MWh)</div>
+      <div class="dash-card" style="margin-bottom:14px">
+        <div class="bar-chart" id="hourlyChart"></div>
+      </div>
+
+      <!-- Inverters grid -->
+      <div class="dash-section">Estado Inversores</div>
+      <div class="inv-grid" id="invGrid"></div>
+
+      <!-- Alerts -->
+      <div class="dash-section" style="margin-top:14px">Alertas Recientes</div>
+      <div id="monAlerts">
+        <div class="alert-card warn">
+          <div class="ac-icon warn">!</div>
+          <div class="ac-body">
+            <div class="ac-title">Temp modulo elevada - Bloque 3</div>
+            <div class="ac-desc">Temperatura 58&deg;C supera umbral 55&deg;C. Derating activo.</div>
+            <div class="ac-time">14:23:10 | Auto-clear</div>
+          </div>
+        </div>
+        <div class="alert-card ok">
+          <div class="ac-icon ok">[OK]</div>
+          <div class="ac-body">
+            <div class="ac-title">Tracker B2-R4 normalizado</div>
+            <div class="ac-desc">Angulo corregido. Seguimiento solar restaurado.</div>
+            <div class="ac-time">13:45:00 | Resuelto</div>
+          </div>
+        </div>
+        <div class="alert-card warn">
+          <div class="ac-icon warn">!</div>
+          <div class="ac-body">
+            <div class="ac-title">Soiling index elevado - Bloque 5</div>
+            <div class="ac-desc">Indice soiling 4.2%. Programar limpieza.</div>
+            <div class="ac-time">10:15:00 | Pendiente</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Power gauge -->
+      <div class="dash-section" style="margin-top:14px">Potencia vs Capacidad</div>
+      <div class="dash-card">
+        <div class="power-gauge">
+          <div class="pg-fill" id="pgFill" style="width:76.4%"></div>
+          <div class="pg-text" id="pgText">38.2 / 50 MW (76.4%)</div>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:6px">
+          <div style="font-size:10px;color:var(--t1)">Curtailment: <span style="color:var(--gr)">0 MW</span></div>
+          <div style="font-size:10px;color:var(--t1)">FP: <span style="color:var(--gr)">0.98</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- RIGHT SIDEBAR -->
+<div id="sidebar-right">
+  <div class="sr-header">
+    <div>
+      <div class="sr-title" id="sr-title">Campo Solar</div>
+      <div class="sr-tag" id="sr-tag">BLQ-01..06 | 48 filas</div>
+    </div>
+  </div>
+  <div class="sr-body" id="sr-body">
+    <div class="sr-section">Configuracion</div>
+    <div class="sr-row"><span class="k">Modulos</span><span class="v">90,720 x 550W</span></div>
+    <div class="sr-row"><span class="k">Strings</span><span class="v">288 strings</span></div>
+    <div class="sr-row"><span class="k">Filas</span><span class="v">48 filas tracker</span></div>
+    <div class="sr-row"><span class="k">Tilt</span><span class="v">0-60&deg; (tracker)</span></div>
+    <div class="sr-row"><span class="k">Azimuth</span><span class="v">180&deg; (N-S axis)</span></div>
+    <div class="sr-row"><span class="k">Area total</span><span class="v">60,000 m2</span></div>
+
+    <div class="sr-section">Lecturas en Vivo</div>
+    <div class="sr-sensor"><span class="sn">Potencia DC</span><span class="sv ok" id="sr-pdc">39.8 MW</span></div>
+    <div class="sr-sensor"><span class="sn">Voltaje string</span><span class="sv ok" id="sr-vstr">1,100 V</span></div>
+    <div class="sr-sensor"><span class="sn">Corriente string</span><span class="sv ok" id="sr-istr">12.4 A</span></div>
+    <div class="sr-sensor"><span class="sn">Irradiancia POA</span><span class="sv ok" id="sr-poa">945 W/m2</span></div>
+    <div class="sr-sensor"><span class="sn">Temp modulo</span><span class="sv warn" id="sr-tmod">52 &deg;C</span></div>
+    <div class="sr-sensor"><span class="sn">Soiling ratio</span><span class="sv ok" id="sr-soil">97.2%</span></div>
+
+    <div class="sr-section">Rendimiento</div>
+    <div class="sr-sensor"><span class="sn">PR instantaneo</span><span class="sv ok">84.2%</span></div>
+    <div class="sr-sensor"><span class="sn">Yield hoy</span><span class="sv ok">4.9 kWh/kWp</span></div>
+    <div class="sr-sensor"><span class="sn">Spec. yield mes</span><span class="sv ok">157 kWh/kWp</span></div>
+
+    <div class="sr-section">Minitrend - Potencia 24h</div>
+    <div class="sparkline" id="sr-spark"></div>
+
+    <button class="sr-btn" onclick="showEquipDetail('field')">Ver detalle completo</button>
+    <button class="sr-btn" style="margin-top:4px;border-color:var(--cy);color:var(--cy)" onclick="switchTab('monitor')">Ir a monitores</button>
+  </div>
+</div>
+
+</div><!-- /app -->
+
+<!-- ====== SAP FULLSCREEN OVERLAY ====== -->
+<div class="fs-overlay sap-overlay" id="sapOverlay">
+  <div class="sap-fs-header">
+    <div style="width:28px;height:28px;background:#E8710A;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff">SAP</div>
+    <div class="sap-fs-header-title">SAP S/4HANA 2023 | Plant Maintenance</div>
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:rgba(255,255,255,.5);margin-left:20px">Planta: FV-SON-01 | Client: 100</span>
+    <button class="sap-fs-close" onclick="closeSAPOverlay()">X</button>
+  </div>
+  <div class="sap-fs-body">
+    <div class="sap-fs-nav" id="sapFsNav">
+      <div class="sap-fs-nav-item active" onclick="switchSapFsTab('launchpad')">Launchpad</div>
+      <div class="sap-fs-nav-item" onclick="switchSapFsTab('pm')">PM Work Orders</div>
+      <div class="sap-fs-nav-item" onclick="switchSapFsTab('apm')">APM Asset Health</div>
+      <div class="sap-fs-nav-item" onclick="switchSapFsTab('mm')">MM Materials</div>
+      <div class="sap-fs-nav-item" onclick="switchSapFsTab('btp')">BTP Integration</div>
+      <div class="sap-fs-nav-item" onclick="switchSapFsTab('gemelo')">Gemelo Digital</div>
+    </div>
+    <div class="sap-fs-content" id="sapFsContent">
+      <!-- Content injected by JS -->
+    </div>
+  </div>
+</div>
+
+<!-- SAP WO Detail Modal -->
+<div class="sap-wo-modal" id="sapWOModal">
+  <div style="background:#fff;border-radius:8px;width:90%;max-width:560px;max-height:80vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.2)">
+    <div style="padding:16px 20px;border-bottom:1px solid #ddd;display:flex;align-items:center;justify-content:space-between">
+      <div style="font-size:16px;font-weight:700;color:#333;font-family:'Space Grotesk',sans-serif" id="sapModalTitle">Detalle Orden</div>
+      <button onclick="closeSapModal()" style="background:none;border:none;font-size:20px;color:#666;cursor:pointer">X</button>
+    </div>
+    <div id="sapModalBody" style="padding:20px"></div>
+    <div style="padding:12px 20px;border-top:1px solid #ddd;display:flex;gap:8px;justify-content:flex-end">
+      <button onclick="closeSapModal()" style="font-family:'Space Grotesk',sans-serif;font-size:11px;padding:6px 16px;border-radius:4px;border:1px solid #ccc;background:#fff;color:#333;cursor:pointer">Cerrar</button>
+      <button onclick="closeSapModal()" style="font-family:'Space Grotesk',sans-serif;font-size:11px;padding:6px 16px;border-radius:4px;border:none;background:#E8710A;color:#fff;cursor:pointer;font-weight:600">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ====== ACC FULLSCREEN OVERLAY ====== -->
+<div class="fs-overlay acc-overlay" id="accOverlay">
+  <div class="acc-fs-header">
+    <div style="width:28px;height:28px;background:#4A90D9;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#fff">ACC</div>
+    <div style="font-size:14px;font-weight:600;color:#fff;font-family:'Space Grotesk',sans-serif">Autodesk Construction Cloud</div>
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:rgba(255,255,255,.4);margin-left:12px">FV-SON-01 Planta Solar Sonora</span>
+    <button class="sap-fs-close" onclick="closeACCOverlay()" style="margin-left:auto">X</button>
+  </div>
+  <div style="display:flex;flex:1;overflow:hidden">
+    <div class="acc-fs-nav" id="accFsNav">
+      <div style="padding:8px 20px;font-size:9px;font-weight:600;letter-spacing:.1em;color:rgba(255,255,255,.25);text-transform:uppercase;margin-bottom:4px">Project Files</div>
+      <div class="acc-fs-nav-item active" onclick="switchAccTab('sld')">Single Line Diagrams</div>
+      <div class="acc-fs-nav-item" onclick="switchAccTab('cable')">Cable Routing</div>
+      <div class="acc-fs-nav-item" onclick="switchAccTab('panel')">Panel Datasheets</div>
+      <div class="acc-fs-nav-item" onclick="switchAccTab('tracker')">Tracker Specs</div>
+      <div class="acc-fs-nav-item" onclick="switchAccTab('civil')">Civil</div>
+      <div class="acc-fs-nav-item" onclick="switchAccTab('electricos')">Electricos</div>
+    </div>
+    <div class="acc-fs-content" id="accFsContent">
+      <!-- Content injected by JS -->
+    </div>
+  </div>
+</div>
+
+<!-- ====== TANDEM FULLSCREEN OVERLAY ====== -->
+<div class="fs-overlay tandem-overlay" id="tandemOverlay">
+  <div class="tandem-fs-header">
+    <div style="width:28px;height:28px;background:linear-gradient(135deg,#00C8F0,#0088AA);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#fff">TD</div>
+    <div style="font-size:14px;font-weight:600;color:#fff;font-family:'Space Grotesk',sans-serif">Autodesk Tandem</div>
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:rgba(255,255,255,.4);margin-left:12px">Digital Twin Asset Registry</span>
+    <button class="sap-fs-close" onclick="closeTandemOverlay()" style="margin-left:auto">X</button>
+  </div>
+  <div style="display:flex;flex:1;overflow:hidden">
+    <div class="tandem-tree" id="tandemTree">
+      <!-- Injected by JS -->
+    </div>
+    <div class="tandem-content" id="tandemContent">
+      <!-- Injected by JS -->
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/renderers/CSS2DRenderer.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+<script>
+// ===================================================================
+// SOLAR PV DIGITAL TWIN - FV-SON-01 - 50 MWp
+// ===================================================================
+
+// -- GLOBALS --
+let scene, camera, renderer, css2dRenderer, controls;
+let clock3d = new THREE.Clock();
+let layers = { panels:null, trackers:null, inverters:null, transformers:null, substation:null, cables:null, auxiliary:null, iotLabels:null };
+let clickableObjects = [];
+let selectedObj = null;
+let simTime = 10;
+let frameCount = 0;
+let iotLabelsData = {};
+
+// -- LIVE PROCESS ANIMATION STATE --
+let powerFlowParticles = [];
+let inverterStatusLights = [];
+let sunLightRef = null;
+let cloudDimTimer = 0;
+let cloudDimActive = false;
+let soilingFactor = 1.0;
+
+// -- SIMULATION STATE --
+const SIM = {
+  irradiance: 920,
+  genMW: 38.2,
+  tmod: 52,
+  tamb: 34,
+  pr: 84.2,
+  disp: 98.8,
+  energyToday: 245,
+  energyMonth: 7850,
+  curtailment: 0,
+  pf: 0.98,
+  inverters: [],
+  hourlyGen: []
+};
+
+// Init inverters
+for(let i=0;i<10;i++){
+  SIM.inverters.push({
+    id: 'INV-'+(i<9?'0':'')+(i+1),
+    type: i<6 ? 'String' : 'Central',
+    power: 3.4+Math.random()*0.8,
+    eff: 97.5+Math.random()*1.5,
+    temp: 38+Math.random()*8,
+    status: 'ok'
+  });
+}
+
+// Hourly generation data
+for(let h=6;h<=18;h++){
+  let frac = Math.sin(Math.PI*(h-6)/12);
+  SIM.hourlyGen.push({ hour:h, mwh: Math.round(frac*42*10)/10 });
+}
+
+// -- IoT Label Data (updates every 2s) --
+const IoTData = {
+  'INV-01': {pos:{x:-84,y:4,z:-30}, cls:'inv', vals:()=>`INV-01 | P: ${(3.2+Math.random()*0.3).toFixed(0)} kW | Eff: ${(96.8+Math.random()*0.8).toFixed(1)}% | T: ${(40+Math.random()*4).toFixed(0)}C`},
+  'INV-02': {pos:{x:-84,y:4,z:50}, cls:'inv', vals:()=>`INV-02 | P: ${(3.1+Math.random()*0.3).toFixed(0)} kW | Eff: ${(96.4+Math.random()*0.8).toFixed(1)}% | T: ${(42+Math.random()*4).toFixed(0)}C`},
+  'INV-C1': {pos:{x:0,y:5,z:80}, cls:'inv', vals:()=>`INV-C1 | P: ${(2.0+Math.random()*0.2).toFixed(1)} MW | Eff: ${(97.2+Math.random()*0.6).toFixed(1)}%`},
+  'TRF-01': {pos:{x:-50,y:6,z:85}, cls:'trf', vals:()=>`TRF-01 | Load: ${(83+Math.random()*4).toFixed(0)}% | T: ${(53+Math.random()*4).toFixed(0)}C`},
+  'SUB-01': {pos:{x:130,y:8,z:0}, cls:'sub', vals:()=>`SUB-01 | V: ${(114.8+Math.random()*0.8).toFixed(1)} kV | f: ${(59.98+Math.random()*0.04).toFixed(2)} Hz | PF: 0.98`},
+  'WEA-01': {pos:{x:-130,y:5,z:-70}, cls:'wea', vals:()=>`WEA-01 | GHI: ${(900+Math.random()*40).toFixed(0)} W/m2 | Tamb: ${(33+Math.random()*2).toFixed(0)}C | Wind: ${(2.8+Math.random()*0.8).toFixed(1)} m/s`}
+};
+
+// Rolling trend data for real-time chart
+var fvTrendHistory = [];
+for (var _fti = 0; _fti < 60; _fti++) {
+  var _t = (_fti / 59) * 24;
+  fvTrendHistory.push(_t >= 6 && _t <= 18 ? Math.sin(Math.PI * (_t - 6) / 12) * 0.9 : 0);
+}
+var fvSelectedAssetId = 'field';
+
+function redrawFvTrendChart() {
+  var canvas = document.getElementById('epTrendCanvas');
+  if (!canvas) return;
+  var ctx = canvas.getContext('2d');
+  canvas.width = canvas.offsetWidth;
+  canvas.height = canvas.offsetHeight;
+  var w = canvas.width, h = canvas.height;
+  if (w === 0 || h === 0) return;
+  ctx.fillStyle = '#111E2E';
+  ctx.fillRect(0, 0, w, h);
+  // Grid lines
+  ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+  ctx.lineWidth = 0.5;
+  for (var i = 1; i < 4; i++) { ctx.beginPath(); ctx.moveTo(0, h * i / 4); ctx.lineTo(w, h * i / 4); ctx.stroke(); }
+  // Data line
+  ctx.strokeStyle = '#F0A000';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  for (var x = 0; x < fvTrendHistory.length; x++) {
+    var px = (x / (fvTrendHistory.length - 1)) * w;
+    var py = h - fvTrendHistory[x] * h * 0.85 - h * 0.05;
+    if (x === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+  }
+  ctx.stroke();
+  // Fill under
+  ctx.lineTo(w, h); ctx.lineTo(0, h); ctx.closePath();
+  ctx.fillStyle = 'rgba(240,160,0,.06)';
+  ctx.fill();
+  // Labels
+  ctx.fillStyle = 'rgba(255,255,255,0.3)'; ctx.font = '8px IBM Plex Mono';
+  ctx.fillText('t-60', 2, h - 2); ctx.fillText('now', w - 22, h - 2);
+}
+
+// -- CLOCK --
+function updateClock(){
+  const now=new Date();
+  document.getElementById('clock').textContent=
+    now.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+setInterval(updateClock,1000);
+updateClock();
+
+// -- MOBILE MENU --
+function toggleMobileMenu(){
+  const sidebar=document.getElementById('sidebar-left');
+  const overlay=document.getElementById('mobileOverlay');
+  const btn=document.getElementById('hamburger-btn');
+  const isOpen=sidebar.classList.contains('mobile-open');
+  if(isOpen){
+    sidebar.classList.remove('mobile-open');
+    overlay.classList.remove('active');
+    btn.classList.remove('active');
+  } else {
+    sidebar.classList.add('mobile-open');
+    overlay.classList.add('active');
+    btn.classList.add('active');
+  }
+}
+
+// ===================================================================
+// SAP FULLSCREEN OVERLAY
+// ===================================================================
+
+function openSAPOverlay(){
+  document.getElementById('sapOverlay').classList.add('active');
+  switchSapFsTab('launchpad');
+  // Move 3D canvas into SAP
+  var canvas = document.querySelector('#center canvas') || document.querySelector('canvas[data-engine]');
+  var sapContainer = document.getElementById('sap3dContainer');
+  if(canvas && sapContainer){
+    sapContainer.appendChild(canvas);
+    canvas.style.width = '100%';
+    canvas.style.height = '100%';
+    if(typeof renderer !== 'undefined'){
+      var w = sapContainer.clientWidth;
+      var h = sapContainer.clientHeight;
+      renderer.setSize(w, h);
+      if(typeof camera !== 'undefined'){
+        camera.aspect = w/h;
+        camera.updateProjectionMatrix();
+      }
+    }
+  }
+}
+function closeSAPOverlay(){
+  document.getElementById('sapOverlay').classList.remove('active');
+  // Find canvas wherever it ended up
+  var canvas = document.querySelector('canvas');
+  var center = document.getElementById('center');
+  if(canvas && center && canvas.parentElement !== center){
+    center.insertBefore(canvas, center.firstChild);
+    canvas.style.width = '100%';
+    canvas.style.height = '100%';
+    if(typeof renderer !== 'undefined'){
+      setTimeout(function(){
+        var w = center.clientWidth;
+        var h = center.clientHeight;
+        renderer.setSize(w, h);
+        if(typeof camera !== 'undefined'){
+          camera.aspect = w/h;
+          camera.updateProjectionMatrix();
+        }
+      }, 100);
+    }
+  }
+}
+
+function switchSapFsTab(id){
+  const items=document.querySelectorAll('#sapFsNav .sap-fs-nav-item');
+  items.forEach(i=>i.classList.remove('active'));
+  const idx={launchpad:0,pm:1,apm:2,mm:3,btp:4,gemelo:5}[id]||0;
+  if(items[idx]) items[idx].classList.add('active');
+
+  const c=document.getElementById('sapFsContent');
+  if(id==='launchpad') c.innerHTML=getSapLaunchpadHTML();
+  else if(id==='pm') c.innerHTML=getSapPMHTML();
+  else if(id==='apm') c.innerHTML=getSapAPMHTML();
+  else if(id==='mm') c.innerHTML=getSapMMHTML();
+  else if(id==='btp') { c.innerHTML=getSapBTPHTML(); startStreamLog(); }
+  else if(id==='gemelo') { c.innerHTML=getSapGemeloHTML(); movCanvasToSap(); }
+}
+function getSapGemeloHTML(){
+  var equips = [
+    {tag:'INV-01',name:'Inversor Central 1',health:94},
+    {tag:'INV-02',name:'Inversor Central 2',health:92},
+    {tag:'TRK-A1',name:'Tracker Bloque A',health:97},
+    {tag:'TRK-B1',name:'Tracker Bloque B',health:88},
+    {tag:'XFMR-01',name:'Transformador 34.5kV',health:96},
+    {tag:'XFMR-02',name:'Subestacion 115kV',health:95},
+    {tag:'WS-01',name:'Estacion Met.',health:99},
+    {tag:'SCADA',name:'SCADA Control',health:98}
+  ];
+  var eqCards = '';
+  equips.forEach(function(eq){
+    var cls = eq.health >= 80 ? '#27AE60' : eq.health >= 60 ? '#F39C12' : '#E74C3C';
+    eqCards += '<div style="background:#f8f9fa;border-radius:8px;padding:12px;border-left:3px solid '+cls+'">' +
+      '<div style="font-weight:700;color:#354A5F;font-size:12px">'+eq.tag+'</div>' +
+      '<div style="font-size:10px;color:#666;margin:2px 0">'+eq.name+'</div>' +
+      '<div style="font-size:11px;font-weight:600;color:'+cls+'">Health: '+eq.health+'%</div>' +
+      '<button onclick="closeSAPOverlay();setTimeout(function(){selectAsset(\''+eq.tag.toLowerCase()+'\')},300)" style="margin-top:6px;font-size:9px;padding:4px 10px;border:1px solid #ccc;border-radius:4px;background:#fff;cursor:pointer;font-family:inherit">Localizar</button>' +
+      '</div>';
+  });
+  return '<div style="font-size:18px;font-weight:700;color:#333;margin-bottom:4px">Gemelo Digital - Vista Integrada SAP</div>' +
+    '<div style="font-size:11px;color:#666;margin-bottom:16px">Modelo 3D en tiempo real vinculado a SAP PM/APM</div>' +
+    '<div id="sap3dContainer" style="width:100%;height:400px;position:relative;background:#0a1420;border-radius:8px;overflow:hidden;margin-bottom:16px"></div>' +
+    '<div style="font-size:14px;font-weight:600;color:#333;margin-bottom:12px">Equipos Vinculados SAP</div>' +
+    '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px">'+eqCards+'</div>';
+}
+function movCanvasToSap(){
+  var canvas = document.querySelector('canvas[data-engine]') || document.querySelector('#center canvas');
+  var sapContainer = document.getElementById('sap3dContainer');
+  if(canvas && sapContainer){
+    sapContainer.appendChild(canvas);
+    canvas.style.width = '100%';
+    canvas.style.height = '100%';
+    if(typeof renderer !== 'undefined'){
+      var w = sapContainer.clientWidth;
+      var h = sapContainer.clientHeight;
+      renderer.setSize(w, h);
+      if(typeof camera !== 'undefined'){
+        camera.aspect = w/h;
+        camera.updateProjectionMatrix();
+      }
+    }
+  }
+}
+
+function getSapLaunchpadHTML(){
+  return `
+  <div style="font-size:18px;font-weight:700;color:#333;margin-bottom:4px">SAP Fiori Launchpad</div>
+  <div style="font-size:11px;color:#666;margin-bottom:20px">Planta Solar FV-SON-01 | Mantenimiento de Planta</div>
+  <div class="fiori-tiles">
+    <div class="fiori-tile" onclick="switchSapFsTab('pm')">
+      <div class="fiori-tile-val crit">2</div>
+      <div class="fiori-tile-lbl">Ordenes Abiertas</div>
+      <div class="fiori-tile-sub">PM Work Orders IW38</div>
+    </div>
+    <div class="fiori-tile" onclick="switchSapFsTab('pm')">
+      <div class="fiori-tile-val warn">3</div>
+      <div class="fiori-tile-lbl">Programadas</div>
+      <div class="fiori-tile-sub">Mantenimiento preventivo</div>
+    </div>
+    <div class="fiori-tile" onclick="switchSapFsTab('apm')">
+      <div class="fiori-tile-val ok">92%</div>
+      <div class="fiori-tile-lbl">Salud Promedio</div>
+      <div class="fiori-tile-sub">APM Asset Health</div>
+    </div>
+    <div class="fiori-tile" onclick="switchSapFsTab('mm')">
+      <div class="fiori-tile-val warn">2</div>
+      <div class="fiori-tile-lbl">Materiales Bajo Min</div>
+      <div class="fiori-tile-sub">MM Inventario</div>
+    </div>
+    <div class="fiori-tile" onclick="switchSapFsTab('btp')">
+      <div class="fiori-tile-val ok">100%</div>
+      <div class="fiori-tile-lbl">Sync Status</div>
+      <div class="fiori-tile-sub">BTP Integration</div>
+    </div>
+    <div class="fiori-tile" onclick="switchSapFsTab('pm')">
+      <div class="fiori-tile-val">10</div>
+      <div class="fiori-tile-lbl">Total OTs Activas</div>
+      <div class="fiori-tile-sub">Todas las ordenes</div>
+    </div>
+  </div>`;
+}
+
+function getSapPMHTML(){
+  return `
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+    <div>
+      <div style="font-size:18px;font-weight:700;color:#333;font-family:'Space Grotesk',sans-serif">Ordenes de Trabajo PM - Solar</div>
+      <div style="font-size:11px;color:#666">Planta FV-SON-01 | 10 ordenes activas</div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <select id="sapFilterPriority" onchange="filterSapWO()" style="font-family:'Space Grotesk',sans-serif;font-size:11px;padding:5px 10px;border-radius:4px;border:1px solid #ccc;background:#fff;color:#333;cursor:pointer">
+        <option value="all">Todas prioridades</option>
+        <option value="1-URGENTE">1-URGENTE</option>
+        <option value="2-ALTA">2-ALTA</option>
+        <option value="3-MEDIA">3-MEDIA</option>
+        <option value="4-BAJA">4-BAJA</option>
+      </select>
+      <select id="sapFilterStatus" onchange="filterSapWO()" style="font-family:'Space Grotesk',sans-serif;font-size:11px;padding:5px 10px;border-radius:4px;border:1px solid #ccc;background:#fff;color:#333;cursor:pointer">
+        <option value="all">Todos estados</option>
+        <option value="ABIERTA">ABIERTA</option>
+        <option value="PROGRAMADA">PROGRAMADA</option>
+        <option value="EN PROCESO">EN PROCESO</option>
+        <option value="COMPLETADA">COMPLETADA</option>
+        <option value="CERT">CERT</option>
+      </select>
+      <input type="text" id="sapSearchWO" oninput="filterSapWO()" placeholder="Buscar orden..." style="font-family:'Space Grotesk',sans-serif;font-size:11px;padding:5px 10px;border-radius:4px;border:1px solid #ccc;background:#fff;color:#333;width:140px">
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;margin-bottom:14px">
+    <div style="background:#FFEBEE;border-radius:6px;padding:10px;text-align:center"><div style="font-size:20px;font-weight:700;color:#CC3333">2</div><div style="font-size:9px;color:#CC3333;font-weight:600">ABIERTAS</div></div>
+    <div style="background:#E3F2FD;border-radius:6px;padding:10px;text-align:center"><div style="font-size:20px;font-weight:700;color:#1A6B8A">3</div><div style="font-size:9px;color:#1A6B8A;font-weight:600">PROGRAMADAS</div></div>
+    <div style="background:#FFF3E0;border-radius:6px;padding:10px;text-align:center"><div style="font-size:20px;font-weight:700;color:#E8710A">1</div><div style="font-size:9px;color:#E8710A;font-weight:600">EN PROCESO</div></div>
+    <div style="background:#E8F5E9;border-radius:6px;padding:10px;text-align:center"><div style="font-size:20px;font-weight:700;color:#2B7D2B">2</div><div style="font-size:9px;color:#2B7D2B;font-weight:600">COMPLETADAS</div></div>
+    <div style="background:#F3E5F5;border-radius:6px;padding:10px;text-align:center"><div style="font-size:20px;font-weight:700;color:#7B1FA2">1</div><div style="font-size:9px;color:#7B1FA2;font-weight:600">CERT</div></div>
+  </div>
+  <div style="background:#fff;border-radius:6px;border:1px solid #ddd;overflow-x:auto">
+    <table class="sap-table" id="sapWOTable">
+      <thead><tr><th>Orden</th><th>Equipo</th><th>Descripcion</th><th>Prioridad</th><th>Estado</th><th>Origen</th><th>Accion</th></tr></thead>
+      <tbody id="sapWOBody">
+        <tr data-prio="1-URGENTE" data-status="ABIERTA"><td style="font-weight:600;color:#1A6B8A;cursor:pointer" onclick="openSapWODetail('PM-FV-8001')">PM-FV-8001</td><td>INV-03 Inversor Central</td><td>Derating por temperatura 62C</td><td><span class="sap-prio sap-prio-urgente">1-URGENTE</span></td><td><span class="sap-estado sap-est-abierta">ABIERTA</span></td><td><span style="font-size:10px;color:#E8710A;font-weight:600">DT Auto</span></td><td><button class="sap-action-btn" onclick="openSapWODetail('PM-FV-8001')">Ver</button></td></tr>
+        <tr data-prio="2-ALTA" data-status="ABIERTA"><td style="font-weight:600;color:#1A6B8A;cursor:pointer" onclick="openSapWODetail('PM-FV-8002')">PM-FV-8002</td><td>TRK-01 Tracker</td><td>Motor tracker fila 7 atascado</td><td><span class="sap-prio sap-prio-alta">2-ALTA</span></td><td><span class="sap-estado sap-est-abierta">ABIERTA</span></td><td><span style="font-size:10px;color:#E8710A;font-weight:600">DT Auto</span></td><td><button class="sap-action-btn" onclick="openSapWODetail('PM-FV-8002')">Ver</button></td></tr>
+        <tr data-prio="3-MEDIA" data-status="PROGRAMADA"><td style="font-weight:600;color:#1A6B8A;cursor:pointer" onclick="openSapWODetail('PM-FV-8003')">PM-FV-8003</td><td>ARR-01 Array Bloque 1</td><td>Lavado paneles programado</td><td><span class="sap-prio sap-prio-media">3-MEDIA</span></td><td><span class="sap-estado sap-est-prog">PROGRAMADA</span></td><td><span style="font-size:10px;color:#354A5F;font-weight:600">Plan PM</span></td><td><button class="sap-action-btn" onclick="openSapWODetail('PM-FV-8003')">Ver</button></td></tr>
+        <tr data-prio="2-ALTA" data-status="PROGRAMADA"><td style="font-weight:600;color:#1A6B8A;cursor:pointer" onclick="openSapWODetail('PM-FV-8004')">PM-FV-8004</td><td>TRF-01 Transformador</td><td>Analisis aceite dielectrico</td><td><span class="sap-prio sap-prio-alta">2-ALTA</span></td><td><span class="sap-estado sap-est-prog">PROGRAMADA</span></td><td><span style="font-size:10px;color:#354A5F;font-weight:600">Plan PM</span></td><td><button class="sap-action-btn" onclick="openSapWODetail('PM-FV-8004')">Ver</button></td></tr>
+        <tr data-prio="2-ALTA" data-status="PROGRAMADA"><td style="font-weight:600;color:#1A6B8A;cursor:pointer" onclick="openSapWODetail('PM-FV-8005')">PM-FV-8005</td><td>SUB-01 Subestacion</td><td>Termografia anual</td><td><span class="sap-prio sap-prio-alta">2-ALTA</span></td><td><span class="sap-estado sap-est-prog">PROGRAMADA</span></td><td><span style="font-size:10px;color:#8B4513;font-weight:600">Regulatorio</span></td><td><button class="sap-action-btn" onclick="openSapWODetail('PM-FV-8005')">Ver</button></td></tr>
+        <tr data-prio="3-MEDIA" data-status="EN PROCESO"><td style="font-weight:600;color:#1A6B8A;cursor:pointer" onclick="openSapWODetail('PM-FV-8006')">PM-FV-8006</td><td>CMB-02 Combiner Box</td><td>Reemplazo fusible string 4</td><td><span class="sap-prio sap-prio-media">3-MEDIA</span></td><td><span class="sap-estado sap-est-proceso">EN PROCESO</span></td><td><span style="font-size:10px;color:#E8710A;font-weight:600">DT Auto</span></td><td><button class="sap-action-btn" onclick="openSapWODetail('PM-FV-8006')">Ver</button></td></tr>
+        <tr data-prio="4-BAJA" data-status="COMPLETADA"><td style="font-weight:600;color:#1A6B8A;cursor:pointer" onclick="openSapWODetail('PM-FV-8007')">PM-FV-8007</td><td>WEA-01 Estacion Meteo</td><td>Calibracion piranometro</td><td><span class="sap-prio sap-prio-baja">4-BAJA</span></td><td><span class="sap-estado sap-est-ok">COMPLETADA</span></td><td><span style="font-size:10px;color:#354A5F;font-weight:600">Plan PM</span></td><td><button class="sap-action-btn" onclick="openSapWODetail('PM-FV-8007')">Ver</button></td></tr>
+        <tr data-prio="1-URGENTE" data-status="PROGRAMADA"><td style="font-weight:600;color:#1A6B8A;cursor:pointer" onclick="openSapWODetail('PM-FV-8008')">PM-FV-8008</td><td>SWG-01 Switchgear</td><td>Prueba protecciones</td><td><span class="sap-prio sap-prio-urgente">1-URGENTE</span></td><td><span class="sap-estado sap-est-prog">PROGRAMADA</span></td><td><span style="font-size:10px;color:#8B4513;font-weight:600">Regulatorio</span></td><td><button class="sap-action-btn" onclick="openSapWODetail('PM-FV-8008')">Ver</button></td></tr>
+        <tr data-prio="4-BAJA" data-status="CERT"><td style="font-weight:600;color:#1A6B8A;cursor:pointer" onclick="openSapWODetail('PM-FV-8009')">PM-FV-8009</td><td>INV-01 Inversor String</td><td>Limpieza ventiladores</td><td><span class="sap-prio sap-prio-baja">4-BAJA</span></td><td><span class="sap-estado sap-est-cert">CERT</span></td><td><span style="font-size:10px;color:#354A5F;font-weight:600">Plan PM</span></td><td><button class="sap-action-btn" onclick="openSapWODetail('PM-FV-8009')">Ver</button></td></tr>
+        <tr data-prio="4-BAJA" data-status="COMPLETADA"><td style="font-weight:600;color:#1A6B8A;cursor:pointer" onclick="openSapWODetail('PM-FV-8010')">PM-FV-8010</td><td>CAM-01 CCTV</td><td>Revision camaras perimetro</td><td><span class="sap-prio sap-prio-baja">4-BAJA</span></td><td><span class="sap-estado sap-est-ok">COMPLETADA</span></td><td><span style="font-size:10px;color:#354A5F;font-weight:600">Plan PM</span></td><td><button class="sap-action-btn" onclick="openSapWODetail('PM-FV-8010')">Ver</button></td></tr>
+      </tbody>
+    </table>
+  </div>`;
+}
+
+function getSapAPMHTML(){
+  return `
+  <div style="font-size:18px;font-weight:700;color:#333;margin-bottom:4px">APM - Asset Performance Management</div>
+  <div style="font-size:11px;color:#666;margin-bottom:16px">Salud de equipos | Planta Solar FV-SON-01</div>
+  <div style="font-size:13px;font-weight:700;color:#354A5F;margin-bottom:10px;text-transform:uppercase;letter-spacing:.05em">Inversores</div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px;margin-bottom:18px">
+    <div class="sap-eq-card" style="cursor:pointer"><div class="sap-eq-header"><span class="sap-eq-tag">INV-01</span><span class="sap-eq-status sap-st-ok">Operativo</span></div><div class="sap-eq-title">Inversor String 01</div><div class="sap-eq-rows"><div class="sap-eq-row"><span>Potencia</span><span style="color:#1A6B8A;font-weight:600">4.82 MW</span></div><div class="sap-eq-row"><span>Eficiencia</span><span style="color:#2B7D2B;font-weight:600">98.1%</span></div><div class="sap-eq-row"><span>Temp</span><span style="color:#2B7D2B;font-weight:600">41 C</span></div></div><div style="margin-top:8px;height:6px;background:#eee;border-radius:3px;overflow:hidden"><div style="width:92%;height:100%;background:#2B7D2B;border-radius:3px"></div></div><div style="font-size:9px;color:#666;margin-top:2px;text-align:right">Salud: 92%</div></div>
+    <div class="sap-eq-card" style="cursor:pointer"><div class="sap-eq-header"><span class="sap-eq-tag">INV-02</span><span class="sap-eq-status sap-st-ok">Operativo</span></div><div class="sap-eq-title">Inversor String 02</div><div class="sap-eq-rows"><div class="sap-eq-row"><span>Potencia</span><span style="color:#1A6B8A;font-weight:600">4.76 MW</span></div><div class="sap-eq-row"><span>Eficiencia</span><span style="color:#2B7D2B;font-weight:600">97.8%</span></div><div class="sap-eq-row"><span>Temp</span><span style="color:#2B7D2B;font-weight:600">43 C</span></div></div><div style="margin-top:8px;height:6px;background:#eee;border-radius:3px;overflow:hidden"><div style="width:89%;height:100%;background:#2B7D2B;border-radius:3px"></div></div><div style="font-size:9px;color:#666;margin-top:2px;text-align:right">Salud: 89%</div></div>
+    <div class="sap-eq-card" style="cursor:pointer"><div class="sap-eq-header"><span class="sap-eq-tag">INV-03</span><span class="sap-eq-status sap-st-warn">Derating</span></div><div class="sap-eq-title">Inversor Central</div><div class="sap-eq-rows"><div class="sap-eq-row"><span>Potencia</span><span style="color:#E8710A;font-weight:600">3.95 MW</span></div><div class="sap-eq-row"><span>Eficiencia</span><span style="color:#E8710A;font-weight:600">94.2%</span></div><div class="sap-eq-row"><span>Temp</span><span style="color:#CC3333;font-weight:600">62 C</span></div></div><div style="margin-top:8px;height:6px;background:#eee;border-radius:3px;overflow:hidden"><div style="width:64%;height:100%;background:#E8710A;border-radius:3px"></div></div><div style="font-size:9px;color:#E8710A;margin-top:2px;text-align:right;font-weight:600">Salud: 64%</div></div>
+  </div>
+  <div style="font-size:13px;font-weight:700;color:#354A5F;margin-bottom:10px;text-transform:uppercase;letter-spacing:.05em">Trackers</div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px;margin-bottom:18px">
+    <div class="sap-eq-card" style="cursor:pointer"><div class="sap-eq-header"><span class="sap-eq-tag">TRK-01</span><span class="sap-eq-status sap-st-crit">Falla</span></div><div class="sap-eq-title">Tracker Fila 7</div><div class="sap-eq-rows"><div class="sap-eq-row"><span>Motor</span><span style="color:#CC3333;font-weight:600">Atascado</span></div><div class="sap-eq-row"><span>Resto filas</span><span style="color:#2B7D2B;font-weight:600">47/48 OK</span></div></div><div style="margin-top:8px;height:6px;background:#eee;border-radius:3px;overflow:hidden"><div style="width:42%;height:100%;background:#CC3333;border-radius:3px"></div></div><div style="font-size:9px;color:#CC3333;margin-top:2px;text-align:right;font-weight:600">Salud: 42%</div></div>
+    <div class="sap-eq-card" style="cursor:pointer"><div class="sap-eq-header"><span class="sap-eq-tag">TRK-02..48</span><span class="sap-eq-status sap-st-ok">Operativo</span></div><div class="sap-eq-title">Trackers Generales</div><div class="sap-eq-rows"><div class="sap-eq-row"><span>Angulo actual</span><span style="color:#2B7D2B;font-weight:600">25.4 deg</span></div><div class="sap-eq-row"><span>Backtracking</span><span style="color:#2B7D2B">Activo</span></div></div><div style="margin-top:8px;height:6px;background:#eee;border-radius:3px;overflow:hidden"><div style="width:96%;height:100%;background:#2B7D2B;border-radius:3px"></div></div><div style="font-size:9px;color:#666;margin-top:2px;text-align:right">Salud: 96%</div></div>
+  </div>
+  <div style="font-size:13px;font-weight:700;color:#354A5F;margin-bottom:10px;text-transform:uppercase;letter-spacing:.05em">Transformadores</div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px;margin-bottom:18px">
+    <div class="sap-eq-card" style="cursor:pointer"><div class="sap-eq-header"><span class="sap-eq-tag">TRF-01</span><span class="sap-eq-status sap-st-ok">Operativo</span></div><div class="sap-eq-title">Transformador MV 25 MVA #1</div><div class="sap-eq-rows"><div class="sap-eq-row"><span>Temp aceite</span><span style="color:#2B7D2B;font-weight:600">62 C</span></div><div class="sap-eq-row"><span>Temp bobinado</span><span style="color:#E8710A;font-weight:600">78 C</span></div><div class="sap-eq-row"><span>Carga</span><span style="color:#1A6B8A;font-weight:600">76%</span></div></div><div style="margin-top:8px;height:6px;background:#eee;border-radius:3px;overflow:hidden"><div style="width:85%;height:100%;background:#2B7D2B;border-radius:3px"></div></div><div style="font-size:9px;color:#666;margin-top:2px;text-align:right">Salud: 85%</div></div>
+    <div class="sap-eq-card" style="cursor:pointer"><div class="sap-eq-header"><span class="sap-eq-tag">TRF-02</span><span class="sap-eq-status sap-st-ok">Operativo</span></div><div class="sap-eq-title">Transformador MV 25 MVA #2</div><div class="sap-eq-rows"><div class="sap-eq-row"><span>Temp aceite</span><span style="color:#2B7D2B;font-weight:600">58 C</span></div><div class="sap-eq-row"><span>Temp bobinado</span><span style="color:#2B7D2B;font-weight:600">72 C</span></div><div class="sap-eq-row"><span>Carga</span><span style="color:#1A6B8A;font-weight:600">71%</span></div></div><div style="margin-top:8px;height:6px;background:#eee;border-radius:3px;overflow:hidden"><div style="width:90%;height:100%;background:#2B7D2B;border-radius:3px"></div></div><div style="font-size:9px;color:#666;margin-top:2px;text-align:right">Salud: 90%</div></div>
+  </div>
+  <div style="font-size:13px;font-weight:700;color:#354A5F;margin-bottom:10px;text-transform:uppercase;letter-spacing:.05em">Subestacion y SCADA/PPC</div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px;margin-bottom:18px">
+    <div class="sap-eq-card" style="cursor:pointer"><div class="sap-eq-header"><span class="sap-eq-tag">SUB-01</span><span class="sap-eq-status sap-st-ok">Operativo</span></div><div class="sap-eq-title">Subestacion 34.5/115 kV</div><div class="sap-eq-rows"><div class="sap-eq-row"><span>Voltaje</span><span style="color:#2B7D2B;font-weight:600">116.8 kV</span></div><div class="sap-eq-row"><span>Frecuencia</span><span style="color:#2B7D2B;font-weight:600">60.00 Hz</span></div><div class="sap-eq-row"><span>FP</span><span style="color:#2B7D2B;font-weight:600">0.98</span></div></div><div style="margin-top:8px;height:6px;background:#eee;border-radius:3px;overflow:hidden"><div style="width:97%;height:100%;background:#2B7D2B;border-radius:3px"></div></div><div style="font-size:9px;color:#666;margin-top:2px;text-align:right">Salud: 97%</div></div>
+    <div class="sap-eq-card" style="cursor:pointer"><div class="sap-eq-header"><span class="sap-eq-tag">SCADA/PPC</span><span class="sap-eq-status sap-st-ok">Operativo</span></div><div class="sap-eq-title">SCADA + Power Plant Controller</div><div class="sap-eq-rows"><div class="sap-eq-row"><span>CPU load</span><span style="color:#2B7D2B;font-weight:600">34%</span></div><div class="sap-eq-row"><span>Tags activos</span><span style="color:#1A6B8A;font-weight:600">2,480</span></div><div class="sap-eq-row"><span>Uptime</span><span style="color:#2B7D2B;font-weight:600">99.99%</span></div></div><div style="margin-top:8px;height:6px;background:#eee;border-radius:3px;overflow:hidden"><div style="width:99%;height:100%;background:#2B7D2B;border-radius:3px"></div></div><div style="font-size:9px;color:#666;margin-top:2px;text-align:right">Salud: 99%</div></div>
+  </div>`;
+}
+
+function getSapMMHTML(){
+  return `
+  <div style="font-size:18px;font-weight:700;color:#333;margin-bottom:4px">SAP MM - Gestion de Materiales</div>
+  <div style="font-size:11px;color:#666;margin-bottom:16px">Inventario de repuestos criticos planta solar FV-SON-01</div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin-bottom:14px">
+    <div style="background:#fff;border:1px solid #ddd;border-radius:6px;padding:10px;text-align:center"><div style="font-size:20px;font-weight:700;color:#1A6B8A">48</div><div style="font-size:9px;color:#666;font-weight:600">SKUs en almacen</div></div>
+    <div style="background:#fff;border:1px solid #ddd;border-radius:6px;padding:10px;text-align:center"><div style="font-size:20px;font-weight:700;color:#E8710A">2</div><div style="font-size:9px;color:#666;font-weight:600">Bajo minimo</div></div>
+    <div style="background:#fff;border:1px solid #ddd;border-radius:6px;padding:10px;text-align:center"><div style="font-size:20px;font-weight:700;color:#354A5F">$128K</div><div style="font-size:9px;color:#666;font-weight:600">Valor inventario</div></div>
+    <div style="background:#fff;border:1px solid #ddd;border-radius:6px;padding:10px;text-align:center"><div style="font-size:20px;font-weight:700;color:#2B7D2B">95%</div><div style="font-size:9px;color:#666;font-weight:600">Disponibilidad</div></div>
+  </div>
+  <div style="background:#fff;border-radius:6px;border:1px solid #ddd;overflow-x:auto">
+    <table class="sap-table">
+      <thead><tr><th>Material</th><th>Descripcion</th><th>Stock</th><th>Min</th><th>Unidad</th><th>Ubicacion</th><th>Estado</th></tr></thead>
+      <tbody>
+        <tr><td style="font-weight:600;color:#1A6B8A">MAT-FV-001</td><td>Fusibles DC 1000V 30A gPV</td><td>24</td><td>10</td><td>PZA</td><td>ALM-01-A3</td><td><span class="sap-estado sap-est-ok">OK</span></td></tr>
+        <tr><td style="font-weight:600;color:#1A6B8A">MAT-FV-002</td><td>Modulos PV 550W reemplazo</td><td>8</td><td>5</td><td>PZA</td><td>ALM-01-B1</td><td><span class="sap-estado sap-est-ok">OK</span></td></tr>
+        <tr><td style="font-weight:600;color:#1A6B8A">MAT-FV-003</td><td>Aceite transformador dielectrico</td><td>200</td><td>100</td><td>LT</td><td>ALM-02-A1</td><td><span class="sap-estado sap-est-ok">OK</span></td></tr>
+        <tr><td style="font-weight:600;color:#1A6B8A">MAT-FV-004</td><td>Sensores irradiancia CMP11</td><td>1</td><td>1</td><td>PZA</td><td>ALM-01-C2</td><td><span class="sap-estado sap-est-warn">Minimo</span></td></tr>
+        <tr><td style="font-weight:600;color:#1A6B8A">MAT-FV-005</td><td>Terminales MC4 macho/hembra</td><td>120</td><td>50</td><td>PAR</td><td>ALM-01-A1</td><td><span class="sap-estado sap-est-ok">OK</span></td></tr>
+        <tr><td style="font-weight:600;color:#1A6B8A">MAT-FV-006</td><td>Contactores inversor 630A</td><td>1</td><td>2</td><td>PZA</td><td>ALM-02-B1</td><td><span class="sap-estado" style="background:#FFEBEE;color:#CC3333">BAJO MIN</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div style="font-size:13px;font-weight:700;color:#354A5F;margin:18px 0 10px;text-transform:uppercase;letter-spacing:.05em">Solicitudes de Compra Pendientes</div>
+  <div style="background:#fff;border-radius:6px;border:1px solid #ddd;overflow-x:auto">
+    <table class="sap-table">
+      <thead><tr><th>Sol. Compra</th><th>Material</th><th>Cant.</th><th>Proveedor</th><th>Estado</th></tr></thead>
+      <tbody>
+        <tr><td style="font-weight:600;color:#1A6B8A">SC-FV-301</td><td>Contactores inversor 630A</td><td>3</td><td>ABB Mexico</td><td><span class="sap-estado sap-est-warn">Aprobacion</span></td></tr>
+        <tr><td style="font-weight:600;color:#1A6B8A">SC-FV-302</td><td>Motor tracker DC 24V</td><td>2</td><td>NEXTracker</td><td><span class="sap-estado" style="background:#E3F2FD;color:#1A6B8A">Enviada</span></td></tr>
+        <tr><td style="font-weight:600;color:#1A6B8A">SC-FV-303</td><td>Sensores irradiancia CMP11</td><td>2</td><td>Kipp & Zonen</td><td><span class="sap-estado sap-est-ok">Aprobada</span></td></tr>
+      </tbody>
+    </table>
+  </div>`;
+}
+
+function getSapBTPHTML(){
+  return `
+  <div style="font-size:18px;font-weight:700;color:#333;margin-bottom:4px">BTP - Integracion DT / SAP S/4HANA</div>
+  <div style="font-size:11px;color:#666;margin-bottom:16px">Flujo de datos bidireccional entre gemelo digital y SAP EAM</div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin-bottom:14px">
+    <div style="background:#fff;border:1px solid #ddd;border-radius:6px;padding:10px;text-align:center"><div style="font-size:20px;font-weight:700;color:#2B7D2B">100%</div><div style="font-size:9px;color:#666;font-weight:600">Sync Status</div></div>
+    <div style="background:#fff;border:1px solid #ddd;border-radius:6px;padding:10px;text-align:center"><div style="font-size:20px;font-weight:700;color:#1A6B8A">1,247</div><div style="font-size:9px;color:#666;font-weight:600">Meas. Points hoy</div></div>
+    <div style="background:#fff;border:1px solid #ddd;border-radius:6px;padding:10px;text-align:center"><div style="font-size:20px;font-weight:700;color:#2B7D2B">0</div><div style="font-size:9px;color:#666;font-weight:600">Errores 24h</div></div>
+    <div style="background:#fff;border:1px solid #ddd;border-radius:6px;padding:10px;text-align:center"><div style="font-size:20px;font-weight:700;color:#E8710A">API</div><div style="font-size:9px;color:#666;font-weight:600">OData v4 + RFC</div></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+    <div style="background:#fff;border:1px solid #ddd;border-radius:6px;padding:14px">
+      <div style="font-size:13px;font-weight:700;color:#333;margin-bottom:10px">Flujo de Datos</div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap">
+        <div style="background:#E3F2FD;padding:6px 12px;border-radius:4px;font-size:11px;font-weight:600;color:#1A6B8A">SCADA / IoT</div>
+        <div style="color:#999;font-size:14px">--></div>
+        <div style="background:#FFF3E0;padding:6px 12px;border-radius:4px;font-size:11px;font-weight:600;color:#E8710A">Digital Twin</div>
+        <div style="color:#999;font-size:14px">--></div>
+        <div style="background:#E8F5E9;padding:6px 12px;border-radius:4px;font-size:11px;font-weight:600;color:#2B7D2B">SAP S/4HANA</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <div style="background:#E8F5E9;padding:6px 12px;border-radius:4px;font-size:11px;font-weight:600;color:#2B7D2B">SAP PM OTs</div>
+        <div style="color:#999;font-size:14px"><--</div>
+        <div style="background:#FFF3E0;padding:6px 12px;border-radius:4px;font-size:11px;font-weight:600;color:#E8710A">Auto-create</div>
+        <div style="color:#999;font-size:14px"><--</div>
+        <div style="background:#FFEBEE;padding:6px 12px;border-radius:4px;font-size:11px;font-weight:600;color:#CC3333">Alertas DT</div>
+      </div>
+    </div>
+    <div style="background:#fff;border:1px solid #ddd;border-radius:6px;padding:14px">
+      <div style="font-size:13px;font-weight:700;color:#333;margin-bottom:10px">APIs Activas</div>
+      <table class="sap-table" style="font-size:10px"><thead><tr><th>Endpoint</th><th>Metodo</th><th>Estado</th></tr></thead><tbody>
+        <tr><td>/sap/opu/odata4/pm/workorders</td><td>GET/POST</td><td><span class="sap-estado sap-est-ok">OK</span></td></tr>
+        <tr><td>/sap/opu/odata4/pm/measpoints</td><td>POST</td><td><span class="sap-estado sap-est-ok">OK</span></td></tr>
+        <tr><td>/sap/opu/odata4/mm/materials</td><td>GET</td><td><span class="sap-estado sap-est-ok">OK</span></td></tr>
+        <tr><td>/sap/opu/odata4/apm/health</td><td>GET</td><td><span class="sap-estado sap-est-ok">OK</span></td></tr>
+      </tbody></table>
+    </div>
+  </div>
+  <div style="font-size:13px;font-weight:700;color:#354A5F;margin-bottom:10px;text-transform:uppercase;letter-spacing:.05em">Stream Log en Vivo</div>
+  <div style="background:#1a1a2e;border-radius:6px;padding:12px;max-height:220px;overflow-y:auto;font-family:'IBM Plex Mono',monospace;font-size:10px" id="sapStreamLog">
+    <div style="color:#4CAF50">[14:30:02] SCADA > DT | Telemetria 48 puntos | OK</div>
+    <div style="color:#4CAF50">[14:29:58] DT > SAP | POST /pm/measpoints | 96 registros | 200 OK</div>
+    <div style="color:#E8710A">[14:29:45] DT > SAP | POST /pm/workorders | PM-FV-8001 creada | Derating INV-03</div>
+    <div style="color:#4CAF50">[14:29:30] SAP > DT | GET /mm/materials | 48 SKUs sync | 200 OK</div>
+    <div style="color:#4CAF50">[14:29:15] Weather API | GET /forecast | Irr. 920 W/m2 | OK</div>
+  </div>`;
+}
+
+// SAP WO Filter
+function filterSapWO(){
+  const prio=document.getElementById('sapFilterPriority');
+  const status=document.getElementById('sapFilterStatus');
+  const search=document.getElementById('sapSearchWO');
+  if(!prio||!status||!search) return;
+  const prioVal=prio.value, statusVal=status.value, searchVal=(search.value||'').toLowerCase();
+  const rows=document.querySelectorAll('#sapWOBody tr');
+  rows.forEach(r=>{
+    const rPrio=r.getAttribute('data-prio')||'';
+    const rStatus=r.getAttribute('data-status')||'';
+    const txt=r.textContent.toLowerCase();
+    let show=true;
+    if(prioVal!=='all'&&rPrio!==prioVal) show=false;
+    if(statusVal!=='all'&&rStatus!==statusVal) show=false;
+    if(searchVal&&txt.indexOf(searchVal)===-1) show=false;
+    r.style.display=show?'':'none';
+  });
+}
+
+// SAP WO Detail
+const SAP_WO_DATA={
+  'PM-FV-8001':{equipo:'INV-03 Inversor Central',desc:'Derating por temperatura 62C',prio:'1-URGENTE',estado:'ABIERTA',origen:'DT Auto',detalle:'Inversor central INV-03 reporta temperatura interna de 62C, superando umbral de 55C. Derating activo reduciendo potencia a 3.95 MW. Verificar filtros de ventilacion y sistema de enfriamiento.'},
+  'PM-FV-8002':{equipo:'TRK-01 Tracker',desc:'Motor tracker fila 7 atascado',prio:'2-ALTA',estado:'ABIERTA',origen:'DT Auto',detalle:'Motor DC 24V del tracker fila 7 reporta corriente excesiva y posicion incorrecta. El tracker no sigue la trayectoria solar. Verificar engranajes y controlador.'},
+  'PM-FV-8003':{equipo:'ARR-01 Array Bloque 1',desc:'Lavado paneles programado',prio:'3-MEDIA',estado:'PROGRAMADA',origen:'Plan PM',detalle:'Limpieza programada de paneles solares Bloque 1. Soiling index actual 3.2%. Programar cuadrilla de limpieza con agua desionizada.'},
+  'PM-FV-8004':{equipo:'TRF-01 Transformador',desc:'Analisis aceite dielectrico',prio:'2-ALTA',estado:'PROGRAMADA',origen:'Plan PM',detalle:'Analisis fisicoquimico y cromatografico de gases disueltos (DGA) del aceite del transformador TRF-01. Ultima muestra hace 6 meses. Coordinar con laboratorio certificado.'},
+  'PM-FV-8005':{equipo:'SUB-01 Subestacion',desc:'Termografia anual',prio:'2-ALTA',estado:'PROGRAMADA',origen:'Regulatorio',detalle:'Inspeccion termografica anual de conexiones, barras, interruptores SF6 y transformadores de corriente. Requisito regulatorio CENACE. Coordinar ventana de mantenimiento.'},
+  'PM-FV-8006':{equipo:'CMB-02 Combiner Box',desc:'Reemplazo fusible string 4',prio:'3-MEDIA',estado:'EN PROCESO',origen:'DT Auto',detalle:'Fusible del string 4 de combiner box CMB-02 abierto. Corriente de string reducida a 0. Tecnico en sitio realizando reemplazo. Material MAT-FV-001 asignado.'},
+  'PM-FV-8007':{equipo:'WEA-01 Estacion Meteo',desc:'Calibracion piranometro',prio:'4-BAJA',estado:'COMPLETADA',origen:'Plan PM',detalle:'Calibracion completada del piranometro CMP11. Desviacion medida: 0.3% dentro de tolerancia. Certificado de calibracion emitido.'},
+  'PM-FV-8008':{equipo:'SWG-01 Switchgear',desc:'Prueba protecciones',prio:'1-URGENTE',estado:'PROGRAMADA',origen:'Regulatorio',detalle:'Prueba de protecciones del switchgear de media tension. Incluye prueba de reles de sobrecorriente, diferencial y distancia. Requisito regulatorio semestral.'},
+  'PM-FV-8009':{equipo:'INV-01 Inversor String',desc:'Limpieza ventiladores',prio:'4-BAJA',estado:'CERT',origen:'Plan PM',detalle:'Limpieza y verificacion de ventiladores de refrigeracion del inversor INV-01. Inspeccion visual de filtros y medicion de flujo de aire. Certificado de mantenimiento emitido.'},
+  'PM-FV-8010':{equipo:'CAM-01 CCTV',desc:'Revision camaras perimetro',prio:'4-BAJA',estado:'COMPLETADA',origen:'Plan PM',detalle:'Revision completada de 8 camaras CCTV perimetrales. Limpieza de lentes, ajuste de enfoque y verificacion de almacenamiento NVR. Todas operativas.'}
+};
+
+function openSapWODetail(id){
+  const data=SAP_WO_DATA[id]; if(!data) return;
+  const modal=document.getElementById('sapWOModal');
+  document.getElementById('sapModalTitle').textContent=id+' - '+data.equipo;
+  let html='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">';
+  html+='<div style="font-size:11px;color:#666">Prioridad: <b style="color:#333">'+data.prio+'</b></div>';
+  html+='<div style="font-size:11px;color:#666">Estado: <b style="color:#333">'+data.estado+'</b></div>';
+  html+='<div style="font-size:11px;color:#666">Origen: <b style="color:#333">'+data.origen+'</b></div>';
+  html+='<div style="font-size:11px;color:#666">Equipo: <b style="color:#333">'+data.equipo+'</b></div>';
+  html+='</div>';
+  html+='<div style="font-size:12px;color:#333;line-height:1.6;background:#F5F6FA;padding:12px;border-radius:6px">'+data.detalle+'</div>';
+  document.getElementById('sapModalBody').innerHTML=html;
+  modal.classList.add('active');
+}
+function closeSapModal(){ document.getElementById('sapWOModal').classList.remove('active'); }
+
+// SAP Stream Log
+let streamLogInterval=null;
+const streamLogMessages=[
+  {color:'#4CAF50',msg:'SCADA > DT | Telemetria 48 puntos | OK'},
+  {color:'#4CAF50',msg:'DT > SAP | POST /pm/measpoints | 96 registros | 200 OK'},
+  {color:'#E8710A',msg:'DT > SAP | Alerta INV-03 temp 62C | OT auto-generada'},
+  {color:'#4CAF50',msg:'SAP > DT | GET /mm/materials | Stock sync | 200 OK'},
+  {color:'#2196F3',msg:'APM > SAP | Health scores updated | 12 activos'},
+  {color:'#4CAF50',msg:'Weather API | Forecast update | Irr 920 W/m2'},
+  {color:'#E8710A',msg:'DT > SAP | Alerta TRK-01 motor fila 7 | OT auto-generada'},
+  {color:'#4CAF50',msg:'SCADA > DT | Alarms sync | 3 alarmas procesadas'},
+  {color:'#2196F3',msg:'SAP PM > DT | OTs sync | 10 ordenes activas'},
+  {color:'#4CAF50',msg:'DT > SAP | POST /apm/health | INV-03 salud 64% | 200 OK'}
+];
+function startStreamLog(){
+  if(streamLogInterval) clearInterval(streamLogInterval);
+  streamLogInterval=setInterval(function(){
+    const log=document.getElementById('sapStreamLog');
+    if(!log||!log.offsetParent){clearInterval(streamLogInterval);streamLogInterval=null;return;}
+    const now=new Date();
+    const ts=now.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    const m=streamLogMessages[Math.floor(Math.random()*streamLogMessages.length)];
+    const line=document.createElement('div');
+    line.style.color=m.color;
+    line.textContent='['+ts+'] '+m.msg;
+    log.insertBefore(line,log.firstChild);
+    if(log.children.length>30) log.removeChild(log.lastChild);
+  },3000);
+}
+
+// ===================================================================
+// ACC FULLSCREEN OVERLAY
+// ===================================================================
+
+function openACCOverlay(){
+  document.getElementById('accOverlay').classList.add('active');
+  switchAccTab('sld');
+}
+function closeACCOverlay(){ document.getElementById('accOverlay').classList.remove('active'); }
+
+const ACC_DOCS = {
+  sld:[
+    {code:'FV-EE-001',name:'Diagrama unifilar general',type:'Plano',rev:'C',status:'Aprobado',size:'2.4 MB'},
+    {code:'FV-EE-002',name:'Single line - MV collection',type:'Plano',rev:'B',status:'Aprobado',size:'1.8 MB'},
+    {code:'FV-EE-010',name:'Single line - Inverter section',type:'Plano',rev:'A',status:'Aprobado',size:'1.2 MB'},
+    {code:'FV-EE-011',name:'Protection coordination diagram',type:'Plano',rev:'B',status:'Aprobado',size:'980 KB'}
+  ],
+  cable:[
+    {code:'FV-EE-003',name:'Cable routing DC/MV',type:'Plano',rev:'C',status:'Aprobado',size:'3.1 MB'},
+    {code:'FV-EE-020',name:'Cable schedule DC strings',type:'Tabla',rev:'B',status:'Aprobado',size:'450 KB'},
+    {code:'FV-EE-021',name:'Cable schedule MV feeders',type:'Tabla',rev:'B',status:'Aprobado',size:'380 KB'},
+    {code:'FV-EE-022',name:'Trench cross sections',type:'Plano',rev:'A',status:'Aprobado',size:'1.5 MB'}
+  ],
+  panel:[
+    {code:'FV-DS-001',name:'Ficha tecnica modulo 550W',type:'Datasheet',rev:'--',status:'Vigente',size:'2.8 MB'},
+    {code:'FV-DS-002',name:'Ficha tecnica inversor 5 MW',type:'Datasheet',rev:'--',status:'Vigente',size:'3.2 MB'},
+    {code:'FV-DS-003',name:'Ficha tecnica trafo 25 MVA',type:'Datasheet',rev:'--',status:'Vigente',size:'1.9 MB'},
+    {code:'FV-DS-004',name:'Ficha tecnica combiner box',type:'Datasheet',rev:'--',status:'Vigente',size:'850 KB'}
+  ],
+  tracker:[
+    {code:'FV-ME-001',name:'Tracker foundation details',type:'Plano',rev:'A',status:'Aprobado',size:'2.1 MB'},
+    {code:'FV-ME-002',name:'Tracker assembly manual',type:'Manual',rev:'1.0',status:'Vigente',size:'12 MB'},
+    {code:'FV-DS-005',name:'NEXTracker NX Horizon spec',type:'Datasheet',rev:'--',status:'Vigente',size:'4.5 MB'}
+  ],
+  civil:[
+    {code:'FV-CV-001',name:'Panel layout & string plan',type:'Plano',rev:'D',status:'Aprobado',size:'5.2 MB'},
+    {code:'FV-CV-002',name:'Grading & drainage plan',type:'Plano',rev:'B',status:'Aprobado',size:'3.8 MB'},
+    {code:'FV-CV-003',name:'Access roads & parking',type:'Plano',rev:'A',status:'Aprobado',size:'2.1 MB'},
+    {code:'FV-CV-004',name:'Perimeter fence details',type:'Plano',rev:'A',status:'Aprobado',size:'1.1 MB'}
+  ],
+  electricos:[
+    {code:'FV-EE-004',name:'Subestacion - GA & sections',type:'Plano',rev:'B',status:'Aprobado',size:'2.9 MB'},
+    {code:'FV-EE-005',name:'Grounding & lightning',type:'Plano',rev:'B',status:'Aprobado',size:'1.7 MB'},
+    {code:'FV-MN-001',name:'Manual O&M planta',type:'Manual',rev:'1.0',status:'Vigente',size:'28 MB'},
+    {code:'FV-MN-002',name:'Emergency response plan',type:'Manual',rev:'1.0',status:'Vigente',size:'8.5 MB'}
+  ]
+};
+
+function buildSldFv001(){
+  return '<div style="position:relative;width:100%;min-height:380px;background:#fff;border:2px solid #333;overflow:auto;font-family:Arial,sans-serif;color:#333;">' +
+    '<div style="position:absolute;top:6px;left:6px;right:6px;height:30px;border:2px solid #333;display:flex;align-items:center;font-size:10px;color:#333;background:#f5f5f5;"><div style="flex:1;padding:0 8px;font-weight:700;">SLD-FV-001 | DIAGRAMA UNIFILAR GENERAL</div><div style="border-left:1px solid #333;padding:0 6px;font-size:8px;color:#555;">REV.C | Mar-2026 | APROBADO</div></div>' +
+    '<div style="position:absolute;top:55px;left:10px;width:70px;height:45px;border:2px solid #2e86c1;background:#d6eaf8;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:8px;font-weight:600;color:#2e86c1;"><div>ARRAYS</div><div style="font-size:6px;">90,900 mod</div></div>' +
+    '<div style="position:absolute;top:76px;left:80px;width:20px;height:2px;background:#c0392b;"></div>' +
+    '<div style="position:absolute;top:55px;left:105px;width:70px;height:45px;border:2px solid #d35400;background:#fdebd0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:8px;font-weight:600;color:#d35400;"><div>CMB-01..03</div><div style="font-size:6px;">DC Combiner</div></div>' +
+    '<div style="position:absolute;top:76px;left:175px;width:20px;height:2px;background:#c0392b;"></div>' +
+    '<div style="position:absolute;top:50px;left:200px;width:80px;height:55px;border:2px solid #1e8449;background:#eafaf1;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:8px;font-weight:600;color:#1e8449;"><div>INV-01..03</div><div style="font-size:6px;">Inversores 5MW</div></div>' +
+    '<div style="position:absolute;top:76px;left:280px;width:20px;height:2px;background:#1e8449;"></div>' +
+    '<div style="position:absolute;top:55px;left:305px;width:75px;height:45px;border:2px solid #7d3c98;background:#f4ecf7;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:8px;font-weight:600;color:#7d3c98;"><div>TRF-01..02</div><div style="font-size:6px;">25 MVA</div></div>' +
+    '<div style="position:absolute;top:76px;left:380px;width:20px;height:2px;background:#333;"></div>' +
+    '<div style="position:absolute;top:55px;left:405px;width:70px;height:45px;border:2px solid #c0392b;background:#fdedec;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:8px;font-weight:600;color:#c0392b;"><div>SWG-01</div><div style="font-size:6px;">Switchgear</div></div>' +
+    '<div style="position:absolute;top:76px;left:475px;width:20px;height:2px;background:#333;"></div>' +
+    '<div style="position:absolute;top:55px;left:500px;width:70px;height:45px;border:2px solid #8e44ad;background:#f5eef8;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:8px;font-weight:600;color:#8e44ad;"><div>SUB-01</div><div style="font-size:6px;">115/34.5kV</div></div>' +
+    '<div style="position:absolute;top:76px;left:570px;width:20px;height:2px;background:#333;"></div>' +
+    '<div style="position:absolute;top:55px;left:595px;width:60px;height:45px;border:2px solid #566573;background:#eaecee;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:8px;font-weight:600;color:#566573;"><div>GRID</div><div style="font-size:6px;">CFE 115kV</div></div>' +
+    '<div style="position:absolute;top:115px;left:105px;font-size:7px;color:#888;font-family:monospace;">1500Vdc | 690Vac | 34.5kV | 115kV</div>' +
+    '<div style="position:absolute;bottom:6px;left:6px;right:6px;border-top:1px solid #ccc;padding-top:4px;font-size:7px;color:#666;">NOTAS: 1. Cap. 50 MWp. 2. FP 0.98. 3. Proteccion IEEE C37. | FV-SON-01</div></div>';
+}
+function buildSldFv002(){
+  return '<div style="position:relative;width:100%;min-height:380px;background:#fff;border:2px solid #333;overflow:auto;font-family:Arial,sans-serif;color:#333;">' +
+    '<div style="position:absolute;top:6px;left:6px;right:6px;height:30px;border:2px solid #333;display:flex;align-items:center;font-size:10px;color:#333;background:#f5f5f5;"><div style="flex:1;padding:0 8px;font-weight:700;">SLD-FV-002 | DC STRING CONFIGURATION</div><div style="border-left:1px solid #333;padding:0 6px;font-size:8px;color:#555;">REV.B | Mar-2026</div></div>' +
+    '<div style="position:absolute;top:50px;left:15px;width:100px;height:35px;border:2px solid #2e86c1;background:#d6eaf8;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:8px;font-weight:600;color:#2e86c1;"><div>STRING 1</div><div style="font-size:6px;">28 mod x 550W</div></div>' +
+    '<div style="position:absolute;top:95px;left:15px;width:100px;height:35px;border:2px solid #2e86c1;background:#d6eaf8;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:8px;font-weight:600;color:#2e86c1;"><div>STRING 2</div><div style="font-size:6px;">28 mod x 550W</div></div>' +
+    '<div style="position:absolute;top:140px;left:15px;width:100px;height:35px;border:2px solid #2e86c1;background:#d6eaf8;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:8px;font-weight:600;color:#2e86c1;"><div>... Str 3-30</div></div>' +
+    '<div style="position:absolute;top:185px;left:15px;width:100px;height:35px;border:2px solid #2e86c1;background:#d6eaf8;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:8px;font-weight:600;color:#2e86c1;"><div>STRING 32</div><div style="font-size:6px;">28 mod x 550W</div></div>' +
+    '<div style="position:absolute;top:66px;left:115px;width:15px;height:2px;background:#c0392b;"></div>' +
+    '<div style="position:absolute;top:111px;left:115px;width:15px;height:2px;background:#c0392b;"></div>' +
+    '<div style="position:absolute;top:156px;left:115px;width:15px;height:2px;background:#c0392b;"></div>' +
+    '<div style="position:absolute;top:201px;left:115px;width:15px;height:2px;background:#c0392b;"></div>' +
+    '<div style="position:absolute;top:66px;left:130px;width:2px;height:137px;background:#c0392b;"></div>' +
+    '<div style="position:absolute;top:130px;left:132px;width:25px;height:2px;background:#c0392b;"></div>' +
+    '<div style="position:absolute;top:50px;left:160px;width:90px;height:50px;border:2px solid #d35400;background:#fdebd0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:8px;font-weight:600;color:#d35400;"><div>CMB-01</div><div style="font-size:6px;">DC Combiner</div><div style="font-size:6px;">32 inputs</div></div>' +
+    '<div style="position:absolute;top:73px;left:250px;width:25px;height:2px;background:#c0392b;"></div>' +
+    '<div style="position:absolute;top:50px;left:280px;width:95px;height:50px;border:2px solid #1e8449;background:#eafaf1;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:8px;font-weight:600;color:#1e8449;"><div>INV-C1</div><div style="font-size:6px;">Inversor Central</div><div style="font-size:6px;">5 MW</div></div>' +
+    '<div style="position:absolute;top:73px;left:375px;width:25px;height:2px;background:#1e8449;"></div>' +
+    '<div style="position:absolute;top:70px;left:385px;font-size:7px;color:#1e8449;">--&gt; AC 690V</div>' +
+    '<div style="position:absolute;top:110px;left:280px;font-size:7px;color:#888;font-family:monospace;">MPPT: 850-1450Vdc</div>' +
+    '<div style="position:absolute;bottom:6px;left:6px;right:6px;border-top:1px solid #ccc;padding-top:4px;font-size:7px;color:#666;">NOTAS: 1. String Voc=1,232V. 2. Cable 10AWG PV. 3. Fusibles 15A. | FV-SON-01</div></div>';
+}
+function buildDsFvINV(){
+  return '<div style="width:100%;max-width:580px;background:#fff;border:2px solid #333;font-family:Arial,sans-serif;color:#333;">' +
+    '<div style="background:#1e8449;color:#fff;padding:8px 14px;font-size:12px;font-weight:700;text-align:center;">FICHA TECNICA - INVERSOR CENTRAL INV-C1</div>' +
+    '<div style="background:#27ae60;color:#fff;padding:4px 14px;font-size:9px;text-align:center;">Planta Solar | FV-SON-01 | Rev.B | Mar-2026</div>' +
+    '<table style="width:100%;border-collapse:collapse;font-size:10px;">' +
+      '<tr style="background:#eafaf1;"><td style="border:1px solid #bbb;padding:4px 8px;font-weight:600;width:38%;">Tag</td><td style="border:1px solid #bbb;padding:4px 8px;">INV-C1 (INV-01)</td></tr>' +
+      '<tr><td style="border:1px solid #bbb;padding:4px 8px;font-weight:600;background:#f8f9fa;">Servicio</td><td style="border:1px solid #bbb;padding:4px 8px;">Conversion DC/AC - 50MWp</td></tr>' +
+      '<tr style="background:#eafaf1;"><td style="border:1px solid #bbb;padding:4px 8px;font-weight:600;">Fabricante</td><td style="border:1px solid #bbb;padding:4px 8px;">SMA Solar Technology</td></tr>' +
+      '<tr><td style="border:1px solid #bbb;padding:4px 8px;font-weight:600;background:#f8f9fa;">Modelo</td><td style="border:1px solid #bbb;padding:4px 8px;">Sunny Central UP 5000</td></tr>' +
+      '<tr style="background:#eafaf1;"><td style="border:1px solid #bbb;padding:4px 8px;font-weight:600;">Potencia Nominal</td><td style="border:1px solid #bbb;padding:4px 8px;">5,000 kW (5 MW)</td></tr>' +
+      '<tr><td style="border:1px solid #bbb;padding:4px 8px;font-weight:600;background:#f8f9fa;">Rango MPPT</td><td style="border:1px solid #bbb;padding:4px 8px;">850-1,450 Vdc</td></tr>' +
+      '<tr style="background:#eafaf1;"><td style="border:1px solid #bbb;padding:4px 8px;font-weight:600;">Vmax DC</td><td style="border:1px solid #bbb;padding:4px 8px;">1,500 Vdc</td></tr>' +
+      '<tr><td style="border:1px solid #bbb;padding:4px 8px;font-weight:600;background:#f8f9fa;">Voltaje AC</td><td style="border:1px solid #bbb;padding:4px 8px;">690V / 3ph / 60Hz</td></tr>' +
+      '<tr style="background:#eafaf1;"><td style="border:1px solid #bbb;padding:4px 8px;font-weight:600;">Eficiencia Max.</td><td style="border:1px solid #bbb;padding:4px 8px;">98.8%</td></tr>' +
+      '<tr><td style="border:1px solid #bbb;padding:4px 8px;font-weight:600;background:#f8f9fa;">THD</td><td style="border:1px solid #bbb;padding:4px 8px;">&lt; 3% @ Pnom</td></tr>' +
+      '<tr style="background:#eafaf1;"><td style="border:1px solid #bbb;padding:4px 8px;font-weight:600;">Factor Potencia</td><td style="border:1px solid #bbb;padding:4px 8px;">0.8 lead - 0.8 lag</td></tr>' +
+      '<tr><td style="border:1px solid #bbb;padding:4px 8px;font-weight:600;background:#f8f9fa;">Proteccion IP</td><td style="border:1px solid #bbb;padding:4px 8px;">IP65 (outdoor)</td></tr>' +
+      '<tr style="background:#eafaf1;"><td style="border:1px solid #bbb;padding:4px 8px;font-weight:600;">Temp. Operacion</td><td style="border:1px solid #bbb;padding:4px 8px;">-25C a +62C</td></tr>' +
+      '<tr><td style="border:1px solid #bbb;padding:4px 8px;font-weight:600;background:#f8f9fa;">Comunicacion</td><td style="border:1px solid #bbb;padding:4px 8px;">Modbus TCP, Ethernet, RS-485</td></tr>' +
+    '</table><div style="padding:4px 14px;font-size:7px;color:#888;border-top:1px solid #bbb;">Documento controlado | FV-SON-01</div></div>';
+}
+function switchAccTab(id){
+  document.querySelectorAll('#accFsNav .acc-fs-nav-item').forEach(n=>n.classList.remove('active'));
+  const items=document.querySelectorAll('#accFsNav .acc-fs-nav-item');
+  const idx={sld:0,cable:1,panel:2,tracker:3,civil:4,electricos:5}[id]||0;
+  if(items[idx]) items[idx].classList.add('active');
+
+  if(id==='sld'){
+    document.getElementById('accFsContent').innerHTML=
+      '<div style="font-size:16px;font-weight:700;color:#fff;margin-bottom:4px">Single Line Diagrams</div>' +
+      '<div style="font-size:10px;color:rgba(255,255,255,.4);margin-bottom:12px">FV-SON-01 | Seleccione un diagrama</div>' +
+      '<div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">' +
+        '<button onclick="showSldDoc(\'sld1\')" style="padding:6px 12px;border:1px solid rgba(255,255,255,.2);background:rgba(0,200,240,.1);color:#00C8F0;border-radius:4px;cursor:pointer;font-size:11px;font-weight:600;">SLD-FV-001 General</button>' +
+        '<button onclick="showSldDoc(\'sld2\')" style="padding:6px 12px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.05);color:rgba(255,255,255,.7);border-radius:4px;cursor:pointer;font-size:11px;">SLD-FV-002 DC Strings</button>' +
+        '<button onclick="showSldDoc(\'ds\')" style="padding:6px 12px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.05);color:rgba(255,255,255,.7);border-radius:4px;cursor:pointer;font-size:11px;">Datasheet INV-C1</button>' +
+      '</div>' +
+      '<div id="sldViewer">'+buildSldFv001()+'</div>';
+    return;
+  }
+
+  const docs=ACC_DOCS[id]||[];
+  const titles={sld:'Single Line Diagrams',cable:'Cable Routing',panel:'Panel Datasheets',tracker:'Tracker Specs',civil:'Civil',electricos:'Electricos'};
+  let html=`<div style="font-size:16px;font-weight:700;color:#fff;margin-bottom:4px">${titles[id]||id}</div>
+  <div style="font-size:10px;color:rgba(255,255,255,.4);margin-bottom:16px">FV-SON-01 Planta Solar Sonora | ${docs.length} documentos</div>
+  <div style="background:rgba(255,255,255,.03);border-radius:6px;border:1px solid rgba(255,255,255,.06);overflow-x:auto">
+    <table class="acc-doc-table"><thead><tr><th>Codigo</th><th>Documento</th><th>Tipo</th><th>Rev</th><th>Tamano</th><th>Estado</th></tr></thead><tbody>`;
+  docs.forEach(d=>{
+    const stColor=d.status==='Aprobado'?'#10D858':'#00C8F0';
+    html+=`<tr><td style="font-weight:600;color:#00C8F0">${d.code}</td><td>${d.name}</td><td>${d.type}</td><td>${d.rev}</td><td>${d.size}</td><td><span style="font-size:9px;padding:2px 6px;border-radius:3px;background:rgba(16,216,88,.1);color:${stColor}">${d.status}</span></td></tr>`;
+  });
+  html+='</tbody></table></div>';
+  document.getElementById('accFsContent').innerHTML=html;
+}
+function showSldDoc(docId){
+  var viewer=document.getElementById('sldViewer');
+  if(!viewer) return;
+  if(docId==='sld1') viewer.innerHTML=buildSldFv001();
+  else if(docId==='sld2') viewer.innerHTML=buildSldFv002();
+  else if(docId==='ds') viewer.innerHTML=buildDsFvINV();
+}
+
+// ===================================================================
+// TANDEM FULLSCREEN OVERLAY
+// ===================================================================
+
+function openTandemOverlay(){
+  document.getElementById('tandemOverlay').classList.add('active');
+  buildTandemTree();
+  showTandemAsset('FV-SON-01');
+}
+function closeTandemOverlay(){ document.getElementById('tandemOverlay').classList.remove('active'); }
+
+const TANDEM_HIERARCHY=[
+  {id:'FV-SON-01',name:'Planta Solar 50 MWp',level:0,sap:'FL-001',streams:847},
+  {id:'BLQ-01..06',name:'Bloques Solares (6)',level:1,sap:'FL-010..060',streams:576},
+  {id:'TRK-xxx',name:'Trackers Single-Axis (48)',level:2,sap:'FL-1xx',streams:48},
+  {id:'STR-xxx',name:'Strings PV (288)',level:2,sap:'FL-2xx',streams:288},
+  {id:'INV-S01..06',name:'Inversores String (6)',level:1,sap:'FL-300..350',streams:72},
+  {id:'INV-C01',name:'Inversor Central (1)',level:1,sap:'FL-400',streams:24},
+  {id:'CB-01..24',name:'Combiner Boxes (24)',level:1,sap:'FL-5xx',streams:48},
+  {id:'TRAFO-01,02',name:'Trafos MV 25 MVA (2)',level:1,sap:'FL-600,610',streams:24},
+  {id:'SE-01',name:'Subestacion 115 kV',level:1,sap:'FL-700',streams:36},
+  {id:'WS-01',name:'Estacion Meteorologica',level:1,sap:'FL-800',streams:12},
+  {id:'SCADA-01',name:'Sistema SCADA',level:1,sap:'FL-900',streams:18}
+];
+
+function buildTandemTree(){
+  const tree=document.getElementById('tandemTree');
+  let html='<div style="padding:8px 16px;font-size:9px;font-weight:600;letter-spacing:.1em;color:rgba(255,255,255,.25);text-transform:uppercase;margin-bottom:4px">Asset Hierarchy</div>';
+  TANDEM_HIERARCHY.forEach(a=>{
+    const indent=a.level*16;
+    const arrow=a.level===0?'[-]':a.level===1?'  |--':'    |--';
+    html+=`<div class="tandem-tree-item${a.id==='FV-SON-01'?' active':''}" onclick="showTandemAsset('${a.id}')" style="padding-left:${12+indent}px">
+      <span style="color:rgba(255,255,255,.2);font-size:9px">${arrow}</span> ${a.id}
+    </div>`;
+  });
+  tree.innerHTML=html;
+}
+
+function showTandemAsset(id){
+  document.querySelectorAll('.tandem-tree-item').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tandem-tree-item').forEach(t=>{if(t.textContent.includes(id)) t.classList.add('active')});
+  const asset=TANDEM_HIERARCHY.find(a=>a.id===id)||TANDEM_HIERARCHY[0];
+  const c=document.getElementById('tandemContent');
+  const now=new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  c.innerHTML=`
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+    <div style="font-size:18px;font-weight:700;color:#fff">${asset.name}</div>
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;padding:2px 8px;border-radius:3px;background:rgba(0,200,240,.1);color:#00C8F0">${asset.id}</span>
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;padding:2px 8px;border-radius:3px;background:rgba(16,216,88,.1);color:#10D858">SYNCED</span>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-bottom:20px">
+    <div style="background:rgba(255,255,255,.03);border-radius:6px;padding:12px;border:1px solid rgba(255,255,255,.06)"><div style="font-size:22px;font-weight:700;color:#00C8F0">${asset.streams}</div><div style="font-size:10px;color:rgba(255,255,255,.4);margin-top:2px">Data Streams</div></div>
+    <div style="background:rgba(255,255,255,.03);border-radius:6px;padding:12px;border:1px solid rgba(255,255,255,.06)"><div style="font-size:22px;font-weight:700;color:#10D858">100%</div><div style="font-size:10px;color:rgba(255,255,255,.4);margin-top:2px">Sync Rate</div></div>
+    <div style="background:rgba(255,255,255,.03);border-radius:6px;padding:12px;border:1px solid rgba(255,255,255,.06)"><div style="font-size:22px;font-weight:700;color:#F0A000">${asset.sap}</div><div style="font-size:10px;color:rgba(255,255,255,.4);margin-top:2px">SAP FL</div></div>
+  </div>
+  <div style="font-size:12px;font-weight:700;color:rgba(255,255,255,.5);letter-spacing:.05em;margin-bottom:8px;text-transform:uppercase">Asset Properties</div>
+  <div style="background:rgba(255,255,255,.03);border-radius:6px;padding:14px;border:1px solid rgba(255,255,255,.06);margin-bottom:16px">
+    <table style="width:100%;border-collapse:collapse;font-size:11px"><tbody>
+      <tr><td style="padding:4px 0;color:rgba(255,255,255,.4)">Tag</td><td style="padding:4px 0;color:#fff;font-family:'IBM Plex Mono',monospace">${asset.id}</td></tr>
+      <tr><td style="padding:4px 0;color:rgba(255,255,255,.4)">Name</td><td style="padding:4px 0;color:#fff">${asset.name}</td></tr>
+      <tr><td style="padding:4px 0;color:rgba(255,255,255,.4)">SAP FL</td><td style="padding:4px 0;color:#fff;font-family:'IBM Plex Mono',monospace">${asset.sap}</td></tr>
+      <tr><td style="padding:4px 0;color:rgba(255,255,255,.4)">Streams</td><td style="padding:4px 0;color:#00C8F0;font-family:'IBM Plex Mono',monospace">${asset.streams} active</td></tr>
+      <tr><td style="padding:4px 0;color:rgba(255,255,255,.4)">Last Sync</td><td style="padding:4px 0;color:#10D858;font-family:'IBM Plex Mono',monospace">${now}</td></tr>
+    </tbody></table>
+  </div>
+  <div style="font-size:12px;font-weight:700;color:rgba(255,255,255,.5);letter-spacing:.05em;margin-bottom:8px;text-transform:uppercase">Stream Log</div>
+  <div class="tandem-stream-log" id="tandemStreamLog">
+    <div style="color:#4CAF50">[${now}] Telemetry sync | ${asset.streams} streams | OK</div>
+    <div style="color:#00C8F0">[${now}] SAP PM sync | Work orders updated | OK</div>
+    <div style="color:#4CAF50">[${now}] Health score recalculated | OK</div>
+    <div style="color:#F0A000">[${now}] Weather data ingested | GHI 920 W/m2</div>
+  </div>`;
+}
+
+// ===================================================================
+// TABS (only 3D and Monitor are inline views; SAP/Tandem/ACC open overlays)
+// ===================================================================
+
+function switchTab(id){
+  if(id==='sap'){openSAPOverlay();return;}
+  if(id==='tandem'){openTandemOverlay();return;}
+  if(id==='acc'){openACCOverlay();return;}
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  const tabEl=document.querySelector('.tab[data-tab="'+id+'"]');
+  if(tabEl) tabEl.classList.add('active');
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  const viewId=id==='3d'?'view-3d':'view-monitor';
+  document.getElementById(viewId).classList.add('active');
+  if(id==='3d' && renderer){
+    const c=document.getElementById('view-3d');
+    renderer.setSize(c.clientWidth,c.clientHeight);
+    if(css2dRenderer) css2dRenderer.setSize(c.clientWidth,c.clientHeight);
+  }
+  if(id==='monitor') buildMonitorCharts();
+}
+
+// -- LAYER TOGGLES --
+function toggleLayer(name){
+  const el=event.currentTarget;
+  el.classList.toggle('active');
+  if(name==='iotLabels'){
+    if(layers.iotLabels) layers.iotLabels.visible=!layers.iotLabels.visible;
+    return;
+  }
+  if(layers[name]) layers[name].visible=!layers[name].visible;
+}
+
+// -- ASSET SELECTION --
+var ASSET_DATA = window.ASSET_DATA = {
+  field:{
+    title:'Campo Solar',tag:'BLQ-01..06 | 48 filas',
+    config:[['Modulos','90,720 x 550W'],['Strings','288 strings'],['Filas','48 filas tracker'],['Tilt','0-60 (tracker)'],['Azimuth','180 (N-S axis)'],['Area total','60,000 m2']],
+    sensors:[['Potencia DC','39.8 MW','ok'],['Voltaje string','1,100 V','ok'],['Corriente string','12.4 A','ok'],['Irradiancia POA','945 W/m2','ok'],['Temp modulo','52 C','warn'],['Soiling ratio','97.2%','ok']],
+    confTag:'gen',confLabel:'GENERACION',
+    docs:['FV-CV-001 Panel layout','FV-DS-001 Modulo 550W'],
+    wos:['PM-FV-8003 Lavado paneles']
+  },
+  tracker:{
+    title:'Trackers Single-Axis',tag:'TRK-001..048 | SAT',
+    config:[['Tipo','Single-axis horizontal'],['Rango','0-60 grados'],['Motor','DC 24V servo'],['Controlador','SCADA integrado'],['Backtracking','Activo'],['Stow angle','60 (viento)']],
+    sensors:[['Angulo actual','25.4 deg','ok'],['Velocidad viento','8.2 m/s','ok'],['Motor current','1.2 A','ok'],['Stow status','Normal','ok'],['Backtrack','Inactivo','ok'],['Error count','0','ok']],
+    confTag:'ctrl',confLabel:'CONTROL',
+    docs:['FV-ME-001 Tracker foundation','FV-ME-002 Assembly manual'],
+    wos:['PM-FV-8002 Motor atascado']
+  },
+  'inv-str':{
+    title:'Inversores String',tag:'INV-S01..S06 | 5 MW c/u',
+    config:[['Potencia nom.','5 MW c/u'],['Voltaje DC','600-1500 V'],['MPPT','12 por inversor'],['Eficiencia','98.6%'],['Cooling','Ventilacion forzada'],['Comm','Modbus TCP/IP']],
+    sensors:[['Potencia total','28.8 MW','ok'],['THD corriente','<2%','ok'],['Temp interna','42 C','ok'],['DC input','29.4 MW','ok'],['Frecuencia','60.00 Hz','ok'],['Voltaje AC','34.5 kV','ok']],
+    confTag:'gen',confLabel:'CONVERSION',
+    docs:['FV-DS-002 Inversor 5 MW','FV-EE-010 Single line'],
+    wos:['PM-FV-8009 Limpieza ventiladores']
+  },
+  'inv-cen':{
+    title:'Inversor Central',tag:'INV-C01 | 20 MW',
+    config:[['Potencia nom.','20 MW'],['Tipo','Central container'],['DC voltage','600-1500 V'],['AC output','34.5 kV'],['Cooling','Liquid + forced air'],['Transformador','Integrado']],
+    sensors:[['Potencia','18.4 MW','ok'],['Eficiencia','98.2%','ok'],['Temp coolant','38 C','ok'],['DC input','18.8 MW','ok'],['Frecuencia','60.00 Hz','ok'],['Voltaje AC','34.5 kV','ok']],
+    confTag:'gen',confLabel:'CONVERSION',
+    docs:['FV-DS-002 Inversor spec'],
+    wos:['PM-FV-8001 Derating temp']
+  },
+  combiner:{
+    title:'Combiner Boxes',tag:'CB-01..24 | DC',
+    config:[['Cantidad','24 unidades'],['Strings/box','12 inputs'],['Fusibles','30A 1000V'],['SPD','Tipo II'],['Monitoring','String level'],['Comm','RS-485']],
+    sensors:[['Strings activos','288/288','ok'],['Alarmas fusible','0','ok'],['Voltaje DC avg','1,085 V','ok'],['Corriente total','148 A','ok'],['Temp max','45 C','ok'],['SPD status','OK','ok']],
+    confTag:'dist',confLabel:'DISTRIBUCION',
+    docs:['FV-DS-004 Combiner box'],
+    wos:['PM-FV-8006 Reemplazo fusible']
+  },
+  'trafo-mv':{
+    title:'Transformadores MV',tag:'TRAFO-01,02 | 25 MVA',
+    config:[['Potencia','25 MVA c/u'],['Relacion','0.6/34.5 kV'],['Cooling','ONAN/ONAF'],['Impedancia','6.5%'],['Aceite','Mineral'],['Tap changer','OLTC +/-10%']],
+    sensors:[['Carga','76%','ok'],['Temp aceite','62 C','ok'],['Temp bobinado','78 C','ok'],['Nivel aceite','Normal','ok'],['Presion','0.3 bar','ok'],['Gas DGA','Normal','ok']],
+    confTag:'dist',confLabel:'DISTRIBUCION',
+    docs:['FV-DS-003 Trafo 25 MVA'],
+    wos:['PM-FV-8004 Analisis aceite']
+  },
+  substation:{
+    title:'Subestacion',tag:'SE-01 | 34.5/115 kV',
+    config:[['Tension','34.5/115 kV'],['Trafo principal','2x50 MVA'],['Interruptores','SF6 145 kV'],['Barras','115 kV doble barra'],['Pararrayos','ZnO 120 kV'],['Control','IEC 61850']],
+    sensors:[['Potencia salida','38.2 MW','ok'],['Voltaje 115kV','116.8 kV','ok'],['Corriente','192 A','ok'],['Frecuencia','60.00 Hz','ok'],['Factor potencia','0.98','ok'],['Temp SF6','24 C','ok']],
+    confTag:'prot',confLabel:'PROTECCION',
+    docs:['FV-EE-004 Subestacion GA','FV-EE-005 Grounding'],
+    wos:['PM-FV-8005 Termografia','PM-FV-8008 Prueba prot.']
+  },
+  cables:{
+    title:'Cableado MV',tag:'34.5 kV | Trincheras',
+    config:[['Tipo','XLPE 34.5 kV'],['Seccion','500 MCM'],['Longitud total','2,400 m'],['Trincheras','Concreto'],['Fibra optica','OPGW integrada'],['Puesta a tierra','Malla Cu']],
+    sensors:[['Temp cable max','48 C','ok'],['Aislamiento','> 1 GOhm','ok'],['Parcial disch.','< 5 pC','ok'],['Continuidad FO','OK','ok']],
+    confTag:'dist',confLabel:'DISTRIBUCION',
+    docs:['FV-EE-003 Cable routing','FV-EE-022 Trench sections'],
+    wos:[]
+  },
+  weather:{
+    title:'Estacion Meteorologica',tag:'WS-01 | Met tower',
+    config:[['Piranometro','Kipp & Zonen CMP11'],['Anemometro','Cup + veleta'],['Temp sensor','PT100 ventilado'],['Altura','3 m'],['Data logger','Campbell CR1000'],['Comm','4G + Ethernet']],
+    sensors:[['GHI','920 W/m2','ok'],['DHI','185 W/m2','ok'],['DNI','735 W/m2','ok'],['Temp aire','34 C','ok'],['Humedad','28%','ok'],['Viento','8.2 m/s NW','ok'],['Presion','1013 hPa','ok']],
+    confTag:'ctrl',confLabel:'METEO',
+    docs:['FV-DS-005 CMP11 spec'],
+    wos:['PM-FV-8007 Calibracion']
+  },
+  scada:{
+    title:'Sistema SCADA',tag:'SCADA-01 | Control',
+    config:[['PLC','Siemens S7-1500'],['RTU','SEL-3530'],['HMI','Wonderware'],['Protocolo','IEC 61850 + Modbus'],['Historian','OSIsoft PI'],['Red','Fiber ring']],
+    sensors:[['CPU load','34%','ok'],['Memory','62%','ok'],['Tags activos','2,480','ok'],['Comm errors','0','ok'],['Latencia','< 50 ms','ok'],['Uptime','99.99%','ok']],
+    confTag:'ctrl',confLabel:'CONTROL',
+    docs:['FV-MN-001 Manual O&M'],
+    wos:[]
+  },
+  oym:{
+    title:'Edificio O&M',tag:'O&M-01 | Operaciones',
+    config:[['Area','180 m2'],['Sala control','1 consola HMI'],['Almacen','60 m2'],['Vehiculos','2 pickups'],['Personal','6 tecnicos'],['Turno','6am-6pm']],
+    sensors:[['Clima interior','24 C','ok'],['UPS','100%','ok'],['Diesel genset','Standby','ok'],['CCTV','8 camaras','ok'],['Access control','Normal','ok']],
+    confTag:'ctrl',confLabel:'SOPORTE',
+    docs:['FV-MN-002 Emergency plan'],
+    wos:['PM-FV-8010 Revision camaras']
+  }
+};
+
+function selectAsset(id){
+  document.querySelectorAll('.asset-item').forEach(a=>a.classList.remove('active'));
+  const el=document.querySelector('.asset-item[data-id="'+id+'"]');
+  if(el) el.classList.add('active');
+  const data=ASSET_DATA[id];
+  if(!data) return;
+  // Update right sidebar
+  document.getElementById('sr-title').textContent=data.title;
+  document.getElementById('sr-tag').textContent=data.tag;
+  let html='';
+  html+='<div class="sr-section">Configuracion</div>';
+  data.config.forEach(r=>html+='<div class="sr-row"><span class="k">'+r[0]+'</span><span class="v">'+r[1]+'</span></div>');
+  html+='<div class="sr-section">Lecturas en Vivo</div>';
+  data.sensors.forEach(s=>html+='<div class="sr-sensor"><span class="sn">'+s[0]+'</span><span class="sv '+s[2]+'">'+s[1]+'</span></div>');
+  html+='<div class="sr-section">Minitrend</div>';
+  html+='<div class="sparkline" id="sr-spark2"></div>';
+  html+='<button class="sr-btn" onclick="switchTab(\'monitor\')">Ir a monitores</button>';
+  document.getElementById('sr-body').innerHTML=html;
+  setTimeout(()=>{
+    const sp=document.getElementById('sr-spark2');
+    if(sp){sp.innerHTML='';for(let i=0;i<24;i++){const b=document.createElement('div');b.className='spark-bar';const h=i>=6&&i<=18?Math.sin(Math.PI*(i-6)/12)*100:0;b.style.height=Math.max(1,h)+'%';if(h===0) b.style.opacity='0.15';sp.appendChild(b);}}
+  },50);
+
+  // Also show rich equip panel on 3D view
+  showRichEquipPanel(id,data);
+}
+
+// -- RICH EQUIPMENT PANEL --
+function showRichEquipPanel(id, data){
+  const panel=document.getElementById('equip-panel');
+  document.getElementById('ep-tag').textContent=data.tag;
+  document.getElementById('ep-name').textContent=data.title;
+  const confEl=document.getElementById('ep-conf');
+  confEl.className='ep-conf '+data.confTag;
+  confEl.textContent=data.confLabel;
+
+  let html='';
+  // Specs
+  html+='<div class="ep-section">Especificaciones</div>';
+  data.config.forEach(r=>html+='<div class="ep-row"><span class="k">'+r[0]+'</span><span class="v">'+r[1]+'</span></div>');
+
+  // Live sensors
+  html+='<div class="ep-section">Sensores en Vivo</div>';
+  data.sensors.forEach(s=>html+='<div class="ep-sensor"><span class="sn">'+s[0]+'</span><span class="sv '+s[2]+'">'+s[1]+'</span></div>');
+
+  // Canvas trend chart
+  html+='<div class="ep-section">Tendencia 24h</div>';
+  html+='<canvas class="ep-trend-canvas" id="epTrendCanvas"></canvas>';
+
+  // QR code + Documents
+  html+='<div style="display:flex;gap:10px;margin-top:8px">';
+  html+='<div class="qr-container" id="epQR"></div>';
+  html+='<div style="flex:1">';
+  html+='<div class="ep-section" style="margin-top:0">Documentos</div>';
+  if(data.docs&&data.docs.length>0){
+    data.docs.forEach(d=>html+='<div class="ep-doc-item">[DOC] '+d+'</div>');
+  } else {
+    html+='<div style="font-size:9px;color:var(--t2)">Sin documentos vinculados</div>';
+  }
+  html+='</div></div>';
+
+  // SAP Work Orders
+  html+='<div class="ep-section">Ordenes SAP PM</div>';
+  if(data.wos&&data.wos.length>0){
+    data.wos.forEach(w=>{
+      const woId=w.split(' ')[0];
+      html+='<div class="ep-wo-item"><span style="color:var(--cy);cursor:pointer" onclick="openSAPOverlay();setTimeout(()=>switchSapFsTab(\'pm\'),100)">'+w+'</span></div>';
+    });
+  } else {
+    html+='<div style="font-size:9px;color:var(--t2)">Sin ordenes activas</div>';
+  }
+
+  // Action buttons
+  html+='<div class="ep-btn-row">';
+  html+='<button class="ep-btn" onclick="openSAPOverlay()">Abrir SAP</button>';
+  html+='<button class="ep-btn" style="border-color:var(--cy);color:var(--cy)" onclick="openACCOverlay()">Ver Docs</button>';
+  html+='</div>';
+
+  document.getElementById('ep-content').innerHTML=html;
+  panel.style.display='block';
+
+  // Draw trend chart (uses shared rolling data, redrawn every 2s)
+  setTimeout(()=>{
+    fvSelectedAssetId = id;
+    redrawFvTrendChart();
+    // Draw QR
+    drawQR(id);
+  },100);
+}
+
+function generateRealQR(containerId, data) {
+  var container = document.getElementById(containerId);
+  if (!container) return;
+  container.innerHTML = '';
+  var qr = qrcode(0, 'M');
+  qr.addData(data);
+  qr.make();
+  var size = 120;
+  var canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  canvas.style.width = size + 'px';
+  canvas.style.height = size + 'px';
+  canvas.style.borderRadius = '4px';
+  var ctx = canvas.getContext('2d');
+  var cellSize = size / qr.getModuleCount();
+  ctx.fillStyle = '#0a1420';
+  ctx.fillRect(0, 0, size, size);
+  ctx.fillStyle = '#FF5500';
+  for (var r = 0; r < qr.getModuleCount(); r++) {
+    for (var c = 0; c < qr.getModuleCount(); c++) {
+      if (qr.isDark(r, c)) {
+        ctx.fillRect(c * cellSize, r * cellSize, cellSize + 0.5, cellSize + 0.5);
+      }
+    }
+  }
+  container.appendChild(canvas);
+}
+function drawQR(id){
+  var tag = ASSET_DATA[id] ? ASSET_DATA[id].tag : id;
+  var url = 'https://creas-demo.netlify.app/fv-DT.html#' + tag;
+  generateRealQR('epQR', url);
+  var container = document.getElementById('epQR');
+  if(container && !container.querySelector('.qr-label')){
+    var lbl = document.createElement('span');
+    lbl.className = 'qr-label';
+    lbl.textContent = 'Escanear para ficha tecnica movil';
+    container.appendChild(lbl);
+  }
+}
+
+function closeEquipPanel(){
+  document.getElementById('equip-panel').style.display='none';
+}
+
+function showEquipDetail(id){ selectAsset(id); }
+
+function showAlerts(){
+  switchTab('monitor');
+  setTimeout(()=>{const el=document.getElementById('monAlerts');if(el) el.scrollIntoView({behavior:'smooth'});},200);
+}
+
+// ===================================================================
+// THREE.JS 3D MODEL
+// ===================================================================
+
+function init3D(){
+  const container=document.getElementById('view-3d');
+  const W=container.clientWidth, H=container.clientHeight;
+
+  scene=new THREE.Scene();
+  scene.background=new THREE.Color(0x87CEEB);
+  scene.fog=new THREE.Fog(0x87CEEB,400,800);
+
+  camera=new THREE.PerspectiveCamera(50,W/H,0.5,2000);
+  camera.position.set(250,100,350);
+  camera.lookAt(0,0,0);
+
+  renderer=new THREE.WebGLRenderer({antialias:true,alpha:false});
+  renderer.setSize(W,H);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+  renderer.shadowMap.enabled=true;
+  renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+  renderer.toneMapping=THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure=1.2;
+  container.appendChild(renderer.domElement);
+
+  // OrbitControls
+  controls = new THREE.OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.1;
+  controls.rotateSpeed = 0.5;
+  controls.panSpeed = 2.0;
+  controls.zoomSpeed = 1.2;
+  controls.minPolarAngle = Math.PI * 0.05;
+  controls.maxPolarAngle = Math.PI * 0.48;
+  controls.minDistance = 20;
+  controls.maxDistance = 800;
+  controls.enablePan = true;
+  controls.screenSpacePanning = false;
+  controls.target.set(0, 0, 0);
+
+  // CSS2DRenderer for IoT labels
+  css2dRenderer=new THREE.CSS2DRenderer();
+  css2dRenderer.setSize(W,H);
+  css2dRenderer.domElement.style.position='absolute';
+  css2dRenderer.domElement.style.top='0';
+  css2dRenderer.domElement.style.left='0';
+  css2dRenderer.domElement.style.pointerEvents='none';
+  container.appendChild(css2dRenderer.domElement);
+
+  // Lights
+  const sunLight=new THREE.DirectionalLight(0xFFF5E0,1.8);
+  sunLightRef=sunLight;
+  sunLight.position.set(80,150,-60);
+  sunLight.castShadow=true;
+  sunLight.shadow.mapSize.set(2048,2048);
+  sunLight.shadow.camera.left=-200;sunLight.shadow.camera.right=200;
+  sunLight.shadow.camera.top=200;sunLight.shadow.camera.bottom=-200;
+  sunLight.shadow.camera.near=1;sunLight.shadow.camera.far=500;
+  sunLight.shadow.bias=-0.001;
+  scene.add(sunLight);
+  scene.add(new THREE.AmbientLight(0x607890,0.4));
+  scene.add(new THREE.HemisphereLight(0x8EC8F0,0xC2A878,0.5));
+
+  // Build Scene
+  buildGround();
+  buildPanelField();
+  buildInverters();
+  buildTransformers();
+  buildSubstation();
+  buildCables();
+  buildAuxiliary();
+  buildIoTLabels();
+
+  setupRaycaster();
+  createPowerFlowParticles();
+  createInverterStatusLights();
+  animate();
+
+  window.addEventListener('resize',()=>{
+    const w=container.clientWidth, h=container.clientHeight;
+    camera.aspect=w/h;
+    camera.updateProjectionMatrix();
+    renderer.setSize(w,h);
+    if(css2dRenderer) css2dRenderer.setSize(w,h);
+  });
+}
+
+// -- IoT LABELS using CSS2DRenderer --
+function buildIoTLabels(){
+  const labelGroup=new THREE.Group();
+  labelGroup.name='iotLabels';
+
+  Object.keys(IoTData).forEach(key=>{
+    const d=IoTData[key];
+    const div=document.createElement('div');
+    div.className='iot-label '+d.cls;
+    div.textContent=d.vals();
+    div.id='iot-'+key;
+    const label=new THREE.CSS2DObject(div);
+    label.position.set(d.pos.x,d.pos.y,d.pos.z);
+    labelGroup.add(label);
+    iotLabelsData[key]={div:div,obj:label};
+  });
+
+  layers.iotLabels=labelGroup;
+  scene.add(labelGroup);
+}
+
+// Update IoT labels every 2s
+setInterval(()=>{
+  Object.keys(IoTData).forEach(key=>{
+    const d=IoTData[key];
+    const info=iotLabelsData[key];
+    if(info&&info.div) info.div.textContent=d.vals();
+  });
+  // Update rolling trend chart
+  var irr = 900 + Math.random() * 40;
+  var hour = new Date().getHours() + new Date().getMinutes() / 60;
+  var solarFactor = (hour >= 6 && hour <= 18) ? Math.sin(Math.PI * (hour - 6) / 12) : 0;
+  var newVal = solarFactor * (0.85 + Math.random() * 0.15);
+  fvTrendHistory.push(newVal);
+  if (fvTrendHistory.length > 60) fvTrendHistory.shift();
+  redrawFvTrendChart();
+},2000);
+
+// -- GROUND --
+function buildGround(){
+  const groundGeo=new THREE.PlaneGeometry(500,400);
+  const groundMat=new THREE.MeshLambertMaterial({color:0xC2A878});
+  const ground=new THREE.Mesh(groundGeo,groundMat);
+  ground.rotation.x=-Math.PI/2;ground.position.y=-0.1;ground.receiveShadow=true;
+  scene.add(ground);
+  const outerGeo=new THREE.PlaneGeometry(1200,1000);
+  const outerMat=new THREE.MeshLambertMaterial({color:0xD4B896});
+  const outer=new THREE.Mesh(outerGeo,outerMat);
+  outer.rotation.x=-Math.PI/2;outer.position.y=-0.2;
+  scene.add(outer);
+  const roadMat=new THREE.MeshLambertMaterial({color:0xA0A0A0});
+  for(let z=-80;z<=80;z+=40){const road=new THREE.Mesh(new THREE.BoxGeometry(300,0.05,4),roadMat);road.position.set(0,0.01,z);road.receiveShadow=true;scene.add(road);}
+  for(let x=-140;x<=140;x+=56){const road=new THREE.Mesh(new THREE.BoxGeometry(4,0.05,200),roadMat);road.position.set(x,0.01,0);road.receiveShadow=true;scene.add(road);}
+  const fenceMat=new THREE.MeshLambertMaterial({color:0x888888,transparent:true,opacity:0.6});
+  const fenceH=2.5;
+  scene.add(createFence(-155,100,310,fenceH,fenceMat,false));
+  scene.add(createFence(-155,-100,310,fenceH,fenceMat,false));
+  scene.add(createFence(155,-100,200,fenceH,fenceMat,true));
+  scene.add(createFence(-155,-100,200,fenceH,fenceMat,true));
+  const postMat=new THREE.MeshLambertMaterial({color:0x666666});
+  for(let x=-155;x<=155;x+=20){addPost(x,100,postMat);addPost(x,-100,postMat);}
+  for(let z=-100;z<=100;z+=20){addPost(155,z,postMat);addPost(-155,z,postMat);}
+  const gateMat=new THREE.MeshLambertMaterial({color:0xFF5500});
+  const gate=new THREE.Mesh(new THREE.BoxGeometry(10,3,0.3),gateMat);
+  gate.position.set(-80,-100,0);scene.add(gate);
+}
+function createFence(x,z,len,h,mat,vertical){
+  const fence=new THREE.Mesh(new THREE.BoxGeometry(vertical?0.1:len,h,vertical?len:0.1),mat);
+  fence.position.set(vertical?x:x+len/2,h/2,vertical?z+len/2:z);return fence;
+}
+function addPost(x,z,mat){const post=new THREE.Mesh(new THREE.CylinderGeometry(0.1,0.1,3,6),mat);post.position.set(x,1.5,z);scene.add(post);}
+
+// -- SOLAR PANEL FIELD --
+function buildPanelField(){
+  const panelGroup=new THREE.Group();panelGroup.name='panels';
+  const trackerGroup=new THREE.Group();trackerGroup.name='trackers';
+  const panelMat=new THREE.MeshStandardMaterial({color:0x1a2744,metalness:0.4,roughness:0.3,envMapIntensity:0.5});
+  const steelMat=new THREE.MeshStandardMaterial({color:0xB0B8C0,metalness:0.6,roughness:0.4});
+  const blockOffsets=[{x:-112,z:-60},{x:-112,z:20},{x:-28,z:-60},{x:-28,z:20},{x:56,z:-60},{x:56,z:20}];
+  const tiltAngle=25*Math.PI/180, rowLen=50, rowW=2, rowSpacing=8;
+  blockOffsets.forEach((blk,bi)=>{
+    for(let r=0;r<8;r++){
+      const rz=blk.z+r*rowSpacing, rx=blk.x+rowLen/2;
+      const panelGeo=new THREE.BoxGeometry(rowLen,0.04,rowW);
+      const panel=new THREE.Mesh(panelGeo,panelMat);
+      panel.position.set(rx,2.2+Math.sin(tiltAngle)*rowW/2,rz);
+      panel.rotation.x=-tiltAngle;panel.castShadow=true;panel.receiveShadow=true;
+      panel.userData={type:'panel',block:bi+1,row:r+1,id:'BLQ-'+(bi+1)+'-R'+(r+1)};
+      clickableObjects.push(panel);panelGroup.add(panel);
+      const linesMat=new THREE.MeshBasicMaterial({color:0x0a1528});
+      for(let px=-rowLen/2+2.5;px<rowLen/2;px+=2.5){
+        const line=new THREE.Mesh(new THREE.BoxGeometry(0.03,0.06,rowW),linesMat);
+        line.position.set(rx+px,2.2+Math.sin(tiltAngle)*rowW/2+0.02,rz);line.rotation.x=-tiltAngle;panelGroup.add(line);
+      }
+      const tubeGeo=new THREE.CylinderGeometry(0.06,0.06,rowLen,8);
+      const tube=new THREE.Mesh(tubeGeo,steelMat);tube.rotation.z=Math.PI/2;tube.position.set(rx,2.0,rz);trackerGroup.add(tube);
+      for(let px=-rowLen/2+2;px<=rowLen/2;px+=5){
+        const pier=new THREE.Mesh(new THREE.CylinderGeometry(0.05,0.07,2.0,6),steelMat);pier.position.set(rx+px,1.0,rz);pier.castShadow=true;trackerGroup.add(pier);
+        const pad=new THREE.Mesh(new THREE.BoxGeometry(0.4,0.1,0.4),new THREE.MeshLambertMaterial({color:0x808080}));pad.position.set(rx+px,0.05,rz);trackerGroup.add(pad);
+      }
+      const motor=new THREE.Mesh(new THREE.BoxGeometry(0.4,0.3,0.3),new THREE.MeshLambertMaterial({color:0x505050}));motor.position.set(rx,1.8,rz);trackerGroup.add(motor);
+    }
+  });
+  layers.panels=panelGroup;layers.trackers=trackerGroup;
+  scene.add(panelGroup);scene.add(trackerGroup);
+  const combinerGroup=new THREE.Group();
+  const cbMat=new THREE.MeshLambertMaterial({color:0xE0E0E0});
+  blockOffsets.forEach((blk,bi)=>{
+    for(let r=0;r<8;r+=2){
+      const cbx=blk.x-2, cbz=blk.z+r*rowSpacing+rowSpacing/2;
+      const cb=new THREE.Mesh(new THREE.BoxGeometry(0.8,1.0,0.4),cbMat);
+      cb.position.set(cbx,0.5,cbz);cb.castShadow=true;
+      cb.userData={type:'combiner',id:'CB-'+(bi*4+r/2+1)};clickableObjects.push(cb);combinerGroup.add(cb);
+      const post=new THREE.Mesh(new THREE.CylinderGeometry(0.04,0.04,0.5,6),steelMat);post.position.set(cbx,0.25,cbz-0.3);combinerGroup.add(post);
+    }
+  });
+  panelGroup.add(combinerGroup);
+}
+
+// -- INVERTERS --
+function buildInverters(){
+  const invGroup=new THREE.Group();invGroup.name='inverters';
+  const invMat=new THREE.MeshStandardMaterial({color:0xE8E8E8,metalness:0.2,roughness:0.5});
+  const padMat=new THREE.MeshLambertMaterial({color:0x909090});
+  const ventMat=new THREE.MeshLambertMaterial({color:0x404040});
+  const invPos=[{x:-84,z:-30},{x:-84,z:50},{x:0,z:-30},{x:0,z:50},{x:84,z:-30},{x:84,z:50}];
+  invPos.forEach((p,i)=>{
+    const pad=new THREE.Mesh(new THREE.BoxGeometry(3,0.2,2),padMat);pad.position.set(p.x,0.1,p.z);invGroup.add(pad);
+    const inv=new THREE.Mesh(new THREE.BoxGeometry(1.2,0.8,0.5),invMat);inv.position.set(p.x,0.6,p.z);inv.castShadow=true;
+    inv.userData={type:'inverter-string',id:'INV-S0'+(i+1),idx:i};clickableObjects.push(inv);invGroup.add(inv);
+    for(let v=-0.3;v<=0.3;v+=0.2){const vent=new THREE.Mesh(new THREE.BoxGeometry(0.08,0.3,0.02),ventMat);vent.position.set(p.x+v,0.6,p.z+0.26);invGroup.add(vent);}
+    const label=new THREE.Mesh(new THREE.BoxGeometry(0.6,0.4,0.02),new THREE.MeshBasicMaterial({color:0xF0A000}));label.position.set(p.x,1.2,p.z+0.26);invGroup.add(label);
+  });
+  const cenX=0,cenZ=80;
+  const cenPad=new THREE.Mesh(new THREE.BoxGeometry(6,0.3,3),padMat);cenPad.position.set(cenX,0.15,cenZ);invGroup.add(cenPad);
+  const cenBody=new THREE.Mesh(new THREE.BoxGeometry(2.5,2.0,1.2),invMat);cenBody.position.set(cenX,1.15,cenZ);cenBody.castShadow=true;
+  cenBody.userData={type:'inverter-central',id:'INV-C01'};clickableObjects.push(cenBody);invGroup.add(cenBody);
+  const doorMat=new THREE.MeshLambertMaterial({color:0xC0C0C0});
+  var door1=new THREE.Mesh(new THREE.BoxGeometry(0.8,1.6,0.02),doorMat);door1.position.set(cenX-0.4,1.0,cenZ+0.61);invGroup.add(door1);
+  var door2=new THREE.Mesh(new THREE.BoxGeometry(0.8,1.6,0.02),doorMat);door2.position.set(cenX+0.4,1.0,cenZ+0.61);invGroup.add(door2);
+  for(let v=-0.8;v<=0.8;v+=0.4){
+    const vent=new THREE.Mesh(new THREE.BoxGeometry(0.3,0.15,0.02),ventMat);vent.position.set(cenX+v,1.8,cenZ+0.61);invGroup.add(vent);
+    const vent2=new THREE.Mesh(new THREE.BoxGeometry(0.3,0.15,0.02),ventMat);vent2.position.set(cenX+v,1.8,cenZ-0.61);invGroup.add(vent2);
+  }
+  const cableMat=new THREE.MeshLambertMaterial({color:0x333333});
+  const cableIn=new THREE.Mesh(new THREE.CylinderGeometry(0.08,0.08,1.5,8),cableMat);cableIn.rotation.z=Math.PI/2;cableIn.position.set(cenX-2,0.5,cenZ);invGroup.add(cableIn);
+  const cableOut=new THREE.Mesh(new THREE.CylinderGeometry(0.08,0.08,1.5,8),cableMat);cableOut.rotation.z=Math.PI/2;cableOut.position.set(cenX+2,0.5,cenZ);invGroup.add(cableOut);
+  layers.inverters=invGroup;scene.add(invGroup);
+}
+
+// -- TRANSFORMERS --
+function buildTransformers(){
+  const trafoGroup=new THREE.Group();trafoGroup.name='transformers';
+  const trafoMat=new THREE.MeshStandardMaterial({color:0x708060,metalness:0.3,roughness:0.5});
+  const bushingMat=new THREE.MeshStandardMaterial({color:0xA0522D,metalness:0.4,roughness:0.3});
+  const padMat=new THREE.MeshLambertMaterial({color:0x808080});
+  const trafoPos=[{x:-50,z:85},{x:50,z:85}];
+  trafoPos.forEach((p,i)=>{
+    const pad=new THREE.Mesh(new THREE.BoxGeometry(5,0.3,4),padMat);pad.position.set(p.x,0.15,p.z);trafoGroup.add(pad);
+    const body=new THREE.Mesh(new THREE.BoxGeometry(2.5,2.5,1.8),trafoMat);body.position.set(p.x,1.4,p.z);body.castShadow=true;
+    body.userData={type:'transformer',id:'TRAFO-0'+(i+1)};clickableObjects.push(body);trafoGroup.add(body);
+    const cons=new THREE.Mesh(new THREE.CylinderGeometry(0.2,0.2,2.0,8),trafoMat);cons.rotation.z=Math.PI/2;cons.position.set(p.x,3.0,p.z);trafoGroup.add(cons);
+    for(let b=-0.6;b<=0.6;b+=0.6){
+      const bushing=new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.08,1.0,8),bushingMat);bushing.position.set(p.x+b,3.2,p.z-0.5);trafoGroup.add(bushing);
+      const cap=new THREE.Mesh(new THREE.SphereGeometry(0.1,8,8),bushingMat);cap.position.set(p.x+b,3.7,p.z-0.5);trafoGroup.add(cap);
+    }
+    for(let b=-0.4;b<=0.4;b+=0.4){const bushing=new THREE.Mesh(new THREE.CylinderGeometry(0.05,0.06,0.6,8),bushingMat);bushing.position.set(p.x+b,2.95,p.z+0.5);trafoGroup.add(bushing);}
+    const finMat=new THREE.MeshLambertMaterial({color:0x607050});
+    for(let f=-0.8;f<=0.8;f+=0.3){
+      const fin=new THREE.Mesh(new THREE.BoxGeometry(0.04,1.8,1.4),finMat);fin.position.set(p.x+1.3,1.2,p.z+f);trafoGroup.add(fin);
+      const fin2=new THREE.Mesh(new THREE.BoxGeometry(0.04,1.8,1.4),finMat);fin2.position.set(p.x-1.3,1.2,p.z+f);trafoGroup.add(fin2);
+    }
+    const np=new THREE.Mesh(new THREE.BoxGeometry(0.5,0.3,0.02),new THREE.MeshBasicMaterial({color:0xF0F0F0}));np.position.set(p.x,1.5,p.z+0.91);trafoGroup.add(np);
+  });
+  layers.transformers=trafoGroup;scene.add(trafoGroup);
+}
+
+// -- SUBSTATION --
+function buildSubstation(){
+  const seGroup=new THREE.Group();seGroup.name='substation';
+  const seX=130,seZ=0;
+  const steelMat=new THREE.MeshStandardMaterial({color:0x909090,metalness:0.5,roughness:0.4});
+  const concreteMat=new THREE.MeshLambertMaterial({color:0xB0B0B0});
+  const whiteMat=new THREE.MeshLambertMaterial({color:0xF0F0F0});
+  const sePad=new THREE.Mesh(new THREE.BoxGeometry(42,0.15,42),new THREE.MeshLambertMaterial({color:0x909090}));sePad.position.set(seX,0.075,seZ);seGroup.add(sePad);
+  const gravel=new THREE.Mesh(new THREE.BoxGeometry(40,0.05,40),new THREE.MeshLambertMaterial({color:0xA8A8A0}));gravel.position.set(seX,0.2,seZ);seGroup.add(gravel);
+  const fenceMat=new THREE.MeshLambertMaterial({color:0x888888,transparent:true,opacity:0.5});
+  seGroup.add(createFenceAt(seX-20,seZ-20,40,2.5,fenceMat,false));
+  seGroup.add(createFenceAt(seX-20,seZ+20,40,2.5,fenceMat,false));
+  seGroup.add(createFenceAt(seX+20,seZ-20,40,2.5,fenceMat,true));
+  seGroup.add(createFenceAt(seX-20,seZ-20,40,2.5,fenceMat,true));
+  const mainTrafo=new THREE.Mesh(new THREE.BoxGeometry(4,3.5,3),new THREE.MeshStandardMaterial({color:0x607050,metalness:0.3,roughness:0.5}));
+  mainTrafo.position.set(seX-5,1.95,seZ);mainTrafo.castShadow=true;
+  mainTrafo.userData={type:'substation',id:'SE-TRAFO'};clickableObjects.push(mainTrafo);seGroup.add(mainTrafo);
+  const consv=new THREE.Mesh(new THREE.CylinderGeometry(0.3,0.3,3,8),steelMat);consv.rotation.z=Math.PI/2;consv.position.set(seX-5,4.0,seZ);seGroup.add(consv);
+  for(let b=-1;b<=1;b+=1){
+    const bsh=new THREE.Mesh(new THREE.CylinderGeometry(0.08,0.1,1.5,8),new THREE.MeshStandardMaterial({color:0xA0522D,metalness:0.4,roughness:0.3}));bsh.position.set(seX-5+b,4.5,seZ-1);seGroup.add(bsh);
+    const cap=new THREE.Mesh(new THREE.SphereGeometry(0.12,8,8),steelMat);cap.position.set(seX-5+b,5.3,seZ-1);seGroup.add(cap);
+  }
+  for(let i=-1;i<=1;i++){
+    const cbBase=new THREE.Mesh(new THREE.BoxGeometry(0.6,2.5,0.6),steelMat);cbBase.position.set(seX+3,1.25,seZ+i*5);seGroup.add(cbBase);
+    const cbTop=new THREE.Mesh(new THREE.BoxGeometry(1.5,0.5,0.5),steelMat);cbTop.position.set(seX+3,2.75,seZ+i*5);seGroup.add(cbTop);
+    const insMat=new THREE.MeshStandardMaterial({color:0xE8E0D0,metalness:0.1,roughness:0.6});
+    const ins=new THREE.Mesh(new THREE.CylinderGeometry(0.15,0.18,0.8,8),insMat);ins.position.set(seX+3,3.2,seZ+i*5);seGroup.add(ins);
+  }
+  const busMat=new THREE.MeshStandardMaterial({color:0xC0C0C0,metalness:0.7,roughness:0.3});
+  for(let i=-1;i<=1;i++){
+    const bus=new THREE.Mesh(new THREE.CylinderGeometry(0.05,0.05,20,8),busMat);bus.rotation.z=Math.PI/2;bus.position.set(seX,5,seZ+i*3);seGroup.add(bus);
+    for(let sx=-8;sx<=8;sx+=8){
+      const support=new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.08,5,6),steelMat);support.position.set(seX+sx,2.5,seZ+i*3);seGroup.add(support);
+      const arm=new THREE.Mesh(new THREE.BoxGeometry(2,0.1,0.1),steelMat);arm.position.set(seX+sx,5,seZ+i*3);seGroup.add(arm);
+      const ins=new THREE.Mesh(new THREE.CylinderGeometry(0.1,0.13,0.6,8),new THREE.MeshLambertMaterial({color:0xE8E0D0}));ins.position.set(seX+sx,4.7,seZ+i*3);seGroup.add(ins);
+    }
+  }
+  const arresterPos=[{x:seX-12,z:seZ-12},{x:seX+12,z:seZ-12},{x:seX-12,z:seZ+12},{x:seX+12,z:seZ+12}];
+  arresterPos.forEach(p=>{
+    const arr=new THREE.Mesh(new THREE.CylinderGeometry(0.04,0.06,6,6),steelMat);arr.position.set(p.x,3,p.z);seGroup.add(arr);
+    const tip=new THREE.Mesh(new THREE.ConeGeometry(0.08,0.3,6),steelMat);tip.position.set(p.x,6.15,p.z);seGroup.add(tip);
+    const base=new THREE.Mesh(new THREE.CylinderGeometry(0.15,0.2,0.5,8),new THREE.MeshLambertMaterial({color:0xE8E0D0}));base.position.set(p.x,0.4,p.z);seGroup.add(base);
+  });
+  for(let i=-1;i<=1;i++){
+    const dsBase=new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.08,3,6),steelMat);dsBase.position.set(seX+8,1.5,seZ+i*5);seGroup.add(dsBase);
+    const dsBlade=new THREE.Mesh(new THREE.BoxGeometry(0.04,1.5,0.04),new THREE.MeshLambertMaterial({color:0xD04040}));dsBlade.position.set(seX+8,3.5,seZ+i*5);dsBlade.rotation.z=0.3;seGroup.add(dsBlade);
+  }
+  const ctrlHouse=new THREE.Mesh(new THREE.BoxGeometry(6,3,4),concreteMat);ctrlHouse.position.set(seX+10,1.5,seZ+14);ctrlHouse.castShadow=true;
+  ctrlHouse.userData={type:'substation',id:'SE-CTRL'};clickableObjects.push(ctrlHouse);seGroup.add(ctrlHouse);
+  const roof=new THREE.Mesh(new THREE.BoxGeometry(6.4,0.15,4.4),whiteMat);roof.position.set(seX+10,3.1,seZ+14);seGroup.add(roof);
+  const doorMat=new THREE.MeshLambertMaterial({color:0x505050});
+  const door=new THREE.Mesh(new THREE.BoxGeometry(1.0,2.2,0.05),doorMat);door.position.set(seX+10,1.1,seZ+16.01);seGroup.add(door);
+  const seClickBox=new THREE.Mesh(new THREE.BoxGeometry(40,0.01,40),new THREE.MeshBasicMaterial({visible:false}));
+  seClickBox.position.set(seX,0.3,seZ);seClickBox.userData={type:'substation-area',id:'SE-01'};clickableObjects.push(seClickBox);seGroup.add(seClickBox);
+  layers.substation=seGroup;scene.add(seGroup);
+}
+function createFenceAt(x,z,len,h,mat,vertical){
+  const fence=new THREE.Mesh(new THREE.BoxGeometry(vertical?0.08:len,h,vertical?len:0.08),mat);
+  fence.position.set(vertical?x:x+len/2,h/2,vertical?z+len/2:z);return fence;
+}
+
+// -- CABLES --
+function buildCables(){
+  const cableGroup=new THREE.Group();cableGroup.name='cables';
+  const trenchMat=new THREE.MeshLambertMaterial({color:0x505050});
+  const coverMat=new THREE.MeshLambertMaterial({color:0x707070});
+  const invPos=[{x:-84,z:-30},{x:-84,z:50},{x:0,z:-30},{x:0,z:50},{x:84,z:-30},{x:84,z:50}];
+  invPos.forEach((p,i)=>{
+    const targetTrafo=i<3?{x:-50,z:85}:{x:50,z:85};
+    const vLen=Math.abs(targetTrafo.z-p.z);
+    const vTrench=new THREE.Mesh(new THREE.BoxGeometry(0.6,0.15,vLen),trenchMat);vTrench.position.set(p.x,0.08,(p.z+targetTrafo.z)/2);cableGroup.add(vTrench);
+    const vCover=new THREE.Mesh(new THREE.BoxGeometry(0.8,0.05,vLen),coverMat);vCover.position.set(p.x,0.18,(p.z+targetTrafo.z)/2);cableGroup.add(vCover);
+    if(Math.abs(p.x-targetTrafo.x)>1){
+      const hLen=Math.abs(targetTrafo.x-p.x);
+      const hTrench=new THREE.Mesh(new THREE.BoxGeometry(hLen,0.15,0.6),trenchMat);hTrench.position.set((p.x+targetTrafo.x)/2,0.08,targetTrafo.z);cableGroup.add(hTrench);
+      const hCover=new THREE.Mesh(new THREE.BoxGeometry(hLen,0.05,0.8),coverMat);hCover.position.set((p.x+targetTrafo.x)/2,0.18,targetTrafo.z);cableGroup.add(hCover);
+    }
+  });
+  const cenTrench=new THREE.Mesh(new THREE.BoxGeometry(0.6,0.15,5),trenchMat);cenTrench.position.set(0,0.08,82.5);cableGroup.add(cenTrench);
+  [{x:-50,z:85},{x:50,z:85}].forEach(t=>{
+    const hLen=Math.abs(130-t.x);
+    const hTrench=new THREE.Mesh(new THREE.BoxGeometry(hLen,0.2,0.8),trenchMat);hTrench.position.set((t.x+130)/2,0.1,t.z);cableGroup.add(hTrench);
+    const hCover=new THREE.Mesh(new THREE.BoxGeometry(hLen,0.06,1.0),coverMat);hCover.position.set((t.x+130)/2,0.22,t.z);cableGroup.add(hCover);
+    const vLen=Math.abs(t.z-0);
+    const vTrench=new THREE.Mesh(new THREE.BoxGeometry(0.8,0.2,vLen),trenchMat);vTrench.position.set(130,0.1,t.z/2);cableGroup.add(vTrench);
+  });
+  const markerMat=new THREE.MeshBasicMaterial({color:0xF0A000});
+  for(let x=-84;x<=84;x+=28){for(let z=-20;z<=80;z+=20){const marker=new THREE.Mesh(new THREE.BoxGeometry(0.15,0.4,0.15),markerMat);marker.position.set(x,0.2,z);cableGroup.add(marker);}}
+  layers.cables=cableGroup;scene.add(cableGroup);
+}
+
+// -- AUXILIARY --
+function buildAuxiliary(){
+  const auxGroup=new THREE.Group();auxGroup.name='auxiliary';
+  const concreteMat=new THREE.MeshLambertMaterial({color:0xC0C0C0});
+  const whiteMat=new THREE.MeshLambertMaterial({color:0xF0F0F0});
+  const steelMat=new THREE.MeshLambertMaterial({color:0x808080});
+  // Weather Station
+  const wsX=-130,wsZ=-70;
+  const mast=new THREE.Mesh(new THREE.CylinderGeometry(0.04,0.06,3,6),steelMat);mast.position.set(wsX,1.5,wsZ);auxGroup.add(mast);
+  const pyra=new THREE.Mesh(new THREE.CylinderGeometry(0.15,0.15,0.05,12),whiteMat);pyra.position.set(wsX,3.1,wsZ);auxGroup.add(pyra);
+  const pyraDome=new THREE.Mesh(new THREE.SphereGeometry(0.12,8,8,0,Math.PI*2,0,Math.PI/2),new THREE.MeshStandardMaterial({color:0xE0E8F0,transparent:true,opacity:0.6}));pyraDome.position.set(wsX,3.12,wsZ);auxGroup.add(pyraDome);
+  const anemoArm=new THREE.Mesh(new THREE.CylinderGeometry(0.02,0.02,0.5,6),steelMat);anemoArm.rotation.z=Math.PI/2;anemoArm.position.set(wsX+0.25,2.8,wsZ);auxGroup.add(anemoArm);
+  for(let a=0;a<3;a++){const cup=new THREE.Mesh(new THREE.SphereGeometry(0.04,6,6),steelMat);const angle=a*Math.PI*2/3;cup.position.set(wsX+0.5+Math.cos(angle)*0.12,2.8+Math.sin(angle)*0.12,wsZ);auxGroup.add(cup);}
+  const tempBox=new THREE.Mesh(new THREE.BoxGeometry(0.2,0.15,0.15),whiteMat);tempBox.position.set(wsX-0.15,2.2,wsZ);auxGroup.add(tempBox);
+  const loggerBox=new THREE.Mesh(new THREE.BoxGeometry(0.4,0.5,0.3),concreteMat);loggerBox.position.set(wsX,0.25,wsZ+0.3);loggerBox.userData={type:'weather',id:'WS-01'};clickableObjects.push(loggerBox);auxGroup.add(loggerBox);
+  // O&M Building
+  const omX=-120,omZ=-90;
+  const omBldg=new THREE.Mesh(new THREE.BoxGeometry(12,3.5,8),concreteMat);omBldg.position.set(omX,1.75,omZ);omBldg.castShadow=true;
+  omBldg.userData={type:'oym',id:'O&M-01'};clickableObjects.push(omBldg);auxGroup.add(omBldg);
+  const omRoof=new THREE.Mesh(new THREE.BoxGeometry(12.4,0.15,8.4),whiteMat);omRoof.position.set(omX,3.55,omZ);auxGroup.add(omRoof);
+  const doorMat=new THREE.MeshLambertMaterial({color:0x505050});
+  const omDoor=new THREE.Mesh(new THREE.BoxGeometry(1.5,2.5,0.05),doorMat);omDoor.position.set(omX-2,1.25,omZ+4.01);auxGroup.add(omDoor);
+  const omDoor2=new THREE.Mesh(new THREE.BoxGeometry(1.5,2.5,0.05),doorMat);omDoor2.position.set(omX+2,1.25,omZ+4.01);auxGroup.add(omDoor2);
+  const winMat=new THREE.MeshStandardMaterial({color:0x88BBDD,metalness:0.3,roughness:0.2,transparent:true,opacity:0.7});
+  for(let wx=-4;wx<=4;wx+=2){const win=new THREE.Mesh(new THREE.BoxGeometry(1.2,0.8,0.05),winMat);win.position.set(omX+wx,2.5,omZ+4.01);auxGroup.add(win);}
+  const eySign=new THREE.Mesh(new THREE.BoxGeometry(1.5,0.8,0.05),new THREE.MeshBasicMaterial({color:0xFF5500}));eySign.position.set(omX,3.2,omZ+4.02);auxGroup.add(eySign);
+  // Parking
+  const parking=new THREE.Mesh(new THREE.BoxGeometry(10,0.05,6),new THREE.MeshLambertMaterial({color:0x606060}));parking.position.set(omX+14,0.03,omZ);auxGroup.add(parking);
+  const lineMat=new THREE.MeshBasicMaterial({color:0xFFFFFF});
+  for(let l=-4;l<=4;l+=2){const pline=new THREE.Mesh(new THREE.BoxGeometry(0.1,0.02,4),lineMat);pline.position.set(omX+14+l,0.06,omZ);auxGroup.add(pline);}
+  const v1=new THREE.Mesh(new THREE.BoxGeometry(2,1.5,4),new THREE.MeshLambertMaterial({color:0xE8E8E8}));v1.position.set(omX+13,0.75,omZ-0.5);auxGroup.add(v1);
+  const v2=new THREE.Mesh(new THREE.BoxGeometry(2,1.5,4),new THREE.MeshLambertMaterial({color:0x3060A0}));v2.position.set(omX+15,0.75,omZ+1);auxGroup.add(v2);
+  // SCADA
+  const scadaCab=new THREE.Mesh(new THREE.BoxGeometry(1.0,1.8,0.6),new THREE.MeshLambertMaterial({color:0xD0D0D0}));scadaCab.position.set(-110,0.9,-85);
+  scadaCab.userData={type:'scada',id:'SCADA-01'};clickableObjects.push(scadaCab);auxGroup.add(scadaCab);
+  const antMast=new THREE.Mesh(new THREE.CylinderGeometry(0.03,0.05,5,6),steelMat);antMast.position.set(-108,2.5,-85);auxGroup.add(antMast);
+  const antDish=new THREE.Mesh(new THREE.BoxGeometry(0.3,0.3,0.05),whiteMat);antDish.position.set(-108,4.5,-85);antDish.rotation.y=0.3;auxGroup.add(antDish);
+  const antDish2=new THREE.Mesh(new THREE.BoxGeometry(0.2,0.4,0.05),whiteMat);antDish2.position.set(-108,3.8,-85);antDish2.rotation.y=-0.5;auxGroup.add(antDish2);
+  const antPanel=new THREE.Mesh(new THREE.BoxGeometry(0.15,0.5,0.03),concreteMat);antPanel.position.set(-107.85,4.2,-85);auxGroup.add(antPanel);
+  // Entrance
+  const entRoad=new THREE.Mesh(new THREE.BoxGeometry(6,0.04,30),new THREE.MeshLambertMaterial({color:0x989890}));entRoad.position.set(-80,0.02,-115);auxGroup.add(entRoad);
+  const booth=new THREE.Mesh(new THREE.BoxGeometry(3,2.5,3),concreteMat);booth.position.set(-86,1.25,-102);auxGroup.add(booth);
+  const boothRoof=new THREE.Mesh(new THREE.BoxGeometry(3.4,0.1,3.4),steelMat);boothRoof.position.set(-86,2.55,-102);auxGroup.add(boothRoof);
+  layers.auxiliary=auxGroup;scene.add(auxGroup);
+}
+
+// ===================================================================
+// RAYCASTER
+// ===================================================================
+function setupRaycaster(){
+  const raycaster=new THREE.Raycaster();
+  const mouse=new THREE.Vector2();
+  renderer.domElement.addEventListener('click',e=>{
+    const rect=renderer.domElement.getBoundingClientRect();
+    mouse.x=((e.clientX-rect.left)/rect.width)*2-1;
+    mouse.y=-((e.clientY-rect.top)/rect.height)*2+1;
+    raycaster.setFromCamera(mouse,camera);
+    const intersects=raycaster.intersectObjects(clickableObjects,false);
+    if(intersects.length>0){
+      const obj=intersects[0].object;const data=obj.userData;
+      if(data.type==='panel') selectAsset('field');
+      else if(data.type==='combiner') selectAsset('combiner');
+      else if(data.type==='inverter-string') selectAsset('inv-str');
+      else if(data.type==='inverter-central') selectAsset('inv-cen');
+      else if(data.type==='transformer') selectAsset('trafo-mv');
+      else if(data.type==='substation'||data.type==='substation-area') selectAsset('substation');
+      else if(data.type==='weather') selectAsset('weather');
+      else if(data.type==='scada') selectAsset('scada');
+      else if(data.type==='oym') selectAsset('oym');
+      if(selectedObj){if(selectedObj._origEmissive) selectedObj.material.emissive.copy(selectedObj._origEmissive);else selectedObj.material.emissive.setHex(0x000000);}
+      selectedObj=obj;selectedObj._origEmissive=selectedObj.material.emissive.clone();selectedObj.material.emissive.setHex(0x332200);
+    }
+  });
+}
+
+// ===================================================================
+// POWER FLOW PARTICLES (Panels -> Inverters -> Transformers -> Substation)
+// ===================================================================
+function createPowerFlowParticles(){
+  // Path 1: Panel field center to string inverters
+  var invPos=[{x:-84,z:-30},{x:-84,z:50},{x:0,z:-30},{x:0,z:50},{x:84,z:-30},{x:84,z:50}];
+  invPos.forEach(function(ip){
+    addPowerFlowPath([
+      {x:ip.x,y:1.5,z:ip.z-20},{x:ip.x,y:1.0,z:ip.z-10},{x:ip.x,y:0.6,z:ip.z}
+    ], 4, 0xffd700, 0.2, 0.015);
+  });
+  // Path 2: Inverters to central inverter / transformers
+  addPowerFlowPath([{x:-84,y:0.6,z:50},{x:-50,y:1,z:70},{x:0,y:1,z:80}], 5, 0xffaa00, 0.25, 0.012);
+  addPowerFlowPath([{x:84,y:0.6,z:50},{x:50,y:1,z:70},{x:0,y:1,z:80}], 5, 0xffaa00, 0.25, 0.012);
+  // Path 3: Central inverter to transformers
+  addPowerFlowPath([{x:0,y:1,z:80},{x:-25,y:1.5,z:85},{x:-50,y:1.5,z:85}], 4, 0xff8800, 0.28, 0.010);
+  addPowerFlowPath([{x:0,y:1,z:80},{x:25,y:1.5,z:85},{x:50,y:1.5,z:85}], 4, 0xff8800, 0.28, 0.010);
+  // Path 4: Transformers to substation
+  addPowerFlowPath([{x:-50,y:2,z:85},{x:0,y:2,z:50},{x:80,y:2,z:20},{x:130,y:2,z:0}], 6, 0xff5500, 0.32, 0.008);
+  addPowerFlowPath([{x:50,y:2,z:85},{x:80,y:2,z:50},{x:110,y:2,z:20},{x:130,y:2,z:0}], 6, 0xff5500, 0.32, 0.008);
+}
+
+function addPowerFlowPath(waypoints, count, color, size, speed){
+  var positions=new Float32Array(count*3);
+  var geo=new THREE.BufferGeometry();
+  var progress=new Float32Array(count);
+  for(var i=0;i<count;i++){
+    progress[i]=Math.random();
+    setPFPos(positions,i,waypoints,progress[i]);
+  }
+  geo.setAttribute('position',new THREE.BufferAttribute(positions,3));
+  var mat=new THREE.PointsMaterial({
+    color:color, size:size, transparent:true, opacity:0.7,
+    blending:THREE.AdditiveBlending, depthWrite:false
+  });
+  var pts=new THREE.Points(geo,mat);
+  scene.add(pts);
+  powerFlowParticles.push({mesh:pts,waypoints:waypoints,count:count,speed:speed,progress:progress});
+}
+
+function setPFPos(pos,i,wp,t){
+  var seg=Math.min(Math.floor(t*(wp.length-1)),wp.length-2);
+  var lt=t*(wp.length-1)-seg;
+  pos[i*3]=wp[seg].x+(wp[seg+1].x-wp[seg].x)*lt+(Math.random()-0.5)*0.3;
+  pos[i*3+1]=wp[seg].y+(wp[seg+1].y-wp[seg].y)*lt+(Math.random()-0.5)*0.15;
+  pos[i*3+2]=wp[seg].z+(wp[seg+1].z-wp[seg].z)*lt+(Math.random()-0.5)*0.3;
+}
+
+// ===================================================================
+// INVERTER STATUS LIGHTS
+// ===================================================================
+function createInverterStatusLights(){
+  var invPos=[{x:-84,z:-30},{x:-84,z:50},{x:0,z:-30},{x:0,z:50},{x:84,z:-30},{x:84,z:50}];
+  invPos.forEach(function(p,i){
+    var geo=new THREE.SphereGeometry(0.12,8,8);
+    var mat=new THREE.MeshBasicMaterial({color:0x00ff44});
+    var light=new THREE.Mesh(geo,mat);
+    light.position.set(p.x+0.7,1.1,p.z);
+    scene.add(light);
+    inverterStatusLights.push({mesh:light,idx:i,faultTimer:0,isFault:false});
+  });
+}
+
+// ===================================================================
+// ANIMATION LOOP
+// ===================================================================
+function animate(){
+  requestAnimationFrame(animate);
+  frameCount++;
+  var elapsed=frameCount*0.016;
+  var dt=0.016;
+
+  if(frameCount%60===0) updateSimulation();
+
+  // -- TRACKER ROTATION (single-axis tracking following sun) --
+  if(layers.trackers){
+    layers.trackers.children.forEach(function(child){
+      if(child.geometry && child.geometry.type==='CylinderGeometry'){
+        // Rotate the tracker tubes (torque tubes)
+      }
+    });
+  }
+  if(layers.panels){
+    layers.panels.children.forEach(function(child){
+      if(child.geometry && child.geometry.type==='BoxGeometry' && child.userData && child.userData.type==='panel'){
+        child.rotation.x = -0.44 + Math.sin(elapsed*0.0001)*0.3;
+      }
+    });
+  }
+
+  // -- POWER FLOW PARTICLES --
+  var powerMultiplier = SIM.genMW > 5 ? 1.0 : 0.2;
+  powerFlowParticles.forEach(function(fp){
+    var pos=fp.mesh.geometry.attributes.position.array;
+    for(var i=0;i<fp.count;i++){
+      fp.progress[i]+=fp.speed*powerMultiplier+Math.random()*0.002;
+      if(fp.progress[i]>1) fp.progress[i]=0;
+      setPFPos(pos,i,fp.waypoints,fp.progress[i]);
+      pos[i*3]+=Math.sin(elapsed*2+i)*0.08;
+      pos[i*3+1]+=Math.sin(elapsed*3+i*0.7)*0.05;
+    }
+    fp.mesh.geometry.attributes.position.needsUpdate=true;
+    fp.mesh.material.opacity=(0.3+0.4*powerMultiplier)+0.15*Math.sin(elapsed*1.5);
+  });
+
+  // -- SUNLIGHT VARIATION (cloud passing) --
+  if(sunLightRef){
+    // Slowly change angle
+    sunLightRef.position.x=80+30*Math.sin(elapsed*0.00015);
+    sunLightRef.position.z=-60+20*Math.cos(elapsed*0.0001);
+    // Cloud dimming events
+    cloudDimTimer++;
+    if(!cloudDimActive && Math.random()<0.001){cloudDimActive=true;cloudDimTimer=0;}
+    if(cloudDimActive){
+      var dimPhase=cloudDimTimer/120;
+      sunLightRef.intensity=1.8*(0.5+0.5*Math.cos(dimPhase*Math.PI*2));
+      if(cloudDimTimer>120){cloudDimActive=false;sunLightRef.intensity=1.8;}
+    }
+  }
+
+  // -- INVERTER STATUS LIGHTS (occasional fault flash) --
+  inverterStatusLights.forEach(function(isl){
+    if(!isl.isFault && Math.random()<0.0008){
+      isl.isFault=true;isl.faultTimer=0;
+      isl.mesh.material.color.setHex(0xff2222);
+    }
+    if(isl.isFault){
+      isl.faultTimer++;
+      isl.mesh.material.opacity=0.5+0.5*Math.sin(isl.faultTimer*0.3);
+      if(isl.faultTimer>180){
+        isl.isFault=false;
+        isl.mesh.material.color.setHex(0x00ff44);
+        isl.mesh.material.opacity=1.0;
+      }
+    }
+  });
+
+  if(controls) controls.update();
+  renderer.render(scene,camera);
+  if(css2dRenderer) css2dRenderer.render(scene,camera);
+}
+
+// ===================================================================
+// REAL-TIME SIMULATION
+// ===================================================================
+function updateSimulation(){
+  simTime+=0.02;if(simTime>18) simTime=6;
+  const hourOfDay=simTime;
+  const solarFraction=hourOfDay>=6&&hourOfDay<=18?Math.sin(Math.PI*(hourOfDay-6)/12):0;
+  SIM.irradiance=Math.round(solarFraction*1050*(0.95+Math.random()*0.1));
+  if(SIM.irradiance<0) SIM.irradiance=0;
+  SIM.tamb=28+8*solarFraction+Math.random()*2-1;
+  SIM.tmod=SIM.tamb+SIM.irradiance*0.025+Math.random()*2;
+  const tempDerating=Math.max(0,1-0.004*(SIM.tmod-25));
+  SIM.genMW=50*solarFraction*tempDerating*0.972*(0.96+Math.random()*0.04);
+  if(SIM.genMW<0) SIM.genMW=0;
+  SIM.pr=SIM.irradiance>50?(SIM.genMW/(50*SIM.irradiance/1000))*100:0;
+  SIM.pr=Math.min(95,Math.max(70,SIM.pr));
+  SIM.energyToday+=SIM.genMW*0.02;
+  SIM.energyMonth=7850+SIM.energyToday-245;
+  // Soiling effect gradually reduces output
+  soilingFactor = Math.max(0.92, soilingFactor - 0.00005);
+  if(Math.random()<0.005) soilingFactor = Math.min(1.0, soilingFactor + 0.005); // occasional cleaning
+  SIM.genMW *= soilingFactor;
+  SIM.pr *= soilingFactor;
+  SIM.inverters.forEach((inv,i)=>{inv.power=SIM.genMW/10*(0.95+Math.random()*0.1);inv.eff=97+Math.random()*2;inv.temp=SIM.tamb+8+Math.random()*6;inv.status=inv.temp>55?'warn':'ok';});
+  // Cloud dimming affects power output
+  if(cloudDimActive && sunLightRef){
+    var dimFactor=sunLightRef.intensity/1.8;
+    SIM.genMW*=dimFactor;
+    SIM.irradiance=Math.round(SIM.irradiance*dimFactor);
+  }
+  updateKPIs();
+}
+
+function updateKPIs(){
+  setText('kpi-gen',SIM.genMW.toFixed(1),'MW');
+  setText('kpi-irr',Math.round(SIM.irradiance),'W/m2');
+  setText('kpi-tmod',SIM.tmod.toFixed(0),'C');
+  setText('kpi-tamb',SIM.tamb.toFixed(0),'C');
+  setText('kpi-pr',SIM.pr.toFixed(1),'%');
+  setText('kpi-ehoy',Math.round(SIM.energyToday),'MWh');
+  setText('kpi-emes',numberWithCommas(Math.round(SIM.energyMonth)),'MWh');
+  setTextContent('mon-gen',SIM.genMW.toFixed(1)+' MW');
+  setTextContent('mon-irr',Math.round(SIM.irradiance)+' W/m2');
+  setTextContent('mon-tmod',SIM.tmod.toFixed(0)+' C');
+  setTextContent('mon-pr',SIM.pr.toFixed(1)+'%');
+  setTextContent('mon-ehoy',Math.round(SIM.energyToday)+' MWh');
+  const pct=(SIM.genMW/50*100).toFixed(1);
+  const pgFill=document.getElementById('pgFill');
+  const pgText=document.getElementById('pgText');
+  if(pgFill) pgFill.style.width=pct+'%';
+  if(pgText) pgText.textContent=SIM.genMW.toFixed(1)+' / 50 MW ('+pct+'%)';
+  const tmodEl=document.getElementById('kpi-tmod');
+  if(tmodEl) tmodEl.className='kpi-val'+(SIM.tmod>55?' red':SIM.tmod>50?' ':' cyan');
+  // -- New KPIs --
+  const soilEl=document.getElementById('kpi-soiling');
+  if(soilEl) soilEl.innerHTML=(soilingFactor*100).toFixed(1)+'<span class="kpi-unit">%</span>';
+  if(soilEl) soilEl.className='kpi-val'+(soilingFactor<0.95?' red':soilingFactor<0.97?' ':' green');
+  const cloudEl=document.getElementById('kpi-cloud');
+  if(cloudEl) cloudEl.textContent=cloudDimActive?'Nublado':'Despejado';
+  if(cloudEl) cloudEl.className='kpi-val'+(cloudDimActive?' ':' cyan');
+}
+function setText(id,val,unit){const el=document.getElementById(id);if(el) el.innerHTML=val+'<span class="kpi-unit">'+unit+'</span>';}
+function setTextContent(id,val){const el=document.getElementById(id);if(el) el.textContent=val;}
+function numberWithCommas(x){return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g,",");}
+
+// ===================================================================
+// MONITOR CHARTS
+// ===================================================================
+function buildMonitorCharts(){
+  const chart=document.getElementById('hourlyChart');
+  if(chart&&chart.children.length===0){
+    SIM.hourlyGen.forEach(h=>{
+      const col=document.createElement('div');col.className='bar-col';
+      const fill=document.createElement('div');fill.className='bar-fill';
+      const pct=h.mwh/42*100;fill.style.height=Math.max(2,pct)+'%';
+      fill.style.background=h.mwh>30?'var(--solar)':h.mwh>15?'var(--ye)':'var(--t2)';
+      const lbl=document.createElement('div');lbl.className='bar-label';lbl.textContent=h.hour+':00';
+      col.appendChild(fill);col.appendChild(lbl);chart.appendChild(col);
+    });
+  }
+  const grid=document.getElementById('invGrid');
+  if(grid&&grid.children.length===0){
+    SIM.inverters.forEach((inv,i)=>{
+      const card=document.createElement('div');card.className='inv-card';
+      card.onclick=()=>selectAsset(i<6?'inv-str':'inv-cen');
+      card.innerHTML='<div class="inv-id">'+inv.id+'</div><div class="inv-pwr">'+inv.power.toFixed(1)+'</div><div style="font-size:8px;color:var(--t2)">MW</div><div class="inv-eff">'+inv.eff.toFixed(1)+'%</div><div class="inv-status" style="background:var(--'+(inv.status==='ok'?'gr':'ye')+')"></div>';
+      grid.appendChild(card);
+    });
+  }
+}
+
+// -- SPARKLINE --
+function buildSparkline(){
+  const sp=document.getElementById('sr-spark');if(!sp) return;sp.innerHTML='';
+  for(let i=0;i<24;i++){const b=document.createElement('div');b.className='spark-bar';const h=i>=6&&i<=18?Math.sin(Math.PI*(i-6)/12)*100:0;b.style.height=Math.max(1,h)+'%';if(h===0) b.style.opacity='0.15';sp.appendChild(b);}
+}
+
+// ===================================================================
+// INITIALIZATION
+// ===================================================================
+var appStarted = false;
+function startApp(){
+  if(appStarted) return;
+  appStarted = true;
+  init3D();
+  buildSparkline();
+  updateSimulation();
+  // Safety: ensure canvas stays in center container
+  setInterval(function(){
+    var sapOverlay = document.getElementById('sapOverlay');
+    var sapVisible = sapOverlay && sapOverlay.classList.contains('active');
+    if(!sapVisible){
+      var canvas = document.querySelector('canvas');
+      var container = document.getElementById('center');
+      if(canvas && container && canvas.parentElement !== container){
+        container.insertBefore(canvas, container.firstChild);
+        renderer.setSize(container.clientWidth, container.clientHeight);
+        camera.aspect = container.clientWidth / container.clientHeight;
+        camera.updateProjectionMatrix();
+      }
+    }
+  }, 2000);
+}
+if(document.readyState === 'loading'){ document.addEventListener('DOMContentLoaded', startApp); } else { startApp(); }
+</script>
+<script src="dt-enhancements.js"></script>
+</body>
+</html>

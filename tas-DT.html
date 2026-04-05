@@ -1,0 +1,2616 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Digital Twin | Terminal Gas LP TAS</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#060D18;--s1:#0A1420;--s2:#111D2B;--s3:#182838;
+  --or:#FF5500;--or-dim:rgba(255,85,0,.15);
+  --cy:#00C8F0;--cy-dim:rgba(0,200,240,.12);
+  --gr:#10D858;--gr-dim:rgba(16,216,88,.12);
+  --re:#E02020;--re-dim:rgba(224,32,32,.15);
+  --ye:#F0A000;--ye-dim:rgba(240,160,0,.12);
+  --t0:#E8F4FF;--t1:#7AAAC8;--t2:#3A607A;
+  --border:rgba(255,255,255,.06);--border2:rgba(255,255,255,.1);--border3:rgba(255,255,255,.15);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--t0);font-family:'Space Grotesk',sans-serif}
+::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+@keyframes pd{0%,100%{opacity:1}50%{opacity:.4}}
+@keyframes slide-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes glow-pulse{0%,100%{box-shadow:0 0 6px var(--or)}50%{box-shadow:0 0 18px var(--or)}}
+
+/* ══════════════════════════════════
+   HEADER (52px)
+   ══════════════════════════════════ */
+#header{height:52px;background:var(--s1);border-bottom:1px solid var(--border2);display:flex;align-items:center;padding:0 20px;gap:14px;flex-shrink:0;position:relative;z-index:100}
+.h-logo{width:32px;height:32px;background:var(--or);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;color:#fff;letter-spacing:-0.5px;flex-shrink:0}
+.h-sep{width:1px;height:24px;background:var(--border2)}
+.h-plant{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--t1)}
+.h-plant b{color:var(--t0);font-weight:600}
+.h-status{display:flex;align-items:center;gap:6px;margin-left:auto}
+.h-dot{width:7px;height:7px;border-radius:50%;background:var(--gr);box-shadow:0 0 8px var(--gr);animation:pd 2s infinite}
+.h-status-txt{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--gr)}
+.h-time{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--t2)}
+.demo-badge{background:var(--re);color:#fff;font-size:9px;font-weight:700;letter-spacing:.12em;padding:2px 8px;border-radius:2px;font-family:'IBM Plex Mono',monospace}
+.h-back{background:var(--s2);border:1px solid var(--border2);border-radius:6px;padding:6px 14px;color:var(--t1);cursor:pointer;font-size:12px;font-family:'Space Grotesk',sans-serif;font-weight:500;text-decoration:none;transition:all .2s;display:flex;align-items:center;gap:6px}
+.h-back:hover{background:var(--s3);color:var(--or);border-color:var(--or)}
+.h-alert-btn{background:var(--s2);border:1px solid var(--border2);border-radius:6px;padding:6px 12px;color:var(--t1);cursor:pointer;font-size:13px;display:flex;align-items:center;gap:6px;transition:all .2s}
+.h-alert-btn:hover{background:var(--s3);color:var(--or);border-color:var(--or)}
+.h-alert-cnt{background:var(--re);color:#fff;font-size:9px;font-weight:700;padding:1px 5px;border-radius:8px;font-family:'IBM Plex Mono',monospace}
+
+/* ══════════════════════════════════
+   LAYOUT
+   ══════════════════════════════════ */
+#app{display:flex;height:calc(100vh - 52px);overflow:hidden}
+
+/* ══════════════════════════════════
+   LEFT SIDEBAR (280px)
+   ══════════════════════════════════ */
+#sidebar-left{width:280px;flex-shrink:0;background:var(--s1);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.sl-tabs{display:flex;border-bottom:1px solid var(--border);flex-shrink:0}
+.sl-tab{flex:1;padding:10px 8px;text-align:center;font-size:10px;font-weight:600;letter-spacing:.08em;color:var(--t2);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;text-transform:uppercase;font-family:'IBM Plex Mono',monospace}
+.sl-tab:hover{color:var(--t1)}.sl-tab.active{color:var(--or);border-bottom-color:var(--or)}
+.sl-panel{flex:1;overflow-y:auto;display:none}.sl-panel.active{display:block}
+
+.sl-section{padding:14px 16px 8px;border-bottom:1px solid var(--border)}
+.sl-label{font-size:10px;font-weight:600;letter-spacing:.15em;color:var(--t2);text-transform:uppercase;margin-bottom:10px;font-family:'IBM Plex Mono',monospace}
+
+.kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:14px 16px}
+.kpi-card{background:var(--s2);border-radius:8px;padding:10px;border:1px solid var(--border)}
+.kpi-val{font-size:20px;font-weight:700;color:var(--or);line-height:1}
+.kpi-val.cy{color:var(--cy)}.kpi-val.gr{color:var(--gr)}.kpi-val.re{color:var(--re)}.kpi-val.ye{color:var(--ye)}
+.kpi-unit{font-family:'IBM Plex Mono',monospace;font-size:8px;color:var(--t2);margin-left:2px}
+.kpi-lbl{font-size:10px;color:var(--t1);margin-top:3px}
+
+.asset-list{padding:8px 16px;overflow-y:auto;flex:1}
+.asset-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:6px;cursor:pointer;transition:all .2s;margin-bottom:2px;border:1px solid transparent}
+.asset-item:hover{background:var(--s2)}
+.asset-item.active{background:var(--or-dim);border-color:rgba(255,85,0,.3)}
+.ai-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.ai-dot.ok{background:var(--gr);box-shadow:0 0 6px var(--gr)}
+.ai-dot.warn{background:var(--ye);box-shadow:0 0 6px var(--ye);animation:pd 1.5s infinite}
+.ai-dot.crit{background:var(--re);box-shadow:0 0 6px var(--re);animation:pd .8s infinite}
+.ai-name{font-size:12px;font-weight:600;color:var(--t0)}
+.ai-sub{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--t2)}
+
+/* chart */
+.chart-section{padding:14px 16px}
+.chart-title{font-size:10px;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px;font-family:'IBM Plex Mono',monospace}
+.bar-chart{display:flex;align-items:flex-end;gap:4px;height:80px;padding:0 4px}
+.bar-col{display:flex;flex-direction:column;align-items:center;flex:1;gap:2px}
+.bar-fill{width:100%;border-radius:3px 3px 0 0;background:var(--or);min-height:4px;transition:height .5s}
+.bar-lbl{font-size:8px;color:var(--t2);font-family:'IBM Plex Mono',monospace}
+
+/* ══════════════════════════════════
+   CENTER (3D)
+   ══════════════════════════════════ */
+#center{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--bg);position:relative}
+#center canvas{width:100%!important;height:100%!important;display:block}
+
+/* 3D overlay controls */
+.overlay-3d{position:absolute;top:10px;left:10px;display:flex;flex-direction:column;gap:4px;z-index:10}
+.sys-toggle{display:flex;align-items:center;gap:6px;padding:5px 10px;background:rgba(10,20,32,.92);border:1px solid var(--border2);border-radius:5px;cursor:pointer;transition:all .2s;font-size:10px;font-weight:600;color:var(--t1);backdrop-filter:blur(8px);font-family:'IBM Plex Mono',monospace}
+.sys-toggle:hover{border-color:var(--or);color:var(--t0)}
+.sys-toggle.active{border-color:var(--or);color:var(--or);background:rgba(255,85,0,.08)}
+.sys-toggle .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+
+/* ══════════════════════════════════
+   RIGHT PANEL (equipment detail)
+   ══════════════════════════════════ */
+#equip-panel{position:absolute;top:12px;right:12px;width:340px;background:rgba(10,20,32,.96);border:1px solid var(--border2);border-radius:10px;padding:16px;display:none;overflow-y:auto;max-height:calc(100% - 24px);backdrop-filter:blur(12px);z-index:10;animation:slide-in .3s ease}
+.ep-close{position:absolute;top:8px;right:12px;cursor:pointer;color:var(--t2);font-size:16px;background:none;border:none}
+.ep-close:hover{color:var(--t0)}
+.ep-tag{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--or);margin-bottom:2px}
+.ep-name{font-size:18px;font-weight:700;margin-bottom:6px}
+.ep-conf{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:9px;padding:2px 6px;border-radius:3px;margin-bottom:10px}
+.ep-conf.alta{background:var(--re-dim);color:var(--re)}.ep-conf.media{background:var(--ye-dim);color:var(--ye)}.ep-conf.baja{background:var(--gr-dim);color:var(--gr)}
+.ep-section{font-size:10px;font-weight:600;letter-spacing:.1em;color:var(--t2);text-transform:uppercase;margin:12px 0 6px;border-bottom:1px solid var(--border);padding-bottom:4px;font-family:'IBM Plex Mono',monospace}
+.qr-container{display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px;background:rgba(10,20,32,.6);border-radius:6px;border:1px solid rgba(255,255,255,.06);margin-bottom:6px}
+.qr-label{font-family:'IBM Plex Mono',monospace;font-size:9px;color:rgba(255,255,255,.4)}
+.ep-row{display:flex;justify-content:space-between;font-size:12px;padding:3px 0}
+.ep-row .k{color:var(--t1)}.ep-row .v{color:var(--t0);font-family:'IBM Plex Mono',monospace;font-size:11px}
+.ep-sensor{display:flex;justify-content:space-between;align-items:center;padding:4px 8px;background:var(--s2);border-radius:4px;margin-bottom:3px;font-size:11px}
+.ep-sensor .sn{color:var(--t1)}.ep-sensor .sv{font-family:'IBM Plex Mono',monospace;font-weight:600}
+.ep-sensor .sv.ok{color:var(--gr)}.ep-sensor .sv.warn{color:var(--ye)}.ep-sensor .sv.crit{color:var(--re)}
+.ep-sensor-bar{height:3px;background:var(--s3);border-radius:2px;margin-top:2px;overflow:hidden}
+.ep-sensor-bar-fill{height:100%;border-radius:2px;transition:width .5s}
+.ep-btn{width:100%;padding:8px;border-radius:6px;border:1px solid var(--or);background:transparent;color:var(--or);font-size:11px;font-weight:600;cursor:pointer;margin-top:6px;transition:all .2s}
+.ep-btn:hover{background:var(--or);color:#fff}
+.ep-btn.secondary{border-color:var(--cy);color:var(--cy)}
+.ep-btn.secondary:hover{background:var(--cy);color:#fff}
+.ep-doc-item{display:flex;align-items:center;gap:8px;padding:6px 8px;background:var(--s2);border-radius:4px;margin-bottom:3px;font-size:11px;color:var(--cy);cursor:pointer;transition:background .2s}
+.ep-doc-item:hover{background:var(--s3)}
+.ep-ot-item{padding:6px 8px;background:var(--s2);border-radius:4px;margin-bottom:3px;font-size:10px;border-left:3px solid var(--ye)}
+.ep-ot-item .ot-id{font-family:'IBM Plex Mono',monospace;font-weight:700;color:var(--t0)}
+.ep-ot-item .ot-desc{color:var(--t1);margin-top:2px}
+
+/* ══════════════════════════════════
+   ALERT MODAL
+   ══════════════════════════════════ */
+#alertModal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);display:none;z-index:200;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+#alertModal.show{display:flex}
+.modal-box{background:var(--s1);border:1px solid var(--border2);border-radius:12px;width:500px;max-height:70vh;overflow-y:auto;padding:24px}
+.modal-title{font-size:16px;font-weight:700;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center}
+.modal-close{background:none;border:none;color:var(--t2);font-size:18px;cursor:pointer}
+.modal-close:hover{color:var(--t0)}
+.alert-card{background:var(--s2);border-radius:8px;padding:12px 14px;border-left:4px solid;margin-bottom:8px}
+.alert-card.crit{border-color:var(--re);background:rgba(224,32,32,.05)}
+.alert-card.warn{border-color:var(--ye);background:rgba(240,160,0,.05)}
+.alert-card.info{border-color:var(--cy);background:rgba(0,200,240,.05)}
+.alert-title{font-size:13px;font-weight:700;margin-bottom:4px}
+.alert-card.crit .alert-title{color:var(--re)}
+.alert-card.warn .alert-title{color:var(--ye)}
+.alert-card.info .alert-title{color:var(--cy)}
+.alert-desc{font-size:11px;color:var(--t1);line-height:1.5}
+.alert-time{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--t2);margin-top:4px}
+
+/* ══════════════════════════════════
+   FULLSCREEN OVERLAYS
+   ══════════════════════════════════ */
+.fs-overlay{position:fixed;top:0;left:0;width:100%;height:100%;z-index:500;display:none;animation:fs-fade-in .3s ease}
+.fs-overlay.show{display:flex}
+@keyframes fs-fade-in{from{opacity:0}to{opacity:1}}
+
+/* -- SAP Fullscreen -- */
+.sap-fs{background:#F0F2F5;color:#333;font-family:'Space Grotesk',sans-serif;flex-direction:column}
+.sap-fs-header{height:48px;background:#354A5F;display:flex;align-items:center;padding:0 20px;gap:14px;flex-shrink:0}
+.sap-fs-header .sap-fs-logo{font-size:16px;font-weight:800;color:#fff;font-family:'IBM Plex Mono',monospace;letter-spacing:1px}
+.sap-fs-header .sap-fs-logo span{color:#5AC8FA}
+.sap-fs-header .sap-fs-title{font-size:12px;color:rgba(255,255,255,.75);font-family:'IBM Plex Mono',monospace;flex:1}
+.sap-fs-header .sap-fs-user{font-size:10px;color:rgba(255,255,255,.6);font-family:'IBM Plex Mono',monospace;text-align:right}
+.sap-fs-header .sap-fs-user b{color:#fff;display:block}
+.sap-fs-close{background:none;border:1px solid rgba(255,255,255,.3);color:#fff;font-size:14px;cursor:pointer;padding:4px 12px;border-radius:4px;font-family:'Space Grotesk',sans-serif;font-weight:600;transition:all .2s}
+.sap-fs-close:hover{background:rgba(255,255,255,.15);border-color:#fff}
+.sap-fs-body{display:flex;flex:1;overflow:hidden}
+.sap-fs-nav{width:200px;background:#354A5F;border-right:1px solid #2C3E50;overflow-y:auto;flex-shrink:0}
+.sap-fs-nav-item{display:flex;align-items:center;gap:10px;padding:12px 16px;color:rgba(255,255,255,.7);font-size:12px;font-weight:500;cursor:pointer;transition:all .2s;border-left:3px solid transparent}
+.sap-fs-nav-item:hover{background:rgba(255,255,255,.08);color:#fff}
+.sap-fs-nav-item.active{background:rgba(90,200,250,.1);color:#5AC8FA;border-left-color:#5AC8FA}
+.sap-fs-nav-item .nav-icon{width:24px;text-align:center;font-size:14px}
+.sap-fs-main{flex:1;overflow-y:auto;padding:0;background:#F0F2F5}
+
+/* SAP Launchpad tiles */
+.sap-lp-tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;padding:24px;max-width:900px}
+.sap-lp-tile{border-radius:8px;padding:20px;color:#fff;cursor:pointer;transition:transform .15s,box-shadow .15s;min-height:100px;display:flex;flex-direction:column;justify-content:space-between}
+.sap-lp-tile:hover{transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,0,0,.2)}
+.sap-lp-tile .tile-count{font-size:32px;font-weight:800;font-family:'IBM Plex Mono',monospace}
+.sap-lp-tile .tile-label{font-size:13px;font-weight:600;margin-top:8px}
+.sap-lp-tile .tile-sub{font-size:10px;opacity:.8;margin-top:4px}
+
+/* SAP Work Order Detail Panel */
+.sap-wo-detail{position:fixed;top:48px;right:0;width:400px;height:calc(100% - 48px);background:#fff;border-left:2px solid #354A5F;box-shadow:-4px 0 20px rgba(0,0,0,.15);z-index:510;overflow-y:auto;display:none;animation:slide-right .3s ease}
+@keyframes slide-right{from{transform:translateX(100%)}to{transform:translateX(0)}}
+.sap-wo-detail.show{display:block}
+.sap-wo-hdr{background:#354A5F;color:#fff;padding:16px 20px;display:flex;align-items:center;justify-content:space-between}
+.sap-wo-hdr h3{font-size:14px;font-family:'IBM Plex Mono',monospace}
+.sap-wo-close{background:none;border:none;color:#fff;font-size:18px;cursor:pointer}
+.sap-wo-body{padding:20px}
+.sap-wo-field{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #EEE;font-size:12px}
+.sap-wo-field .wf-label{color:#666;font-weight:500}.sap-wo-field .wf-val{color:#333;font-family:'IBM Plex Mono',monospace;font-weight:600}
+.sap-wo-btn{width:100%;padding:10px;border:none;border-radius:6px;background:#354A5F;color:#fff;font-size:12px;font-weight:600;cursor:pointer;margin-top:12px;transition:background .2s}
+.sap-wo-btn:hover{background:#2C3E50}
+
+/* SAP PM Full table */
+.sap-pm-full-table{width:100%;border-collapse:collapse;font-size:11px;background:#fff;border:1px solid #E0E0E0;border-radius:6px;overflow:hidden}
+.sap-pm-full-table th{background:#354A5F;color:#fff;padding:10px 12px;text-align:left;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap}
+.sap-pm-full-table td{padding:10px 12px;border-bottom:1px solid #EEE;color:#333;vertical-align:middle}
+.sap-pm-full-table tr:hover{background:#F5F8FA;cursor:pointer}
+.pri-badge{font-family:'IBM Plex Mono',monospace;font-size:9px;padding:3px 8px;border-radius:3px;font-weight:700;white-space:nowrap}
+.pri-badge.urgente{background:#FDEDEC;color:#E74C3C}.pri-badge.alta{background:#FEF9E7;color:#E67E22}
+.pri-badge.media{background:#EBF5FB;color:#2E86C1}.pri-badge.baja{background:#EAFAF1;color:#27AE60}
+.sts-badge{font-family:'IBM Plex Mono',monospace;font-size:9px;padding:3px 8px;border-radius:3px;font-weight:600;white-space:nowrap}
+.sts-badge.abierta{background:#FDEDEC;color:#E74C3C}.sts-badge.cert{background:#EAFAF1;color:#27AE60}
+.sts-badge.programada{background:#EBF5FB;color:#2E86C1}
+.sts-badge.enproceso{background:#FEF9E7;color:#E67E22}
+.sts-badge.completada{background:#EAFAF1;color:#27AE60}
+.dt-flag{font-family:'IBM Plex Mono',monospace;font-size:8px;padding:2px 6px;border-radius:2px;background:#354A5F;color:#5AC8FA;font-weight:700}
+
+/* SAP APM Cards Fullscreen */
+.sap-apm-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;padding:24px}
+.sap-apm-card{background:#fff;border-radius:8px;padding:16px;border:1px solid #E0E0E0;transition:box-shadow .2s}
+.sap-apm-card:hover{box-shadow:0 4px 16px rgba(0,0,0,.1)}
+.sap-apm-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.sap-apm-tag{font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:800;color:#354A5F}
+.sap-apm-crit{font-family:'IBM Plex Mono',monospace;font-size:9px;padding:3px 8px;border-radius:3px;font-weight:600}
+.sap-apm-crit.alta{background:#FDEDEC;color:#E74C3C}.sap-apm-crit.media{background:#FEF9E7;color:#F39C12}.sap-apm-crit.baja{background:#EAFAF1;color:#27AE60}
+.sap-apm-name{font-size:12px;color:#555;margin-bottom:6px}
+.sap-apm-sap{font-family:'IBM Plex Mono',monospace;font-size:10px;color:#888;margin-bottom:10px}
+.sap-apm-health-bar{height:8px;background:#E0E0E0;border-radius:4px;margin-bottom:6px;overflow:hidden}
+.sap-apm-health-fill{height:100%;border-radius:4px;transition:width .5s}
+.sap-apm-health-fill.high{background:#27AE60}.sap-apm-health-fill.med{background:#F39C12}.sap-apm-health-fill.low{background:#E74C3C}
+.sap-apm-reading{font-family:'IBM Plex Mono',monospace;font-size:11px;color:#333;display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.sap-apm-sparkline{height:30px;display:flex;align-items:flex-end;gap:1px;margin-top:8px}
+.sap-apm-sparkline .spark-bar{flex:1;background:#5AC8FA;border-radius:1px 1px 0 0;min-height:2px;transition:height .3s}
+.sap-apm-next{font-family:'IBM Plex Mono',monospace;font-size:9px;color:#888;margin-top:6px}
+
+/* SAP MM Full table */
+.sap-mm-table{width:100%;border-collapse:collapse;font-size:11px;background:#fff;border:1px solid #E0E0E0;border-radius:6px;overflow:hidden}
+.sap-mm-table th{background:#E67E22;color:#fff;padding:10px 12px;text-align:left;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.06em}
+.sap-mm-table td{padding:10px 12px;border-bottom:1px solid #EEE;color:#333}
+.stock-bar{width:80px;height:6px;background:#E0E0E0;border-radius:3px;display:inline-block;overflow:hidden;vertical-align:middle;margin-left:6px}
+.stock-bar-fill{height:100%;border-radius:3px}
+
+/* SAP BTP Integration */
+.sap-btp-flow{padding:24px;max-width:800px}
+.sap-btp-step{display:flex;gap:16px;padding:16px;background:#fff;border-radius:8px;border:1px solid #E0E0E0;margin-bottom:12px;align-items:center}
+.sap-btp-num{width:36px;height:36px;border-radius:50%;background:#354A5F;color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;font-family:'IBM Plex Mono',monospace;flex-shrink:0}
+.sap-btp-text{font-size:12px;color:#444;line-height:1.5}
+.sap-btp-text b{color:#354A5F}
+.sap-btp-arrow{text-align:center;font-size:20px;color:#354A5F;padding:4px 0}
+.sap-btp-log{padding:0 24px 24px}
+.sap-btp-log-item{display:flex;gap:12px;padding:10px 14px;background:#fff;border-radius:6px;border-left:4px solid;margin-bottom:8px;font-size:11px;color:#444}
+
+/* -- ACC Fullscreen -- */
+.acc-fs{background:#1A1A2E;color:#E0E0E0;font-family:'Space Grotesk',sans-serif;flex-direction:column}
+.acc-fs-header{height:48px;background:#16213E;display:flex;align-items:center;padding:0 20px;gap:14px;flex-shrink:0;border-bottom:2px solid #0F3460}
+.acc-fs-header .acc-fs-logo{font-size:14px;font-weight:800;color:#fff;font-family:'IBM Plex Mono',monospace}
+.acc-fs-header .acc-fs-logo span{color:#E94560}
+.acc-fs-header .acc-fs-project{font-size:11px;color:rgba(255,255,255,.6);font-family:'IBM Plex Mono',monospace;flex:1;margin-left:10px}
+.acc-fs-close{background:none;border:1px solid rgba(255,255,255,.3);color:#fff;font-size:14px;cursor:pointer;padding:4px 12px;border-radius:4px;font-weight:600;transition:all .2s}
+.acc-fs-close:hover{background:rgba(255,255,255,.15)}
+.acc-fs-body{display:flex;flex:1;overflow:hidden}
+.acc-fs-nav{width:200px;background:#16213E;border-right:1px solid #0F3460;overflow-y:auto;flex-shrink:0}
+.acc-fs-nav-item{display:flex;align-items:center;gap:10px;padding:12px 16px;color:rgba(255,255,255,.6);font-size:12px;cursor:pointer;transition:all .2s;border-left:3px solid transparent}
+.acc-fs-nav-item:hover{background:rgba(255,255,255,.05);color:#fff}
+.acc-fs-nav-item.active{background:rgba(233,69,96,.1);color:#E94560;border-left-color:#E94560}
+.acc-fs-main{flex:1;display:flex;overflow:hidden}
+.acc-fs-tree{width:240px;background:#1A1A2E;border-right:1px solid rgba(255,255,255,.08);overflow-y:auto;padding:12px 0}
+.acc-fs-tree-hdr{padding:8px 16px;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.12em}
+.acc-fs-tree-folder{padding:8px 16px;color:rgba(255,255,255,.7);font-size:12px;cursor:pointer;display:flex;align-items:center;gap:8px;transition:background .15s}
+.acc-fs-tree-folder:hover{background:rgba(255,255,255,.05)}
+.acc-fs-tree-folder.sel{background:rgba(233,69,96,.1);color:#E94560}
+.acc-fs-viewer{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.acc-fs-viewer-header{padding:12px 20px;border-bottom:1px solid rgba(255,255,255,.08);display:flex;align-items:center;justify-content:space-between}
+.acc-fs-viewer-title{font-size:16px;font-weight:700}
+.acc-fs-viewer-meta{font-family:'IBM Plex Mono',monospace;font-size:10px;color:rgba(255,255,255,.4)}
+.acc-fs-viewer-body{flex:1;display:flex;overflow:hidden}
+.acc-fs-doc-preview{flex:1;padding:20px;overflow:auto;display:flex;align-items:center;justify-content:center}
+.acc-fs-doc-meta-panel{width:260px;background:#16213E;border-left:1px solid rgba(255,255,255,.08);padding:16px;overflow-y:auto}
+.acc-meta-section{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.1em;margin:12px 0 8px;padding-bottom:4px;border-bottom:1px solid rgba(255,255,255,.08)}
+.acc-meta-row{display:flex;justify-content:space-between;padding:4px 0;font-size:11px}
+.acc-meta-row .mk{color:rgba(255,255,255,.5)}.acc-meta-row .mv{color:#E0E0E0;font-family:'IBM Plex Mono',monospace;font-size:10px}
+
+/* P&ID CSS Drawing */
+.pid-drawing{width:600px;height:400px;background:#1E1E2E;border:1px solid rgba(255,255,255,.1);border-radius:8px;position:relative;overflow:hidden}
+.pid-box{position:absolute;border:2px solid #5AC8FA;border-radius:4px;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:9px;color:#5AC8FA;background:rgba(90,200,250,.08)}
+.pid-line{position:absolute;background:#5AC8FA;opacity:.5}
+.pid-valve{position:absolute;width:12px;height:12px;border:2px solid #E94560;border-radius:50%;background:rgba(233,69,96,.2)}
+
+/* -- TANDEM Fullscreen -- */
+.tandem-fs{background:#111827;color:#E0E0E0;font-family:'Space Grotesk',sans-serif;flex-direction:column}
+.tandem-fs-header{height:48px;background:#1F2937;display:flex;align-items:center;padding:0 20px;gap:14px;flex-shrink:0;border-bottom:2px solid #374151}
+.tandem-fs-header .tandem-fs-logo{font-size:14px;font-weight:800;color:#fff;font-family:'IBM Plex Mono',monospace}
+.tandem-fs-header .tandem-fs-logo span{color:#10B981}
+.tandem-fs-close{background:none;border:1px solid rgba(255,255,255,.3);color:#fff;font-size:14px;cursor:pointer;padding:4px 12px;border-radius:4px;font-weight:600;transition:all .2s}
+.tandem-fs-close:hover{background:rgba(255,255,255,.15)}
+.tandem-fs-body{display:flex;flex:1;overflow:hidden}
+.tandem-fs-tree{width:260px;background:#1F2937;border-right:1px solid #374151;overflow-y:auto;padding:12px 0}
+.tandem-fs-tree-hdr{padding:8px 16px;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.12em}
+.tandem-fs-tree-item{padding:8px 16px 8px 24px;color:rgba(255,255,255,.6);font-size:12px;cursor:pointer;display:flex;align-items:center;gap:8px;transition:background .15s;border-left:3px solid transparent}
+.tandem-fs-tree-item:hover{background:rgba(255,255,255,.05)}
+.tandem-fs-tree-item.sel{background:rgba(16,185,129,.1);color:#10B981;border-left-color:#10B981}
+.tandem-fs-tree-group{padding:10px 16px;color:rgba(255,255,255,.8);font-size:12px;font-weight:600;display:flex;align-items:center;gap:8px}
+.tandem-fs-main{flex:1;display:flex;flex-direction:column;overflow-y:auto}
+.tandem-fs-props{width:300px;background:#1F2937;border-left:1px solid #374151;overflow-y:auto;padding:16px}
+.tandem-fs-prop-section{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.1em;margin:12px 0 8px;padding-bottom:4px;border-bottom:1px solid #374151}
+.tandem-fs-prop-row{display:flex;justify-content:space-between;padding:5px 0;font-size:11px}
+.tandem-fs-prop-row .pk{color:rgba(255,255,255,.5)}.tandem-fs-prop-row .pv{color:#E0E0E0;font-family:'IBM Plex Mono',monospace;font-size:10px}
+.tandem-stream-card{background:#1F2937;border-radius:8px;padding:14px;border:1px solid #374151;margin:8px 16px}
+.tandem-stream-hdr{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.tandem-stream-dot{width:10px;height:10px;border-radius:50%}
+.tandem-stream-name{font-size:13px;font-weight:600}
+.tandem-stream-status{font-family:'IBM Plex Mono',monospace;font-size:9px;padding:2px 8px;border-radius:3px;margin-left:auto}
+.tandem-sync-card{background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.3);border-radius:8px;padding:12px;margin:8px 16px}
+
+/* CSS2D IoT Labels */
+.iot-label{background:rgba(10,20,32,.92);border-radius:4px;padding:4px 8px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#E8F4FF;white-space:nowrap;border-left:3px solid #10D858;pointer-events:auto;cursor:pointer;backdrop-filter:blur(4px);transition:border-color .3s}
+.iot-label.warn{border-left-color:#F0A000}
+.iot-label.crit{border-left-color:#E02020}
+.iot-label .iot-tag{font-weight:700;color:#FF5500;margin-right:6px}
+
+/* Toast */
+.toast-msg{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#354A5F;color:#fff;padding:10px 20px;border-radius:6px;font-size:12px;font-family:'IBM Plex Mono',monospace;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,.3);border-left:4px solid #5AC8FA;animation:slide-in .3s ease}
+
+/* ══════════════════════════════════
+   HAMBURGER MENU (mobile)
+   ══════════════════════════════════ */
+.hamburger{display:none;background:none;border:none;color:var(--t0);font-size:22px;cursor:pointer;padding:4px 8px;line-height:1;flex-shrink:0}
+.sidebar-overlay{display:none;position:fixed;top:52px;left:0;width:100%;height:calc(100% - 52px);background:rgba(0,0,0,.5);z-index:49;backdrop-filter:blur(2px)}
+.sidebar-overlay.show{display:block}
+
+/* ══════════════════════════════════
+   MOBILE RESPONSIVE
+   ══════════════════════════════════ */
+@media (max-width:900px){
+  .hamburger{display:flex;align-items:center;justify-content:center}
+  #sidebar-left{position:fixed;top:52px;left:0;width:300px;height:calc(100% - 52px);z-index:50;transform:translateX(-100%);transition:transform .3s ease;box-shadow:4px 0 20px rgba(0,0,0,.5)}
+  #sidebar-left.open{transform:translateX(0)}
+  #center{width:100%!important;flex:1}
+  #equip-panel{position:fixed;top:auto;bottom:0;left:0;right:0;width:100%!important;max-height:55vh;border-radius:14px 14px 0 0;animation:slide-up .3s ease}
+  @keyframes slide-up{from{transform:translateY(100%)}to{transform:translateY(0)}}
+  .h-plant b{max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;vertical-align:bottom}
+  .h-back{padding:4px 8px;font-size:11px}
+  .demo-badge{display:none}
+  .kpi-grid{grid-template-columns:1fr 1fr;gap:6px;padding:10px 12px}
+  .kpi-card{padding:8px}
+  .kpi-val{font-size:18px}
+  .overlay-3d{top:6px;left:6px}
+  .sys-toggle{font-size:9px;padding:4px 8px}
+  .modal-box{width:90%;max-width:400px;padding:16px}
+  .sl-tabs{overflow-x:auto;-webkit-overflow-scrolling:touch;flex-wrap:nowrap}
+  .sl-tab{white-space:nowrap;flex:0 0 auto;padding:10px 12px}
+  .sap-fs-nav{width:140px}
+  .sap-lp-tiles{grid-template-columns:repeat(2,1fr);gap:10px;padding:16px}
+  .acc-fs-nav{width:140px}
+  .acc-fs-tree{width:160px}
+  .acc-fs-doc-meta-panel{width:200px}
+  .tandem-fs-tree{width:180px}
+  .tandem-fs-props{width:220px}
+  .sap-wo-detail{width:320px}
+}
+@media (max-width:600px){
+  #header{padding:0 8px;gap:6px;height:44px}
+  .h-logo{width:26px;height:26px;font-size:11px}
+  .h-plant{font-size:10px}
+  .h-plant b{max-width:70px}
+  .h-sep{display:none}
+  .h-status-txt{display:none}
+  .h-time{display:none}
+  #equip-panel{max-height:65vh}
+  .ep-name{font-size:15px}
+  .kpi-grid{grid-template-columns:1fr;gap:4px;padding:8px}
+  .kpi-val{font-size:16px}
+  .kpi-lbl{font-size:9px}
+  .sl-tab{font-size:9px;padding:8px 10px}
+  .bar-chart{height:60px}
+  .modal-box{width:95%;padding:12px}
+  .alert-card{padding:8px 10px}
+  #sidebar-left{width:260px}
+  .sap-fs-nav{display:none}
+  .sap-lp-tiles{grid-template-columns:1fr;padding:12px}
+  .acc-fs-nav{display:none}
+  .acc-fs-tree{width:120px}
+  .acc-fs-doc-meta-panel{display:none}
+  .tandem-fs-tree{width:140px}
+  .tandem-fs-props{display:none}
+  .sap-wo-detail{width:100%}
+  .pid-drawing{width:100%;height:260px}
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div id="header">
+  <button class="hamburger" id="hamburgerBtn" onclick="toggleSidebar()">&#9776;</button>
+  <div class="h-logo">EY</div>
+  <div class="h-sep"></div>
+  <div class="h-plant"><b>Terminal Gas LP</b> &middot; TAS-AGS-01</div>
+  <div class="h-sep"></div>
+  <span class="demo-badge">DEMO</span>
+  <div class="h-status">
+    <div class="h-dot"></div>
+    <span class="h-status-txt">EN LINEA</span>
+  </div>
+  <div class="h-sep"></div>
+  <span class="h-time" id="clock">--:--:--</span>
+  <button class="h-alert-btn" onclick="showAlerts()">ALERTAS <span class="h-alert-cnt" id="alertCnt">3</span></button>
+  <a class="h-back" href="gas-hub.html">&larr; Hub</a>
+</div>
+
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+<!-- MAIN APP -->
+<div id="app">
+
+<!-- LEFT SIDEBAR -->
+<div id="sidebar-left">
+  <div class="sl-tabs">
+    <div class="sl-tab active" data-sl="monitores">Monitores</div>
+    <div class="sl-tab" data-sl="sap">SAP</div>
+    <div class="sl-tab" data-sl="tandem">Tandem</div>
+    <div class="sl-tab" data-sl="acc">ACC</div>
+  </div>
+
+  <!-- MONITORES -->
+  <div class="sl-panel active" id="sl-monitores">
+    <div class="sl-section">
+      <div class="sl-label">KPIs Operativos</div>
+    </div>
+    <div class="kpi-grid">
+      <div class="kpi-card"><div class="kpi-val or" id="kAlmacenamiento">11,100</div><div class="kpi-unit">m3</div><div class="kpi-lbl">Almacenamiento Total</div></div>
+      <div class="kpi-card"><div class="kpi-val cy" id="kNivel">72</div><div class="kpi-unit">%</div><div class="kpi-lbl">Nivel Promedio</div></div>
+      <div class="kpi-card"><div class="kpi-val ye" id="kPresion">12.3</div><div class="kpi-unit">kg/cm2</div><div class="kpi-lbl">Presion Promedio</div></div>
+      <div class="kpi-card"><div class="kpi-val gr" id="kTemp">28</div><div class="kpi-unit">&deg;C</div><div class="kpi-lbl">Temperatura</div></div>
+      <div class="kpi-card"><div class="kpi-val cy" id="kFlujo">180</div><div class="kpi-unit">m3/h</div><div class="kpi-lbl">Flujo Despacho</div></div>
+      <div class="kpi-card"><div class="kpi-val gr" id="kBombas">2/2</div><div class="kpi-lbl">Bombas Activas</div></div>
+      <div class="kpi-card"><div class="kpi-val gr" id="kCompresor">OK</div><div class="kpi-lbl">Compresor</div></div>
+      <div class="kpi-card"><div class="kpi-val or" id="kDespachos">14</div><div class="kpi-lbl">Despachos Hoy</div></div>
+      <div class="kpi-card"><div class="kpi-val gr" id="kGas">0</div><div class="kpi-lbl">Alertas Gas</div></div>
+      <div class="kpi-card"><div class="kpi-val gr" id="kSCI">SI</div><div class="kpi-lbl">SCI Disponible</div></div>
+      <div class="kpi-card"><div class="kpi-val ye" id="kOT">3</div><div class="kpi-lbl">OT SAP Abiertas</div></div>
+      <div class="kpi-card"><div class="kpi-val gr" id="kDisp">98.2</div><div class="kpi-unit">%</div><div class="kpi-lbl">Disponibilidad</div></div>
+    </div>
+    <div class="chart-section">
+      <div class="chart-title">Despachos Diarios (m3)</div>
+      <div class="bar-chart" id="dispatchChart"></div>
+    </div>
+    <div class="sl-section">
+      <div class="sl-label">Activos</div>
+    </div>
+    <div class="asset-list" id="assetList"></div>
+  </div>
+
+</div>
+
+<!-- CENTER (Three.js 3D Canvas) -->
+<div id="center">
+  <!-- Layer toggles -->
+  <div class="overlay-3d" id="overlayToggles">
+    <div class="sys-toggle active" data-sys="tanks"><div class="dot" style="background:var(--cy)"></div>Tanques</div>
+    <div class="sys-toggle active" data-sys="piping"><div class="dot" style="background:#aaa"></div>Tuberias</div>
+    <div class="sys-toggle active" data-sys="fire"><div class="dot" style="background:var(--re)"></div>SCI</div>
+    <div class="sys-toggle active" data-sys="loading"><div class="dot" style="background:var(--or)"></div>Llenaderas</div>
+    <div class="sys-toggle active" data-sys="labels"><div class="dot" style="background:var(--ye)"></div>Etiquetas</div>
+    <div class="sys-toggle active" id="iotToggle"><div class="dot" style="background:var(--gr)"></div>IoT</div>
+  </div>
+
+  <!-- Equipment detail panel (right side) -->
+  <div id="equip-panel">
+    <button class="ep-close" onclick="closePanel()">&times;</button>
+    <div class="ep-tag" id="epTag">--</div>
+    <div class="ep-name" id="epName">--</div>
+    <div class="ep-conf" id="epConf">--</div>
+    <div class="ep-section">Ficha Tecnica</div>
+    <div id="epInfo"></div>
+    <div class="ep-section">Sensores en Tiempo Real</div>
+    <div id="epSensors"></div>
+    <div class="ep-section">Tendencia</div>
+    <canvas id="epTrendChart" width="300" height="100" style="width:100%;height:100px;background:var(--s2);border-radius:6px;margin-bottom:6px"></canvas>
+    <div class="ep-section">QR Ficha Movil</div>
+    <div class="qr-container">
+      <div id="epQrCode"></div>
+      <span class="qr-label">Escanear para ficha tecnica movil</span>
+    </div>
+    <div class="ep-section">Documentos Vinculados</div>
+    <div id="epDocs"></div>
+    <div class="ep-section">Mantenimiento</div>
+    <div id="epMaint"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px">
+      <button class="ep-btn" onclick="openSapForEquip()">Abrir en SAP</button>
+      <button class="ep-btn secondary" onclick="openAccFS()">Ver Documentos</button>
+      <button class="ep-btn" onclick="showToast('OT creada en SAP exitosamente')">Crear OT</button>
+      <button class="ep-btn secondary" onclick="showToast('Reporte generado y enviado')">Generar Reporte</button>
+    </div>
+  </div>
+</div>
+
+</div><!-- /app -->
+
+<!-- ALERT MODAL -->
+<div id="alertModal">
+  <div class="modal-box">
+    <div class="modal-title">
+      <span>ALERTAS Activas</span>
+      <button class="modal-close" onclick="hideAlerts()">&times;</button>
+    </div>
+    <div id="alertList"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     SAP FULLSCREEN OVERLAY
+     ═══════════════════════════════════════════ -->
+<div class="fs-overlay sap-fs" id="sapFullscreen">
+  <div class="sap-fs-header">
+    <div class="sap-fs-logo">SAP <span>S/4HANA 2023</span></div>
+    <div class="sap-fs-title">| Plant Maintenance</div>
+    <div class="sap-fs-user"><b>Ing. Rodriguez</b>Plant Manager</div>
+    <button class="sap-fs-close" onclick="closeSapFS()">X Cerrar</button>
+  </div>
+  <div class="sap-fs-body">
+    <div class="sap-fs-nav">
+      <div class="sap-fs-nav-item active" onclick="sapFsNav('launchpad')"><span class="nav-icon">[H]</span>Launchpad</div>
+      <div class="sap-fs-nav-item" onclick="sapFsNav('pm')"><span class="nav-icon">[PM]</span>PM - Mantenimiento</div>
+      <div class="sap-fs-nav-item" onclick="sapFsNav('apm')"><span class="nav-icon">[APM]</span>APM - Salud Activos</div>
+      <div class="sap-fs-nav-item" onclick="sapFsNav('mm')"><span class="nav-icon">[MM]</span>MM - Materiales</div>
+      <div class="sap-fs-nav-item" onclick="sapFsNav('btp')"><span class="nav-icon">[BTP]</span>BTP - Integracion</div>
+      <div class="sap-fs-nav-item" onclick="sapFsNav('gemelo')"><span class="nav-icon">[3D]</span>Gemelo Digital</div>
+    </div>
+    <div class="sap-fs-main" id="sapFsMain">
+      <!-- Content injected by JS -->
+    </div>
+  </div>
+</div>
+
+<!-- SAP Work Order Detail Panel -->
+<div class="sap-wo-detail" id="sapWoDetail">
+  <div class="sap-wo-hdr">
+    <h3 id="sapWoTitle">--</h3>
+    <button class="sap-wo-close" onclick="closeSapWoDetail()">&times;</button>
+  </div>
+  <div class="sap-wo-body" id="sapWoBody"></div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     ACC FULLSCREEN OVERLAY
+     ═══════════════════════════════════════════ -->
+<div class="fs-overlay acc-fs" id="accFullscreen">
+  <div class="acc-fs-header">
+    <div class="acc-fs-logo">Autodesk <span>ACC</span></div>
+    <div class="acc-fs-project">TAS-AGS-01 Terminal Gas LP</div>
+    <button class="acc-fs-close" onclick="closeAccFS()">X Cerrar</button>
+  </div>
+  <div class="acc-fs-body">
+    <div class="acc-fs-nav">
+      <div class="acc-fs-nav-item active" onclick="accFsNav('docs')"><span>[D]</span> Documentos</div>
+      <div class="acc-fs-nav-item" onclick="accFsNav('models')"><span>[M]</span> Modelos</div>
+      <div class="acc-fs-nav-item" onclick="accFsNav('submittals')"><span>[S]</span> Submittals</div>
+      <div class="acc-fs-nav-item" onclick="accFsNav('rfis')"><span>[R]</span> RFIs</div>
+      <div class="acc-fs-nav-item" onclick="accFsNav('issues')"><span>[I]</span> Issues</div>
+    </div>
+    <div class="acc-fs-main" id="accFsMain">
+      <!-- Content injected by JS -->
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     TANDEM FULLSCREEN OVERLAY
+     ═══════════════════════════════════════════ -->
+<div class="fs-overlay tandem-fs" id="tandemFullscreen">
+  <div class="tandem-fs-header">
+    <div class="tandem-fs-logo">Autodesk <span>Tandem</span></div>
+    <div style="font-size:11px;color:rgba(255,255,255,.6);font-family:'IBM Plex Mono',monospace;flex:1;margin-left:10px">TAS-AGS-01 Digital Twin</div>
+    <button class="tandem-fs-close" onclick="closeTandemFS()">X Cerrar</button>
+  </div>
+  <div class="tandem-fs-body">
+    <div class="tandem-fs-tree" id="tandemTree">
+      <!-- Injected by JS -->
+    </div>
+    <div class="tandem-fs-main" id="tandemMain">
+      <!-- Injected by JS -->
+    </div>
+    <div class="tandem-fs-props" id="tandemProps">
+      <!-- Injected by JS -->
+    </div>
+  </div>
+</div>
+
+<!-- THREE.JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   ASSET DATA MODEL
+   ═══════════════════════════════════════════════════════════════ */
+var ASSETS = [
+  {id:'SPH-01',name:'Esfera SPH-01',system:'Almacenamiento',type:'Esfera Presion',capacity:'4,200 m3',criticality:'alta',sap:'10-SPH-001',status:'ok',
+   manufacturer:'Chicago Bridge & Iron',model:'CB&I Type-III',dimensions:'16m diam.',installDate:'2018-06-15',serial:'CBI-2018-4201',
+   sensors:[{n:'Nivel',v:74,u:'%',s:'ok'},{n:'Presion',v:12.5,u:'kg/cm2',s:'ok'},{n:'Temperatura',v:27,u:'\u00b0C',s:'ok'},{n:'PSV Status',v:'Cerrada',u:'',s:'ok'}]},
+  {id:'SPH-02',name:'Esfera SPH-02',system:'Almacenamiento',type:'Esfera Presion',capacity:'4,200 m3',criticality:'alta',sap:'10-SPH-002',status:'ok',
+   manufacturer:'Chicago Bridge & Iron',model:'CB&I Type-III',dimensions:'16m diam.',installDate:'2018-06-15',serial:'CBI-2018-4202',
+   sensors:[{n:'Nivel',v:68,u:'%',s:'ok'},{n:'Presion',v:12.1,u:'kg/cm2',s:'ok'},{n:'Temperatura',v:29,u:'\u00b0C',s:'ok'},{n:'PSV Status',v:'Cerrada',u:'',s:'ok'}]},
+  {id:'SPH-03',name:'Esfera SPH-03',system:'Almacenamiento',type:'Esfera Presion',capacity:'4,200 m3',criticality:'alta',sap:'10-SPH-003',status:'warn',
+   manufacturer:'Chicago Bridge & Iron',model:'CB&I Type-III',dimensions:'16m diam.',installDate:'2019-02-10',serial:'CBI-2019-4203',
+   sensors:[{n:'Nivel',v:82,u:'%',s:'warn'},{n:'Presion',v:13.1,u:'kg/cm2',s:'warn'},{n:'Temperatura',v:30,u:'\u00b0C',s:'ok'},{n:'PSV Status',v:'Cerrada',u:'',s:'ok'}]},
+  {id:'BT-01',name:'Salchicha BT-01',system:'Almacenamiento',type:'Tanque Bullet',capacity:'650 m3',criticality:'media',sap:'10-BT-001',status:'ok',
+   manufacturer:'Trinity Industries',model:'TI-Bullet-650',dimensions:'18m x 5m diam.',installDate:'2019-08-22',serial:'TI-2019-BT01',
+   sensors:[{n:'Nivel',v:55,u:'%',s:'ok'},{n:'Presion',v:11.8,u:'kg/cm2',s:'ok'},{n:'Temperatura',v:28,u:'\u00b0C',s:'ok'}]},
+  {id:'BT-02',name:'Salchicha BT-02',system:'Almacenamiento',type:'Tanque Bullet',capacity:'650 m3',criticality:'media',sap:'10-BT-002',status:'ok',
+   manufacturer:'Trinity Industries',model:'TI-Bullet-650',dimensions:'18m x 5m diam.',installDate:'2019-08-22',serial:'TI-2019-BT02',
+   sensors:[{n:'Nivel',v:61,u:'%',s:'ok'},{n:'Presion',v:11.5,u:'kg/cm2',s:'ok'},{n:'Temperatura',v:27,u:'\u00b0C',s:'ok'}]},
+  {id:'P-01',name:'Bomba Centrifuga P-01',system:'Bombeo',type:'Bomba Centrifuga',capacity:'120 m3/h',criticality:'alta',sap:'20-PMP-001',status:'ok',
+   manufacturer:'Flowserve',model:'HPX 6x4-13',dimensions:'2.5m x 1.2m',installDate:'2020-03-10',serial:'FS-2020-HP01',
+   sensors:[{n:'Vibracion',v:2.8,u:'mm/s',s:'ok'},{n:'Temperatura',v:62,u:'\u00b0C',s:'ok'},{n:'Presion Desc.',v:14.2,u:'kg/cm2',s:'ok'},{n:'Amperaje',v:85,u:'A',s:'ok'}]},
+  {id:'P-02',name:'Bomba Centrifuga P-02',system:'Bombeo',type:'Bomba Centrifuga',capacity:'120 m3/h',criticality:'alta',sap:'20-PMP-002',status:'ok',
+   manufacturer:'Flowserve',model:'HPX 6x4-13',dimensions:'2.5m x 1.2m',installDate:'2020-03-10',serial:'FS-2020-HP02',
+   sensors:[{n:'Vibracion',v:3.1,u:'mm/s',s:'ok'},{n:'Temperatura',v:65,u:'\u00b0C',s:'ok'},{n:'Presion Desc.',v:13.9,u:'kg/cm2',s:'ok'},{n:'Amperaje',v:88,u:'A',s:'ok'}]},
+  {id:'COMP-01',name:'Compresor Gas LP',system:'Compresion',type:'Compresor Reciprocante',capacity:'80 m3/h',criticality:'alta',sap:'20-CMP-001',status:'ok',
+   manufacturer:'Ariel Corporation',model:'JGK/4',dimensions:'4m x 2.5m x 3m',installDate:'2018-11-20',serial:'AR-2018-JGK01',
+   sensors:[{n:'RPM',v:1480,u:'rpm',s:'ok'},{n:'Presion Succ.',v:2.1,u:'kg/cm2',s:'ok'},{n:'Presion Desc.',v:14.5,u:'kg/cm2',s:'ok'},{n:'Temp. Aceite',v:72,u:'\u00b0C',s:'ok'},{n:'Vibracion',v:4.2,u:'mm/s',s:'ok'}]},
+  {id:'LR-01',name:'Llenadora Pos. 1',system:'Despacho',type:'Brazo de Carga',capacity:'60 m3/h',criticality:'media',sap:'30-LR-001',status:'ok',
+   manufacturer:'Emco Wheaton',model:'E2148',dimensions:'3m reach',installDate:'2019-04-15',serial:'EW-2019-E01',
+   sensors:[{n:'Flujo',v:42,u:'m3/h',s:'ok'},{n:'Presion',v:11.2,u:'kg/cm2',s:'ok'},{n:'Acumulado',v:1250,u:'m3',s:'ok'}]},
+  {id:'LR-02',name:'Llenadora Pos. 2',system:'Despacho',type:'Brazo de Carga',capacity:'60 m3/h',criticality:'media',sap:'30-LR-002',status:'warn',
+   manufacturer:'Emco Wheaton',model:'E2148',dimensions:'3m reach',installDate:'2019-04-15',serial:'EW-2019-E02',
+   sensors:[{n:'Flujo',v:38,u:'m3/h',s:'ok'},{n:'Presion',v:10.8,u:'kg/cm2',s:'ok'},{n:'Acumulado',v:980,u:'m3',s:'ok'}]},
+  {id:'LR-03',name:'Llenadora Pos. 3',system:'Despacho',type:'Brazo de Carga',capacity:'60 m3/h',criticality:'media',sap:'30-LR-003',status:'ok',
+   manufacturer:'Emco Wheaton',model:'E2148',dimensions:'3m reach',installDate:'2019-04-15',serial:'EW-2019-E03',
+   sensors:[{n:'Flujo',v:0,u:'m3/h',s:'ok'},{n:'Presion',v:11.0,u:'kg/cm2',s:'ok'},{n:'Acumulado',v:870,u:'m3',s:'ok'}]},
+  {id:'SCL-01',name:'Bascula Camionera',system:'Despacho',type:'Bascula Electronica',capacity:'80 ton',criticality:'media',sap:'30-SCL-001',status:'ok',
+   manufacturer:'Mettler Toledo',model:'7564',dimensions:'18m x 3.5m',installDate:'2020-01-08',serial:'MT-2020-SCL01',
+   sensors:[{n:'Peso',v:0,u:'ton',s:'ok'},{n:'Calibracion',v:'Vigente',u:'',s:'ok'}]},
+  {id:'MET-01',name:'Skid Medicion Fiscal',system:'Medicion',type:'Medidor Coriolis',capacity:'200 m3/h',criticality:'alta',sap:'30-MET-001',status:'ok',
+   manufacturer:'Emerson',model:'Micro Motion CMFS400',dimensions:'4m x 3m x 3m',installDate:'2019-06-20',serial:'EM-2019-CF01',
+   sensors:[{n:'Flujo',v:178,u:'m3/h',s:'ok'},{n:'Densidad',v:0.54,u:'kg/L',s:'ok'},{n:'Temperatura',v:28,u:'\u00b0C',s:'ok'},{n:'Totalizador',v:45680,u:'m3',s:'ok'}]},
+  {id:'FW-01',name:'Tanque Agua SCI',system:'Proteccion',type:'Tanque Vertical',capacity:'500 m3',criticality:'alta',sap:'40-FW-001',status:'ok',
+   manufacturer:'Envirco',model:'FWT-500',dimensions:'8m diam. x 6m',installDate:'2018-05-10',serial:'ENV-2018-FW01',
+   sensors:[{n:'Nivel',v:92,u:'%',s:'ok'},{n:'Presion Red',v:7.5,u:'kg/cm2',s:'ok'}]},
+  {id:'FP-01',name:'Bomba Contra Incendio',system:'Proteccion',type:'Bomba Diesel',capacity:'1500 GPM',criticality:'alta',sap:'40-FP-001',status:'ok',
+   manufacturer:'Clarke',model:'JU6H-UF30',dimensions:'3m x 1.5m',installDate:'2018-05-10',serial:'CL-2018-FP01',
+   sensors:[{n:'Presion',v:8.2,u:'kg/cm2',s:'ok'},{n:'Diesel',v:85,u:'%',s:'ok'},{n:'Baterias',v:'OK',u:'',s:'ok'}]},
+  {id:'CR-01',name:'Cuarto de Control',system:'Control',type:'Edificio',capacity:'N/A',criticality:'alta',sap:'50-CR-001',status:'ok',
+   manufacturer:'N/A',model:'N/A',dimensions:'8m x 6m x 3.5m',installDate:'2018-03-01',serial:'N/A',
+   sensors:[{n:'Temp. Interior',v:22,u:'\u00b0C',s:'ok'},{n:'HVAC',v:'Auto',u:'',s:'ok'},{n:'UPS',v:98,u:'%',s:'ok'}]},
+  {id:'GD-01',name:'Detector Gas Zona Esferas',system:'Seguridad',type:'Detector Gas LP',capacity:'0-100% LEL',criticality:'alta',sap:'60-GD-001',status:'ok',
+   manufacturer:'Honeywell',model:'Searchpoint Optima Plus',dimensions:'0.3m x 0.2m',installDate:'2020-07-15',serial:'HW-2020-GD01',
+   sensors:[{n:'Lectura',v:0,u:'% LEL',s:'ok'},{n:'Alarma',v:'Normal',u:'',s:'ok'}]}
+];
+
+/* Work Orders */
+var SAP_WORK_ORDERS = [
+  {id:'PM-GAS-4001',equip:'SPH-01',equipName:'Esfera Almacenamiento #1',desc:'Inspeccion nivel tanque esfera',pri:'2-ALTA',priClass:'alta',sts:'EN PROCESO',stsClass:'enproceso',fecha:'2026-03-20',resp:'Tec. Martinez',origen:'DT Auto'},
+  {id:'PM-GAS-4002',equip:'CMP-01',equipName:'Compresor Reciprocante',desc:'Vibracion elevada 4.2 mm/s - revisar alineacion',pri:'1-URGENTE',priClass:'urgente',sts:'ABIERTA',stsClass:'abierta',fecha:'2026-03-22',resp:'Ing. Lopez',origen:'DT Auto'},
+  {id:'PM-GAS-4003',equip:'PMP-01',equipName:'Bomba Centrifuga #1',desc:'Mantenimiento preventivo 2000h',pri:'3-MEDIA',priClass:'media',sts:'PROGRAMADA',stsClass:'programada',fecha:'2026-04-01',resp:'Tec. Garcia',origen:'Plan PM'},
+  {id:'PM-GAS-4004',equip:'VLV-01',equipName:'Valvula ESD Principal',desc:'Prueba parcial PST valvula seguridad',pri:'2-ALTA',priClass:'alta',sts:'PROGRAMADA',stsClass:'programada',fecha:'2026-03-28',resp:'Ing. Hernandez',origen:'Regulatorio'},
+  {id:'PM-GAS-4005',equip:'LDR-01',equipName:'Brazo de Carga Pos. 1',desc:'Calibracion brazo carga - verificar sello',pri:'4-BAJA',priClass:'baja',sts:'CERT',stsClass:'cert',fecha:'2026-03-15',resp:'Tec. Sanchez',origen:'Plan PM'},
+  {id:'PM-GAS-4006',equip:'FWP-01',equipName:'Bomba Contra Incendio SCI',desc:'Prueba semanal arranque automatico',pri:'3-MEDIA',priClass:'media',sts:'COMPLETADA',stsClass:'completada',fecha:'2026-03-18',resp:'Tec. Rivera',origen:'Plan PM'},
+  {id:'PM-GAS-4007',equip:'MET-01',equipName:'Skid Medicion Fiscal',desc:'Verificacion fiscal mensual medidor Coriolis',pri:'2-ALTA',priClass:'alta',sts:'PROGRAMADA',stsClass:'programada',fecha:'2026-04-05',resp:'Ing. Flores',origen:'Regulatorio'},
+  {id:'PM-GAS-4008',equip:'GAS-01',equipName:'Detector Gas LEL/H2S',desc:'Calibracion detectores LEL/H2S zona esferas',pri:'1-URGENTE',priClass:'urgente',sts:'ABIERTA',stsClass:'abierta',fecha:'2026-03-24',resp:'Tec. Torres',origen:'DT Auto'}
+];
+
+var ALERTS_DATA = [
+  {type:'warn',title:'Nivel Alto SPH-03',desc:'Nivel esfera SPH-03 alcanza 82% - verificar recirculacion y apertura de valvula de transferencia',time:'14:32'},
+  {type:'info',title:'Brazo carga #2 en mantenimiento',desc:'OT 5001405 - Reemplazo sello giroscopo brazo de carga posicion 2',time:'10:15'},
+  {type:'warn',title:'Compresor - Vibracion elevada',desc:'Lectura 4.2 mm/s en punto DE - monitorear tendencia proximas 4 hrs',time:'09:45'}
+];
+
+/* Trend history storage */
+var trendHistory = {};
+
+/* ═══════════════════════════════════════════════════════════════
+   UI LOGIC: SIDEBAR TABS
+   ═══════════════════════════════════════════════════════════════ */
+document.querySelectorAll('.sl-tab').forEach(function(tab){
+  tab.addEventListener('click',function(){
+    var target = tab.dataset.sl;
+    /* For SAP, TANDEM, ACC: open fullscreen overlay */
+    if(target === 'sap'){
+      openSapFS();
+      return;
+    }
+    if(target === 'tandem'){
+      openTandemFS();
+      return;
+    }
+    if(target === 'acc'){
+      openAccFS();
+      return;
+    }
+    /* MONITORES: standard sidebar tab */
+    document.querySelectorAll('.sl-tab').forEach(function(t){t.classList.remove('active')});
+    document.querySelectorAll('.sl-panel').forEach(function(p){p.classList.remove('active')});
+    tab.classList.add('active');
+    document.getElementById('sl-'+target).classList.add('active');
+  });
+});
+
+/* ── ASSET LIST BUILD ── */
+function buildAssetList(){
+  var el=document.getElementById('assetList');
+  el.innerHTML='';
+  ASSETS.forEach(function(a){
+    var d=document.createElement('div');
+    d.className='asset-item';
+    d.dataset.id=a.id;
+    d.innerHTML='<div class="ai-dot '+a.status+'"></div><div><div class="ai-name">'+a.id+'</div><div class="ai-sub">'+a.name+'</div></div>';
+    d.addEventListener('click',function(){selectAsset(a.id)});
+    el.appendChild(d);
+  });
+}
+buildAssetList();
+
+/* ── DISPATCH CHART ── */
+function buildDispatchChart(){
+  var el=document.getElementById('dispatchChart');
+  var days=['Lun','Mar','Mie','Jue','Vie','Sab','Dom'];
+  var vals=[2400,2800,3100,2600,3200,1800,900];
+  var max=Math.max.apply(null,vals);
+  el.innerHTML='';
+  days.forEach(function(d,i){
+    var col=document.createElement('div');
+    col.className='bar-col';
+    var h=(vals[i]/max)*65;
+    col.innerHTML='<div class="bar-fill" style="height:'+h+'px"></div><div class="bar-lbl">'+d+'</div>';
+    el.appendChild(col);
+  });
+}
+buildDispatchChart();
+
+/* ── ALERTS ── */
+function showAlerts(){document.getElementById('alertModal').classList.add('show')}
+function hideAlerts(){document.getElementById('alertModal').classList.remove('show')}
+function renderAlerts(){
+  var el=document.getElementById('alertList');
+  el.innerHTML='';
+  ALERTS_DATA.forEach(function(a){
+    el.innerHTML+='<div class="alert-card '+a.type+'"><div class="alert-title">'+a.title+'</div><div class="alert-desc">'+a.desc+'</div><div class="alert-time">'+a.time+'</div></div>';
+  });
+  document.getElementById('alertCnt').textContent=ALERTS_DATA.length;
+}
+renderAlerts();
+
+/* ── CLOCK ── */
+setInterval(function(){
+  var n=new Date();
+  document.getElementById('clock').textContent=n.toLocaleTimeString('es-MX',{hour12:false});
+},1000);
+
+/* ── TOAST ── */
+function showToast(msg){
+  var existing=document.querySelector('.toast-msg');
+  if(existing) existing.remove();
+  var t=document.createElement('div');
+  t.className='toast-msg';
+  t.textContent=msg;
+  document.body.appendChild(t);
+  setTimeout(function(){t.remove()},3000);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SAP FULLSCREEN
+   ═══════════════════════════════════════════════════════════════ */
+var currentSapSection = 'launchpad';
+
+function openSapFS(){
+  document.getElementById('sapFullscreen').classList.add('show');
+  sapFsNav('launchpad');
+  // Move 3D canvas into SAP
+  var canvas = document.querySelector('#center canvas');
+  var sapContainer = document.getElementById('sap3dContainer');
+  if(canvas && sapContainer){
+    sapContainer.appendChild(canvas);
+    canvas.style.width = '100%';
+    canvas.style.height = '100%';
+    if(typeof renderer !== 'undefined'){
+      var w = sapContainer.clientWidth;
+      var h = sapContainer.clientHeight;
+      renderer.setSize(w, h);
+      if(typeof camera !== 'undefined'){
+        camera.aspect = w/h;
+        camera.updateProjectionMatrix();
+      }
+    }
+  }
+}
+function closeSapFS(){
+  document.getElementById('sapFullscreen').classList.remove('show');
+  closeSapWoDetail();
+  // Find canvas wherever it ended up
+  var canvas = document.querySelector('canvas');
+  var center = document.getElementById('center');
+  if(canvas && center && canvas.parentElement !== center){
+    center.insertBefore(canvas, center.firstChild);
+    canvas.style.width = '100%';
+    canvas.style.height = '100%';
+    if(typeof renderer !== 'undefined'){
+      setTimeout(function(){
+        var w = center.clientWidth;
+        var h = center.clientHeight;
+        renderer.setSize(w, h);
+        if(typeof camera !== 'undefined'){
+          camera.aspect = w/h;
+          camera.updateProjectionMatrix();
+        }
+      }, 100);
+    }
+  }
+}
+
+function sapFsNav(section){
+  currentSapSection = section;
+  document.querySelectorAll('.sap-fs-nav-item').forEach(function(el,i){
+    var sections = ['launchpad','pm','apm','mm','btp','gemelo'];
+    el.classList.toggle('active', sections[i] === section);
+  });
+  var main = document.getElementById('sapFsMain');
+  closeSapWoDetail();
+
+  if(section === 'launchpad'){
+    main.innerHTML = '<div style="padding:24px"><h2 style="color:#354A5F;margin-bottom:8px;font-size:18px">SAP Fiori Launchpad</h2><p style="color:#666;font-size:12px;margin-bottom:20px">Planta TAS-AGS-01 | Terminal Gas LP</p></div>' +
+      '<div class="sap-lp-tiles">' +
+      '<div class="sap-lp-tile" style="background:#E74C3C" onclick="sapFsNav(\'pm\')"><div class="tile-count">8</div><div class="tile-label">Ordenes de Trabajo</div><div class="tile-sub">PM - Plant Maintenance</div></div>' +
+      '<div class="sap-lp-tile" style="background:#E67E22" onclick="sapFsNav(\'pm\')"><div class="tile-count">3</div><div class="tile-label">Notificaciones</div><div class="tile-sub">Pendientes de revision</div></div>' +
+      '<div class="sap-lp-tile" style="background:#2E86C1" onclick="sapFsNav(\'apm\')"><div class="tile-count">17</div><div class="tile-label">Asset Health</div><div class="tile-sub">APM - Salud de Activos</div></div>' +
+      '<div class="sap-lp-tile" style="background:#27AE60" onclick="sapFsNav(\'mm\')"><div class="tile-count">6</div><div class="tile-label">Stock Refacciones</div><div class="tile-sub">MM - Materials Mgmt</div></div>' +
+      '<div class="sap-lp-tile" style="background:#8E44AD"><div class="tile-count">$1.2M</div><div class="tile-label">Costos Mantenimiento</div><div class="tile-sub">YTD 2026</div></div>' +
+      '<div class="sap-lp-tile" style="background:#7F8C8D"><div class="tile-count">12</div><div class="tile-label">Reportes</div><div class="tile-sub">Analytics & BI</div></div>' +
+      '</div>';
+  } else if(section === 'pm'){
+    var rows = '';
+    SAP_WORK_ORDERS.forEach(function(wo,i){
+      rows += '<tr onclick="showSapWoDetail('+i+')" style="cursor:pointer">' +
+        '<td style="text-align:center;color:#888">'+(i+1)+'</td>' +
+        '<td style="font-weight:700;color:#354A5F">'+wo.id+'</td>' +
+        '<td>'+wo.equip+'</td>' +
+        '<td>'+wo.desc+'</td>' +
+        '<td><span class="pri-badge '+wo.priClass+'">'+wo.pri+'</span></td>' +
+        '<td><span class="sts-badge '+wo.stsClass+'">'+wo.sts+'</span></td>' +
+        '<td>'+wo.fecha+'</td>' +
+        '<td>'+wo.resp+'</td>' +
+        '<td>'+(wo.origen==='DT Auto'?'<span class="dt-flag">DT Auto</span>':wo.origen)+'</td>' +
+        '</tr>';
+    });
+    main.innerHTML = '<div style="padding:20px"><h2 style="color:#354A5F;margin-bottom:4px;font-size:16px">SAP PM - Ordenes de Mantenimiento (IW38)</h2><p style="color:#888;font-size:11px;margin-bottom:16px">8 ordenes activas | Planta TAS-AGS-01</p>' +
+      '<div style="overflow-x:auto"><table class="sap-pm-full-table"><thead><tr>' +
+      '<th>#</th><th>Orden</th><th>Equipo</th><th>Descripcion</th><th>Prioridad</th><th>Status</th><th>Fecha</th><th>Responsable</th><th>Origen</th>' +
+      '</tr></thead><tbody>'+rows+'</tbody></table></div></div>';
+  } else if(section === 'apm'){
+    var cards = '';
+    var apmData = [
+      {tag:'SPH-01',sap:'10-SPH-001',name:'Esfera Almacenamiento #1',health:92,cls:'high',crit:'alta',status:'Normal',next:'2026-04-15'},
+      {tag:'SPH-02',sap:'10-SPH-002',name:'Esfera Almacenamiento #2',health:88,cls:'high',crit:'alta',status:'Normal',next:'2026-04-22'},
+      {tag:'SPH-03',sap:'10-SPH-003',name:'Esfera Almacenamiento #3',health:74,cls:'med',crit:'media',status:'Nivel alto',next:'2026-04-08'},
+      {tag:'CMP-01',sap:'20-CMP-001',name:'Compresor Reciprocante',health:58,cls:'low',crit:'alta',status:'Vibracion alta',next:'URGENTE'},
+      {tag:'PMP-01',sap:'20-PMP-001',name:'Bomba Centrifuga #1',health:85,cls:'high',crit:'alta',status:'Normal',next:'2026-05-10'},
+      {tag:'PMP-02',sap:'20-PMP-002',name:'Bomba Centrifuga #2',health:81,cls:'high',crit:'alta',status:'Normal',next:'2026-05-18'},
+      {tag:'LDR-01',sap:'30-LR-001',name:'Brazo de Carga',health:90,cls:'high',crit:'media',status:'Normal',next:'2026-06-01'},
+      {tag:'FWP-01',sap:'40-FP-001',name:'Bomba SCI',health:95,cls:'high',crit:'alta',status:'Normal',next:'2026-04-01'}
+    ];
+    apmData.forEach(function(a){
+      var sparkBars = '';
+      for(var si=0;si<20;si++){
+        var sh = Math.max(4, a.health * (0.85 + Math.random()*0.3) / 100 * 30);
+        sparkBars += '<div class="spark-bar" style="height:'+sh+'px;background:'+(a.cls==='low'?'#E74C3C':a.cls==='med'?'#F39C12':'#5AC8FA')+'"></div>';
+      }
+      var statusColor = a.cls==='low'?'#E74C3C':a.cls==='med'?'#F39C12':'#27AE60';
+      var trendArrow = a.health < 70 ? ' [DOWN]' : a.health > 85 ? ' [UP]' : ' [--]';
+      cards += '<div class="sap-apm-card">' +
+        '<div class="sap-apm-hdr"><span class="sap-apm-tag">'+a.tag+'</span><span class="sap-apm-crit '+a.crit+'">'+a.crit.toUpperCase()+'</span></div>' +
+        '<div class="sap-apm-sap">SAP: '+a.sap+'</div>' +
+        '<div class="sap-apm-name">'+a.name+'</div>' +
+        '<div class="sap-apm-health-bar"><div class="sap-apm-health-fill '+a.cls+'" style="width:'+a.health+'%"></div></div>' +
+        '<div class="sap-apm-reading"><span>Health Score: '+a.health+'%'+trendArrow+'</span><span style="color:'+statusColor+'">'+a.status+'</span></div>' +
+        '<div class="sap-apm-sparkline">'+sparkBars+'</div>' +
+        '<div class="sap-apm-next">Prox PM: '+a.next+'</div>' +
+        '</div>';
+    });
+    main.innerHTML = '<div style="padding:20px 20px 8px"><h2 style="color:#354A5F;margin-bottom:4px;font-size:16px">SAP APM - Asset Performance Management</h2><p style="color:#888;font-size:11px;margin-bottom:8px">Health scores y tendencias | 8 activos monitoreados</p></div>' +
+      '<div class="sap-apm-grid">'+cards+'</div>';
+  } else if(section === 'mm'){
+    var matData = [
+      {mat:'MAT-5001',desc:'Sellos mecanicos bomba centrifuga',stock:4,max:10,ubi:'ALM-01-A3',reorder:3,status:'Disponible',sColor:'#27AE60'},
+      {mat:'MAT-5002',desc:'Kit valvula alivio PSV 150#',stock:2,max:8,ubi:'ALM-01-B1',reorder:3,status:'Stock min.',sColor:'#F39C12'},
+      {mat:'MAT-5003',desc:'Aceite compresor SAE 40',stock:12,max:20,ubi:'ALM-02-A1',reorder:5,status:'Disponible',sColor:'#27AE60'},
+      {mat:'MAT-5004',desc:'Filtros coalescentes gas LP',stock:6,max:12,ubi:'ALM-01-C2',reorder:4,status:'Disponible',sColor:'#27AE60'},
+      {mat:'MAT-5005',desc:'Juntas bridadas RTJ R-24',stock:8,max:15,ubi:'ALM-01-A5',reorder:5,status:'Disponible',sColor:'#27AE60'},
+      {mat:'MAT-5006',desc:'Sensor presion 0-25 kg/cm2',stock:1,max:6,ubi:'ALM-02-B3',reorder:3,status:'Reorden',sColor:'#E74C3C'},
+      {mat:'MAT-5007',desc:'Empaque spiralwound 316SS',stock:15,max:20,ubi:'ALM-01-D1',reorder:8,status:'Disponible',sColor:'#27AE60'},
+      {mat:'MAT-5008',desc:'Rodamiento SKF 6310-2RS',stock:3,max:8,ubi:'ALM-02-A4',reorder:4,status:'Stock min.',sColor:'#F39C12'}
+    ];
+    var matRows = '';
+    matData.forEach(function(m){
+      var pct = Math.round((m.stock/m.max)*100);
+      var barColor = pct < 30 ? '#E74C3C' : pct < 50 ? '#F39C12' : '#27AE60';
+      matRows += '<tr><td style="font-weight:700;color:#354A5F">'+m.mat+'</td><td>'+m.desc+'</td><td style="text-align:center;font-weight:700">'+m.stock+'</td>' +
+        '<td style="text-align:center">'+m.reorder+'</td>' +
+        '<td><div class="stock-bar"><div class="stock-bar-fill" style="width:'+pct+'%;background:'+barColor+'"></div></div> '+pct+'%</td>' +
+        '<td>'+m.ubi+'</td><td style="color:'+m.sColor+';font-weight:600">'+m.status+'</td></tr>';
+    });
+    main.innerHTML = '<div style="padding:20px"><h2 style="color:#354A5F;margin-bottom:4px;font-size:16px">SAP MM - Inventario de Refacciones</h2><p style="color:#888;font-size:11px;margin-bottom:16px">Almacen TAS-AGS-01 | 8 materiales</p>' +
+      '<div style="overflow-x:auto"><table class="sap-mm-table"><thead><tr><th>Material</th><th>Descripcion</th><th>Stock</th><th>Reorden</th><th>Nivel</th><th>Ubicacion</th><th>Status</th></tr></thead>' +
+      '<tbody>'+matRows+'</tbody></table></div></div>';
+  } else if(section === 'btp'){
+    main.innerHTML = '<div style="padding:20px"><h2 style="color:#354A5F;margin-bottom:4px;font-size:16px">SAP BTP - Flujo de Integracion IoT</h2><p style="color:#888;font-size:11px;margin-bottom:16px">Pipeline de datos IoT a SAP S/4HANA</p></div>' +
+      '<div class="sap-btp-flow">' +
+      '<div class="sap-btp-step"><div class="sap-btp-num">1</div><div class="sap-btp-text"><b>IoT Sensor</b> -- Lectura de campo cada 2s via MQTT/OPC-UA <span style="color:#27AE60;font-weight:700">[LIVE 7s]</span></div></div>' +
+      '<div class="sap-btp-arrow">|</div>' +
+      '<div class="sap-btp-step"><div class="sap-btp-num">2</div><div class="sap-btp-text"><b>Edge Gateway</b> -- Procesamiento local, filtrado y buffer 4,800 pts <span style="color:#2E86C1;font-weight:700">[2s latency]</span></div></div>' +
+      '<div class="sap-btp-arrow">|</div>' +
+      '<div class="sap-btp-step"><div class="sap-btp-num">3</div><div class="sap-btp-text"><b>SAP BTP</b> -- Business Rules Engine, Event Mesh, reglas automaticas <span style="color:#E67E22;font-weight:700">[~1min]</span></div></div>' +
+      '<div class="sap-btp-arrow">|</div>' +
+      '<div class="sap-btp-step"><div class="sap-btp-num">4</div><div class="sap-btp-text"><b>SAP S/4HANA</b> -- Creacion automatica de OT PM, actualizacion APM, notificaciones</div></div>' +
+      '</div>' +
+      '<div style="padding:0 20px"><h3 style="color:#354A5F;margin-bottom:12px;font-size:14px">Stream Log - Eventos Recientes</h3></div>' +
+      '<div class="sap-btp-log">' +
+      '<div class="sap-btp-log-item" style="border-color:#E74C3C"><b>OT PM-GAS-4002</b> creada automaticamente para CMP-01 -- Vibracion 4.2 mm/s excede umbral 3.5 mm/s</div>' +
+      '<div class="sap-btp-log-item" style="border-color:#E67E22"><b>OT PM-GAS-4008</b> creada automaticamente para GAS-01 -- Calibracion vencida detectores LEL</div>' +
+      '<div class="sap-btp-log-item" style="border-color:#27AE60"><b>OT PM-GAS-4006</b> completada -- Prueba semanal SCI bomba contra incendio OK</div>' +
+      '<div class="sap-btp-log-item" style="border-color:#2E86C1"><b>APM actualizado</b> -- Health score CMP-01 descendio de 72% a 58% por vibracion sostenida</div>' +
+      '<div class="sap-btp-log-item" style="border-color:#8E44AD"><b>Sync Tandem</b> -- 312 tags sincronizados con modelo digital | Latencia 38ms</div>' +
+      '</div>';
+  } else if(section === 'gemelo'){
+    var eqCards = '';
+    var apmEquips = [
+      {tag:'SPH-01',name:'Esfera #1',health:92},
+      {tag:'SPH-02',name:'Esfera #2',health:88},
+      {tag:'SPH-03',name:'Esfera #3',health:74},
+      {tag:'CMP-01',name:'Compresor',health:58},
+      {tag:'PMP-01',name:'Bomba #1',health:85},
+      {tag:'PMP-02',name:'Bomba #2',health:81},
+      {tag:'LDR-01',name:'Brazo Carga',health:90},
+      {tag:'FWP-01',name:'Bomba SCI',health:95}
+    ];
+    apmEquips.forEach(function(eq){
+      var cls = eq.health >= 80 ? '#27AE60' : eq.health >= 60 ? '#F39C12' : '#E74C3C';
+      eqCards += '<div style="background:#f8f9fa;border-radius:8px;padding:12px;border-left:3px solid '+cls+'">' +
+        '<div style="font-weight:700;color:#354A5F;font-size:12px">'+eq.tag+'</div>' +
+        '<div style="font-size:10px;color:#666;margin:2px 0">'+eq.name+'</div>' +
+        '<div style="font-size:11px;font-weight:600;color:'+cls+'">Health: '+eq.health+'%</div>' +
+        '<button onclick="closeSapFS();setTimeout(function(){selectAsset(\''+eq.tag+'\')},300)" style="margin-top:6px;font-size:9px;padding:4px 10px;border:1px solid #ccc;border-radius:4px;background:#fff;cursor:pointer;font-family:inherit">Localizar</button>' +
+        '</div>';
+    });
+    main.innerHTML = '<div style="padding:20px"><h2 style="color:#354A5F;margin-bottom:4px;font-size:16px">Gemelo Digital - Vista Integrada SAP</h2>' +
+      '<p style="color:#888;font-size:11px;margin-bottom:16px">Modelo 3D en tiempo real vinculado a SAP PM/APM</p></div>' +
+      '<div style="padding:0 20px"><div id="sap3dContainer" style="width:100%;height:400px;position:relative;background:#0a1420;border-radius:8px;overflow:hidden;margin-bottom:16px"></div></div>' +
+      '<div style="padding:0 20px"><h3 style="color:#354A5F;margin-bottom:12px;font-size:14px">Equipos Vinculados SAP</h3>' +
+      '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px">'+eqCards+'</div></div>';
+    // Move canvas into the new container
+    var canvas = document.querySelector('canvas[data-engine]') || document.querySelector('#center canvas');
+    var sapContainer = document.getElementById('sap3dContainer');
+    if(canvas && sapContainer){
+      sapContainer.appendChild(canvas);
+      canvas.style.width = '100%';
+      canvas.style.height = '100%';
+      if(typeof renderer !== 'undefined'){
+        var w = sapContainer.clientWidth;
+        var h = sapContainer.clientHeight;
+        renderer.setSize(w, h);
+        if(typeof camera !== 'undefined'){
+          camera.aspect = w/h;
+          camera.updateProjectionMatrix();
+        }
+      }
+    }
+  }
+}
+
+function showSapWoDetail(idx){
+  var wo = SAP_WORK_ORDERS[idx];
+  if(!wo) return;
+  var panel = document.getElementById('sapWoDetail');
+  document.getElementById('sapWoTitle').textContent = wo.id;
+  document.getElementById('sapWoBody').innerHTML =
+    '<div class="sap-wo-field"><span class="wf-label">Orden</span><span class="wf-val">'+wo.id+'</span></div>' +
+    '<div class="sap-wo-field"><span class="wf-label">Equipo</span><span class="wf-val">'+wo.equip+' - '+wo.equipName+'</span></div>' +
+    '<div class="sap-wo-field"><span class="wf-label">Descripcion</span><span class="wf-val">'+wo.desc+'</span></div>' +
+    '<div class="sap-wo-field"><span class="wf-label">Prioridad</span><span class="wf-val"><span class="pri-badge '+wo.priClass+'">'+wo.pri+'</span></span></div>' +
+    '<div class="sap-wo-field"><span class="wf-label">Status</span><span class="wf-val"><span class="sts-badge '+wo.stsClass+'">'+wo.sts+'</span></span></div>' +
+    '<div class="sap-wo-field"><span class="wf-label">Fecha</span><span class="wf-val">'+wo.fecha+'</span></div>' +
+    '<div class="sap-wo-field"><span class="wf-label">Responsable</span><span class="wf-val">'+wo.resp+'</span></div>' +
+    '<div class="sap-wo-field"><span class="wf-label">Origen</span><span class="wf-val">'+wo.origen+'</span></div>' +
+    '<div class="sap-wo-field"><span class="wf-label">Centro</span><span class="wf-val">TAS-AGS-01</span></div>' +
+    '<div class="sap-wo-field"><span class="wf-label">Tipo OT</span><span class="wf-val">PM01 - Correctivo</span></div>' +
+    '<button class="sap-wo-btn" onclick="closeSapFS();selectAsset(\''+wo.equip+'\')">Ver en Gemelo Digital</button>';
+  panel.classList.add('show');
+}
+function closeSapWoDetail(){
+  document.getElementById('sapWoDetail').classList.remove('show');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ACC FULLSCREEN
+   ═══════════════════════════════════════════════════════════════ */
+var accCurrentDoc = 'pid1';
+var ACC_DOCS = {
+  pid1:{title:'P&ID-TAS-001: Almacenamiento y Transferencia',version:'REV.05',author:'Ing. R. Ramirez',date:'2025-11-15',format:'DWG/PDF',size:'3.2 MB',status:'Aprobado',approval:'Ing. Director Tecnico'},
+  pid2:{title:'P&ID-TAS-002: Sistema Contra Incendio',version:'REV.03',author:'Ing. M. Castillo',date:'2025-08-20',format:'DWG/PDF',size:'2.1 MB',status:'Aprobado',approval:'Ing. Director Tecnico'},
+  pid3:{title:'P&ID-TAS-003: Despacho y Medicion',version:'REV.04',author:'Ing. R. Ramirez',date:'2025-10-10',format:'DWG/PDF',size:'2.8 MB',status:'Aprobado',approval:'Ing. Director Tecnico'},
+  ds:{title:'Ficha Tecnica - Tanque Esferico SPH-01',version:'REV.02',author:'Ing. R. Ramirez',date:'2024-06-15',format:'PDF',size:'1.4 MB',status:'Vigente',approval:'Vendedor/OEM'},
+  pfd:{title:'PFD Proceso',version:'REV.03',author:'Ing. Castillo',date:'2025-08-20',format:'PDF',size:'1.8 MB',status:'Aprobado',approval:'Ing. Director Tecnico'},
+  elec:{title:'Diagrama Unifilar Electrico',version:'REV.03',author:'Ing. Torres',date:'2025-07-08',format:'DWG/PDF',size:'3.8 MB',status:'Aprobado',approval:'Ing. Director Tecnico'},
+  inst:{title:'Planos Instrumentacion',version:'REV.02',author:'Ing. Garcia',date:'2025-09-15',format:'DWG/PDF',size:'2.9 MB',status:'Aprobado',approval:'Ing. Director Tecnico'},
+  sop:{title:'SOPs Operacion',version:'REV.03',author:'Ing. Hernandez',date:'2025-09-05',format:'PDF',size:'1.1 MB',status:'Vigente',approval:'Jefe Operaciones'},
+  insp:{title:'Reportes Inspeccion',version:'REV.01',author:'Insp. Flores',date:'2026-02-28',format:'PDF',size:'3.8 MB',status:'Vigente',approval:'API Inspector'}
+};
+
+function openAccFS(){
+  document.getElementById('accFullscreen').classList.add('show');
+  renderAccContent();
+}
+function closeAccFS(){
+  document.getElementById('accFullscreen').classList.remove('show');
+}
+
+function accFsNav(section){
+  document.querySelectorAll('.acc-fs-nav-item').forEach(function(el,i){
+    var sections = ['docs','models','submittals','rfis','issues'];
+    el.classList.toggle('active', sections[i] === section);
+  });
+  renderAccContent();
+}
+
+function buildPidTas001(){
+  return '<div style="position:relative;width:100%;height:520px;background:#fff;border:2px solid #333;overflow:auto;font-family:Arial,sans-serif;">' +
+    '<div style="position:absolute;top:8px;left:8px;right:8px;height:38px;border:2px solid #333;display:flex;align-items:center;font-size:12px;color:#333;background:#f5f5f5;">' +
+      '<div style="flex:1;padding:0 10px;font-weight:700;">P&ID-TAS-001 | ALMACENAMIENTO Y TRANSFERENCIA</div>' +
+      '<div style="border-left:1px solid #333;padding:0 8px;font-size:9px;color:#555;">REV.05</div>' +
+      '<div style="border-left:1px solid #333;padding:0 8px;font-size:9px;color:#555;">15-Nov-2025</div>' +
+      '<div style="border-left:1px solid #333;padding:0 8px;font-size:9px;color:#555;">Ing. R. Ramirez</div>' +
+      '<div style="border-left:1px solid #333;padding:0 8px;font-size:9px;color:#555;">APROBADO</div>' +
+    '</div>' +
+    '<div style="position:absolute;top:80px;left:30px;width:110px;height:60px;border:2px solid #1a5276;background:#eaf2f8;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#1a5276;"><div>SPH-01</div><div style="font-size:8px;font-weight:400;">Esfera 2,500 m3</div></div>' +
+    '<div style="position:absolute;top:160px;left:30px;width:110px;height:60px;border:2px solid #1a5276;background:#eaf2f8;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#1a5276;"><div>SPH-02</div><div style="font-size:8px;font-weight:400;">Esfera 2,500 m3</div></div>' +
+    '<div style="position:absolute;top:240px;left:30px;width:110px;height:60px;border:2px solid #1a5276;background:#eaf2f8;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#1a5276;"><div>SPH-03</div><div style="font-size:8px;font-weight:400;">Esfera 2,500 m3</div></div>' +
+    '<div style="position:absolute;top:62px;left:68px;width:22px;height:22px;border:1.5px solid #333;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:700;">PT</div>' +
+    '<div style="position:absolute;top:76px;left:78px;width:1px;height:4px;border-left:1px dashed #333;"></div>' +
+    '<div style="position:absolute;top:62px;left:100px;width:22px;height:22px;border:1.5px solid #333;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:700;">LT</div>' +
+    '<div style="position:absolute;top:109px;left:140px;width:40px;height:2px;background:#333;"></div>' +
+    '<div style="position:absolute;top:189px;left:140px;width:40px;height:2px;background:#333;"></div>' +
+    '<div style="position:absolute;top:269px;left:140px;width:40px;height:2px;background:#333;"></div>' +
+    '<div style="position:absolute;top:103px;left:155px;width:14px;height:14px;border:2px solid #333;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-size:7px;">X</div>' +
+    '<div style="position:absolute;top:183px;left:155px;width:14px;height:14px;border:2px solid #333;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-size:7px;">X</div>' +
+    '<div style="position:absolute;top:263px;left:155px;width:14px;height:14px;border:2px solid #333;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-size:7px;">X</div>' +
+    '<div style="position:absolute;top:109px;left:180px;width:2px;height:162px;background:#333;"></div>' +
+    '<div style="position:absolute;top:189px;left:182px;width:50px;height:2px;background:#333;"></div>' +
+    '<div style="position:absolute;top:185px;left:210px;font-size:9px;color:#333;">--&gt;</div>' +
+    '<div style="position:absolute;top:170px;left:235px;width:100px;height:55px;border:2px solid #7d3c98;background:#f4ecf7;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#7d3c98;"><div>MANIFOLD</div><div style="font-size:8px;font-weight:400;">Distribucion</div></div>' +
+    '<div style="position:absolute;top:180px;left:335px;width:40px;height:2px;background:#333;"></div>' +
+    '<div style="position:absolute;top:205px;left:335px;width:40px;height:2px;background:#333;"></div>' +
+    '<div style="position:absolute;top:174px;left:348px;width:14px;height:14px;border:2px solid #333;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-size:7px;">X</div>' +
+    '<div style="position:absolute;top:165px;left:378px;width:90px;height:45px;border:2px solid #1e8449;background:#eafaf1;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#1e8449;"><div>PMP-01</div><div style="font-size:8px;font-weight:400;">Bomba Transfer.</div></div>' +
+    '<div style="position:absolute;top:225px;left:378px;width:90px;height:45px;border:2px solid #1e8449;background:#eafaf1;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#1e8449;"><div>PMP-02</div><div style="font-size:8px;font-weight:400;">Bomba Transfer.</div></div>' +
+    '<div style="position:absolute;top:155px;left:405px;width:22px;height:22px;border:1.5px solid #333;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:700;">FT</div>' +
+    '<div style="position:absolute;top:186px;left:468px;width:50px;height:2px;background:#333;"></div>' +
+    '<div style="position:absolute;top:183px;left:490px;font-size:9px;color:#333;">--&gt;</div>' +
+    '<div style="position:absolute;top:165px;left:520px;width:100px;height:55px;border:2px solid #d35400;background:#fdebd0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#d35400;"><div>LOADING RACK</div><div style="font-size:8px;font-weight:400;">Despacho</div></div>' +
+    '<div style="position:absolute;top:109px;left:182px;width:80px;height:2px;background:#333;"></div>' +
+    '<div style="position:absolute;top:90px;left:265px;width:100px;height:45px;border:2px solid #2e86c1;background:#d6eaf8;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#2e86c1;"><div>CMP-01</div><div style="font-size:8px;font-weight:400;">Compresor</div></div>' +
+    '<div style="position:absolute;top:75px;left:300px;width:22px;height:22px;border:1.5px solid #333;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:700;">TT</div>' +
+    '<div style="position:absolute;top:60px;left:30px;font-size:8px;color:#888;font-family:monospace;">P: 7.5 kg/cm2</div>' +
+    '<div style="position:absolute;top:148px;left:240px;font-size:8px;color:#888;font-family:monospace;">P: 7.2 kg/cm2</div>' +
+    '<div style="position:absolute;top:215px;left:520px;font-size:8px;color:#888;font-family:monospace;">P: 8.0 kg/cm2</div>' +
+    '<div style="position:absolute;bottom:8px;left:8px;right:8px;border-top:1px solid #ccc;padding-top:6px;font-size:8px;color:#666;">NOTAS: 1. Tuberias Sch.80 ASTM A106-B. 2. PSV set @ 10.5 kg/cm2. 3. P diseno 12.5 kg/cm2. | TAS-AGS-01</div>' +
+  '</div>';
+}
+function buildPidTas002(){
+  return '<div style="position:relative;width:100%;height:520px;background:#fff;border:2px solid #333;overflow:auto;font-family:Arial,sans-serif;">' +
+    '<div style="position:absolute;top:8px;left:8px;right:8px;height:38px;border:2px solid #333;display:flex;align-items:center;font-size:12px;color:#333;background:#f5f5f5;">' +
+      '<div style="flex:1;padding:0 10px;font-weight:700;">P&ID-TAS-002 | SISTEMA CONTRA INCENDIO</div>' +
+      '<div style="border-left:1px solid #333;padding:0 8px;font-size:9px;color:#555;">REV.03</div>' +
+      '<div style="border-left:1px solid #333;padding:0 8px;font-size:9px;color:#555;">20-Ago-2025</div>' +
+      '<div style="border-left:1px solid #333;padding:0 8px;font-size:9px;color:#555;">Ing. M. Castillo</div>' +
+    '</div>' +
+    '<div style="position:absolute;top:80px;left:30px;width:110px;height:60px;border:2px solid #c0392b;background:#fdedec;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#c0392b;"><div>TK-SCI-01</div><div style="font-size:8px;font-weight:400;">Tanque Agua 500m3</div></div>' +
+    '<div style="position:absolute;top:65px;left:70px;width:22px;height:22px;border:1.5px solid #333;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:700;">LT</div>' +
+    '<div style="position:absolute;top:109px;left:140px;width:50px;height:2px;background:#c0392b;"></div>' +
+    '<div style="position:absolute;top:103px;left:158px;width:14px;height:14px;border:2px solid #333;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-size:7px;">X</div>' +
+    '<div style="position:absolute;top:90px;left:195px;width:90px;height:45px;border:2px solid #c0392b;background:#fdedec;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#c0392b;"><div>PMP-JK-01</div><div style="font-size:8px;font-weight:400;">Bomba Jockey</div></div>' +
+    '<div style="position:absolute;top:160px;left:195px;width:90px;height:45px;border:2px solid #c0392b;background:#fdedec;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#c0392b;"><div>PMP-SCI-01</div><div style="font-size:8px;font-weight:400;">Bomba Principal</div></div>' +
+    '<div style="position:absolute;top:140px;left:140px;width:2px;height:45px;background:#c0392b;"></div>' +
+    '<div style="position:absolute;top:180px;left:140px;width:55px;height:2px;background:#c0392b;"></div>' +
+    '<div style="position:absolute;top:78px;left:225px;width:22px;height:22px;border:1.5px solid #333;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:700;">PT</div>' +
+    '<div style="position:absolute;top:109px;left:285px;width:60px;height:2px;background:#c0392b;"></div>' +
+    '<div style="position:absolute;top:106px;left:310px;font-size:9px;color:#c0392b;">--&gt;</div>' +
+    '<div style="position:absolute;top:80px;left:350px;width:220px;height:130px;border:3px solid #c0392b;background:rgba(192,57,43,.05);border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;"><div style="font-size:13px;font-weight:700;color:#c0392b;">ANILLO SCI</div><div style="font-size:9px;color:#c0392b;">Ring Main 8" ASTM A53</div></div>' +
+    '<div style="position:absolute;top:80px;left:585px;width:80px;height:35px;border:2px solid #e74c3c;background:#fce4ec;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:9px;font-weight:600;color:#e74c3c;"><div>HID-01..06</div><div style="font-size:7px;">Hidrantes</div></div>' +
+    '<div style="position:absolute;top:96px;left:570px;width:15px;height:2px;background:#c0392b;"></div>' +
+    '<div style="position:absolute;top:125px;left:585px;width:80px;height:35px;border:2px solid #e74c3c;background:#fce4ec;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:9px;font-weight:600;color:#e74c3c;"><div>MON-01..04</div><div style="font-size:7px;">Monitores</div></div>' +
+    '<div style="position:absolute;top:141px;left:570px;width:15px;height:2px;background:#c0392b;"></div>' +
+    '<div style="position:absolute;top:170px;left:585px;width:80px;height:35px;border:2px solid #e74c3c;background:#fce4ec;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:9px;font-weight:600;color:#e74c3c;"><div>SPK-01..03</div><div style="font-size:7px;">Rociadores</div></div>' +
+    '<div style="position:absolute;top:186px;left:570px;width:15px;height:2px;background:#c0392b;"></div>' +
+    '<div style="position:absolute;top:228px;left:350px;width:100px;height:45px;border:2px solid #d35400;background:#fdebd0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#d35400;"><div>DLV-01..03</div><div style="font-size:8px;font-weight:400;">Valv. Diluvio</div></div>' +
+    '<div style="position:absolute;top:290px;left:30px;width:100px;height:40px;border:2px solid #f39c12;background:#fef9e7;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#f39c12;"><div>DET-GAS</div><div style="font-size:8px;">12 Detectores</div></div>' +
+    '<div style="position:absolute;top:290px;left:150px;width:100px;height:40px;border:2px solid #f39c12;background:#fef9e7;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#f39c12;"><div>DET-FUEGO</div><div style="font-size:8px;">8 Detectores</div></div>' +
+    '<div style="position:absolute;top:290px;left:270px;width:100px;height:40px;border:2px solid #f39c12;background:#fef9e7;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#f39c12;"><div>PNL-F&G</div><div style="font-size:8px;">Panel Deteccion</div></div>' +
+    '<div style="position:absolute;top:310px;left:130px;width:140px;height:1px;border-top:1px dashed #f39c12;"></div>' +
+    '<div style="position:absolute;bottom:8px;left:8px;right:8px;border-top:1px solid #ccc;padding-top:6px;font-size:8px;color:#666;">NOTAS: 1. SCI per NFPA 15/30. 2. Pmin 7.0 kg/cm2 hidrante lejano. 3. Autonomia 4h. | TAS-AGS-01</div>' +
+  '</div>';
+}
+function buildPidTas003(){
+  return '<div style="position:relative;width:100%;height:520px;background:#fff;border:2px solid #333;overflow:auto;font-family:Arial,sans-serif;">' +
+    '<div style="position:absolute;top:8px;left:8px;right:8px;height:38px;border:2px solid #333;display:flex;align-items:center;font-size:12px;color:#333;background:#f5f5f5;">' +
+      '<div style="flex:1;padding:0 10px;font-weight:700;">P&ID-TAS-003 | DESPACHO Y MEDICION</div>' +
+      '<div style="border-left:1px solid #333;padding:0 8px;font-size:9px;color:#555;">REV.04</div>' +
+      '<div style="border-left:1px solid #333;padding:0 8px;font-size:9px;color:#555;">10-Oct-2025</div>' +
+      '<div style="border-left:1px solid #333;padding:0 8px;font-size:9px;color:#555;">Ing. R. Ramirez</div>' +
+    '</div>' +
+    '<div style="position:absolute;top:90px;left:20px;width:80px;height:40px;border:2px solid #1e8449;background:#eafaf1;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#1e8449;"><div>PMP-01/02</div><div style="font-size:7px;">Desde Bombas</div></div>' +
+    '<div style="position:absolute;top:109px;left:100px;width:40px;height:2px;background:#333;"></div>' +
+    '<div style="position:absolute;top:106px;left:120px;font-size:9px;color:#333;">--&gt;</div>' +
+    '<div style="position:absolute;top:85px;left:145px;width:90px;height:50px;border:2px solid #8e44ad;background:#f5eef8;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#8e44ad;"><div>MET-01</div><div style="font-size:8px;font-weight:400;">Med. Coriolis</div></div>' +
+    '<div style="position:absolute;top:72px;left:175px;width:22px;height:22px;border:1.5px solid #333;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:700;">FT</div>' +
+    '<div style="position:absolute;top:109px;left:235px;width:30px;height:2px;background:#333;"></div>' +
+    '<div style="position:absolute;top:103px;left:243px;width:14px;height:14px;border:2px solid #333;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-size:7px;">X</div>' +
+    '<div style="position:absolute;top:109px;left:265px;width:2px;height:120px;background:#333;"></div>' +
+    '<div style="position:absolute;top:109px;left:267px;width:60px;height:2px;background:#333;"></div>' +
+    '<div style="position:absolute;top:90px;left:330px;width:100px;height:45px;border:2px solid #d35400;background:#fdebd0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#d35400;"><div>BRZ-01</div><div style="font-size:8px;font-weight:400;">Brazo Carga 1</div></div>' +
+    '<div style="position:absolute;top:149px;left:267px;width:60px;height:2px;background:#333;"></div>' +
+    '<div style="position:absolute;top:140px;left:330px;width:100px;height:45px;border:2px solid #d35400;background:#fdebd0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#d35400;"><div>BRZ-02</div><div style="font-size:8px;font-weight:400;">Brazo Carga 2</div></div>' +
+    '<div style="position:absolute;top:189px;left:267px;width:60px;height:2px;background:#333;"></div>' +
+    '<div style="position:absolute;top:180px;left:330px;width:100px;height:45px;border:2px solid #d35400;background:#fdebd0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#d35400;"><div>BRZ-03</div><div style="font-size:8px;font-weight:400;">Brazo Carga 3</div></div>' +
+    '<div style="position:absolute;top:103px;left:305px;width:14px;height:14px;border:2px solid #333;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-size:7px;">X</div>' +
+    '<div style="position:absolute;top:143px;left:305px;width:14px;height:14px;border:2px solid #333;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-size:7px;">X</div>' +
+    '<div style="position:absolute;top:183px;left:305px;width:14px;height:14px;border:2px solid #333;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-size:7px;">X</div>' +
+    '<div style="position:absolute;top:90px;left:450px;width:90px;height:45px;border:2px solid #566573;background:#eaecee;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#566573;"><div>AT-OUT</div><div style="font-size:8px;font-weight:400;">Autotanques</div></div>' +
+    '<div style="position:absolute;top:109px;left:430px;width:20px;height:2px;background:#333;"></div>' +
+    '<div style="position:absolute;top:260px;left:145px;width:110px;height:45px;border:2px solid #2c3e50;background:#ecf0f1;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#2c3e50;"><div>TOTALIZADOR</div><div style="font-size:8px;font-weight:400;">Sistema Contable</div></div>' +
+    '<div style="position:absolute;top:229px;left:195px;width:1px;height:31px;border-left:1px dashed #333;"></div>' +
+    '<div style="position:absolute;top:75px;left:145px;font-size:8px;color:#888;font-family:monospace;">Q: 120 LPM</div>' +
+    '<div style="position:absolute;top:135px;left:430px;font-size:8px;color:#888;font-family:monospace;">P: 8.0 kg/cm2</div>' +
+    '<div style="position:absolute;bottom:8px;left:8px;right:8px;border-top:1px solid #ccc;padding-top:6px;font-size:8px;color:#666;">NOTAS: 1. Medicion por masa (Coriolis). 2. Precision +/- 0.1%. 3. Tierra y pararrayos en isla. | TAS-AGS-01</div>' +
+  '</div>';
+}
+function buildDatasheetTasSPH01(){
+  return '<div style="width:100%;max-width:650px;background:#fff;border:2px solid #333;font-family:Arial,sans-serif;color:#333;">' +
+    '<div style="background:#1a5276;color:#fff;padding:12px 16px;font-size:14px;font-weight:700;text-align:center;">FICHA TECNICA - TANQUE ESFERICO SPH-01</div>' +
+    '<div style="background:#2980b9;color:#fff;padding:6px 16px;font-size:10px;text-align:center;">Terminal de Gas LP | TAS-AGS-01 | Rev.02 | 15-Jun-2024</div>' +
+    '<table style="width:100%;border-collapse:collapse;font-size:11px;">' +
+      '<tr style="background:#eaf2f8;"><td style="border:1px solid #bbb;padding:6px 10px;font-weight:600;width:35%;">Tag</td><td style="border:1px solid #bbb;padding:6px 10px;">SPH-01</td></tr>' +
+      '<tr><td style="border:1px solid #bbb;padding:6px 10px;font-weight:600;background:#f8f9fa;">Servicio</td><td style="border:1px solid #bbb;padding:6px 10px;">Almacenamiento Gas LP (Propano/Butano)</td></tr>' +
+      '<tr style="background:#eaf2f8;"><td style="border:1px solid #bbb;padding:6px 10px;font-weight:600;">Diametro</td><td style="border:1px solid #bbb;padding:6px 10px;">16.8 m</td></tr>' +
+      '<tr><td style="border:1px solid #bbb;padding:6px 10px;font-weight:600;background:#f8f9fa;">Volumen</td><td style="border:1px solid #bbb;padding:6px 10px;">2,500 m3</td></tr>' +
+      '<tr style="background:#eaf2f8;"><td style="border:1px solid #bbb;padding:6px 10px;font-weight:600;">Presion de Diseno</td><td style="border:1px solid #bbb;padding:6px 10px;">12.5 kg/cm2 @ 55 C</td></tr>' +
+      '<tr><td style="border:1px solid #bbb;padding:6px 10px;font-weight:600;background:#f8f9fa;">Material</td><td style="border:1px solid #bbb;padding:6px 10px;">SA-516 Gr.70 (cuerpo) / SA-105 (boquillas)</td></tr>' +
+      '<tr style="background:#eaf2f8;"><td style="border:1px solid #bbb;padding:6px 10px;font-weight:600;">Codigo de Fabricacion</td><td style="border:1px solid #bbb;padding:6px 10px;">ASME Section VIII, Div.1</td></tr>' +
+      '<tr><td style="border:1px solid #bbb;padding:6px 10px;font-weight:600;background:#f8f9fa;">Fabricante</td><td style="border:1px solid #bbb;padding:6px 10px;">Infra S.A. de C.V.</td></tr>' +
+      '<tr style="background:#eaf2f8;"><td style="border:1px solid #bbb;padding:6px 10px;font-weight:600;">Ano de Instalacion</td><td style="border:1px solid #bbb;padding:6px 10px;">2018</td></tr>' +
+      '<tr><td style="border:1px solid #bbb;padding:6px 10px;font-weight:600;background:#f8f9fa;">Ultima Inspeccion</td><td style="border:1px solid #bbb;padding:6px 10px;">28-Feb-2026 (API 510)</td></tr>' +
+      '<tr style="background:#eaf2f8;"><td style="border:1px solid #bbb;padding:6px 10px;font-weight:600;">Espesor Min. Medido</td><td style="border:1px solid #bbb;padding:6px 10px;">18.2 mm (nom. 20 mm)</td></tr>' +
+      '<tr><td style="border:1px solid #bbb;padding:6px 10px;font-weight:600;background:#f8f9fa;">Corrosion Allowance</td><td style="border:1px solid #bbb;padding:6px 10px;">3.0 mm</td></tr>' +
+      '<tr style="background:#eaf2f8;"><td style="border:1px solid #bbb;padding:6px 10px;font-weight:600;">PSV Set Pressure</td><td style="border:1px solid #bbb;padding:6px 10px;">10.5 kg/cm2</td></tr>' +
+      '<tr><td style="border:1px solid #bbb;padding:6px 10px;font-weight:600;background:#f8f9fa;">No. Boquillas</td><td style="border:1px solid #bbb;padding:6px 10px;">8 (2x4", 2x6", 1x8", 2x2", 1x1")</td></tr>' +
+      '<tr style="background:#eaf2f8;"><td style="border:1px solid #bbb;padding:6px 10px;font-weight:600;">Instrumentacion</td><td style="border:1px solid #bbb;padding:6px 10px;">LT, PT, TT, LSH, LSLL, PSV x2</td></tr>' +
+    '</table>' +
+    '<div style="padding:8px 16px;font-size:8px;color:#888;border-top:1px solid #bbb;">Documento controlado | No reproducir sin autorizacion | TAS-AGS-01</div>' +
+  '</div>';
+}
+
+function renderAccContent(){
+  var main = document.getElementById('accFsMain');
+  var doc = ACC_DOCS[accCurrentDoc] || ACC_DOCS.pid1;
+
+  var pidDrawing = '';
+  if(accCurrentDoc === 'pid1') pidDrawing = buildPidTas001();
+  else if(accCurrentDoc === 'pid2') pidDrawing = buildPidTas002();
+  else if(accCurrentDoc === 'pid3') pidDrawing = buildPidTas003();
+  else if(accCurrentDoc === 'ds') pidDrawing = buildDatasheetTasSPH01();
+  else pidDrawing = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:300px;color:rgba(255,255,255,.4);font-size:13px;"><div style="font-size:36px;opacity:.3;margin-bottom:8px;">[DOC]</div>'+doc.title+'<div style="font-size:10px;margin-top:4px;">Vista previa - '+doc.format+'</div></div>';
+
+  var folders = ['pid1','pid2','pid3','ds','pfd','elec','inst','sop','insp'];
+  var folderNames = ['P&ID Almacenamiento','P&ID Sist. Contra Incendio','P&ID Despacho y Medicion','Datasheet SPH-01','PFD Proceso','Electricos','Instrumentacion','SOPs','Inspecciones'];
+  var treeHtml = '<div class="acc-fs-tree-hdr">Documentos</div>';
+  folders.forEach(function(f,i){
+    treeHtml += '<div class="acc-fs-tree-folder'+(f===accCurrentDoc?' sel':'')+'" onclick="accSelectDoc(\''+f+'\')">[DOC] '+folderNames[i]+'</div>';
+  });
+
+  main.innerHTML =
+    '<div class="acc-fs-tree">'+treeHtml+'</div>' +
+    '<div class="acc-fs-viewer">' +
+      '<div class="acc-fs-viewer-header">' +
+        '<div><div class="acc-fs-viewer-title">'+doc.title+'</div><div class="acc-fs-viewer-meta">'+doc.version+' | '+doc.date+' | '+doc.format+' | '+doc.size+'</div></div>' +
+      '</div>' +
+      '<div class="acc-fs-viewer-body">' +
+        '<div class="acc-fs-doc-preview">'+pidDrawing+'</div>' +
+        '<div class="acc-fs-doc-meta-panel">' +
+          '<div class="acc-meta-section">Metadata</div>' +
+          '<div class="acc-meta-row"><span class="mk">Version</span><span class="mv">'+doc.version+'</span></div>' +
+          '<div class="acc-meta-row"><span class="mk">Autor</span><span class="mv">'+doc.author+'</span></div>' +
+          '<div class="acc-meta-row"><span class="mk">Fecha</span><span class="mv">'+doc.date+'</span></div>' +
+          '<div class="acc-meta-row"><span class="mk">Formato</span><span class="mv">'+doc.format+'</span></div>' +
+          '<div class="acc-meta-row"><span class="mk">Tamano</span><span class="mv">'+doc.size+'</span></div>' +
+          '<div class="acc-meta-section">Aprobacion</div>' +
+          '<div class="acc-meta-row"><span class="mk">Status</span><span class="mv" style="color:#10B981">'+doc.status+'</span></div>' +
+          '<div class="acc-meta-row"><span class="mk">Aprobado por</span><span class="mv">'+doc.approval+'</span></div>' +
+          '<div class="acc-meta-section">Vinculacion</div>' +
+          '<div class="acc-meta-row"><span class="mk">Proyecto</span><span class="mv">TAS-AGS-01</span></div>' +
+          '<div class="acc-meta-row"><span class="mk">Disciplina</span><span class="mv">Multi</span></div>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+}
+
+function accSelectDoc(docKey){
+  accCurrentDoc = docKey;
+  renderAccContent();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   TANDEM FULLSCREEN
+   ═══════════════════════════════════════════════════════════════ */
+function openTandemFS(){
+  document.getElementById('tandemFullscreen').classList.add('show');
+  renderTandemContent();
+}
+function closeTandemFS(){
+  document.getElementById('tandemFullscreen').classList.remove('show');
+}
+
+function renderTandemContent(){
+  var tree = document.getElementById('tandemTree');
+  var main = document.getElementById('tandemMain');
+  var props = document.getElementById('tandemProps');
+
+  tree.innerHTML =
+    '<div class="tandem-fs-tree-hdr">Jerarquia de Activos</div>' +
+    '<div class="tandem-fs-tree-group">[+] Terminal Gas LP TAS-AGS-01</div>' +
+    '<div class="tandem-fs-tree-item sel">[T] SPH-01 Esfera #1</div>' +
+    '<div class="tandem-fs-tree-item">[T] SPH-02 Esfera #2</div>' +
+    '<div class="tandem-fs-tree-item">[T] SPH-03 Esfera #3</div>' +
+    '<div class="tandem-fs-tree-item">[T] BT-01 Bullet #1</div>' +
+    '<div class="tandem-fs-tree-item">[T] BT-02 Bullet #2</div>' +
+    '<div class="tandem-fs-tree-group">[+] Bombeo</div>' +
+    '<div class="tandem-fs-tree-item">[P] P-01 Bomba #1</div>' +
+    '<div class="tandem-fs-tree-item">[P] P-02 Bomba #2</div>' +
+    '<div class="tandem-fs-tree-item">[C] CMP-01 Compresor</div>' +
+    '<div class="tandem-fs-tree-group">[+] Despacho</div>' +
+    '<div class="tandem-fs-tree-item">[L] LR-01 Llenadora #1</div>' +
+    '<div class="tandem-fs-tree-item">[L] LR-02 Llenadora #2</div>' +
+    '<div class="tandem-fs-tree-item">[L] LR-03 Llenadora #3</div>' +
+    '<div class="tandem-fs-tree-item">[S] SCL-01 Bascula</div>' +
+    '<div class="tandem-fs-tree-group">[+] Medicion</div>' +
+    '<div class="tandem-fs-tree-item">[M] MET-01 Coriolis</div>' +
+    '<div class="tandem-fs-tree-group">[+] Proteccion</div>' +
+    '<div class="tandem-fs-tree-item">[F] FW-01 Tanque Agua</div>' +
+    '<div class="tandem-fs-tree-item">[F] FP-01 Bomba SCI</div>';
+
+  main.innerHTML =
+    '<div style="padding:16px">' +
+    '<h3 style="font-size:14px;margin-bottom:12px;color:#10B981">Autodesk Tandem - Vista General</h3>' +
+    '<div class="tandem-sync-card">' +
+      '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><div class="tandem-stream-dot" style="background:#10B981;box-shadow:0 0 8px #10B981"></div><span style="font-weight:700;color:#10B981">SAP SYNC ACTIVO</span></div>' +
+      '<div style="font-size:11px;color:rgba(255,255,255,.6)">Sincronizacion bidireccional SAP S/4HANA activa | 312 tags | Latencia: 38ms</div>' +
+    '</div>' +
+    '<div class="tandem-stream-card">' +
+      '<div class="tandem-stream-hdr"><div class="tandem-stream-dot" style="background:#10B981"></div><div class="tandem-stream-name">SCADA Link</div><span class="tandem-stream-status" style="background:rgba(16,185,129,.15);color:#10B981">SYNC</span></div>' +
+      '<div class="tandem-fs-prop-row"><span class="pk">Protocolo</span><span class="pv">Modbus TCP</span></div>' +
+      '<div class="tandem-fs-prop-row"><span class="pk">RTU</span><span class="pv">Allen-Bradley PLC5</span></div>' +
+      '<div class="tandem-fs-prop-row"><span class="pk">Tags activos</span><span class="pv">312</span></div>' +
+      '<div class="tandem-fs-prop-row"><span class="pk">Latencia</span><span class="pv">38 ms</span></div>' +
+    '</div>' +
+    '<div class="tandem-stream-card">' +
+      '<div class="tandem-stream-hdr"><div class="tandem-stream-dot" style="background:#F59E0B"></div><div class="tandem-stream-name">IoT Gateway</div><span class="tandem-stream-status" style="background:rgba(245,158,11,.15);color:#F59E0B">ONLINE</span></div>' +
+      '<div class="tandem-fs-prop-row"><span class="pk">Sensores</span><span class="pv">86</span></div>' +
+      '<div class="tandem-fs-prop-row"><span class="pk">Frecuencia</span><span class="pv">2 Hz</span></div>' +
+      '<div class="tandem-fs-prop-row"><span class="pk">Buffer</span><span class="pv">4,800 pts</span></div>' +
+    '</div>' +
+    '<div class="tandem-stream-card">' +
+      '<div class="tandem-stream-hdr"><div class="tandem-stream-dot" style="background:#10B981"></div><div class="tandem-stream-name">ESD / SIS</div><span class="tandem-stream-status" style="background:rgba(16,185,129,.15);color:#10B981">ARMED</span></div>' +
+      '<div class="tandem-fs-prop-row"><span class="pk">SIL Level</span><span class="pv">SIL 2</span></div>' +
+      '<div class="tandem-fs-prop-row"><span class="pk">Detectores gas</span><span class="pv">12</span></div>' +
+      '<div class="tandem-fs-prop-row"><span class="pk">ESD Buttons</span><span class="pv">6</span></div>' +
+    '</div>' +
+    '<div class="tandem-stream-card">' +
+      '<div class="tandem-stream-hdr"><div class="tandem-stream-dot" style="background:#10B981"></div><div class="tandem-stream-name">Historian</div><span class="tandem-stream-status" style="background:rgba(16,185,129,.15);color:#10B981">RECORDING</span></div>' +
+      '<div class="tandem-fs-prop-row"><span class="pk">Registros/dia</span><span class="pv">2.4M</span></div>' +
+      '<div class="tandem-fs-prop-row"><span class="pk">Retencion</span><span class="pv">730 dias</span></div>' +
+      '<div class="tandem-fs-prop-row"><span class="pk">Almacenamiento</span><span class="pv">168 GB</span></div>' +
+    '</div>' +
+    '</div>';
+
+  props.innerHTML =
+    '<div class="tandem-fs-prop-section">Activo Seleccionado</div>' +
+    '<div class="tandem-fs-prop-row"><span class="pk">TAG</span><span class="pv">SPH-01</span></div>' +
+    '<div class="tandem-fs-prop-row"><span class="pk">Nombre</span><span class="pv">Esfera #1</span></div>' +
+    '<div class="tandem-fs-prop-row"><span class="pk">SAP</span><span class="pv">10-SPH-001</span></div>' +
+    '<div class="tandem-fs-prop-row"><span class="pk">Tipo</span><span class="pv">Esfera Presion</span></div>' +
+    '<div class="tandem-fs-prop-row"><span class="pk">Capacidad</span><span class="pv">4,200 m3</span></div>' +
+    '<div class="tandem-fs-prop-section">Streams Conectados</div>' +
+    '<div class="tandem-fs-prop-row"><span class="pk">Nivel</span><span class="pv" style="color:#10B981">74%</span></div>' +
+    '<div class="tandem-fs-prop-row"><span class="pk">Presion</span><span class="pv" style="color:#10B981">12.5 kg/cm2</span></div>' +
+    '<div class="tandem-fs-prop-row"><span class="pk">Temp</span><span class="pv" style="color:#10B981">27 C</span></div>' +
+    '<div class="tandem-fs-prop-section">Sync Status</div>' +
+    '<div class="tandem-fs-prop-row"><span class="pk">SAP PM</span><span class="pv" style="color:#10B981">SYNC OK</span></div>' +
+    '<div class="tandem-fs-prop-row"><span class="pk">IoT</span><span class="pv" style="color:#10B981">LIVE</span></div>' +
+    '<div class="tandem-fs-prop-row"><span class="pk">ACC Docs</span><span class="pv" style="color:#10B981">8 linked</span></div>' +
+    '<div class="tandem-fs-prop-row"><span class="pk">Last Sync</span><span class="pv">Just now</span></div>';
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   OPEN SAP FOR SPECIFIC EQUIPMENT
+   ═══════════════════════════════════════════════════════════════ */
+function openSapForEquip(){
+  var asset = selectedMesh ? ASSETS.find(function(a){return a.id===selectedMesh.userData.assetId}) : null;
+  openSapFS();
+  sapFsNav('pm');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   THREE.JS -- SCENE SETUP
+   ═══════════════════════════════════════════════════════════════ */
+var container=document.getElementById('center');
+var scene=new THREE.Scene();
+scene.background=new THREE.Color(0x060D18);
+scene.fog=new THREE.FogExp2(0x060D18,0.003);
+
+var camera=new THREE.PerspectiveCamera(50,container.clientWidth/container.clientHeight,0.1,1000);
+camera.position.set(70,55,85);
+camera.lookAt(0,0,0);
+
+var renderer=new THREE.WebGLRenderer({antialias:true,alpha:false});
+renderer.setSize(container.clientWidth,container.clientHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+renderer.shadowMap.enabled=true;
+renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+renderer.toneMapping=THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure=1.1;
+container.appendChild(renderer.domElement);
+
+/* ── LIGHTS ── */
+scene.add(new THREE.AmbientLight(0x334466,0.5));
+scene.add(new THREE.HemisphereLight(0x8899bb,0x445566,0.6));
+
+var sunLight=new THREE.DirectionalLight(0xffeedd,1.2);
+sunLight.position.set(60,80,40);
+sunLight.castShadow=true;
+sunLight.shadow.mapSize.set(2048,2048);
+sunLight.shadow.camera.left=-100;sunLight.shadow.camera.right=100;
+sunLight.shadow.camera.top=100;sunLight.shadow.camera.bottom=-100;
+sunLight.shadow.camera.near=1;sunLight.shadow.camera.far=200;
+sunLight.shadow.bias=-0.001;
+scene.add(sunLight);
+
+var warmLight=new THREE.PointLight(0xffaa66,0.8,30);
+warmLight.position.set(-40,5,30);
+scene.add(warmLight);
+
+/* ── ORBIT CONTROLS ── */
+var controls=new THREE.OrbitControls(camera,renderer.domElement);
+controls.enableDamping=true;
+controls.dampingFactor=0.08;
+controls.rotateSpeed=0.6;
+controls.panSpeed=0.5;
+controls.zoomSpeed=0.8;
+controls.minDistance=8;
+controls.maxDistance=300;
+controls.maxPolarAngle=Math.PI/2.05;
+controls.target.set(0,5,0);
+controls.enablePan=true;
+controls.screenSpacePanning=true;
+controls.update();
+
+/* ═══════════════════════════════════════════════════════════════
+   MATERIALS
+   ═══════════════════════════════════════════════════════════════ */
+var matTank=new THREE.MeshStandardMaterial({color:0xe0e0e0,metalness:0.5,roughness:0.3});
+var matTankWarn=new THREE.MeshStandardMaterial({color:0xe0e0e0,metalness:0.5,roughness:0.3,emissive:0xF0A000,emissiveIntensity:0.1});
+var matSteel=new THREE.MeshStandardMaterial({color:0x999999,metalness:0.6,roughness:0.4});
+var matPipe=new THREE.MeshStandardMaterial({color:0xaaaaaa,metalness:0.7,roughness:0.3});
+var matPipeRed=new THREE.MeshStandardMaterial({color:0xcc2200,metalness:0.5,roughness:0.4});
+var matConcrete=new THREE.MeshStandardMaterial({color:0x8a8a7a,roughness:0.9,metalness:0.1});
+var matConcreteLight=new THREE.MeshStandardMaterial({color:0x9a9590,roughness:0.85,metalness:0.1});
+var matAsphalt=new THREE.MeshStandardMaterial({color:0x333333,roughness:0.95,metalness:0.0});
+var matGrass=new THREE.MeshStandardMaterial({color:0x2a5a2a,roughness:0.9});
+var matGlass=new THREE.MeshStandardMaterial({color:0x88ccff,transparent:true,opacity:0.3,metalness:0.8,roughness:0.1});
+var matDarkSteel=new THREE.MeshStandardMaterial({color:0x555555,metalness:0.7,roughness:0.4});
+var matValveMat=new THREE.MeshStandardMaterial({color:0x777777,metalness:0.8,roughness:0.2});
+var matFence=new THREE.MeshStandardMaterial({color:0x888888,metalness:0.6,roughness:0.5});
+var matRed=new THREE.MeshStandardMaterial({color:0xcc2200});
+var matWhite=new THREE.MeshStandardMaterial({color:0xffffff,roughness:0.8});
+var matYellowSign=new THREE.MeshStandardMaterial({color:0xF0A000,emissive:0xF0A000,emissiveIntensity:0.15});
+var matOrangeSign=new THREE.MeshStandardMaterial({color:0xFF5500,emissive:0xFF5500,emissiveIntensity:0.2});
+var matCyanGlow=new THREE.MeshStandardMaterial({color:0x00C8F0,emissive:0x00C8F0,emissiveIntensity:0.3});
+var matHighlight=new THREE.MeshStandardMaterial({color:0xFF5500,emissive:0xFF5500,emissiveIntensity:0.5,transparent:true,opacity:0.35});
+var matVehicle1=new THREE.MeshStandardMaterial({color:0x2244aa,roughness:0.6});
+var matVehicle2=new THREE.MeshStandardMaterial({color:0xdddddd,roughness:0.6});
+var matTruckMarking=new THREE.MeshStandardMaterial({color:0xF0A000,transparent:true,opacity:0.15});
+
+/* ═══════════════════════════════════════════════════════════════
+   GROUPS & HELPERS
+   ═══════════════════════════════════════════════════════════════ */
+var clickable=[];
+var systemGroups={};
+var labelSprites=[];
+
+function makeGroup(name){
+  var g=new THREE.Group();g.name=name;scene.add(g);systemGroups[name]=g;return g;
+}
+var grpTanks=makeGroup('tanks');
+var grpPiping=makeGroup('piping');
+var grpFire=makeGroup('fire');
+var grpLoading=makeGroup('loading');
+var grpLabels=makeGroup('labels');
+var grpStructure=new THREE.Group();grpStructure.name='structure';scene.add(grpStructure);
+
+function addClickable(mesh,assetId){mesh.userData.assetId=assetId;clickable.push(mesh)}
+
+function makePipe(x1,y1,z1,x2,y2,z2,radius,mat,parent){
+  var dir=new THREE.Vector3(x2-x1,y2-y1,z2-z1);
+  var len=dir.length();
+  var geo=new THREE.CylinderGeometry(radius,radius,len,8);
+  var pipe=new THREE.Mesh(geo,mat||matPipe);
+  pipe.position.set((x1+x2)/2,(y1+y2)/2,(z1+z2)/2);
+  dir.normalize();
+  var quat=new THREE.Quaternion();
+  quat.setFromUnitVectors(new THREE.Vector3(0,1,0),dir);
+  pipe.quaternion.copy(quat);
+  pipe.castShadow=true;
+  (parent||scene).add(pipe);
+  return pipe;
+}
+
+function makeLabel(text,x,y,z){
+  var canvas=document.createElement('canvas');
+  canvas.width=256;canvas.height=64;
+  var ctx=canvas.getContext('2d');
+  ctx.fillStyle='rgba(10,20,32,0.85)';
+  ctx.beginPath();ctx.roundRect(0,0,256,64,8);ctx.fill();
+  ctx.strokeStyle='rgba(255,85,0,0.6)';ctx.lineWidth=2;
+  ctx.beginPath();ctx.roundRect(0,0,256,64,8);ctx.stroke();
+  ctx.fillStyle='#FF5500';ctx.font='bold 28px Arial';ctx.textAlign='center';
+  ctx.fillText(text,128,42);
+  var tex=new THREE.CanvasTexture(canvas);
+  var spriteMat=new THREE.SpriteMaterial({map:tex,transparent:true});
+  var sprite=new THREE.Sprite(spriteMat);
+  sprite.position.set(x,y,z);sprite.scale.set(8,2,1);
+  grpLabels.add(sprite);labelSprites.push(sprite);
+  return sprite;
+}
+
+function makeValve(x,y,z,parent){
+  var wheelGeo=new THREE.TorusGeometry(0.5,0.08,8,16);
+  var wheel=new THREE.Mesh(wheelGeo,matValveMat);
+  wheel.position.set(x,y+0.6,z);
+  (parent||grpPiping).add(wheel);
+  var stemGeo=new THREE.CylinderGeometry(0.06,0.06,0.6,6);
+  var stem=new THREE.Mesh(stemGeo,matValveMat);
+  stem.position.set(x,y+0.3,z);
+  (parent||grpPiping).add(stem);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   GROUND & TERRAIN (200x150m)
+   ═══════════════════════════════════════════════════════════════ */
+var ground=new THREE.Mesh(new THREE.PlaneGeometry(200,150),matConcrete);
+ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;scene.add(ground);
+
+/* Perimeter road */
+function makeRoadSeg(x1,z1,x2,z2,w){
+  var dx=x2-x1,dz=z2-z1,len=Math.sqrt(dx*dx+dz*dz);
+  var road=new THREE.Mesh(new THREE.PlaneGeometry(len,w),matAsphalt);
+  road.rotation.x=-Math.PI/2;road.position.set((x1+x2)/2,0.02,(z1+z2)/2);
+  road.rotation.z=-Math.atan2(dz,dx);road.receiveShadow=true;
+  grpStructure.add(road);
+}
+makeRoadSeg(-90,-65,90,-65,6);
+makeRoadSeg(-90,65,90,65,6);
+makeRoadSeg(-90,-65,-90,65,6);
+makeRoadSeg(90,-65,90,65,6);
+makeRoadSeg(0,-65,0,-30,8);
+makeRoadSeg(-30,-30,50,-30,7);
+
+/* Grass patches */
+[[-75,50,20,15],[-75,-50,20,15],[75,50,18,12],[75,-50,18,12]].forEach(function(p){
+  var g=new THREE.Mesh(new THREE.PlaneGeometry(p[2],p[3]),matGrass);
+  g.rotation.x=-Math.PI/2;g.position.set(p[0],0.03,p[1]);grpStructure.add(g);
+});
+
+/* Gate */
+var gatePost1=new THREE.Mesh(new THREE.BoxGeometry(0.5,4,0.5),matSteel);
+gatePost1.position.set(-3,2,-68);gatePost1.castShadow=true;grpStructure.add(gatePost1);
+var gatePost2=gatePost1.clone();gatePost2.position.set(3,2,-68);grpStructure.add(gatePost2);
+var gateBar=new THREE.Mesh(new THREE.BoxGeometry(6,0.3,0.15),matRed);
+gateBar.position.set(0,3.5,-68);grpStructure.add(gateBar);
+
+/* Perimeter fence */
+function makeFence(x1,z1,x2,z2){
+  var dx=x2-x1,dz=z2-z1,len=Math.sqrt(dx*dx+dz*dz);
+  var posts=Math.floor(len/5);
+  for(var i=0;i<=posts;i++){
+    var t=i/posts;
+    var post=new THREE.Mesh(new THREE.CylinderGeometry(0.08,0.08,3,6),matFence);
+    post.position.set(x1+dx*t,1.5,z1+dz*t);grpStructure.add(post);
+  }
+  [1,2,2.8].forEach(function(h){makePipe(x1,h,z1,x2,h,z2,0.04,matFence,grpStructure)});
+}
+makeFence(-95,-70,95,-70);makeFence(-95,70,95,70);
+makeFence(-95,-70,-95,70);makeFence(95,-70,95,70);
+
+/* ═══════════════════════════════════════════════════════════════
+   SPHERICAL TANKS (3 units)
+   ═══════════════════════════════════════════════════════════════ */
+function createSphere(x,z,id,warn){
+  var group=new THREE.Group();group.position.set(x,0,z);
+  var sphere=new THREE.Mesh(new THREE.SphereGeometry(8,32,32),warn?matTankWarn:matTank);
+  sphere.position.y=12;sphere.castShadow=true;sphere.receiveShadow=true;
+  group.add(sphere);addClickable(sphere,id);
+  for(var i=0;i<8;i++){
+    var angle=(i/8)*Math.PI*2;
+    var leg=new THREE.Mesh(new THREE.CylinderGeometry(0.3,0.35,13,8),matSteel);
+    var spread=5.5;
+    leg.position.set(Math.cos(angle)*spread,6,Math.sin(angle)*spread);
+    leg.rotation.z=Math.cos(angle)*0.15;
+    leg.rotation.x=-Math.sin(angle)*0.15;
+    leg.castShadow=true;group.add(leg);
+    var bp=new THREE.Mesh(new THREE.CylinderGeometry(0.6,0.6,0.15,8),matConcrete);
+    bp.position.set(Math.cos(angle)*spread,0.08,Math.sin(angle)*spread);group.add(bp);
+  }
+  var walkway=new THREE.Mesh(new THREE.TorusGeometry(8.5,0.25,8,32),matSteel);
+  walkway.position.y=12;walkway.rotation.x=Math.PI/2;group.add(walkway);
+  var walkPlat=new THREE.Mesh(new THREE.RingGeometry(8.2,9.2,32),matDarkSteel);
+  walkPlat.position.y=12;walkPlat.rotation.x=-Math.PI/2;group.add(walkPlat);
+  var rail=new THREE.Mesh(new THREE.TorusGeometry(9.0,0.06,6,32),matSteel);
+  rail.position.y=13;rail.rotation.x=Math.PI/2;group.add(rail);
+  var topPlat=new THREE.Mesh(new THREE.CylinderGeometry(1.5,1.5,0.15,16),matDarkSteel);
+  topPlat.position.y=20.1;group.add(topPlat);
+  for(var pi=0;pi<2;pi++){
+    var psv=new THREE.Mesh(new THREE.CylinderGeometry(0.2,0.25,1.2,8),matSteel);
+    psv.position.set(pi*1.5-0.75,20.8,0);group.add(psv);
+    var flange=new THREE.Mesh(new THREE.CylinderGeometry(0.35,0.35,0.15,8),matRed);
+    flange.position.set(pi*1.5-0.75,21.4,0);group.add(flange);
+  }
+  var stairSteps=20;
+  for(var si=0;si<stairSteps;si++){
+    var sAngle=(si/stairSteps)*Math.PI*2;
+    var sH=(si/stairSteps)*12;
+    var step=new THREE.Mesh(new THREE.BoxGeometry(1.2,0.12,0.6),matDarkSteel);
+    step.position.set(Math.cos(sAngle)*9.5,sH+0.5,Math.sin(sAngle)*9.5);
+    step.rotation.y=-sAngle;group.add(step);
+  }
+  var pole=new THREE.Mesh(new THREE.CylinderGeometry(0.1,0.1,13,8),matSteel);
+  pole.position.set(9.5,6.5,0);group.add(pole);
+  var gauge=new THREE.Mesh(new THREE.BoxGeometry(0.15,6,0.5),matCyanGlow);
+  gauge.position.set(8.1,12,0);group.add(gauge);
+  var btmPipe=new THREE.Mesh(new THREE.CylinderGeometry(0.4,0.4,4,8),matPipe);
+  btmPipe.position.set(0,2,0);group.add(btmPipe);
+  makePipe(x,0.8,z,x,0.8,z+25,0.4,matPipe,grpPiping);
+  grpTanks.add(group);
+  return group;
+}
+
+createSphere(-15,10,'SPH-01',false);
+createSphere(15,10,'SPH-02',false);
+createSphere(0,-10,'SPH-03',true);
+makeLabel('SPH-01',-15,23,10);
+makeLabel('SPH-02',15,23,10);
+makeLabel('SPH-03',0,23,-10);
+
+/* ═══════════════════════════════════════════════════════════════
+   BULLET TANKS (2 units)
+   ═══════════════════════════════════════════════════════════════ */
+function createBullet(x,z,id){
+  var group=new THREE.Group();group.position.set(x,0,z);
+  var body=new THREE.Mesh(new THREE.CylinderGeometry(2.5,2.5,18,32),matTank);
+  body.rotation.z=Math.PI/2;body.position.y=4;body.castShadow=true;
+  group.add(body);addClickable(body,id);
+  var capGeo=new THREE.SphereGeometry(2.5,16,16,0,Math.PI*2,0,Math.PI/2);
+  var cap1=new THREE.Mesh(capGeo,matTank);cap1.rotation.z=-Math.PI/2;cap1.position.set(9,4,0);cap1.castShadow=true;group.add(cap1);
+  var cap2=new THREE.Mesh(capGeo,matTank);cap2.rotation.z=Math.PI/2;cap2.position.set(-9,4,0);cap2.castShadow=true;group.add(cap2);
+  [-5,5].forEach(function(sx){
+    var saddle=new THREE.Mesh(new THREE.TorusGeometry(2.7,0.3,8,16,Math.PI),matConcreteLight);
+    saddle.position.set(sx,1.5,0);saddle.rotation.y=Math.PI/2;group.add(saddle);
+    var base=new THREE.Mesh(new THREE.BoxGeometry(1.5,1.5,5.5),matConcreteLight);
+    base.position.set(sx,0.75,0);group.add(base);
+  });
+  var btm=new THREE.Mesh(new THREE.CylinderGeometry(0.3,0.3,2,8),matPipe);
+  btm.position.set(0,2,0);group.add(btm);
+  var gaugeBT=new THREE.Mesh(new THREE.BoxGeometry(0.1,3.5,0.3),matCyanGlow);
+  gaugeBT.position.set(0,4,2.6);group.add(gaugeBT);
+  grpTanks.add(group);
+}
+createBullet(50,15,'BT-01');
+createBullet(50,5,'BT-02');
+makeLabel('BT-01',50,9,15);
+makeLabel('BT-02',50,9,5);
+
+makePipe(50,0.8,15,50,0.8,35,0.3,matPipe,grpPiping);
+makePipe(50,0.8,5,50,0.8,35,0.3,matPipe,grpPiping);
+
+/* ═══════════════════════════════════════════════════════════════
+   MANIFOLD
+   ═══════════════════════════════════════════════════════════════ */
+makePipe(-25,0.8,35,55,0.8,35,0.5,matPipe,grpPiping);
+makePipe(-25,0.8,35,-25,0.8,45,0.4,matPipe,grpPiping);
+makeValve(-15,0.8,35);makeValve(0,0.8,35);makeValve(15,0.8,35);
+makeValve(50,0.8,35);makeValve(-25,0.8,40);
+
+for(var px=-20;px<=50;px+=10){
+  var pL=new THREE.Mesh(new THREE.CylinderGeometry(0.08,0.08,1.5,6),matSteel);
+  pL.position.set(px,0.75,34);grpPiping.add(pL);
+  var pR=pL.clone();pR.position.set(px,0.75,36);grpPiping.add(pR);
+  var cb=new THREE.Mesh(new THREE.BoxGeometry(0.08,0.08,2.5),matSteel);
+  cb.position.set(px,0.6,35);grpPiping.add(cb);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PUMP SKID (2 pumps)
+   ═══════════════════════════════════════════════════════════════ */
+function createPump(x,z,id){
+  var group=new THREE.Group();group.position.set(x,0,z);
+  var pad=new THREE.Mesh(new THREE.BoxGeometry(5,0.3,4),matConcreteLight);
+  pad.position.y=0.15;pad.receiveShadow=true;group.add(pad);
+  var motor=new THREE.Mesh(new THREE.CylinderGeometry(0.8,0.8,2.5,16),matDarkSteel);
+  motor.rotation.z=Math.PI/2;motor.position.set(-0.5,1.2,0);motor.castShadow=true;
+  group.add(motor);addClickable(motor,id);
+  var pBody=new THREE.Mesh(new THREE.CylinderGeometry(0.6,0.7,1.2,16),matSteel);
+  pBody.position.set(1.3,1.0,0);pBody.castShadow=true;group.add(pBody);
+  var vol=new THREE.Mesh(new THREE.BoxGeometry(1.2,0.8,1.0),matSteel);
+  vol.position.set(1.3,1.0,0);group.add(vol);
+  makePipe(x+1.3,1.0,z-0.6,x+1.3,1.0,z-3,0.25,matPipe,grpPiping);
+  makePipe(x+1.3,1.6,z,x+1.3,1.6,z-3,0.2,matPipe,grpPiping);
+  var cab=new THREE.Mesh(new THREE.BoxGeometry(0.8,1.2,0.4),matDarkSteel);
+  cab.position.set(-2,0.6,1);group.add(cab);
+  grpStructure.add(group);
+}
+createPump(-25,50,'P-01');
+createPump(-18,50,'P-02');
+makeLabel('P-01',-25,4,50);
+makeLabel('P-02',-18,4,50);
+
+makePipe(-25,1.5,47,-25,1.5,-30,0.35,matPipe,grpPiping);
+makePipe(-25,1.5,-30,30,1.5,-30,0.35,matPipe,grpPiping);
+
+/* ═══════════════════════════════════════════════════════════════
+   COMPRESSOR
+   ═══════════════════════════════════════════════════════════════ */
+(function(){
+  var g=new THREE.Group();g.position.set(-45,0,20);
+  var found=new THREE.Mesh(new THREE.BoxGeometry(8,1,6),matConcrete);
+  found.position.y=0.5;found.receiveShadow=true;g.add(found);
+  var base=new THREE.Mesh(new THREE.BoxGeometry(6,2,4),matDarkSteel);
+  base.position.y=2;base.castShadow=true;g.add(base);addClickable(base,'COMP-01');
+  var cyl=new THREE.Mesh(new THREE.CylinderGeometry(1.2,1.2,4,16),matSteel);
+  cyl.rotation.z=Math.PI/2;cyl.position.set(0,4,0);cyl.castShadow=true;g.add(cyl);
+  var mtr=new THREE.Mesh(new THREE.CylinderGeometry(1,1,2.5,16),matDarkSteel);
+  mtr.rotation.z=Math.PI/2;mtr.position.set(-3,3.5,0);mtr.castShadow=true;g.add(mtr);
+  for(var fi=0;fi<6;fi++){
+    var fin=new THREE.Mesh(new THREE.BoxGeometry(0.08,2,4.5),matSteel);
+    fin.position.set(-1+fi*0.5,4,0);g.add(fin);
+  }
+  var encMat=new THREE.MeshStandardMaterial({color:0x445566,transparent:true,opacity:0.1,metalness:0.3});
+  var enc=new THREE.Mesh(new THREE.BoxGeometry(9,5,7),encMat);
+  enc.position.y=3.5;g.add(enc);
+  grpStructure.add(g);
+  makeLabel('COMP-01',-45,8,20);
+})();
+
+/* ═══════════════════════════════════════════════════════════════
+   LOADING RACK (3 positions)
+   ═══════════════════════════════════════════════════════════════ */
+(function(){
+  var g=new THREE.Group();g.position.set(30,0,-45);
+  var platf=new THREE.Mesh(new THREE.BoxGeometry(30,0.2,6),matDarkSteel);
+  platf.position.y=3.5;platf.castShadow=true;g.add(platf);
+  for(var ci=-12;ci<=12;ci+=6){
+    [-2.5,2.5].forEach(function(cz){
+      var col=new THREE.Mesh(new THREE.BoxGeometry(0.3,3.5,0.3),matSteel);
+      col.position.set(ci,1.75,cz);col.castShadow=true;g.add(col);
+    });
+  }
+  var roof=new THREE.Mesh(new THREE.BoxGeometry(32,0.15,8),matDarkSteel);
+  roof.position.y=6;roof.castShadow=true;g.add(roof);
+  [-14,14].forEach(function(rx){
+    [-3.5,3.5].forEach(function(rz){
+      var rc=new THREE.Mesh(new THREE.CylinderGeometry(0.15,0.15,2.5,8),matSteel);
+      rc.position.set(rx,4.75,rz);g.add(rc);
+    });
+  });
+  [-3,3].forEach(function(rz){
+    var r1=new THREE.Mesh(new THREE.BoxGeometry(30,0.06,0.06),matSteel);r1.position.set(0,4.5,rz);g.add(r1);
+    var r2=r1.clone();r2.position.y=4;g.add(r2);
+  });
+  for(var li=0;li<3;li++){
+    var lx=-9+li*9;
+    var armId='LR-0'+(li+1);
+    var arm1=new THREE.Mesh(new THREE.CylinderGeometry(0.15,0.15,2,8),matPipe);
+    arm1.position.set(lx,4.5,0);g.add(arm1);addClickable(arm1,armId);
+    var arm2=new THREE.Mesh(new THREE.CylinderGeometry(0.12,0.12,3,8),matPipe);
+    arm2.position.set(lx,3,2);arm2.rotation.x=Math.PI/6;g.add(arm2);
+    var cw=new THREE.Mesh(new THREE.BoxGeometry(0.6,0.4,0.4),matDarkSteel);
+    cw.position.set(lx,5.3,-0.5);g.add(cw);
+    var mark=new THREE.Mesh(new THREE.PlaneGeometry(4,9),matTruckMarking);
+    mark.rotation.x=-Math.PI/2;mark.position.set(lx,0.03,6);g.add(mark);
+    var borderGeo=new THREE.EdgesGeometry(new THREE.PlaneGeometry(4,9));
+    var border=new THREE.LineSegments(borderGeo,new THREE.LineBasicMaterial({color:0xF0A000}));
+    border.rotation.x=-Math.PI/2;border.position.set(lx,0.04,6);g.add(border);
+  }
+  [-15,15].forEach(function(sx){
+    for(var si=0;si<7;si++){
+      var step=new THREE.Mesh(new THREE.BoxGeometry(1.5,0.12,0.5),matDarkSteel);
+      step.position.set(sx,si*0.5+0.25,-2-si*0.4);g.add(step);
+    }
+    var sr1=new THREE.Mesh(new THREE.CylinderGeometry(0.04,0.04,4,6),matSteel);
+    sr1.position.set(sx-0.7,2,-3.5);sr1.rotation.x=0.55;g.add(sr1);
+    var sr2=sr1.clone();sr2.position.x=sx+0.7;g.add(sr2);
+  });
+  grpLoading.add(g);
+  makeLabel('LR-01',21,8,-45);makeLabel('LR-02',30,8,-45);makeLabel('LR-03',39,8,-45);
+})();
+
+/* ═══════════════════════════════════════════════════════════════
+   TRUCK SCALE
+   ═══════════════════════════════════════════════════════════════ */
+(function(){
+  var g=new THREE.Group();g.position.set(0,0,-52);
+  var sclPad=new THREE.Mesh(new THREE.BoxGeometry(18,0.3,3.5),matConcreteLight);
+  sclPad.position.y=0.15;sclPad.receiveShadow=true;g.add(sclPad);addClickable(sclPad,'SCL-01');
+  var ramp1=new THREE.Mesh(new THREE.BoxGeometry(3,0.15,3.5),matConcrete);
+  ramp1.position.set(-10.5,0.08,0);ramp1.rotation.z=0.03;g.add(ramp1);
+  var ramp2=ramp1.clone();ramp2.position.x=10.5;ramp2.rotation.z=-0.03;g.add(ramp2);
+  var dPost=new THREE.Mesh(new THREE.CylinderGeometry(0.1,0.1,2.5,8),matSteel);
+  dPost.position.set(-10,1.25,3);g.add(dPost);
+  var dBox=new THREE.Mesh(new THREE.BoxGeometry(1,0.7,0.4),matDarkSteel);
+  dBox.position.set(-10,2.7,3);g.add(dBox);
+  var scr=new THREE.Mesh(new THREE.PlaneGeometry(0.8,0.5),matCyanGlow);
+  scr.position.set(-10,2.7,3.21);g.add(scr);
+  grpStructure.add(g);makeLabel('SCL-01',0,4,-52);
+})();
+
+/* ═══════════════════════════════════════════════════════════════
+   METERING SKID
+   ═══════════════════════════════════════════════════════════════ */
+(function(){
+  var g=new THREE.Group();g.position.set(-45,0,45);
+  var fEdges=new THREE.EdgesGeometry(new THREE.BoxGeometry(4,3,3));
+  var frame=new THREE.LineSegments(fEdges,new THREE.LineBasicMaterial({color:0x666666}));
+  frame.position.y=1.5;g.add(frame);
+  var meter=new THREE.Mesh(new THREE.CylinderGeometry(0.4,0.4,2,16),matSteel);
+  meter.rotation.z=Math.PI/2;meter.position.set(0,1.5,0);meter.castShadow=true;
+  g.add(meter);addClickable(meter,'MET-01');
+  makePipe(-45-3,1.5,45,-45,1.5,45,0.25,matPipe,grpPiping);
+  makePipe(-45,1.5,45,-45+3,1.5,45,0.25,matPipe,grpPiping);
+  var panel=new THREE.Mesh(new THREE.BoxGeometry(0.3,1.5,1.5),matDarkSteel);
+  panel.position.set(2.5,1.5,0);g.add(panel);
+  makeValve(-45,1.5,43.8);
+  grpStructure.add(g);makeLabel('MET-01',-45,5,45);
+})();
+
+/* ═══════════════════════════════════════════════════════════════
+   CONTROL ROOM
+   ═══════════════════════════════════════════════════════════════ */
+(function(){
+  var g=new THREE.Group();g.position.set(-45,0,-25);
+  var bldg=new THREE.Mesh(new THREE.BoxGeometry(8,3.5,6),matConcreteLight);
+  bldg.position.y=1.75;bldg.castShadow=true;bldg.receiveShadow=true;
+  g.add(bldg);addClickable(bldg,'CR-01');
+  var roof=new THREE.Mesh(new THREE.BoxGeometry(8.4,0.15,6.4),matDarkSteel);
+  roof.position.y=3.57;g.add(roof);
+  [-2.5,0,2.5].forEach(function(wx){
+    var win=new THREE.Mesh(new THREE.PlaneGeometry(1.5,1.2),matGlass);
+    win.position.set(wx,2.2,3.01);g.add(win);
+    var wEdges=new THREE.EdgesGeometry(new THREE.PlaneGeometry(1.5,1.2));
+    var wFrame=new THREE.LineSegments(wEdges,new THREE.LineBasicMaterial({color:0x444444}));
+    wFrame.position.set(wx,2.2,3.02);g.add(wFrame);
+  });
+  var door=new THREE.Mesh(new THREE.BoxGeometry(1.2,2.2,0.1),matDarkSteel);
+  door.position.set(-3,1.1,3.05);g.add(door);
+  var ac=new THREE.Mesh(new THREE.BoxGeometry(2,0.8,1.5),matWhite);
+  ac.position.set(2,4,1);g.add(ac);
+  var ant=new THREE.Mesh(new THREE.CylinderGeometry(0.05,0.05,4,6),matSteel);
+  ant.position.set(-3,5.5,-2);g.add(ant);
+  var antTop=new THREE.Mesh(new THREE.CylinderGeometry(0.3,0.05,0.8,8),matSteel);
+  antTop.position.set(-3,7.7,-2);g.add(antTop);
+  var iLight=new THREE.PointLight(0xffaa44,0.6,15);
+  iLight.position.set(-45,2,-22);scene.add(iLight);
+  grpStructure.add(g);makeLabel('CTRL',-45,6,-25);
+})();
+
+/* ═══════════════════════════════════════════════════════════════
+   ELECTRICAL ROOM / MCC
+   ═══════════════════════════════════════════════════════════════ */
+(function(){
+  var g=new THREE.Group();g.position.set(-55,0,-10);
+  var bldg=new THREE.Mesh(new THREE.BoxGeometry(6,3,4),matConcreteLight);
+  bldg.position.y=1.5;bldg.castShadow=true;g.add(bldg);
+  var roof=new THREE.Mesh(new THREE.BoxGeometry(6.3,0.12,4.3),matDarkSteel);
+  roof.position.y=3.06;g.add(roof);
+  var door=new THREE.Mesh(new THREE.BoxGeometry(1,2.2,0.1),matDarkSteel);
+  door.position.set(0,1.1,2.05);g.add(door);
+  [-1.5,0,1.5].forEach(function(ct){
+    var tray=new THREE.Mesh(new THREE.BoxGeometry(0.5,0.15,3),matSteel);
+    tray.position.set(ct,3.2,0);g.add(tray);
+  });
+  var txBody=new THREE.Mesh(new THREE.BoxGeometry(2,2.5,1.5),matDarkSteel);
+  txBody.position.set(5,1.25,0);txBody.castShadow=true;g.add(txBody);
+  for(var bi=0;bi<3;bi++){
+    var bush=new THREE.Mesh(new THREE.CylinderGeometry(0.1,0.15,1.2,8),
+      new THREE.MeshStandardMaterial({color:0x884422}));
+    bush.position.set(4.5+bi*0.5,3.1,0);g.add(bush);
+  }
+  grpStructure.add(g);
+})();
+
+/* ═══════════════════════════════════════════════════════════════
+   FIRE WATER SYSTEM (SCI)
+   ═══════════════════════════════════════════════════════════════ */
+(function(){
+  var wTank=new THREE.Mesh(new THREE.CylinderGeometry(4,4,6,32),matWhite);
+  wTank.position.set(65,3,35);wTank.castShadow=true;grpFire.add(wTank);addClickable(wTank,'FW-01');
+  var cone=new THREE.Mesh(new THREE.ConeGeometry(4.3,1.5,32),matDarkSteel);
+  cone.position.set(65,6.75,35);grpFire.add(cone);
+  makeLabel('FW-01',65,10,35);
+  var fpHouse=new THREE.Mesh(new THREE.BoxGeometry(5,3,4),matConcreteLight);
+  fpHouse.position.set(65,1.5,25);fpHouse.castShadow=true;grpFire.add(fpHouse);addClickable(fpHouse,'FP-01');
+  var fpRoof=new THREE.Mesh(new THREE.BoxGeometry(5.3,0.12,4.3),matDarkSteel);
+  fpRoof.position.set(65,3.06,25);grpFire.add(fpRoof);
+  makeLabel('FP-01',65,5,25);
+  var ring=[[-80,0.5,-60],[80,0.5,-60],[80,0.5,60],[-80,0.5,60]];
+  for(var ri=0;ri<ring.length;ri++){
+    var rj=(ri+1)%ring.length;
+    makePipe(ring[ri][0],ring[ri][1],ring[ri][2],ring[rj][0],ring[rj][1],ring[rj][2],0.2,matPipeRed,grpFire);
+  }
+  [[-80,-30],[-80,30],[80,-30],[80,30],[0,-60],[0,60],[-40,-60],[40,-60]].forEach(function(h){
+    var hPost=new THREE.Mesh(new THREE.CylinderGeometry(0.12,0.12,1.5,8),matRed);
+    hPost.position.set(h[0],0.75,h[1]);grpFire.add(hPost);
+    var hTop=new THREE.Mesh(new THREE.CylinderGeometry(0.1,0.1,0.6,8),matRed);
+    hTop.position.set(h[0],1.5,h[1]);hTop.rotation.z=Math.PI/2;grpFire.add(hTop);
+  });
+  [[-30,-20],[30,-20],[-30,30],[30,30]].forEach(function(m){
+    var mPost=new THREE.Mesh(new THREE.CylinderGeometry(0.15,0.15,5,8),matRed);
+    mPost.position.set(m[0],2.5,m[1]);grpFire.add(mPost);
+    var mHead=new THREE.Mesh(new THREE.CylinderGeometry(0.2,0.15,0.8,8),matSteel);
+    mHead.position.set(m[0],5.2,m[1]);mHead.rotation.x=Math.PI/4;grpFire.add(mHead);
+  });
+  var foam=new THREE.Mesh(new THREE.BoxGeometry(1.5,1.5,1),matRed);
+  foam.position.set(60,0.75,15);grpFire.add(foam);
+})();
+
+/* ═══════════════════════════════════════════════════════════════
+   GAS DETECTION SENSORS
+   ═══════════════════════════════════════════════════════════════ */
+(function(){
+  var positions=[[-20,10],[-10,10],[0,-15],[10,10],[20,10],[45,10],[55,10],[-20,-5],[0,5],[10,-5],[-30,35],[30,-40]];
+  positions.forEach(function(p,i){
+    var post=new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.06,3,6),matSteel);
+    post.position.set(p[0],1.5,p[1]);grpStructure.add(post);
+    var sensor=new THREE.Mesh(new THREE.SphereGeometry(0.2,8,8),matYellowSign);
+    sensor.position.set(p[0],3.1,p[1]);grpStructure.add(sensor);
+    if(i===0) addClickable(sensor,'GD-01');
+  });
+})();
+
+/* ═══════════════════════════════════════════════════════════════
+   AREA LIGHTING POLES
+   ═══════════════════════════════════════════════════════════════ */
+(function(){
+  [[-30,-40],[30,-40],[-30,0],[30,0],[-30,40],[30,40],[0,-20],[60,0],[-60,30],[60,40]].forEach(function(lp){
+    var pole=new THREE.Mesh(new THREE.CylinderGeometry(0.12,0.15,10,8),matSteel);
+    pole.position.set(lp[0],5,lp[1]);grpStructure.add(pole);
+    var fix=new THREE.Mesh(new THREE.BoxGeometry(1.5,0.3,1),matDarkSteel);
+    fix.position.set(lp[0],10.2,lp[1]);grpStructure.add(fix);
+    var light=new THREE.PointLight(0xffeebb,0.15,25);
+    light.position.set(lp[0],10,lp[1]);scene.add(light);
+  });
+})();
+
+/* ═══════════════════════════════════════════════════════════════
+   PARKING & VEHICLES
+   ═══════════════════════════════════════════════════════════════ */
+(function(){
+  var park=new THREE.Mesh(new THREE.PlaneGeometry(12,8),matAsphalt);
+  park.rotation.x=-Math.PI/2;park.position.set(-45,0.02,-35);grpStructure.add(park);
+  for(var pl=0;pl<4;pl++){
+    var line=new THREE.Mesh(new THREE.PlaneGeometry(0.1,4),matWhite);
+    line.rotation.x=-Math.PI/2;line.position.set(-48+pl*3,0.03,-35);grpStructure.add(line);
+  }
+  function makeVehicle(x,z,mat,rot){
+    var body=new THREE.Mesh(new THREE.BoxGeometry(2,1,4),mat);
+    body.position.set(x,0.8,z);body.rotation.y=rot||0;body.castShadow=true;grpStructure.add(body);
+    var cabin=new THREE.Mesh(new THREE.BoxGeometry(1.8,0.8,2),mat);
+    cabin.position.set(x,1.7,z-0.5);cabin.rotation.y=rot||0;grpStructure.add(cabin);
+    var ws=new THREE.Mesh(new THREE.PlaneGeometry(1.6,0.6),matGlass);
+    ws.position.set(x,1.7,z-1.52);ws.rotation.y=rot||0;grpStructure.add(ws);
+  }
+  makeVehicle(-47,-34,matVehicle1,0);
+  makeVehicle(-44,-36,matVehicle2,0.1);
+  makeVehicle(-41,-34,matVehicle1,-0.05);
+  var tBody=new THREE.Mesh(new THREE.BoxGeometry(3,2.5,8),matWhite);
+  tBody.position.set(21,1.75,-39);tBody.castShadow=true;grpLoading.add(tBody);
+  var tCab=new THREE.Mesh(new THREE.BoxGeometry(3,2,3),matVehicle1);
+  tCab.position.set(21,1.5,-34);tCab.castShadow=true;grpLoading.add(tCab);
+  var tTank=new THREE.Mesh(new THREE.CylinderGeometry(1.2,1.2,7,16),matWhite);
+  tTank.rotation.x=Math.PI/2;tTank.position.set(21,3.5,-39);grpLoading.add(tTank);
+})();
+
+/* ═══════════════════════════════════════════════════════════════
+   SAFETY SIGNAGE
+   ═══════════════════════════════════════════════════════════════ */
+(function(){
+  [{x:-10,z:-60,c:0xFF5500},{x:10,z:-60,c:0xF0A000},{x:-40,z:-10,c:0x00C8F0},{x:55,z:-20,c:0xFF5500}].forEach(function(s){
+    var post=new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.06,2,6),matSteel);
+    post.position.set(s.x,1,s.z);grpStructure.add(post);
+    var sign=new THREE.Mesh(new THREE.PlaneGeometry(1.5,0.8),
+      new THREE.MeshStandardMaterial({color:s.c,emissive:s.c,emissiveIntensity:0.2}));
+    sign.position.set(s.x,2.2,s.z);grpStructure.add(sign);
+  });
+})();
+
+/* ═══════════════════════════════════════════════════════════════
+   GROUNDING CABLES
+   ═══════════════════════════════════════════════════════════════ */
+(function(){
+  [[-15,10],[15,10],[0,-10]].forEach(function(tp){
+    var pts=[new THREE.Vector3(tp[0]+5,12,tp[1]),new THREE.Vector3(tp[0]+6,6,tp[1]),new THREE.Vector3(tp[0]+6,0.1,tp[1])];
+    var lg=new THREE.BufferGeometry().setFromPoints(pts);
+    grpStructure.add(new THREE.Line(lg,new THREE.LineBasicMaterial({color:0x888800})));
+  });
+})();
+
+/* Recirculation line */
+makePipe(30,1,-35,30,1,35,0.25,matPipe,grpPiping);
+makePipe(30,1,35,-15,1,35,0.25,matPipe,grpPiping);
+
+/* ═══════════════════════════════════════════════════════════════
+   IoT FLOATING LABELS (CSS-based overlay, camera-synced)
+   ═══════════════════════════════════════════════════════════════ */
+var iotLabelsVisible = true;
+var iotLabelContainer = document.createElement('div');
+iotLabelContainer.id = 'iotLabelContainer';
+iotLabelContainer.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;overflow:hidden;z-index:5';
+container.appendChild(iotLabelContainer);
+
+var iotLabelData = [
+  {id:'SPH-01', pos:new THREE.Vector3(-15,25,10), getData:function(){
+    var a=ASSETS[0]; return {tag:'SPH-01',text:'Nivel: '+a.sensors[0].v+'% | P: '+a.sensors[1].v+' kg/cm2 | T: '+a.sensors[2].v+'C',status:a.status};
+  }},
+  {id:'SPH-02', pos:new THREE.Vector3(15,25,10), getData:function(){
+    var a=ASSETS[1]; return {tag:'SPH-02',text:'Nivel: '+a.sensors[0].v+'% | P: '+a.sensors[1].v+' kg/cm2 | T: '+a.sensors[2].v+'C',status:a.status};
+  }},
+  {id:'SPH-03', pos:new THREE.Vector3(0,25,-10), getData:function(){
+    var a=ASSETS[2]; return {tag:'SPH-03',text:'Nivel: '+a.sensors[0].v+'% | P: '+a.sensors[1].v+' kg/cm2 | T: '+a.sensors[2].v+'C',status:a.status};
+  }},
+  {id:'COMP-01', pos:new THREE.Vector3(-45,10,20), getData:function(){
+    var a=ASSETS[7]; return {tag:'CMP-01',text:'RPM: '+a.sensors[0].v+' | Vib: '+a.sensors[4].v+' mm/s | T: '+a.sensors[3].v+'C',status:a.sensors[4].v>3.5?'warn':'ok'};
+  }},
+  {id:'P-01', pos:new THREE.Vector3(-25,6,50), getData:function(){
+    var a=ASSETS[5]; return {tag:'PMP-01',text:'Flow: '+Math.round(a.sensors[2].v*8.5)+' m3/h | I: '+a.sensors[3].v+'A',status:a.status};
+  }},
+  {id:'P-02', pos:new THREE.Vector3(-18,6,50), getData:function(){
+    var a=ASSETS[6]; return {tag:'PMP-02',text:'Flow: '+Math.round(a.sensors[2].v*8.2)+' m3/h | I: '+a.sensors[3].v+'A',status:a.status};
+  }}
+];
+
+var iotLabelElements = [];
+iotLabelData.forEach(function(ld){
+  var el = document.createElement('div');
+  el.className = 'iot-label';
+  el.style.position = 'absolute';
+  el.style.pointerEvents = 'auto';
+  el.innerHTML = '<span class="iot-tag">'+ld.id+'</span><span class="iot-text"></span>';
+  el.addEventListener('click',function(){ selectAsset(ld.id); });
+  iotLabelContainer.appendChild(el);
+  iotLabelElements.push({el:el,data:ld});
+});
+
+function updateIoTLabels(){
+  if(!iotLabelsVisible){
+    iotLabelContainer.style.display='none';
+    return;
+  }
+  iotLabelContainer.style.display='block';
+  var w = container.clientWidth;
+  var h = container.clientHeight;
+  iotLabelElements.forEach(function(item){
+    var screenPos = item.data.pos.clone().project(camera);
+    var x = (screenPos.x * 0.5 + 0.5) * w;
+    var y = (-screenPos.y * 0.5 + 0.5) * h;
+    /* Check if behind camera */
+    if(screenPos.z > 1 || x < -100 || x > w+100 || y < -50 || y > h+50){
+      item.el.style.display = 'none';
+      return;
+    }
+    item.el.style.display = 'block';
+    item.el.style.left = x + 'px';
+    item.el.style.top = y + 'px';
+    item.el.style.transform = 'translate(-50%,-100%)';
+    var d = item.data.getData();
+    item.el.querySelector('.iot-text').textContent = d.text;
+    item.el.className = 'iot-label' + (d.status==='warn'?' warn':'') + (d.status==='crit'?' crit':'');
+  });
+}
+
+/* IoT toggle */
+document.getElementById('iotToggle').addEventListener('click',function(){
+  this.classList.toggle('active');
+  iotLabelsVisible = this.classList.contains('active');
+});
+
+/* ═══════════════════════════════════════════════════════════════
+   RAYCASTING / SELECTION
+   ═══════════════════════════════════════════════════════════════ */
+var raycaster=new THREE.Raycaster();
+var mouse=new THREE.Vector2();
+var selectedMesh=null;
+var originalMaterials=new Map();
+
+function selectAsset(assetId){
+  if(selectedMesh&&originalMaterials.has(selectedMesh)){
+    selectedMesh.material=originalMaterials.get(selectedMesh);
+    selectedMesh=null;
+  }
+
+  var asset=ASSETS.find(function(a){return a.id===assetId});
+  if(!asset) return;
+
+  document.querySelectorAll('.asset-item').forEach(function(el){
+    el.classList.toggle('active',el.dataset.id===assetId);
+  });
+
+  var meshObj=clickable.find(function(m){return m.userData.assetId===assetId});
+  if(meshObj){
+    selectedMesh=meshObj;
+    originalMaterials.set(meshObj,meshObj.material);
+    meshObj.material=matHighlight;
+    var wp=new THREE.Vector3();meshObj.getWorldPosition(wp);
+    wp.y=Math.max(wp.y,5);
+    camTarget.lerp(wp,0.5);
+  }
+
+  showEquipPanel(asset);
+}
+
+function showEquipPanel(asset){
+  var panel=document.getElementById('equip-panel');
+  panel.style.display='block';
+
+  document.getElementById('epTag').textContent=asset.sap;
+  document.getElementById('epName').textContent=asset.name;
+
+  var confEl=document.getElementById('epConf');
+  confEl.textContent='Criticidad: '+asset.criticality.toUpperCase();
+  confEl.className='ep-conf '+asset.criticality;
+
+  /* Ficha Tecnica */
+  document.getElementById('epInfo').innerHTML=
+    '<div class="ep-row"><span class="k">TAG</span><span class="v">'+asset.id+'</span></div>'+
+    '<div class="ep-row"><span class="k">Sistema</span><span class="v">'+asset.system+'</span></div>'+
+    '<div class="ep-row"><span class="k">Tipo</span><span class="v">'+asset.type+'</span></div>'+
+    '<div class="ep-row"><span class="k">Fabricante</span><span class="v">'+(asset.manufacturer||'N/A')+'</span></div>'+
+    '<div class="ep-row"><span class="k">Modelo</span><span class="v">'+(asset.model||'N/A')+'</span></div>'+
+    '<div class="ep-row"><span class="k">Capacidad</span><span class="v">'+asset.capacity+'</span></div>'+
+    '<div class="ep-row"><span class="k">Dimensiones</span><span class="v">'+(asset.dimensions||'N/A')+'</span></div>'+
+    '<div class="ep-row"><span class="k">Instalacion</span><span class="v">'+(asset.installDate||'N/A')+'</span></div>'+
+    '<div class="ep-row"><span class="k">No. Serie</span><span class="v">'+(asset.serial||'N/A')+'</span></div>'+
+    '<div class="ep-row"><span class="k">SAP Tag</span><span class="v">'+asset.sap+'</span></div>'+
+    '<div class="ep-row"><span class="k">Estado</span><span class="v" style="color:var(--'+(asset.status==='ok'?'gr':asset.status==='warn'?'ye':'re')+')">'+(asset.status==='ok'?'NORMAL':asset.status==='warn'?'PRECAUCION':'ALARMA')+'</span></div>';
+
+  /* Sensors with mini bar indicators */
+  var sensEl=document.getElementById('epSensors');
+  sensEl.innerHTML='';
+  asset.sensors.forEach(function(s){
+    var barHtml = '';
+    if(typeof s.v === 'number'){
+      var pct = 50;
+      if(s.n==='Nivel') pct=s.v;
+      else if(s.n.indexOf('Presion')>=0) pct=Math.min(100,(s.v/20)*100);
+      else if(s.n.indexOf('Temp')>=0) pct=Math.min(100,(s.v/100)*100);
+      else if(s.n==='Vibracion') pct=Math.min(100,(s.v/10)*100);
+      else if(s.n==='Amperaje') pct=Math.min(100,(s.v/120)*100);
+      else if(s.n==='RPM') pct=Math.min(100,((s.v-1400)/200)*100);
+      else if(s.n==='Flujo') pct=Math.min(100,(s.v/200)*100);
+      var barColor = s.s==='crit'?'var(--re)':s.s==='warn'?'var(--ye)':'var(--gr)';
+      barHtml = '<div class="ep-sensor-bar"><div class="ep-sensor-bar-fill" style="width:'+pct+'%;background:'+barColor+'"></div></div>';
+    }
+    sensEl.innerHTML+='<div class="ep-sensor"><span class="sn">'+s.n+'</span><span class="sv '+s.s+'">'+s.v+(s.u?' '+s.u:'')+'</span></div>'+barHtml;
+  });
+
+  /* Draw trend chart */
+  drawTrendChart(asset);
+
+  /* Draw QR code */
+  drawQrCode(asset);
+
+  /* Documents */
+  var docsEl = document.getElementById('epDocs');
+  docsEl.innerHTML =
+    '<div class="ep-doc-item" onclick="openAccFS()">[DOC] P&ID - '+asset.id+'</div>' +
+    '<div class="ep-doc-item" onclick="openAccFS()">[DOC] Datasheet - '+asset.id+'</div>' +
+    '<div class="ep-doc-item" onclick="openAccFS()">[DOC] Manual O&M</div>';
+
+  /* Maintenance */
+  var maintEl = document.getElementById('epMaint');
+  var relatedWOs = SAP_WORK_ORDERS.filter(function(wo){
+    return wo.equip === asset.id || wo.equip === asset.id.replace('COMP','CMP').replace('P-0','PMP-0');
+  }).slice(0,3);
+  if(relatedWOs.length === 0){
+    relatedWOs = SAP_WORK_ORDERS.slice(0,2);
+  }
+  maintEl.innerHTML = '';
+  relatedWOs.forEach(function(wo){
+    maintEl.innerHTML += '<div class="ep-ot-item"><div class="ot-id">'+wo.id+' <span class="sts-badge '+wo.stsClass+'" style="font-size:8px">'+wo.sts+'</span></div><div class="ot-desc">'+wo.desc+'</div></div>';
+  });
+}
+
+function drawTrendChart(asset){
+  var canvas = document.getElementById('epTrendChart');
+  var ctx = canvas.getContext('2d');
+  var w = canvas.width, h = canvas.height;
+  ctx.clearRect(0,0,w,h);
+
+  /* Initialize trend history if needed */
+  if(!trendHistory[asset.id]){
+    trendHistory[asset.id] = [];
+    var baseVal = typeof asset.sensors[0].v === 'number' ? asset.sensors[0].v : 50;
+    for(var i=0;i<60;i++){
+      trendHistory[asset.id].push(baseVal + (Math.random()-0.5)*baseVal*0.1);
+    }
+  }
+
+  var data = trendHistory[asset.id];
+  var min = Math.min.apply(null,data);
+  var max = Math.max.apply(null,data);
+  var range = max-min || 1;
+
+  /* Background */
+  ctx.fillStyle = '#111D2B';
+  ctx.fillRect(0,0,w,h);
+
+  /* Grid */
+  ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+  ctx.lineWidth = 0.5;
+  for(var gi=0;gi<5;gi++){
+    var gy = h*0.1 + (h*0.8/4)*gi;
+    ctx.beginPath();ctx.moveTo(0,gy);ctx.lineTo(w,gy);ctx.stroke();
+  }
+  for(var gj=0;gj<6;gj++){
+    var gx = w*(gj/5);
+    ctx.beginPath();ctx.moveTo(gx,0);ctx.lineTo(gx,h);ctx.stroke();
+  }
+
+  /* Line */
+  ctx.strokeStyle = '#FF5500';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  data.forEach(function(v,i){
+    var x = (i/(data.length-1))*w;
+    var y = h*0.9 - ((v-min)/range)*(h*0.8);
+    if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  });
+  ctx.stroke();
+
+  /* Fill under line */
+  ctx.lineTo(w,h);ctx.lineTo(0,h);ctx.closePath();
+  ctx.fillStyle = 'rgba(255,85,0,0.1)';
+  ctx.fill();
+
+  /* Labels */
+  ctx.fillStyle = 'rgba(255,255,255,0.4)';
+  ctx.font = '8px IBM Plex Mono,monospace';
+  ctx.fillText(Math.round(max),2,12);
+  ctx.fillText(Math.round(min),2,h-4);
+  ctx.fillText('60 lecturas',w-55,h-4);
+}
+
+function generateRealQR(containerId, data) {
+  var container = document.getElementById(containerId);
+  if (!container) return;
+  container.innerHTML = '';
+  var qr = qrcode(0, 'M');
+  qr.addData(data);
+  qr.make();
+  var size = 120;
+  var canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  canvas.style.width = size + 'px';
+  canvas.style.height = size + 'px';
+  canvas.style.borderRadius = '4px';
+  var ctx = canvas.getContext('2d');
+  var cellSize = size / qr.getModuleCount();
+  ctx.fillStyle = '#0a1420';
+  ctx.fillRect(0, 0, size, size);
+  ctx.fillStyle = '#FF5500';
+  for (var r = 0; r < qr.getModuleCount(); r++) {
+    for (var c = 0; c < qr.getModuleCount(); c++) {
+      if (qr.isDark(r, c)) {
+        ctx.fillRect(c * cellSize, r * cellSize, cellSize + 0.5, cellSize + 0.5);
+      }
+    }
+  }
+  container.appendChild(canvas);
+}
+function drawQrCode(asset){
+  var url = 'https://creas-demo.netlify.app/tas-DT.html#' + asset.id;
+  generateRealQR('epQrCode', url);
+}
+
+function closePanel(){
+  document.getElementById('equip-panel').style.display='none';
+  if(selectedMesh&&originalMaterials.has(selectedMesh)){
+    selectedMesh.material=originalMaterials.get(selectedMesh);selectedMesh=null;
+  }
+  document.querySelectorAll('.asset-item').forEach(function(el){el.classList.remove('active')});
+}
+
+/* Click handler */
+renderer.domElement.addEventListener('click',function(e){
+  var rect=renderer.domElement.getBoundingClientRect();
+  mouse.x=((e.clientX-rect.left)/rect.width)*2-1;
+  mouse.y=-((e.clientY-rect.top)/rect.height)*2+1;
+  raycaster.setFromCamera(mouse,camera);
+  var intersects=raycaster.intersectObjects(clickable,false);
+  if(intersects.length>0){
+    var aid=intersects[0].object.userData.assetId;
+    if(aid) selectAsset(aid);
+  }
+});
+
+/* Double-click to focus */
+renderer.domElement.addEventListener('dblclick',function(e){
+  var rect=renderer.domElement.getBoundingClientRect();
+  mouse.x=((e.clientX-rect.left)/rect.width)*2-1;
+  mouse.y=-((e.clientY-rect.top)/rect.height)*2+1;
+  raycaster.setFromCamera(mouse,camera);
+  var intersects=raycaster.intersectObjects(clickable,false);
+  if(intersects.length>0){
+    controls.target.copy(intersects[0].point);
+    var dir=new THREE.Vector3().subVectors(camera.position,controls.target).normalize();
+    camera.position.copy(controls.target).addScaledVector(dir,30);
+  }
+});
+
+/* ═══════════════════════════════════════════════════════════════
+   LAYER TOGGLES
+   ═══════════════════════════════════════════════════════════════ */
+document.querySelectorAll('.sys-toggle').forEach(function(btn){
+  if(btn.id === 'iotToggle') return; /* handled separately */
+  btn.addEventListener('click',function(){
+    btn.classList.toggle('active');
+    var sys=btn.dataset.sys;
+    if(systemGroups[sys]) systemGroups[sys].visible=btn.classList.contains('active');
+  });
+});
+
+/* ═══════════════════════════════════════════════════════════════
+   REAL-TIME SIMULATION
+   ═══════════════════════════════════════════════════════════════ */
+function rw(val,min,max,step){
+  var d=(Math.random()-0.5)*step;
+  return Math.max(min,Math.min(max,val+d));
+}
+
+function updateSimulation(){
+  ASSETS.forEach(function(a){
+    a.sensors.forEach(function(s){
+      if(typeof s.v!=='number') return;
+      if(s.n==='Nivel'){
+        s.v=Math.round(rw(s.v,30,95,0.5)*10)/10;
+        s.s=s.v>85?'warn':s.v<20?'crit':'ok';
+      } else if(s.n.indexOf('Presion')===0||s.n==='Presion Desc.'||s.n==='Presion Succ.'||s.n==='Presion Red'){
+        s.v=Math.round(rw(s.v,s.v*0.85,s.v*1.15,0.1)*10)/10;s.s='ok';
+      } else if(s.n.indexOf('Temp')===0||s.n==='Temp. Aceite'||s.n==='Temp. Interior'){
+        s.v=Math.round(rw(s.v,s.v-5,s.v+5,0.3)*10)/10;s.s='ok';
+      } else if(s.n==='Flujo'){
+        s.v=Math.round(rw(s.v,0,65,1));s.s='ok';
+      } else if(s.n==='Vibracion'){
+        s.v=Math.round(rw(s.v,1,8,0.2)*10)/10;
+        s.s=s.v>6?'warn':s.v>8?'crit':'ok';
+      } else if(s.n==='Amperaje'){
+        s.v=Math.round(rw(s.v,70,110,1));s.s=s.v>105?'warn':'ok';
+      } else if(s.n==='RPM'){
+        s.v=Math.round(rw(s.v,1450,1510,3));s.s='ok';
+      } else if(s.n==='Lectura'){
+        s.v=Math.round(rw(s.v,0,5,0.3)*10)/10;
+        s.s=s.v>10?'crit':s.v>3?'warn':'ok';
+      } else if(s.n==='Densidad'){
+        s.v=Math.round(rw(s.v,0.50,0.58,0.005)*1000)/1000;s.s='ok';
+      } else if(s.n==='Totalizador'||s.n==='Acumulado'){
+        s.v=Math.round(s.v+Math.random()*0.5);s.s='ok';
+      } else if(s.n==='UPS'||s.n==='Diesel'){
+        s.v=Math.round(rw(s.v,75,100,0.2));s.s=s.v<50?'crit':s.v<70?'warn':'ok';
+      }
+    });
+  });
+
+  /* Update KPIs */
+  var sph1=ASSETS[0],sph2=ASSETS[1],sph3=ASSETS[2];
+  var avgLvl=Math.round((sph1.sensors[0].v+sph2.sensors[0].v+sph3.sensors[0].v)/3);
+  var avgPrs=Math.round(((sph1.sensors[1].v+sph2.sensors[1].v+sph3.sensors[1].v)/3)*10)/10;
+  var avgTmp=Math.round((sph1.sensors[2].v+sph2.sensors[2].v+sph3.sensors[2].v)/3);
+  var flow=ASSETS.find(function(a){return a.id==='MET-01'}).sensors[0].v;
+  var gasRd=ASSETS.find(function(a){return a.id==='GD-01'}).sensors[0].v;
+
+  document.getElementById('kNivel').textContent=avgLvl;
+  document.getElementById('kPresion').textContent=avgPrs;
+  document.getElementById('kTemp').textContent=avgTmp;
+  document.getElementById('kFlujo').textContent=Math.round(flow);
+  document.getElementById('kGas').textContent=gasRd>3?Math.round(gasRd):0;
+
+  /* Update right panel sensors if visible */
+  if(selectedMesh&&document.getElementById('equip-panel').style.display==='block'){
+    var asset=ASSETS.find(function(a){return a.id===selectedMesh.userData.assetId});
+    if(asset){
+      var sensEl=document.getElementById('epSensors');sensEl.innerHTML='';
+      asset.sensors.forEach(function(s){
+        var barHtml = '';
+        if(typeof s.v === 'number'){
+          var pct = 50;
+          if(s.n==='Nivel') pct=s.v;
+          else if(s.n.indexOf('Presion')>=0) pct=Math.min(100,(s.v/20)*100);
+          else if(s.n.indexOf('Temp')>=0) pct=Math.min(100,(s.v/100)*100);
+          else if(s.n==='Vibracion') pct=Math.min(100,(s.v/10)*100);
+          else if(s.n==='Amperaje') pct=Math.min(100,(s.v/120)*100);
+          else if(s.n==='RPM') pct=Math.min(100,((s.v-1400)/200)*100);
+          else if(s.n==='Flujo') pct=Math.min(100,(s.v/200)*100);
+          var barColor = s.s==='crit'?'var(--re)':s.s==='warn'?'var(--ye)':'var(--gr)';
+          barHtml = '<div class="ep-sensor-bar"><div class="ep-sensor-bar-fill" style="width:'+pct+'%;background:'+barColor+'"></div></div>';
+        }
+        sensEl.innerHTML+='<div class="ep-sensor"><span class="sn">'+s.n+'</span><span class="sv '+s.s+'">'+s.v+(s.u?' '+s.u:'')+'</span></div>'+barHtml;
+      });
+      /* Update trend */
+      if(!trendHistory[asset.id]) trendHistory[asset.id]=[];
+      if(typeof asset.sensors[0].v === 'number'){
+        trendHistory[asset.id].push(asset.sensors[0].v);
+        if(trendHistory[asset.id].length>60) trendHistory[asset.id].shift();
+      }
+      drawTrendChart(asset);
+    }
+  }
+
+  /* Update asset list dots */
+  ASSETS.forEach(function(a){
+    var worst='ok';
+    a.sensors.forEach(function(s){
+      if(s.s==='crit') worst='crit';
+      else if(s.s==='warn'&&worst!=='crit') worst='warn';
+    });
+    a.status=worst;
+    var dot=document.querySelector('.asset-item[data-id="'+a.id+'"] .ai-dot');
+    if(dot) dot.className='ai-dot '+worst;
+  });
+
+  /* Occasional despachos increment */
+  if(Math.random()<0.02){
+    var dEl=document.getElementById('kDespachos');
+    dEl.textContent=parseInt(dEl.textContent)+1;
+  }
+
+  /* -- E) Enhanced IoT dynamics -- */
+
+  /* Tank levels: slow drain simulating consumption, occasional refill jump */
+  tankDrainCycle++;
+  tankLevels.forEach(function(tl, idx){
+    // Slow drain
+    tl.targetLevel -= 0.002 + Math.random() * 0.001;
+    // Refill when low (simulates truck delivery)
+    if(tl.targetLevel < 0.25){
+      tl.targetLevel = 0.80 + Math.random() * 0.15;
+    }
+    tl.targetLevel = Math.max(0.1, Math.min(0.95, tl.targetLevel));
+  });
+
+  /* Pressure correlates with temperature */
+  ASSETS.forEach(function(a){
+    a.sensors.forEach(function(s){
+      if(s.n==='Presion Desc.' || s.n==='Presion Succ.'){
+        // Pressure rises slightly with temperature
+        var tempSensor = a.sensors.find(function(ts){ return ts.n.indexOf('Temp')===0; });
+        if(tempSensor && typeof tempSensor.v === 'number'){
+          var tempFactor = (tempSensor.v - 30) / 70;
+          s.v = s.v * (0.99 + tempFactor * 0.02);
+        }
+      }
+    });
+  });
+
+  /* Flow rate varies with pump RPM */
+  var pumpAsset = ASSETS.find(function(a){ return a.id==='P-01'; });
+  if(pumpAsset){
+    var rpmSensor = pumpAsset.sensors.find(function(s){ return s.n==='RPM'; });
+    var flowSensor = pumpAsset.sensors.find(function(s){ return s.n==='Flujo'; });
+    if(rpmSensor && flowSensor && typeof rpmSensor.v === 'number'){
+      flowSensor.v = Math.round((rpmSensor.v / 1500) * (40 + Math.random() * 15));
+    }
+  }
+
+  /* Gas detection: occasional brief spike */
+  var gasAsset = ASSETS.find(function(a){ return a.id==='GD-01'; });
+  if(gasAsset){
+    var lectura = gasAsset.sensors.find(function(s){ return s.n==='Lectura'; });
+    if(lectura){
+      if(Math.random() < 0.03){
+        // Brief spike
+        lectura.v = Math.round((5 + Math.random() * 8) * 10) / 10;
+        lectura.s = lectura.v > 10 ? 'crit' : 'warn';
+      } else if(lectura.v > 3){
+        // Return to normal after spike
+        lectura.v = Math.max(0, lectura.v - 1.5);
+        lectura.s = lectura.v > 3 ? 'warn' : 'ok';
+      }
+    }
+  }
+
+  /* Occasional new alerts with more variety */
+  if(Math.random()<0.008&&ALERTS_DATA.length<8){
+    var pool=[
+      {type:'warn',title:'Vibracion elevada P-02',desc:'Punto DE lectura 5.1 mm/s - revisar alineacion'},
+      {type:'info',title:'Calibracion medidor fiscal',desc:'Proxima calibracion programada para manana'},
+      {type:'warn',title:'Temperatura alta compresor',desc:'Aceite a 78 C - verificar enfriador'},
+      {type:'info',title:'Autotanque llegando',desc:'Placa ABC-1234 en bascula de entrada'},
+      {type:'warn',title:'Nivel bajo tanque SPH-03',desc:'Nivel actual: '+(tankLevels[2]?Math.round(tankLevels[2].currentLevel*100):45)+'% - programar recarga'},
+      {type:'info',title:'Despacho completado LR-02',desc:'Volumen: '+Math.round(8000+Math.random()*12000)+' litros'},
+      {type:'warn',title:'Presion diferencial filtro',desc:'Delta P: '+(0.3+Math.random()*0.4).toFixed(2)+' bar - verificar elemento'}
+    ];
+    var rnd=pool[Math.floor(Math.random()*pool.length)];
+    rnd.time=new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit',hour12:false});
+    ALERTS_DATA.unshift(rnd);renderAlerts();
+  }
+}
+
+setInterval(updateSimulation,2000);
+
+/* ═══════════════════════════════════════════════════════════════
+   LIVE PROCESS ANIMATIONS
+   ═══════════════════════════════════════════════════════════════ */
+
+/* -- A) Flow particles in pipes -- */
+var flowParticles = [];
+(function createFlowParticles(){
+  var particleMat = new THREE.MeshStandardMaterial({color:0xFF8800, emissive:0xFF6600, emissiveIntensity:0.6, metalness:0.3, roughness:0.4});
+  var particleMat2 = new THREE.MeshStandardMaterial({color:0xFF5500, emissive:0xFF4400, emissiveIntensity:0.5, metalness:0.3, roughness:0.4});
+  var particleGeo = new THREE.SphereGeometry(0.15, 8, 8);
+
+  var paths = [
+    // Tank SPH-01 down to manifold line (tank area to piping header)
+    {start:new THREE.Vector3(-15, 2, 35), end:new THREE.Vector3(-15, 0.8, 35), count:3, mat:particleMat},
+    {start:new THREE.Vector3(15, 2, 35), end:new THREE.Vector3(15, 0.8, 35), count:3, mat:particleMat},
+    {start:new THREE.Vector3(0, 2, 25), end:new THREE.Vector3(0, 0.8, 35), count:3, mat:particleMat},
+    // Main header line tanks to pumps
+    {start:new THREE.Vector3(-25, 0.8, 35), end:new THREE.Vector3(55, 0.8, 35), count:8, mat:particleMat},
+    // Pumps to loading rack via piping
+    {start:new THREE.Vector3(-25, 1.5, 47), end:new THREE.Vector3(-25, 1.5, -30), count:5, mat:particleMat2},
+    {start:new THREE.Vector3(-25, 1.5, -30), end:new THREE.Vector3(30, 1.5, -30), count:5, mat:particleMat2},
+    // Compressor area flow
+    {start:new THREE.Vector3(-45, 3, 20), end:new THREE.Vector3(-25, 1.5, 35), count:3, mat:particleMat2}
+  ];
+
+  paths.forEach(function(path){
+    for(var i=0; i<path.count; i++){
+      var mesh = new THREE.Mesh(particleGeo, path.mat);
+      var progress = i / path.count;
+      mesh.position.lerpVectors(path.start, path.end, progress);
+      scene.add(mesh);
+      flowParticles.push({
+        mesh: mesh,
+        startPos: path.start.clone(),
+        endPos: path.end.clone(),
+        progress: progress,
+        speed: 0.003 + Math.random() * 0.002
+      });
+    }
+  });
+})();
+
+/* -- B) Tank level indicators -- */
+var tankLevels = [];
+(function createTankLevels(){
+  var levelMat = new THREE.MeshStandardMaterial({
+    color:0x00C8F0, transparent:true, opacity:0.35, emissive:0x0088AA, emissiveIntensity:0.3, side:THREE.DoubleSide
+  });
+  var levelGeo = new THREE.CircleGeometry(7.5, 32);
+  var tankPositions = [
+    {x:-15, z:10, baseY:12},
+    {x:15, z:10, baseY:12},
+    {x:0, z:-10, baseY:12}
+  ];
+  tankPositions.forEach(function(tp){
+    var levelPlane = new THREE.Mesh(levelGeo, levelMat.clone());
+    levelPlane.rotation.x = -Math.PI / 2;
+    levelPlane.position.set(tp.x, tp.baseY, tp.z);
+    scene.add(levelPlane);
+    tankLevels.push({
+      mesh: levelPlane,
+      baseY: tp.baseY,
+      targetLevel: 0.65 + Math.random() * 0.2,
+      currentLevel: 0.65,
+      minY: tp.baseY - 6,
+      maxY: tp.baseY + 6
+    });
+  });
+})();
+
+/* -- C) Compressor reference for rotation -- */
+var compressorGroup = null;
+scene.traverse(function(obj){
+  if(obj.userData && obj.userData.assetId === 'COMP-01'){
+    compressorGroup = obj.parent;
+  }
+});
+
+/* -- D) Loading arm references for oscillation -- */
+var loadingArmBasePositions = [];
+var loadingArmMeshes = [];
+(function findLoadingArms(){
+  grpLoading.traverse(function(obj){
+    if(obj.isMesh && obj.geometry && obj.geometry.parameters){
+      var params = obj.geometry.parameters;
+      if(params.radiusTop === 0.12 && params.height === 3){
+        loadingArmMeshes.push(obj);
+        loadingArmBasePositions.push({x: obj.position.x, y: obj.position.y, z: obj.position.z});
+      }
+    }
+  });
+})();
+
+/* -- Animation helpers -- */
+var animTime = 0;
+var tankDrainCycle = 0;
+
+function animateFlowParticles(){
+  flowParticles.forEach(function(p){
+    p.progress += p.speed;
+    if(p.progress > 1) p.progress -= 1;
+    p.mesh.position.lerpVectors(p.startPos, p.endPos, p.progress);
+    // Slight vertical bob for liveliness
+    p.mesh.position.y += Math.sin(p.progress * Math.PI * 4) * 0.08;
+  });
+}
+
+function animateTankLevels(){
+  tankLevels.forEach(function(tl){
+    // Smoothly interpolate toward target level
+    tl.currentLevel += (tl.targetLevel - tl.currentLevel) * 0.02;
+    var y = tl.minY + (tl.maxY - tl.minY) * tl.currentLevel;
+    tl.mesh.position.y = y;
+    // Pulsing opacity based on level
+    tl.mesh.material.opacity = 0.25 + tl.currentLevel * 0.15;
+  });
+}
+
+function animateCompressor(){
+  if(compressorGroup){
+    // Subtle vibration + rotation for running feel
+    compressorGroup.children.forEach(function(child){
+      if(child.isMesh){
+        child.rotation.y += 0.001;
+      }
+    });
+    // The cylinder part rotates faster
+    if(compressorGroup.children[3]){
+      compressorGroup.children[3].rotation.x += 0.02;
+    }
+  }
+}
+
+function animateLoadingArms(){
+  for(var i=0; i<loadingArmMeshes.length; i++){
+    var arm = loadingArmMeshes[i];
+    var base = loadingArmBasePositions[i];
+    // Small oscillation to simulate dispensing activity
+    arm.rotation.x = Math.PI/6 + Math.sin(animTime * 0.5 + i * 2.1) * 0.05;
+    arm.position.z = base.z + Math.sin(animTime * 0.3 + i * 1.7) * 0.08;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ANIMATION LOOP
+   ═══════════════════════════════════════════════════════════════ */
+function animate(){
+  requestAnimationFrame(animate);
+  animTime += 0.016;
+  controls.update();
+
+  // Live process animations
+  animateFlowParticles();
+  animateTankLevels();
+  animateCompressor();
+  animateLoadingArms();
+
+  renderer.render(scene,camera);
+  updateIoTLabels();
+}
+animate();
+
+/* Resize */
+window.addEventListener('resize',function(){
+  var w=container.clientWidth,h=container.clientHeight;
+  camera.aspect=w/h;camera.updateProjectionMatrix();
+  renderer.setSize(w,h);
+});
+
+/* ═══════════════════════════════════════════════════════════════
+   HAMBURGER / SIDEBAR TOGGLE (MOBILE)
+   ═══════════════════════════════════════════════════════════════ */
+function toggleSidebar(){
+  var sb=document.getElementById('sidebar-left');
+  var ov=document.getElementById('sidebarOverlay');
+  sb.classList.toggle('open');
+  ov.classList.toggle('show');
+}
+
+// Safety: ensure canvas stays in center container
+setInterval(function(){
+  var sapOverlay = document.getElementById('sapFullscreen');
+  var sapVisible = sapOverlay && sapOverlay.classList.contains('show');
+  if(!sapVisible){
+    var canvas = document.querySelector('canvas');
+    var container = document.getElementById('center');
+    if(canvas && container && canvas.parentElement !== container){
+      container.insertBefore(canvas, container.firstChild);
+      renderer.setSize(container.clientWidth, container.clientHeight);
+      camera.aspect = container.clientWidth / container.clientHeight;
+      camera.updateProjectionMatrix();
+    }
+  }
+}, 2000);
+</script>
+<script src="dt-enhancements.js"></script>
+</body>
+</html>

@@ -1,0 +1,236 @@
+{
+  "plants": [
+    {
+      "id": "TAS-AGS-01", "name": "Terminal Aguascalientes", "type": "TAS", "state": "Aguascalientes",
+      "lat": 21.8818, "lng": -102.2916, "capacity": "12,000 m3", "status": "Operativa", "tanks": 4
+    },
+    {
+      "id": "TAS-MTY-01", "name": "Terminal Monterrey Norte", "type": "TAS", "state": "Nuevo Leon",
+      "lat": 25.7617, "lng": -100.1865, "capacity": "18,000 m3", "status": "Operativa", "tanks": 6
+    },
+    {
+      "id": "TAS-GDL-01", "name": "Terminal Guadalajara", "type": "TAS", "state": "Jalisco",
+      "lat": 20.6597, "lng": -103.3496, "capacity": "15,000 m3", "status": "Operativa", "tanks": 5
+    },
+    {
+      "id": "TAS-PUE-01", "name": "Terminal Puebla", "type": "TAS", "state": "Puebla",
+      "lat": 19.0414, "lng": -98.2063, "capacity": "8,000 m3", "status": "Operativa", "tanks": 3
+    },
+    {
+      "id": "TAS-QRO-01", "name": "Terminal Queretaro", "type": "TAS", "state": "Queretaro",
+      "lat": 20.5888, "lng": -100.3899, "capacity": "10,000 m3", "status": "Mantenimiento", "tanks": 4
+    },
+    {
+      "id": "TAS-SLP-01", "name": "Terminal San Luis Potosi", "type": "TAS", "state": "San Luis Potosi",
+      "lat": 22.1565, "lng": -100.9855, "capacity": "9,500 m3", "status": "Operativa", "tanks": 3
+    },
+    {
+      "id": "TAS-LEO-01", "name": "Terminal Leon", "type": "TAS", "state": "Guanajuato",
+      "lat": 21.1221, "lng": -101.6821, "capacity": "11,000 m3", "status": "Operativa", "tanks": 4
+    },
+    {
+      "id": "TAS-CHI-01", "name": "Terminal Chihuahua", "type": "TAS", "state": "Chihuahua",
+      "lat": 28.6353, "lng": -106.0889, "capacity": "7,000 m3", "status": "Operativa", "tanks": 2
+    },
+    {
+      "id": "TAS-HMO-01", "name": "Terminal Hermosillo", "type": "TAS", "state": "Sonora",
+      "lat": 29.0729, "lng": -110.9559, "capacity": "8,500 m3", "status": "Operativa", "tanks": 3
+    },
+    {
+      "id": "TAS-VER-01", "name": "Terminal Veracruz", "type": "TAS", "state": "Veracruz",
+      "lat": 19.1738, "lng": -96.1342, "capacity": "14,000 m3", "status": "Operativa", "tanks": 5
+    },
+    {
+      "id": "GNC-MTY-01", "name": "Estacion GNC Monterrey", "type": "GNC", "state": "Nuevo Leon",
+      "lat": 25.6866, "lng": -100.3161, "capacity": "5,000 Nm3/h", "status": "Operativa", "compressors": 2
+    },
+    {
+      "id": "GNC-GDL-01", "name": "Estacion GNC Guadalajara", "type": "GNC", "state": "Jalisco",
+      "lat": 20.7214, "lng": -103.3887, "capacity": "3,500 Nm3/h", "status": "Operativa", "compressors": 1
+    },
+    {
+      "id": "GNC-QRO-01", "name": "Estacion GNC Queretaro", "type": "GNC", "state": "Queretaro",
+      "lat": 20.6233, "lng": -100.4115, "capacity": "4,000 Nm3/h", "status": "Operativa", "compressors": 2
+    },
+    {
+      "id": "GNC-CDX-01", "name": "Estacion GNC CDMX Norte", "type": "GNC", "state": "CDMX",
+      "lat": 19.4969, "lng": -99.1269, "capacity": "6,000 Nm3/h", "status": "Operativa", "compressors": 3
+    },
+    {
+      "id": "GNC-PUE-01", "name": "Estacion GNC Puebla", "type": "GNC", "state": "Puebla",
+      "lat": 19.0616, "lng": -98.1837, "capacity": "3,000 Nm3/h", "status": "Mantenimiento", "compressors": 1
+    },
+    {
+      "id": "GNC-SLP-01", "name": "Estacion GNC San Luis", "type": "GNC", "state": "San Luis Potosi",
+      "lat": 22.1195, "lng": -101.0028, "capacity": "2,500 Nm3/h", "status": "Operativa", "compressors": 1
+    },
+    {
+      "id": "GNC-AGS-01", "name": "Estacion GNC Aguascalientes", "type": "GNC", "state": "Aguascalientes",
+      "lat": 21.9103, "lng": -102.3133, "capacity": "3,200 Nm3/h", "status": "Operativa", "compressors": 1
+    },
+    {
+      "id": "GNC-LEO-01", "name": "Estacion GNC Leon", "type": "GNC", "state": "Guanajuato",
+      "lat": 21.1543, "lng": -101.7112, "capacity": "4,500 Nm3/h", "status": "Operativa", "compressors": 2
+    },
+    {
+      "id": "LNG-MTY-01", "name": "Planta LNG Monterrey", "type": "LNG", "state": "Nuevo Leon",
+      "lat": 25.7345, "lng": -100.2518, "capacity": "120 KL", "status": "Operativa", "tanks": 2
+    },
+    {
+      "id": "LNG-GDL-01", "name": "Planta LNG Guadalajara", "type": "LNG", "state": "Jalisco",
+      "lat": 20.6866, "lng": -103.4143, "capacity": "80 KL", "status": "Operativa", "tanks": 1
+    },
+    {
+      "id": "LNG-CDX-01", "name": "Planta LNG CDMX", "type": "LNG", "state": "Estado de Mexico",
+      "lat": 19.5218, "lng": -99.0937, "capacity": "100 KL", "status": "Operativa", "tanks": 2
+    },
+    {
+      "id": "LNG-QRO-01", "name": "Planta LNG Queretaro", "type": "LNG", "state": "Queretaro",
+      "lat": 20.5515, "lng": -100.4218, "capacity": "60 KL", "status": "Mantenimiento", "tanks": 1
+    },
+    {
+      "id": "LNG-PUE-01", "name": "Planta LNG Puebla", "type": "LNG", "state": "Puebla",
+      "lat": 19.0218, "lng": -98.2437, "capacity": "56 KL", "status": "Operativa", "tanks": 1
+    },
+    {
+      "id": "DUC-NOR-01", "name": "Estacion Compresion Norte", "type": "DUCTOS", "state": "Tamaulipas",
+      "lat": 25.4218, "lng": -99.1437, "capacity": "80 MMSCFD", "status": "Operativa", "compressors": 2
+    },
+    {
+      "id": "DUC-CEN-01", "name": "Estacion Compresion Centro", "type": "DUCTOS", "state": "San Luis Potosi",
+      "lat": 22.3218, "lng": -100.8437, "capacity": "120 MMSCFD", "status": "Operativa", "compressors": 3
+    },
+    {
+      "id": "DUC-BAJ-01", "name": "Estacion Regulacion Bajio", "type": "DUCTOS", "state": "Guanajuato",
+      "lat": 20.9218, "lng": -101.4437, "capacity": "60 MMSCFD", "status": "Operativa", "compressors": 1
+    },
+    {
+      "id": "DUC-SUR-01", "name": "Estacion Compresion Sur", "type": "DUCTOS", "state": "Veracruz",
+      "lat": 19.5218, "lng": -96.9237, "capacity": "90 MMSCFD", "status": "Operativa", "compressors": 2
+    },
+    {
+      "id": "FV-SON-01", "name": "Planta Solar Sonora", "type": "FV", "state": "Sonora",
+      "lat": 29.2218, "lng": -110.8937, "capacity": "50 MWp", "status": "Operativa", "inverters": 10
+    },
+    {
+      "id": "FV-CHI-01", "name": "Planta Solar Chihuahua", "type": "FV", "state": "Chihuahua",
+      "lat": 28.8218, "lng": -106.4437, "capacity": "30 MWp", "status": "Operativa", "inverters": 6
+    },
+    {
+      "id": "FV-AGS-01", "name": "Planta Solar Aguascalientes", "type": "FV", "state": "Aguascalientes",
+      "lat": 21.9518, "lng": -102.3237, "capacity": "25 MWp", "status": "Operativa", "inverters": 5
+    },
+    {
+      "id": "FV-GDL-01", "name": "Planta Solar Jalisco", "type": "FV", "state": "Jalisco",
+      "lat": 20.5218, "lng": -103.5137, "capacity": "40 MWp", "status": "Operativa", "inverters": 8
+    },
+    {
+      "id": "FV-SLP-01", "name": "Planta Solar San Luis", "type": "FV", "state": "San Luis Potosi",
+      "lat": 22.2818, "lng": -100.9137, "capacity": "20 MWp", "status": "Mantenimiento", "inverters": 4
+    },
+    {
+      "id": "FV-COA-01", "name": "Planta Solar Coahuila", "type": "FV", "state": "Coahuila",
+      "lat": 25.3918, "lng": -101.0237, "capacity": "60 MWp", "status": "Operativa", "inverters": 12
+    }
+  ],
+  "tas_assets": [
+    {"tag":"SPH-01","name":"Tanque esferico #1","system":"Almacenamiento","type":"SphericalTank","dimensions":"16m diametro","capacity":"2,500 m3","criticality":"CRITICA","sapTag":"ESFERA-001"},
+    {"tag":"SPH-02","name":"Tanque esferico #2","system":"Almacenamiento","type":"SphericalTank","dimensions":"16m diametro","capacity":"2,500 m3","criticality":"CRITICA","sapTag":"ESFERA-002"},
+    {"tag":"SPH-03","name":"Tanque esferico #3","system":"Almacenamiento","type":"SphericalTank","dimensions":"16m diametro","capacity":"2,500 m3","criticality":"CRITICA","sapTag":"ESFERA-003"},
+    {"tag":"BUL-01","name":"Tanque bullet #1","system":"Almacenamiento","type":"BulletTank","dimensions":"20x4m","capacity":"1,800 m3","criticality":"ALTA","sapTag":"BULLET-001"},
+    {"tag":"BUL-02","name":"Tanque bullet #2","system":"Almacenamiento","type":"BulletTank","dimensions":"20x4m","capacity":"1,800 m3","criticality":"ALTA","sapTag":"BULLET-002"},
+    {"tag":"PMP-01","name":"Bomba centrifuga #1","system":"Transferencia","type":"CentrifugalPump","dimensions":"2x1.5x1.8m","capacity":"150 m3/h","criticality":"ALTA","sapTag":"BOMBA-001"},
+    {"tag":"PMP-02","name":"Bomba centrifuga #2","system":"Transferencia","type":"CentrifugalPump","dimensions":"2x1.5x1.8m","capacity":"150 m3/h","criticality":"ALTA","sapTag":"BOMBA-002"},
+    {"tag":"CMP-01","name":"Compresor LP","system":"Transferencia","type":"Compressor","dimensions":"3x2x2.5m","capacity":"200 HP","criticality":"CRITICA","sapTag":"COMPRESOR-001"},
+    {"tag":"MAN-01","name":"Manifold principal","system":"Distribucion","type":"Manifold","dimensions":"8x2x1.5m","capacity":"-","criticality":"ALTA","sapTag":"MANIFOLD-001"},
+    {"tag":"VLV-01","name":"Valvula ESD principal","system":"Seguridad","type":"ESDValve","dimensions":"0.8x0.5x1.2m","capacity":"12 in","criticality":"CRITICA","sapTag":"ESD-001"},
+    {"tag":"VLV-02","name":"Valvula alivio tanque 1","system":"Seguridad","type":"ReliefValve","dimensions":"0.3x0.3x0.8m","capacity":"6 in","criticality":"CRITICA","sapTag":"PSV-001"},
+    {"tag":"LDR-01","name":"Loading arm #1","system":"Despacho","type":"LoadingArm","dimensions":"4x2x3m","capacity":"300 m3/h","criticality":"ALTA","sapTag":"BRAZO-001"},
+    {"tag":"LDR-02","name":"Loading arm #2","system":"Despacho","type":"LoadingArm","dimensions":"4x2x3m","capacity":"300 m3/h","criticality":"ALTA","sapTag":"BRAZO-002"},
+    {"tag":"LDR-03","name":"Loading arm #3","system":"Despacho","type":"LoadingArm","dimensions":"4x2x3m","capacity":"300 m3/h","criticality":"ALTA","sapTag":"BRAZO-003"},
+    {"tag":"BSC-01","name":"Bascula camionera","system":"Despacho","type":"TruckScale","dimensions":"18x3.5x0.5m","capacity":"60 ton","criticality":"MEDIA","sapTag":"BASCULA-001"},
+    {"tag":"MET-01","name":"Skid medicion fiscal","system":"Medicion","type":"MeteringSkid","dimensions":"3x2x2m","capacity":"-","criticality":"ALTA","sapTag":"MEDICION-001"},
+    {"tag":"FWP-01","name":"Bomba contra incendio","system":"SCI","type":"FirePump","dimensions":"2.5x1.5x2m","capacity":"500 GPM","criticality":"CRITICA","sapTag":"SCI-BOMBA-001"},
+    {"tag":"FWT-01","name":"Tanque agua CI","system":"SCI","type":"WaterTank","dimensions":"8m diametro x 6m","capacity":"200 m3","criticality":"ALTA","sapTag":"SCI-TANQUE-001"},
+    {"tag":"MCC-01","name":"Cuarto electrico / MCC","system":"Electrico","type":"MCC","dimensions":"6x4x3m","capacity":"-","criticality":"ALTA","sapTag":"MCC-001"},
+    {"tag":"CTR-01","name":"Cuarto de control","system":"Control","type":"ControlRoom","dimensions":"8x6x3.5m","capacity":"-","criticality":"ALTA","sapTag":"CONTROL-001"},
+    {"tag":"GAS-01","name":"Detector gas H2S/LEL","system":"Seguridad","type":"GasDetector","dimensions":"0.3x0.2x0.4m","capacity":"-","criticality":"ALTA","sapTag":"GAS-DET-001"}
+  ],
+  "gnc_assets": [
+    {"tag":"REG-01","name":"Regulador entrada","system":"Recepcion","type":"PressureRegulator","dimensions":"1.5x1x1.5m","capacity":"6 in","criticality":"ALTA","sapTag":"REG-001"},
+    {"tag":"FLT-01","name":"Filtro coalescente","system":"Tratamiento","type":"CoalescentFilter","dimensions":"1x0.8x2m","capacity":"-","criticality":"MEDIA","sapTag":"FILTRO-001"},
+    {"tag":"DRY-01","name":"Secador desecante","system":"Tratamiento","type":"DesiccantDryer","dimensions":"2x1.5x2.5m","capacity":"5,000 Nm3/h","criticality":"ALTA","sapTag":"SECADOR-001"},
+    {"tag":"CMP-01","name":"Compresor reciprocante #1","system":"Compresion","type":"ReciprocatingCompressor","dimensions":"4x2.5x3m","capacity":"3,000 Nm3/h @ 250 bar","criticality":"CRITICA","sapTag":"COMP-001"},
+    {"tag":"CMP-02","name":"Compresor reciprocante #2","system":"Compresion","type":"ReciprocatingCompressor","dimensions":"4x2.5x3m","capacity":"3,000 Nm3/h @ 250 bar","criticality":"CRITICA","sapTag":"COMP-002"},
+    {"tag":"CLR-01","name":"Enfriador post-compresion","system":"Compresion","type":"Aftercooler","dimensions":"2x1.5x2m","capacity":"-","criticality":"MEDIA","sapTag":"COOLER-001"},
+    {"tag":"PRI-01","name":"Panel de prioridad","system":"Almacenamiento","type":"PriorityPanel","dimensions":"1.5x0.8x2m","capacity":"-","criticality":"ALTA","sapTag":"PRIORITY-001"},
+    {"tag":"CAS-H1","name":"Cascada alta presion #1","system":"Almacenamiento","type":"CascadeBank","dimensions":"6x2x2.5m","capacity":"250 bar","criticality":"ALTA","sapTag":"CASCADE-H1"},
+    {"tag":"CAS-H2","name":"Cascada alta presion #2","system":"Almacenamiento","type":"CascadeBank","dimensions":"6x2x2.5m","capacity":"250 bar","criticality":"ALTA","sapTag":"CASCADE-H2"},
+    {"tag":"CAS-M1","name":"Cascada media presion","system":"Almacenamiento","type":"CascadeBank","dimensions":"6x2x2.5m","capacity":"200 bar","criticality":"ALTA","sapTag":"CASCADE-M1"},
+    {"tag":"CAS-L1","name":"Cascada baja presion","system":"Almacenamiento","type":"CascadeBank","dimensions":"6x2x2.5m","capacity":"150 bar","criticality":"MEDIA","sapTag":"CASCADE-L1"},
+    {"tag":"DSP-01","name":"Dispensador #1","system":"Suministro","type":"Dispenser","dimensions":"1.2x0.8x2.2m","capacity":"200 bar","criticality":"ALTA","sapTag":"DISP-001"},
+    {"tag":"DSP-02","name":"Dispensador #2","system":"Suministro","type":"Dispenser","dimensions":"1.2x0.8x2.2m","capacity":"200 bar","criticality":"ALTA","sapTag":"DISP-002"},
+    {"tag":"DSP-03","name":"Dispensador #3","system":"Suministro","type":"Dispenser","dimensions":"1.2x0.8x2.2m","capacity":"200 bar","criticality":"ALTA","sapTag":"DISP-003"},
+    {"tag":"DSP-04","name":"Dispensador #4","system":"Suministro","type":"Dispenser","dimensions":"1.2x0.8x2.2m","capacity":"200 bar","criticality":"ALTA","sapTag":"DISP-004"},
+    {"tag":"MCC-01","name":"Gabinete electrico","system":"Electrico","type":"MCC","dimensions":"3x1x2.2m","capacity":"-","criticality":"ALTA","sapTag":"MCC-001"},
+    {"tag":"PLC-01","name":"PLC / SCADA","system":"Control","type":"PLC","dimensions":"0.8x0.6x2m","capacity":"-","criticality":"ALTA","sapTag":"PLC-001"},
+    {"tag":"ESD-01","name":"Sistema ESD","system":"Seguridad","type":"ESD","dimensions":"-","capacity":"-","criticality":"CRITICA","sapTag":"ESD-001"}
+  ],
+  "lng_assets": [
+    {"tag":"UNL-01","name":"Area descarga criogenica","system":"Recepcion","type":"UnloadingBay","dimensions":"15x5x4m","capacity":"1 pipa","criticality":"ALTA","sapTag":"DESCARGA-001"},
+    {"tag":"CTK-01","name":"Tanque criogenico #1","system":"Almacenamiento","type":"CryogenicTank","dimensions":"4m diametro x 12m","capacity":"56 KL","criticality":"CRITICA","sapTag":"CRYO-001"},
+    {"tag":"CTK-02","name":"Tanque criogenico #2","system":"Almacenamiento","type":"CryogenicTank","dimensions":"4m diametro x 12m","capacity":"56 KL","criticality":"CRITICA","sapTag":"CRYO-002"},
+    {"tag":"PBU-01","name":"Pressure building unit","system":"Almacenamiento","type":"PressureBuilder","dimensions":"2x1.5x3m","capacity":"-","criticality":"ALTA","sapTag":"PBU-001"},
+    {"tag":"VAP-01","name":"Vaporizador ambiente #1","system":"Regasificacion","type":"AmbientVaporizer","dimensions":"3x2x8m","capacity":"2,000 Nm3/h","criticality":"CRITICA","sapTag":"VAP-001"},
+    {"tag":"VAP-02","name":"Vaporizador ambiente #2","system":"Regasificacion","type":"AmbientVaporizer","dimensions":"3x2x8m","capacity":"2,000 Nm3/h","criticality":"CRITICA","sapTag":"VAP-002"},
+    {"tag":"VAP-03","name":"Vaporizador standby","system":"Regasificacion","type":"AmbientVaporizer","dimensions":"3x2x8m","capacity":"2,000 Nm3/h","criticality":"ALTA","sapTag":"VAP-003"},
+    {"tag":"WBV-01","name":"Vaporizador bano maria","system":"Regasificacion","type":"WaterBathVaporizer","dimensions":"4x2x2.5m","capacity":"1,500 Nm3/h","criticality":"ALTA","sapTag":"WBV-001"},
+    {"tag":"RGS-01","name":"Skid regulacion presion","system":"Regulacion","type":"RegulationSkid","dimensions":"3x2x2.5m","capacity":"4 bar salida","criticality":"ALTA","sapTag":"REG-001"},
+    {"tag":"ODR-01","name":"Odorizador","system":"Regulacion","type":"Odorizer","dimensions":"1x0.8x1.5m","capacity":"-","criticality":"MEDIA","sapTag":"ODOR-001"},
+    {"tag":"MET-01","name":"Skid medicion","system":"Medicion","type":"MeteringSkid","dimensions":"2x1.5x2m","capacity":"-","criticality":"ALTA","sapTag":"MED-001"},
+    {"tag":"BOG-01","name":"Sistema BOG","system":"Almacenamiento","type":"BOGSystem","dimensions":"2x1.5x2.5m","capacity":"-","criticality":"MEDIA","sapTag":"BOG-001"},
+    {"tag":"PLC-01","name":"Panel de control","system":"Control","type":"PLC","dimensions":"2x1x2m","capacity":"-","criticality":"ALTA","sapTag":"PLC-001"},
+    {"tag":"ESD-01","name":"Sistema ESD","system":"Seguridad","type":"ESD","dimensions":"-","capacity":"-","criticality":"CRITICA","sapTag":"ESD-001"}
+  ],
+  "ductos_assets": [
+    {"tag":"YRD-01","name":"Yard piping entrada","system":"Entrada","type":"YardPiping","dimensions":"30x8x3m","capacity":"24 in","criticality":"ALTA","sapTag":"YARD-IN-001"},
+    {"tag":"SCR-01","name":"Scrubber / separador","system":"Separacion","type":"Scrubber","dimensions":"2m diametro x 6m","capacity":"120 MMSCFD","criticality":"ALTA","sapTag":"SCRUBBER-001"},
+    {"tag":"SLG-01","name":"Slug catcher","system":"Separacion","type":"SlugCatcher","dimensions":"3m diametro x 10m","capacity":"-","criticality":"ALTA","sapTag":"SLUG-001"},
+    {"tag":"CMP-01","name":"Compresor centrifugo #1","system":"Compresion","type":"CentrifugalCompressor","dimensions":"5x3x4m","capacity":"60 MMSCFD","criticality":"CRITICA","sapTag":"COMP-001"},
+    {"tag":"CMP-02","name":"Compresor centrifugo #2","system":"Compresion","type":"CentrifugalCompressor","dimensions":"5x3x4m","capacity":"60 MMSCFD","criticality":"CRITICA","sapTag":"COMP-002"},
+    {"tag":"DRV-01","name":"Gas turbine driver #1","system":"Compresion","type":"GasTurbine","dimensions":"6x3x3.5m","capacity":"5,000 HP","criticality":"CRITICA","sapTag":"TURB-001"},
+    {"tag":"DRV-02","name":"Gas turbine driver #2","system":"Compresion","type":"GasTurbine","dimensions":"6x3x3.5m","capacity":"5,000 HP","criticality":"CRITICA","sapTag":"TURB-002"},
+    {"tag":"ACL-01","name":"Aeroenfriador #1","system":"Enfriamiento","type":"AirCooler","dimensions":"6x4x4m","capacity":"-","criticality":"ALTA","sapTag":"COOLER-001"},
+    {"tag":"PIG-L1","name":"Pig launcher","system":"Pigging","type":"PigLauncher","dimensions":"12x2x2.5m","capacity":"24 in","criticality":"ALTA","sapTag":"PIG-LAUNCH-001"},
+    {"tag":"PIG-R1","name":"Pig receiver","system":"Pigging","type":"PigReceiver","dimensions":"12x2x2.5m","capacity":"24 in","criticality":"ALTA","sapTag":"PIG-RECV-001"},
+    {"tag":"MET-01","name":"Skid medicion fiscal","system":"Medicion","type":"MeteringSkid","dimensions":"4x2.5x2.5m","capacity":"USM","criticality":"ALTA","sapTag":"MED-001"},
+    {"tag":"VLV-01","name":"Valvula ESD entrada","system":"Seguridad","type":"ESDValve","dimensions":"1x0.5x1.5m","capacity":"24 in","criticality":"CRITICA","sapTag":"ESD-IN-001"},
+    {"tag":"VLV-02","name":"Valvula ESD salida","system":"Seguridad","type":"ESDValve","dimensions":"1x0.5x1.5m","capacity":"24 in","criticality":"CRITICA","sapTag":"ESD-OUT-001"},
+    {"tag":"YRD-02","name":"Yard piping salida","system":"Salida","type":"YardPiping","dimensions":"30x8x3m","capacity":"24 in","criticality":"ALTA","sapTag":"YARD-OUT-001"},
+    {"tag":"RTU-01","name":"RTU / SCADA","system":"Control","type":"RTU","dimensions":"1x0.6x2m","capacity":"-","criticality":"ALTA","sapTag":"RTU-001"},
+    {"tag":"CTR-01","name":"Edificio control","system":"Control","type":"ControlBuilding","dimensions":"12x8x4m","capacity":"-","criticality":"ALTA","sapTag":"CTRL-001"},
+    {"tag":"TLM-01","name":"Torre telecom","system":"Comunicaciones","type":"TelecomTower","dimensions":"30m altura","capacity":"-","criticality":"ALTA","sapTag":"TELECOM-001"}
+  ],
+  "fv_assets": [
+    {"tag":"ARR-01","name":"Array solar bloque 1","system":"Generacion","type":"SolarArray","dimensions":"50x20m","capacity":"2 MWp","criticality":"ALTA","sapTag":"ARRAY-001"},
+    {"tag":"ARR-02","name":"Array solar bloque 2","system":"Generacion","type":"SolarArray","dimensions":"50x20m","capacity":"2 MWp","criticality":"ALTA","sapTag":"ARRAY-002"},
+    {"tag":"ARR-03","name":"Array solar bloque 3","system":"Generacion","type":"SolarArray","dimensions":"50x20m","capacity":"2 MWp","criticality":"ALTA","sapTag":"ARRAY-003"},
+    {"tag":"ARR-04","name":"Array solar bloque 4","system":"Generacion","type":"SolarArray","dimensions":"50x20m","capacity":"2 MWp","criticality":"ALTA","sapTag":"ARRAY-004"},
+    {"tag":"TRK-01","name":"Tracker 1 eje fila 1-10","system":"Generacion","type":"SingleAxisTracker","dimensions":"variable","capacity":"-","criticality":"MEDIA","sapTag":"TRACKER-001"},
+    {"tag":"CMB-01","name":"DC Combiner box #1","system":"DC","type":"CombinerBox","dimensions":"0.8x0.4x1m","capacity":"16 strings","criticality":"MEDIA","sapTag":"CBOX-001"},
+    {"tag":"CMB-02","name":"DC Combiner box #2","system":"DC","type":"CombinerBox","dimensions":"0.8x0.4x1m","capacity":"16 strings","criticality":"MEDIA","sapTag":"CBOX-002"},
+    {"tag":"CMB-03","name":"DC Combiner box #3","system":"DC","type":"CombinerBox","dimensions":"0.8x0.4x1m","capacity":"16 strings","criticality":"MEDIA","sapTag":"CBOX-003"},
+    {"tag":"INV-01","name":"Inversor string #1","system":"Conversion","type":"StringInverter","dimensions":"1.2x0.5x0.8m","capacity":"250 kW","criticality":"ALTA","sapTag":"INV-001"},
+    {"tag":"INV-02","name":"Inversor string #2","system":"Conversion","type":"StringInverter","dimensions":"1.2x0.5x0.8m","capacity":"250 kW","criticality":"ALTA","sapTag":"INV-002"},
+    {"tag":"INV-03","name":"Inversor central #1","system":"Conversion","type":"CentralInverter","dimensions":"2.5x1.2x2m","capacity":"2,500 kW","criticality":"CRITICA","sapTag":"INV-C-001"},
+    {"tag":"TRF-01","name":"Transformador MV #1","system":"Elevacion","type":"MVTransformer","dimensions":"2.5x1.8x2.5m","capacity":"3 MVA","criticality":"ALTA","sapTag":"TRAFO-001"},
+    {"tag":"TRF-02","name":"Transformador MV #2","system":"Elevacion","type":"MVTransformer","dimensions":"2.5x1.8x2.5m","capacity":"3 MVA","criticality":"ALTA","sapTag":"TRAFO-002"},
+    {"tag":"SUB-01","name":"Subestacion elevadora","system":"Interconexion","type":"Substation","dimensions":"40x40m","capacity":"115 kV","criticality":"CRITICA","sapTag":"SUB-001"},
+    {"tag":"SWG-01","name":"Switchgear MV","system":"Interconexion","type":"Switchgear","dimensions":"3x1x2.2m","capacity":"34.5 kV","criticality":"ALTA","sapTag":"SWG-001"},
+    {"tag":"MET-01","name":"Medidor revenue-grade","system":"Medicion","type":"RevenueMeter","dimensions":"0.5x0.3x0.8m","capacity":"-","criticality":"ALTA","sapTag":"MED-001"},
+    {"tag":"WEA-01","name":"Estacion meteorologica","system":"Monitoreo","type":"WeatherStation","dimensions":"3m mast","capacity":"-","criticality":"MEDIA","sapTag":"METEO-001"},
+    {"tag":"PPC-01","name":"Power Plant Controller","system":"Control","type":"PPC","dimensions":"0.8x0.6x2m","capacity":"-","criticality":"CRITICA","sapTag":"PPC-001"},
+    {"tag":"SCA-01","name":"SCADA / RTU","system":"Control","type":"SCADA","dimensions":"1x0.6x2m","capacity":"-","criticality":"ALTA","sapTag":"SCADA-001"},
+    {"tag":"CAM-01","name":"CCTV perimetral","system":"Seguridad","type":"CCTV","dimensions":"-","capacity":"8 camaras","criticality":"MEDIA","sapTag":"CCTV-001"}
+  ]
+}

@@ -1,0 +1,2308 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Digital Twin | Estacion Compresion Ductos</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════
+   ROOT VARIABLES & RESET
+   ═══════════════════════════════════════════════ */
+:root {
+  --bg:#060D18;--s1:#0A1420;--s2:#111D2B;--s3:#182838;
+  --or:#FF5500;--or-dim:rgba(255,85,0,.15);
+  --cy:#00C8F0;--cy-dim:rgba(0,200,240,.12);
+  --gr:#10D858;--gr-dim:rgba(16,216,88,.12);
+  --re:#E02020;--re-dim:rgba(224,32,32,.15);
+  --ye:#F0A000;--ye-dim:rgba(240,160,0,.12);
+  --t0:#E8F4FF;--t1:#7AAAC8;--t2:#3A607A;
+  --border:rgba(255,255,255,.06);--border2:rgba(255,255,255,.1);--border3:rgba(255,255,255,.15);
+  --radius:8px;--radius-sm:5px;
+  --shadow:0 2px 12px rgba(0,0,0,.4);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--t0);font-family:'Space Grotesk',sans-serif}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+/* ═══════════════════════════════════════════════
+   KEYFRAME ANIMATIONS
+   ═══════════════════════════════════════════════ */
+@keyframes pd{0%,100%{opacity:1}50%{opacity:.4}}
+@keyframes pulse-ring{0%{transform:scale(1);opacity:.6}100%{transform:scale(2.8);opacity:0}}
+@keyframes slide-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes glow{0%,100%{filter:brightness(1)}50%{filter:brightness(1.3)}}
+@keyframes bar-grow{from{width:0}to{width:var(--w)}}
+@keyframes flicker{0%,100%{opacity:.8}25%{opacity:1}50%{opacity:.6}75%{opacity:.9}}
+
+/* ═══════════════════════════════════════════════
+   HEADER (52px)
+   ═══════════════════════════════════════════════ */
+#header{height:52px;background:var(--s1);border-bottom:1px solid var(--border2);display:flex;align-items:center;padding:0 20px;gap:14px;flex-shrink:0;position:relative;z-index:100}
+.h-logo{width:32px;height:32px;background:var(--or);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;color:#fff;letter-spacing:-0.5px;flex-shrink:0}
+.h-sep{width:1px;height:24px;background:var(--border2)}
+.h-plant{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--t1)}
+.h-plant b{color:var(--t0);font-weight:600}
+.h-status{display:flex;align-items:center;gap:6px;margin-left:auto}
+.h-dot{width:7px;height:7px;border-radius:50%;background:var(--gr);box-shadow:0 0 8px var(--gr);animation:pd 2s infinite}
+.h-status-txt{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--gr)}
+.h-time{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--t2)}
+.demo-badge{background:var(--re);color:#fff;font-size:9px;font-weight:700;letter-spacing:.12em;padding:2px 8px;border-radius:2px;font-family:'IBM Plex Mono',monospace}
+.h-back{background:var(--s2);border:1px solid var(--border2);border-radius:6px;padding:6px 14px;color:var(--t1);cursor:pointer;font-size:12px;font-family:'Space Grotesk',sans-serif;font-weight:500;text-decoration:none;transition:all .2s;display:flex;align-items:center;gap:6px}
+.h-back:hover{background:var(--s3);color:var(--or);border-color:var(--or)}
+.h-alert-btn{background:var(--s2);border:1px solid var(--border2);border-radius:6px;padding:6px 12px;color:var(--t1);cursor:pointer;font-size:13px;display:flex;align-items:center;gap:6px;transition:all .2s;font-family:inherit}
+.h-alert-btn:hover{background:var(--s3);color:var(--or);border-color:var(--or)}
+.h-alert-cnt{background:var(--re);color:#fff;font-size:9px;font-weight:700;padding:1px 5px;border-radius:8px;font-family:'IBM Plex Mono',monospace}
+
+/* ═══════════════════════════════════════════════
+   MAIN LAYOUT
+   ═══════════════════════════════════════════════ */
+#app{display:flex;height:calc(100vh - 52px);overflow:hidden}
+
+/* ═══════════════════════════════════════════════
+   LEFT SIDEBAR (280px)
+   ═══════════════════════════════════════════════ */
+#sidebar-left{width:280px;flex-shrink:0;background:var(--s1);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.sl-tabs{display:flex;border-bottom:1px solid var(--border);flex-shrink:0}
+.sl-tab{flex:1;padding:10px 8px;text-align:center;font-size:10px;font-weight:600;letter-spacing:.08em;color:var(--t2);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;text-transform:uppercase;font-family:'IBM Plex Mono',monospace}
+.sl-tab:hover{color:var(--t1)}.sl-tab.active{color:var(--or);border-bottom-color:var(--or)}
+.sl-panel{flex:1;overflow-y:auto;display:none}.sl-panel.active{display:block}
+
+.sl-section{padding:14px 16px 8px;border-bottom:1px solid var(--border)}
+.sl-label{font-size:10px;font-weight:600;letter-spacing:.15em;color:var(--t2);text-transform:uppercase;margin-bottom:10px;font-family:'IBM Plex Mono',monospace}
+
+.kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:14px 16px}
+.kpi-card{background:var(--s2);border-radius:8px;padding:10px;border:1px solid var(--border)}
+.kpi-val{font-size:20px;font-weight:700;color:var(--or);line-height:1}
+.kpi-val.cy{color:var(--cy)}.kpi-val.gr{color:var(--gr)}.kpi-val.re{color:var(--re)}.kpi-val.ye{color:var(--ye)}
+.kpi-unit{font-family:'IBM Plex Mono',monospace;font-size:8px;color:var(--t2);margin-left:2px}
+.kpi-lbl{font-size:10px;color:var(--t1);margin-top:3px}
+
+.asset-list{padding:8px 16px;overflow-y:auto;flex:1}
+.asset-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:6px;cursor:pointer;transition:all .2s;margin-bottom:2px;border:1px solid transparent}
+.asset-item:hover{background:var(--s2)}
+.asset-item.active{background:var(--or-dim);border-color:rgba(255,85,0,.3)}
+.ai-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.ai-dot.ok{background:var(--gr);box-shadow:0 0 6px var(--gr)}
+.ai-dot.warn{background:var(--ye);box-shadow:0 0 6px var(--ye);animation:pd 1.5s infinite}
+.ai-dot.crit{background:var(--re);box-shadow:0 0 6px var(--re);animation:pd .8s infinite}
+.ai-name{font-size:12px;font-weight:600;color:var(--t0)}
+.ai-sub{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--t2)}
+
+/* ═══════════════════════════════════════════════
+   SIDEBAR FULLSCREEN LAUNCH BUTTONS
+   ═══════════════════════════════════════════════ */
+.sl-launch-btn{display:flex;align-items:center;gap:10px;padding:12px 16px;margin:6px 16px;background:var(--s2);border:1px solid var(--border2);border-radius:8px;cursor:pointer;transition:all .2s;color:var(--t0);font-size:12px;font-weight:600;font-family:inherit}
+.sl-launch-btn:hover{background:var(--s3);border-color:var(--or);color:var(--or)}
+.sl-launch-icon{width:32px;height:32px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;font-family:'IBM Plex Mono',monospace;flex-shrink:0}
+.sl-launch-sub{font-size:9px;color:var(--t2);font-weight:400;margin-top:2px}
+
+/* ═══════════════════════════════════════════════
+   CENTER
+   ═══════════════════════════════════════════════ */
+#center{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
+
+/* ═══════════════════════════════════════════════
+   CENTER TABS
+   ═══════════════════════════════════════════════ */
+#tabs{display:flex;gap:0;padding:0 16px;border-bottom:1px solid var(--border);background:var(--s1);flex-shrink:0}
+.tab{font-size:12px;font-weight:600;letter-spacing:.05em;padding:11px 16px;cursor:pointer;color:var(--t2);border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap}
+.tab:hover{color:var(--t1)}.tab.active{color:var(--or);border-bottom-color:var(--or)}
+
+/* ═══════════════════════════════════════════════
+   VIEWS
+   ═══════════════════════════════════════════════ */
+.view{flex:1;overflow:hidden;position:relative;display:none!important}
+.view.active{display:flex!important;flex-direction:column}
+
+/* ═══════════════════════════════════════════════
+   3D VIEW
+   ═══════════════════════════════════════════════ */
+#view-3d{position:relative}
+#view-3d canvas{width:100%!important;height:100%!important;display:block}
+
+/* ═══════════════════════════════════════════════
+   3D OVERLAY TOGGLES
+   ═══════════════════════════════════════════════ */
+.overlay-3d{position:absolute;top:10px;left:10px;display:flex;flex-direction:column;gap:4px;z-index:10}
+.sys-toggle{display:flex;align-items:center;gap:6px;padding:5px 10px;background:rgba(10,20,32,.92);border:1px solid var(--border2);border-radius:5px;cursor:pointer;transition:all .2s;font-size:10px;font-weight:600;color:var(--t1);backdrop-filter:blur(8px);font-family:'IBM Plex Mono',monospace}
+.sys-toggle:hover{border-color:var(--or);color:var(--t0)}
+.sys-toggle.active{border-color:var(--or);color:var(--or);background:rgba(255,85,0,.08)}
+.sys-toggle .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+
+/* ═══════════════════════════════════════════════
+   EQUIPMENT PANEL (RIGHT) - RICH
+   ═══════════════════════════════════════════════ */
+#equip-panel{position:absolute;top:12px;right:12px;width:340px;background:rgba(10,20,32,.96);border:1px solid var(--border2);border-radius:10px;padding:16px;display:none;overflow-y:auto;max-height:calc(100% - 24px);backdrop-filter:blur(12px);z-index:10}
+.ep-close{position:absolute;top:8px;right:12px;cursor:pointer;color:var(--t2);font-size:16px;background:none;border:none}
+.ep-close:hover{color:var(--t0)}
+.ep-tag{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--or);margin-bottom:2px}
+.ep-name{font-size:18px;font-weight:700;margin-bottom:6px}
+.ep-conf{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:9px;padding:2px 6px;border-radius:3px;margin-bottom:10px}
+.ep-conf.alta{background:var(--re-dim);color:var(--re)}.ep-conf.media{background:var(--ye-dim);color:var(--ye)}.ep-conf.baja{background:var(--gr-dim);color:var(--gr)}
+.ep-section{font-size:10px;font-weight:600;letter-spacing:.1em;color:var(--t2);text-transform:uppercase;margin:12px 0 6px;border-bottom:1px solid var(--border);padding-bottom:4px;font-family:'IBM Plex Mono',monospace}
+.ep-row{display:flex;justify-content:space-between;font-size:12px;padding:3px 0}
+.ep-row .k{color:var(--t1)}.ep-row .v{color:var(--t0);font-family:'IBM Plex Mono',monospace;font-size:11px}
+.ep-sensor{display:flex;justify-content:space-between;align-items:center;padding:4px 8px;background:var(--s2);border-radius:4px;margin-bottom:3px;font-size:11px}
+.ep-sensor .sn{color:var(--t1)}.ep-sensor .sv{font-family:'IBM Plex Mono',monospace;font-weight:600}
+.ep-sensor .sv.ok{color:var(--gr)}.ep-sensor .sv.warn{color:var(--ye)}.ep-sensor .sv.crit{color:var(--re)}
+.ep-btn{width:100%;padding:8px;border-radius:6px;border:1px solid var(--or);background:transparent;color:var(--or);font-size:11px;font-weight:600;cursor:pointer;margin-top:6px;transition:all .2s;font-family:inherit}
+.ep-btn:hover{background:var(--or);color:#fff}
+.ep-btn-row{display:flex;gap:6px;margin-top:6px}
+.ep-btn-row .ep-btn{flex:1;margin-top:0}
+.ep-trend-canvas{width:100%;height:80px;background:var(--s2);border-radius:6px;margin-top:6px}
+.ep-qr{width:80px;height:80px;background:var(--s2);border:1px solid var(--border);border-radius:6px;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:8px;color:var(--t2)}
+.qr-container{display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px;background:rgba(10,20,32,.6);border-radius:6px;border:1px solid rgba(255,255,255,.06)}
+.qr-label{font-family:'IBM Plex Mono',monospace;font-size:9px;color:rgba(255,255,255,.4)}
+.ep-doc-item{display:flex;align-items:center;gap:6px;padding:4px 8px;background:var(--s2);border-radius:4px;margin-bottom:3px;font-size:10px;color:var(--t1);cursor:pointer;transition:background .2s}
+.ep-doc-item:hover{background:var(--s3);color:var(--or)}
+.ep-wo-item{padding:6px 8px;background:var(--s2);border-radius:4px;margin-bottom:3px;font-size:10px;border-left:3px solid var(--cy)}
+.ep-wo-item .wo-id{font-family:'IBM Plex Mono',monospace;color:#0a84ff;font-weight:600}
+.ep-wo-item .wo-desc{color:var(--t1);margin-top:2px}
+
+/* ═══════════════════════════════════════════════
+   MONITOR / DASHBOARD VIEW
+   ═══════════════════════════════════════════════ */
+.dash-view{overflow-y:auto;padding:20px;gap:16px}
+.dash-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.dash-title{font-size:20px;font-weight:700}.dash-sub{font-size:11px;color:var(--t1)}
+.dash-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-bottom:16px}
+.dk-card{background:var(--s1);border-radius:8px;padding:14px;border:1px solid var(--border)}
+.dk-val{font-size:26px;font-weight:700}.dk-val.ok{color:var(--gr)}.dk-val.warn{color:var(--ye)}.dk-val.crit{color:var(--re)}.dk-val.info{color:var(--cy)}.dk-val.or{color:var(--or)}
+.dk-lbl{font-size:11px;color:var(--t1);margin-top:3px}.dk-sub{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--t2);margin-top:2px}
+.dash-section{font-size:13px;font-weight:700;color:var(--t1);letter-spacing:.05em;margin:16px 0 8px}
+.dash-grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.dash-grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.dash-card{background:var(--s1);border-radius:8px;padding:14px;border:1px solid var(--border)}
+.dash-card-title{font-size:12px;font-weight:700;margin-bottom:8px}
+.dt-table{width:100%;border-collapse:collapse;font-size:11px}
+.dt-table th{text-align:left;padding:7px 10px;font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;color:var(--t2);letter-spacing:.08em;text-transform:uppercase;border-bottom:1px solid var(--border);background:var(--s2)}
+.dt-table td{padding:7px 10px;border-bottom:1px solid var(--border);color:var(--t1)}
+.health-bar{flex:1;height:5px;background:var(--s3);border-radius:3px;overflow:hidden}
+.health-fill{height:100%;border-radius:3px;transition:width .5s}
+.health-fill.ok{background:var(--gr)}.health-fill.warn{background:var(--ye)}.health-fill.crit{background:var(--re)}
+.status-badge{font-family:'IBM Plex Mono',monospace;font-size:8px;padding:2px 6px;border-radius:3px}
+.status-badge.ok{background:var(--gr-dim);color:var(--gr)}
+.status-badge.warn{background:var(--ye-dim);color:var(--ye)}
+.status-badge.crit{background:var(--re-dim);color:var(--re)}
+.status-badge.info{background:var(--cy-dim);color:var(--cy)}
+
+/* ═══════════════════════════════════════════════
+   GAUGE CANVAS
+   ═══════════════════════════════════════════════ */
+.gauge-wrap{text-align:center;margin-bottom:10px}
+.gauge-label{font-size:10px;color:var(--t1);margin-top:4px}
+
+/* ═══════════════════════════════════════════════
+   ALERT CARDS (monitor view)
+   ═══════════════════════════════════════════════ */
+.alert-card{background:var(--s1);border-radius:8px;padding:14px 16px;border-left:4px solid;display:flex;gap:14px;align-items:flex-start;margin-bottom:6px}
+.alert-card.crit{border-color:var(--re);background:rgba(224,32,32,.03)}
+.alert-card.warn{border-color:var(--ye);background:rgba(240,160,0,.03)}
+.alert-card.ok{border-color:var(--gr);background:rgba(16,216,88,.03)}
+.ac-icon{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;flex-shrink:0}
+.alert-card.crit .ac-icon{background:var(--re-dim);color:var(--re);border:1px solid var(--re)}
+.alert-card.warn .ac-icon{background:var(--ye-dim);color:var(--ye);border:1px solid var(--ye)}
+.alert-card.ok .ac-icon{background:var(--gr-dim);color:var(--gr);border:1px solid var(--gr)}
+.ac-body{flex:1}.ac-title{font-size:14px;font-weight:700;margin-bottom:3px}
+.ac-title.crit{color:var(--re)}.ac-title.warn{color:var(--ye)}
+.ac-desc{font-size:12px;color:var(--t1);line-height:1.5}
+.ac-meta{display:flex;gap:14px;margin-top:6px}
+.ac-tag{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--t2)}.ac-tag span{color:var(--t1)}
+
+/* ═══════════════════════════════════════════════
+   BOTTOM BAR
+   ═══════════════════════════════════════════════ */
+#bottombar{height:28px;background:var(--s1);border-top:1px solid var(--border);display:flex;align-items:center;padding:0 16px;font-size:9px;color:var(--t2);letter-spacing:.08em;flex-shrink:0;gap:16px}
+.bb-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+
+/* ═══════════════════════════════════════════════
+   SAP PRIO / WO STATUS (reusable)
+   ═══════════════════════════════════════════════ */
+.sap-prio{font-family:'IBM Plex Mono',monospace;font-size:8px;padding:1px 5px;border-radius:2px;font-weight:600;white-space:nowrap}
+.sap-prio.p1{background:rgba(224,32,32,.15);color:#e02020}
+.sap-prio.p2{background:rgba(240,160,0,.15);color:#f0a000}
+.sap-prio.p3{background:rgba(0,200,240,.12);color:#00c8f0}
+.sap-prio.p4{background:rgba(16,216,88,.12);color:#10d858}
+.sap-wo-status{font-family:'IBM Plex Mono',monospace;font-size:8px;padding:1px 5px;border-radius:2px}
+.sap-wo-status.open{background:rgba(224,32,32,.12);color:#e02020}
+.sap-wo-status.prog{background:rgba(0,200,240,.12);color:#00c8f0}
+.sap-wo-status.cert{background:rgba(240,160,0,.12);color:#f0a000}
+
+/* ═══════════════════════════════════════════════
+   FULLSCREEN OVERLAY (SAP, ACC, TANDEM)
+   ═══════════════════════════════════════════════ */
+.fs-overlay{position:fixed;top:0;left:0;width:100%;height:100%;z-index:500;display:none;flex-direction:column;animation:slide-in .3s ease}
+.fs-overlay.open{display:flex}
+
+/* --- SAP FULLSCREEN --- */
+.sap-fs-header{height:48px;background:#354A5F;display:flex;align-items:center;padding:0 20px;gap:12px;flex-shrink:0}
+.sap-fs-logo{width:32px;height:32px;background:#fff;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;color:#354A5F;font-family:'IBM Plex Mono',monospace}
+.sap-fs-title{font-size:14px;font-weight:600;color:#fff}
+.sap-fs-sub{font-size:10px;color:rgba(255,255,255,.6);font-family:'IBM Plex Mono',monospace}
+.sap-fs-close{margin-left:auto;background:none;border:1px solid rgba(255,255,255,.3);border-radius:6px;color:#fff;font-size:18px;width:32px;height:32px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.sap-fs-close:hover{background:rgba(255,255,255,.15);border-color:#fff}
+.sap-fs-body{flex:1;display:flex;overflow:hidden;background:#F0F2F5}
+.sap-fs-nav{width:200px;background:#354A5F;flex-shrink:0;display:flex;flex-direction:column;padding-top:8px}
+.sap-fs-nav-item{padding:12px 20px;color:rgba(255,255,255,.7);font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;border-left:3px solid transparent;display:flex;align-items:center;gap:8px}
+.sap-fs-nav-item:hover{background:rgba(255,255,255,.08);color:#fff}
+.sap-fs-nav-item.active{background:rgba(255,255,255,.12);color:#fff;border-left-color:#fff}
+.sap-fs-nav-icon{width:20px;text-align:center;font-size:10px;font-family:'IBM Plex Mono',monospace;font-weight:800}
+.sap-fs-content{flex:1;overflow-y:auto;padding:24px}
+.sap-fs-panel{display:none}.sap-fs-panel.active{display:block}
+
+/* SAP Fiori tiles */
+.fiori-tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;max-width:800px}
+.fiori-tile{background:#fff;border-radius:8px;padding:20px;cursor:pointer;transition:all .2s;border:1px solid #e0e0e0;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.fiori-tile:hover{box-shadow:0 4px 16px rgba(0,0,0,.15);transform:translateY(-2px)}
+.fiori-tile-count{font-size:32px;font-weight:700;color:#354A5F;margin-bottom:4px}
+.fiori-tile-count.warn{color:#e78c07}.fiori-tile-count.crit{color:#bb0000}.fiori-tile-count.ok{color:#2b7c2b}
+.fiori-tile-label{font-size:12px;color:#666;font-weight:500}
+.fiori-tile-footer{font-size:10px;color:#999;margin-top:8px;font-family:'IBM Plex Mono',monospace}
+
+/* SAP fullscreen table */
+.sap-fs-table{width:100%;border-collapse:collapse;background:#fff;border-radius:8px;overflow:hidden;font-size:13px}
+.sap-fs-table th{text-align:left;padding:12px 16px;background:#f7f7f7;font-size:11px;font-weight:600;color:#666;text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid #e0e0e0}
+.sap-fs-table td{padding:10px 16px;border-bottom:1px solid #f0f0f0;color:#333}
+.sap-fs-table tr:hover{background:#f5f8ff}
+.sap-fs-table tr{cursor:pointer}
+
+/* SAP APM cards */
+.apm-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
+.apm-card{background:#fff;border-radius:8px;padding:16px;border:1px solid #e0e0e0}
+.apm-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.apm-card-tag{font-family:'IBM Plex Mono',monospace;font-size:10px;color:#0854a0;font-weight:600}
+.apm-card-name{font-size:14px;font-weight:700;color:#333}
+.apm-card-health{font-family:'IBM Plex Mono',monospace;font-size:20px;font-weight:700}
+.apm-bar{width:100%;height:6px;background:#e8e8e8;border-radius:3px;margin-top:8px;overflow:hidden}
+.apm-bar-fill{height:100%;border-radius:3px}
+.apm-row{display:flex;justify-content:space-between;padding:4px 0;font-size:12px;color:#666;border-bottom:1px solid #f5f5f5}
+.apm-row .av{font-family:'IBM Plex Mono',monospace;color:#333;font-weight:500}
+
+/* SAP MM */
+.mm-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+.mm-item{background:#fff;border-radius:8px;padding:14px;border:1px solid #e0e0e0}
+.mm-item-qty{font-size:24px;font-weight:700;color:#0854a0}
+.mm-item-name{font-size:12px;color:#666;margin-top:4px}
+
+/* SAP BTP */
+.btp-flow{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:20px}
+.btp-node{background:#fff;border:1px solid #e0e0e0;border-radius:8px;padding:12px 16px;font-size:12px;font-weight:600;color:#354A5F;display:flex;align-items:center;gap:6px}
+.btp-node .btp-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.btp-arrow{color:#999;font-size:16px;font-weight:700}
+.btp-log{background:#fff;border:1px solid #e0e0e0;border-radius:8px;padding:16px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#555;max-height:300px;overflow-y:auto;line-height:1.8}
+.btp-log div{border-bottom:1px solid #f5f5f5;padding:2px 0}
+
+/* --- ACC FULLSCREEN --- */
+.acc-fs-header{height:48px;background:#2E3B4E;display:flex;align-items:center;padding:0 20px;gap:12px;flex-shrink:0}
+.acc-fs-logo{width:28px;height:28px;background:#FF5500;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:900;color:#fff;font-family:'IBM Plex Mono',monospace}
+.acc-fs-title{font-size:14px;font-weight:600;color:#fff}
+.acc-fs-proj{font-size:10px;color:rgba(255,255,255,.6);font-family:'IBM Plex Mono',monospace;background:rgba(255,255,255,.1);padding:4px 10px;border-radius:4px}
+.acc-fs-close{margin-left:auto;background:none;border:1px solid rgba(255,255,255,.3);border-radius:6px;color:#fff;font-size:18px;width:32px;height:32px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.acc-fs-close:hover{background:rgba(255,255,255,.15)}
+.acc-fs-body{flex:1;display:flex;overflow:hidden;background:#1a1a1a}
+.acc-fs-tree{width:220px;background:#111;border-right:1px solid #2a2a2a;overflow-y:auto;padding:12px 0;flex-shrink:0}
+.acc-fs-tree-hdr{padding:8px 16px;font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;color:#555;text-transform:uppercase;letter-spacing:.12em}
+.acc-fs-tree-item{display:flex;align-items:center;gap:8px;padding:8px 16px;cursor:pointer;font-size:12px;color:#888;transition:all .15s;border-left:3px solid transparent}
+.acc-fs-tree-item:hover{background:rgba(255,255,255,.04);color:#ccc}
+.acc-fs-tree-item.sel{background:rgba(255,85,0,.08);color:var(--or);border-left-color:var(--or)}
+.acc-fs-tree-icon{font-size:10px;opacity:.6}
+.acc-fs-viewer{flex:1;display:flex;flex-direction:column;padding:24px;overflow-y:auto;background:#1e1e1e}
+.acc-fs-doc-title{font-size:18px;font-weight:700;color:#ddd;margin-bottom:6px}
+.acc-fs-doc-meta{font-family:'IBM Plex Mono',monospace;font-size:10px;color:#555;margin-bottom:16px;display:flex;gap:16px}
+.acc-fs-preview{flex:1;background:#151515;border:1px solid #2a2a2a;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-direction:column;color:#444;font-size:14px;gap:12px;min-height:300px}
+
+/* --- TANDEM FULLSCREEN --- */
+.tandem-fs-header{height:48px;background:#1a1a2e;display:flex;align-items:center;padding:0 20px;gap:12px;flex-shrink:0}
+.tandem-fs-logo{width:28px;height:28px;background:var(--cy);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:900;color:#000;font-family:'IBM Plex Mono',monospace}
+.tandem-fs-title{font-size:14px;font-weight:600;color:#fff}
+.tandem-fs-close{margin-left:auto;background:none;border:1px solid rgba(255,255,255,.3);border-radius:6px;color:#fff;font-size:18px;width:32px;height:32px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.tandem-fs-close:hover{background:rgba(255,255,255,.15)}
+.tandem-fs-body{flex:1;display:flex;overflow:hidden;background:#0d0d1a}
+.tandem-fs-tree{width:240px;background:#111122;border-right:1px solid #222;overflow-y:auto;padding:12px 0;flex-shrink:0}
+.tandem-fs-tree-hdr{padding:8px 16px;font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;color:#555;text-transform:uppercase;letter-spacing:.12em;display:flex;align-items:center;gap:6px}
+.tandem-fs-tree-item{display:flex;align-items:center;gap:8px;padding:6px 16px 6px 24px;cursor:pointer;font-size:11px;color:#888;transition:all .15s;border-left:2px solid transparent}
+.tandem-fs-tree-item:hover{background:rgba(0,200,240,.05);color:#aaa}
+.tandem-fs-tree-item.sel{background:rgba(0,200,240,.08);color:var(--cy);border-left-color:var(--cy)}
+.tandem-fs-tree-sub{padding-left:40px;font-size:10px;color:#666;padding:4px 16px 4px 40px;cursor:pointer;transition:all .15s}
+.tandem-fs-tree-sub:hover{color:var(--cy)}
+.tandem-fs-content{flex:1;overflow-y:auto;padding:24px}
+.tandem-fs-card{background:#151528;border:1px solid #222;border-radius:8px;padding:16px;margin-bottom:12px}
+.tandem-fs-card-title{font-size:14px;font-weight:700;color:#ddd;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.tandem-fs-row{display:flex;justify-content:space-between;padding:5px 0;font-size:12px;border-bottom:1px solid rgba(255,255,255,.04)}
+.tandem-fs-row .tfk{color:#666}.tandem-fs-row .tfv{color:#aaa;font-family:'IBM Plex Mono',monospace}
+.tandem-fs-stream{background:#0a0a18;border:1px solid #222;border-radius:6px;padding:12px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#555;max-height:200px;overflow-y:auto;margin-top:12px}
+.tandem-fs-stream div{padding:2px 0;border-bottom:1px solid rgba(255,255,255,.03)}
+
+/* ═══════════════════════════════════════════════
+   CSS2D LABELS (IoT floating data)
+   ═══════════════════════════════════════════════ */
+.iot-label{background:rgba(6,13,24,.92);border:1px solid rgba(255,255,255,.15);border-radius:6px;padding:6px 10px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#E8F4FF;pointer-events:none;white-space:nowrap;backdrop-filter:blur(8px);line-height:1.4}
+.iot-label.border-or{border-left:3px solid #FF5500}
+.iot-label.border-cy{border-left:3px solid #00C8F0}
+.iot-label.border-gr{border-left:3px solid #10D858}
+.iot-label.border-ye{border-left:3px solid #F0A000}
+
+/* ===============================================
+   HAMBURGER / MOBILE MENU
+   =============================================== */
+.hamburger-btn{display:none;background:none;border:1px solid var(--border2);border-radius:6px;padding:6px 8px;cursor:pointer;flex-shrink:0;align-items:center;justify-content:center}
+.hamburger-btn span{display:block;width:18px;height:2px;background:var(--t1);margin:3px 0;transition:all .3s}
+.mobile-overlay{display:none;position:fixed;top:52px;left:0;right:0;bottom:0;background:rgba(0,0,0,.6);z-index:90}
+
+/* ===============================================
+   MOBILE RESPONSIVE - max 900px
+   =============================================== */
+@media(max-width:900px){
+  .hamburger-btn{display:flex}
+  .h-plant{font-size:10px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .h-sep{display:none}
+  .demo-badge{display:none}
+  .h-status-txt{display:none}
+  .h-time{display:none}
+  .h-back{padding:5px 10px;font-size:11px}
+  .h-back span.back-text{display:none}
+
+  #sidebar-left{position:fixed;top:52px;left:0;bottom:0;width:300px;z-index:95;transform:translateX(-100%);transition:transform .3s ease;overflow-y:auto}
+  #sidebar-left.open{transform:translateX(0)}
+  .mobile-overlay.open{display:block}
+
+  #app{flex-direction:column}
+  #center{width:100%;height:calc(100vh - 52px)}
+
+  #tabs{overflow-x:auto;padding:0 8px;-webkit-overflow-scrolling:touch}
+  .tab{padding:9px 12px;font-size:11px;flex-shrink:0}
+
+  #view-3d canvas{width:100%!important;height:100%!important}
+  .overlay-3d{top:6px;left:6px}
+  .sys-toggle{padding:4px 7px;font-size:9px}
+  #equip-panel{width:280px;right:6px;top:6px;max-height:calc(100% - 12px)}
+
+  .dash-view{padding:12px}
+  .dash-kpis{grid-template-columns:repeat(2,1fr);gap:6px}
+  .dash-grid2,.dash-grid3{grid-template-columns:1fr}
+  .dk-val{font-size:20px}
+
+  .sap-fs-nav{width:160px}
+  .sap-fs-nav-item{padding:10px 14px;font-size:11px}
+  .fiori-tiles{grid-template-columns:repeat(2,1fr)}
+  .acc-fs-tree{width:180px}
+  .tandem-fs-tree{width:200px}
+
+  #bottombar{font-size:8px;padding:0 8px;gap:8px;overflow-x:auto;white-space:nowrap}
+  #bottombar span:last-child{display:none}
+}
+
+@media(max-width:600px){
+  .h-plant{max-width:90px;font-size:9px}
+  .h-alert-btn span.h-alert-cnt{font-size:8px}
+  .h-back{padding:4px 8px;font-size:10px}
+  #sidebar-left{width:85vw;max-width:320px}
+  .tab{padding:8px 10px;font-size:10px}
+  #equip-panel{width:calc(100% - 24px);left:12px;right:12px}
+  .dash-kpis{grid-template-columns:1fr 1fr;gap:5px}
+  .dk-val{font-size:18px}
+  .dk-card{padding:10px}
+  .kpi-grid{grid-template-columns:1fr 1fr;gap:5px;padding:10px 12px}
+  .kpi-val{font-size:16px}
+  .sap-fs-nav{width:50px;overflow:hidden}
+  .sap-fs-nav-item span.nav-text{display:none}
+  .fiori-tiles{grid-template-columns:1fr}
+  .acc-fs-tree{width:140px}
+  .tandem-fs-tree{width:160px}
+  .alert-card{padding:10px 12px;gap:10px}
+  .ac-title{font-size:12px}
+  .ac-desc{font-size:11px}
+  .ac-meta{flex-wrap:wrap;gap:8px}
+}
+
+@media(max-width:480px){
+  #header{padding:0 10px;gap:8px;height:48px}
+  .h-logo{width:28px;height:28px;font-size:12px}
+  .h-plant{max-width:80px;font-size:9px}
+  .h-alert-btn{padding:5px 8px;font-size:12px}
+  #sidebar-left{width:100%}
+  #equip-panel{width:calc(100% - 16px);left:8px;right:8px}
+  .overlay-3d{flex-direction:row;flex-wrap:wrap;top:4px;left:4px;right:4px}
+  .sys-toggle{font-size:8px;padding:3px 6px}
+  .dash-kpis{grid-template-columns:1fr 1fr}
+  .dk-card{padding:10px}
+  .dk-val{font-size:18px}
+  .kpi-grid{grid-template-columns:1fr 1fr;gap:6px;padding:10px 12px}
+  .sap-fs-nav{display:none}
+  .acc-fs-tree{width:120px}
+  .tandem-fs-tree{width:140px}
+  #bottombar{height:24px;font-size:7px}
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════
+     HEADER
+     ══════════════════════════════════════════════════════ -->
+<div id="header">
+  <button class="hamburger-btn" id="hamburgerBtn" onclick="toggleMobileSidebar()"><span></span><span></span><span></span></button>
+  <div class="h-logo">EY</div>
+  <div class="h-sep"></div>
+  <div class="h-plant"><b>Estacion Compresion</b> &middot; DUC-CEN-01</div>
+  <div class="h-sep"></div>
+  <span class="demo-badge">DEMO</span>
+  <div class="h-status">
+    <div class="h-dot"></div>
+    <span class="h-status-txt">EN LINEA</span>
+  </div>
+  <div class="h-sep"></div>
+  <span class="h-time" id="clock">--:--:--</span>
+  <button class="h-alert-btn" onclick="showAlerts()">ALRT <span class="h-alert-cnt" id="alertCnt">4</span></button>
+  <a class="h-back" href="gas-hub.html"><span class="back-text">&lt;-</span> Hub</a>
+</div>
+
+<div class="mobile-overlay" id="mobileOverlay" onclick="toggleMobileSidebar()"></div>
+
+<!-- ══════════════════════════════════════════════════════
+     FULLSCREEN OVERLAYS
+     ══════════════════════════════════════════════════════ -->
+
+<!-- SAP FULLSCREEN OVERLAY -->
+<div class="fs-overlay" id="sapFullscreen">
+  <div class="sap-fs-header">
+    <div class="sap-fs-logo">S/4</div>
+    <div>
+      <div class="sap-fs-title">SAP S/4HANA 2023 | Plant Maintenance</div>
+      <div class="sap-fs-sub">Estacion DUC-CEN-01 -- Ing. Garcia</div>
+    </div>
+    <button class="sap-fs-close" onclick="closeSapFS()">X</button>
+  </div>
+  <div class="sap-fs-body">
+    <div class="sap-fs-nav">
+      <div class="sap-fs-nav-item active" onclick="switchSapFSNav(this,'sap-fs-launchpad')"><span class="sap-fs-nav-icon">[LP]</span><span class="nav-text">Launchpad</span></div>
+      <div class="sap-fs-nav-item" onclick="switchSapFSNav(this,'sap-fs-pm')"><span class="sap-fs-nav-icon">PM</span><span class="nav-text">PM</span></div>
+      <div class="sap-fs-nav-item" onclick="switchSapFSNav(this,'sap-fs-apm')"><span class="sap-fs-nav-icon">APM</span><span class="nav-text">APM</span></div>
+      <div class="sap-fs-nav-item" onclick="switchSapFSNav(this,'sap-fs-mm')"><span class="sap-fs-nav-icon">MM</span><span class="nav-text">MM</span></div>
+      <div class="sap-fs-nav-item" onclick="switchSapFSNav(this,'sap-fs-btp')"><span class="sap-fs-nav-icon">BTP</span><span class="nav-text">BTP</span></div>
+      <div class="sap-fs-nav-item" onclick="switchSapFSNav(this,'sap-fs-gemelo')"><span class="sap-fs-nav-icon">3D</span><span class="nav-text">Gemelo Digital</span></div>
+    </div>
+    <div class="sap-fs-content">
+      <!-- GEMELO DIGITAL -->
+      <div class="sap-fs-panel" id="sap-fs-gemelo">
+        <h2 style="font-size:18px;color:#333;margin-bottom:8px">Gemelo Digital - Vista Integrada SAP</h2>
+        <p style="color:#888;font-size:11px;margin-bottom:16px">Modelo 3D en tiempo real vinculado a SAP PM/APM</p>
+        <div id="sap3dContainer" style="width:100%;height:400px;position:relative;background:#0a1420;border-radius:8px;overflow:hidden;margin-bottom:16px"></div>
+        <h3 style="font-size:14px;color:#333;margin-bottom:12px">Equipos Vinculados SAP</h3>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px" id="sapGemeloEquips"></div>
+      </div>
+      <!-- LAUNCHPAD -->
+      <div class="sap-fs-panel active" id="sap-fs-launchpad">
+        <h2 style="font-size:18px;color:#333;margin-bottom:20px">Fiori Launchpad -- Estacion Compresion</h2>
+        <div class="fiori-tiles">
+          <div class="fiori-tile" onclick="switchSapFSNav(document.querySelectorAll('.sap-fs-nav-item')[1],'sap-fs-pm')">
+            <div class="fiori-tile-count crit">2</div>
+            <div class="fiori-tile-label">Ordenes Urgentes</div>
+            <div class="fiori-tile-footer">PM -- Prioridad 1</div>
+          </div>
+          <div class="fiori-tile" onclick="switchSapFSNav(document.querySelectorAll('.sap-fs-nav-item')[1],'sap-fs-pm')">
+            <div class="fiori-tile-count warn">10</div>
+            <div class="fiori-tile-label">Ordenes Totales</div>
+            <div class="fiori-tile-footer">PM -- Abiertas + Prog.</div>
+          </div>
+          <div class="fiori-tile" onclick="switchSapFSNav(document.querySelectorAll('.sap-fs-nav-item')[2],'sap-fs-apm')">
+            <div class="fiori-tile-count" style="color:#0854a0">87%</div>
+            <div class="fiori-tile-label">Salud Compresores</div>
+            <div class="fiori-tile-footer">APM -- Health Index</div>
+          </div>
+          <div class="fiori-tile" onclick="switchSapFSNav(document.querySelectorAll('.sap-fs-nav-item')[3],'sap-fs-mm')">
+            <div class="fiori-tile-count ok">238</div>
+            <div class="fiori-tile-label">Items en Stock</div>
+            <div class="fiori-tile-footer">MM -- $1.24M MXN</div>
+          </div>
+          <div class="fiori-tile" onclick="switchSapFSNav(document.querySelectorAll('.sap-fs-nav-item')[4],'sap-fs-btp')">
+            <div class="fiori-tile-count ok">5</div>
+            <div class="fiori-tile-label">Integraciones BTP</div>
+            <div class="fiori-tile-footer">BTP -- Todas activas</div>
+          </div>
+          <div class="fiori-tile">
+            <div class="fiori-tile-count" style="color:#0854a0">99.5%</div>
+            <div class="fiori-tile-label">Disponibilidad</div>
+            <div class="fiori-tile-footer">KPI -- Ultimo mes</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PM -->
+      <div class="sap-fs-panel" id="sap-fs-pm">
+        <h2 style="font-size:18px;color:#333;margin-bottom:4px">Ordenes de Trabajo -- Plant Maintenance</h2>
+        <p style="font-size:12px;color:#888;margin-bottom:16px">Total: 10 ordenes | Urgente: 2 | Alta: 4 | Media: 3 | Baja: 1</p>
+        <table class="sap-fs-table">
+          <thead>
+            <tr><th>Orden</th><th>Equipo</th><th>Descripcion</th><th>Prioridad</th><th>Estado</th><th>Origen</th></tr>
+          </thead>
+          <tbody>
+            <tr onclick="this.style.background='#e8f0fe'"><td style="color:#0854a0;font-weight:600">PM-DUC-7001</td><td>CMP-01 Compresor</td><td>Vibracion alta 5.8 mm/s</td><td><span class="sap-prio p1">1-URGENTE</span></td><td><span class="sap-wo-status open">ABIERTA</span></td><td>DT Auto</td></tr>
+            <tr onclick="this.style.background='#e8f0fe'"><td style="color:#0854a0;font-weight:600">PM-DUC-7002</td><td>DRV-01 Turbina Gas</td><td>Overhaul 25,000h</td><td><span class="sap-prio p2">2-ALTA</span></td><td><span class="sap-wo-status prog">PROGRAMADA</span></td><td>Plan PM</td></tr>
+            <tr onclick="this.style.background='#e8f0fe'"><td style="color:#0854a0;font-weight:600">PM-DUC-7003</td><td>PIG-L01 Pig Launcher</td><td>Preparacion corrida pigging</td><td><span class="sap-prio p2">2-ALTA</span></td><td><span class="sap-wo-status prog">EN PROCESO</span></td><td>Operaciones</td></tr>
+            <tr onclick="this.style.background='#e8f0fe'"><td style="color:#0854a0;font-weight:600">PM-DUC-7004</td><td>SCR-01 Scrubber</td><td>Drenaje liquidos acumulados</td><td><span class="sap-prio p3">3-MEDIA</span></td><td><span class="sap-wo-status" style="background:rgba(16,216,88,.12);color:#2b7c2b">COMPLETADA</span></td><td>Plan PM</td></tr>
+            <tr onclick="this.style.background='#e8f0fe'"><td style="color:#0854a0;font-weight:600">PM-DUC-7005</td><td>ACL-01 Aeroenfriador</td><td>Revision ventilador / motor</td><td><span class="sap-prio p3">3-MEDIA</span></td><td><span class="sap-wo-status prog">PROGRAMADA</span></td><td>Plan PM</td></tr>
+            <tr onclick="this.style.background='#e8f0fe'"><td style="color:#0854a0;font-weight:600">PM-DUC-7006</td><td>VLV-01 ESD Entrada</td><td>Prueba parcial PST</td><td><span class="sap-prio p1">1-URGENTE</span></td><td><span class="sap-wo-status prog">PROGRAMADA</span></td><td>Regulatorio</td></tr>
+            <tr onclick="this.style.background='#e8f0fe'"><td style="color:#0854a0;font-weight:600">PM-DUC-7007</td><td>MET-01 Medicion</td><td>Verificacion USM fiscal</td><td><span class="sap-prio p2">2-ALTA</span></td><td><span class="sap-wo-status prog">PROGRAMADA</span></td><td>Regulatorio</td></tr>
+            <tr onclick="this.style.background='#e8f0fe'"><td style="color:#0854a0;font-weight:600">PM-DUC-7008</td><td>CMP-02 Compresor #2</td><td>Cambio sellos secos</td><td><span class="sap-prio p3">3-MEDIA</span></td><td><span class="sap-wo-status cert">CERT</span></td><td>Plan PM</td></tr>
+            <tr onclick="this.style.background='#e8f0fe'"><td style="color:#0854a0;font-weight:600">PM-DUC-7009</td><td>TLM-01 Telecom</td><td>Mantenimiento VSAT/radio</td><td><span class="sap-prio p4">4-BAJA</span></td><td><span class="sap-wo-status" style="background:rgba(16,216,88,.12);color:#2b7c2b">COMPLETADA</span></td><td>Plan PM</td></tr>
+            <tr onclick="this.style.background='#e8f0fe'"><td style="color:#0854a0;font-weight:600">PM-DUC-7010</td><td>DRV-02 Turbina #2</td><td>Inspeccion boroscopica</td><td><span class="sap-prio p2">2-ALTA</span></td><td><span class="sap-wo-status prog">PROGRAMADA</span></td><td>Plan PM</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- APM -->
+      <div class="sap-fs-panel" id="sap-fs-apm">
+        <h2 style="font-size:18px;color:#333;margin-bottom:16px">Asset Performance Management -- Equipment Health</h2>
+        <div class="apm-grid">
+          <div class="apm-card">
+            <div class="apm-card-header"><div><div class="apm-card-tag">CMP</div><div class="apm-card-name">Compresores</div></div><div class="apm-card-health" style="color:#e78c07" id="apmHealth1">87%</div></div>
+            <div class="apm-row"><span>Vibracion CMP-01</span><span class="av" id="apmVib1">3.2 mm/s</span></div>
+            <div class="apm-row"><span>RPM CMP-01</span><span class="av">11,200</span></div>
+            <div class="apm-row"><span>T. Descarga</span><span class="av">118 C</span></div>
+            <div class="apm-bar"><div class="apm-bar-fill" id="apmBar1" style="width:87%;background:#e78c07"></div></div>
+          </div>
+          <div class="apm-card">
+            <div class="apm-card-header"><div><div class="apm-card-tag">DRV</div><div class="apm-card-name">Turbinas</div></div><div class="apm-card-health" style="color:#2b7c2b">94%</div></div>
+            <div class="apm-row"><span>Horas DRV-01</span><span class="av">32,450 hrs</span></div>
+            <div class="apm-row"><span>RPM DRV-02</span><span class="av">10,800</span></div>
+            <div class="apm-row"><span>Eficiencia</span><span class="av">34.2%</span></div>
+            <div class="apm-bar"><div class="apm-bar-fill" style="width:94%;background:#2b7c2b"></div></div>
+          </div>
+          <div class="apm-card">
+            <div class="apm-card-header"><div><div class="apm-card-tag">SEP</div><div class="apm-card-name">Separacion</div></div><div class="apm-card-health" style="color:#e78c07">68%</div></div>
+            <div class="apm-row"><span>Nivel Scrubber</span><span class="av" style="color:#e78c07">68%</span></div>
+            <div class="apm-row"><span>Condicion</span><span class="av" style="color:#e78c07">Nivel Alto</span></div>
+            <div class="apm-bar"><div class="apm-bar-fill" style="width:68%;background:#e78c07"></div></div>
+          </div>
+          <div class="apm-card">
+            <div class="apm-card-header"><div><div class="apm-card-tag">PIG</div><div class="apm-card-name">Pigging</div></div><div class="apm-card-health" style="color:#2b7c2b">96%</div></div>
+            <div class="apm-row"><span>Ultima corrida</span><span class="av">2026-03-20</span></div>
+            <div class="apm-row"><span>Estado</span><span class="av" style="color:#0854a0">En Proceso</span></div>
+            <div class="apm-bar"><div class="apm-bar-fill" style="width:96%;background:#2b7c2b"></div></div>
+          </div>
+          <div class="apm-card">
+            <div class="apm-card-header"><div><div class="apm-card-tag">TLM</div><div class="apm-card-name">SCADA</div></div><div class="apm-card-health" style="color:#2b7c2b">98%</div></div>
+            <div class="apm-row"><span>Enlace</span><span class="av" style="color:#2b7c2b">VSAT Up</span></div>
+            <div class="apm-row"><span>Latencia</span><span class="av">32 ms</span></div>
+            <div class="apm-bar"><div class="apm-bar-fill" style="width:98%;background:#2b7c2b"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MM -->
+      <div class="sap-fs-panel" id="sap-fs-mm">
+        <h2 style="font-size:18px;color:#333;margin-bottom:4px">Materials Management -- Materiales Criticos</h2>
+        <p style="font-size:12px;color:#888;margin-bottom:16px">Stock total: 238 items | Valor: $1,240,000 MXN</p>
+        <div class="mm-grid">
+          <div class="mm-item"><div class="mm-item-qty">4</div><div class="mm-item-name">Sellos secos compresor</div></div>
+          <div class="mm-item"><div class="mm-item-qty">200L</div><div class="mm-item-name">Aceite turbina sintetico</div></div>
+          <div class="mm-item"><div class="mm-item-qty">12</div><div class="mm-item-name">Filtros aire intake</div></div>
+          <div class="mm-item"><div class="mm-item-qty">8</div><div class="mm-item-name">Juntas scrubber</div></div>
+          <div class="mm-item"><div class="mm-item-qty">3</div><div class="mm-item-name">Pigs inteligentes MFL</div></div>
+          <div class="mm-item"><div class="mm-item-qty">6</div><div class="mm-item-name">Sensores vibracion proximidad</div></div>
+        </div>
+        <h3 style="font-size:14px;color:#333;margin:20px 0 10px">Pedidos Pendientes</h3>
+        <table class="sap-fs-table">
+          <thead><tr><th>PO</th><th>Material</th><th>Estado</th></tr></thead>
+          <tbody>
+            <tr><td style="font-weight:600;color:#0854a0">PO-45001</td><td>Sellos secos CMP-01</td><td style="color:#e78c07;font-weight:600">En transito</td></tr>
+            <tr><td style="font-weight:600;color:#0854a0">PO-45002</td><td>Aceite turbina sintetico</td><td style="color:#0854a0;font-weight:600">Confirmado</td></tr>
+            <tr><td style="font-weight:600;color:#0854a0">PO-45003</td><td>Pig inteligente MFL</td><td style="color:#2b7c2b;font-weight:600">En almacen</td></tr>
+            <tr><td style="font-weight:600;color:#0854a0">PO-45004</td><td>Sensor vibracion proximidad</td><td style="color:#0854a0;font-weight:600">Confirmado</td></tr>
+            <tr><td style="font-weight:600;color:#0854a0">PO-45005</td><td>Filtros coalescentes</td><td style="color:#e78c07;font-weight:600">En transito</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- BTP -->
+      <div class="sap-fs-panel" id="sap-fs-btp">
+        <h2 style="font-size:18px;color:#333;margin-bottom:16px">SAP BTP -- Integration Flow</h2>
+        <div class="btp-flow">
+          <div class="btp-node"><span class="btp-dot" style="background:#2b7c2b"></span>OPC-UA Gateway</div>
+          <span class="btp-arrow">--></span>
+          <div class="btp-node"><span class="btp-dot" style="background:#2b7c2b"></span>SAP BTP Integration</div>
+          <span class="btp-arrow">--></span>
+          <div class="btp-node"><span class="btp-dot" style="background:#2b7c2b"></span>S/4HANA PM</div>
+          <span class="btp-arrow">--></span>
+          <div class="btp-node"><span class="btp-dot" style="background:#0854a0"></span>Digital Twin</div>
+        </div>
+        <div class="btp-flow">
+          <div class="btp-node"><span class="btp-dot" style="background:#2b7c2b"></span>Historian PI</div>
+          <span class="btp-arrow">--></span>
+          <div class="btp-node"><span class="btp-dot" style="background:#2b7c2b"></span>CMMS Link</div>
+          <span class="btp-arrow">--></span>
+          <div class="btp-node"><span class="btp-dot" style="background:#0854a0"></span>DT Auto-WO</div>
+        </div>
+        <h3 style="font-size:14px;color:#333;margin:20px 0 10px">Stream Log</h3>
+        <div class="btp-log" id="btpStreamLog">
+          <div>[08:00] OPC-UA: 186 tags sincronizados - SYNC 1Hz</div>
+          <div>[08:01] SAP PM: OT-7001 creada por DT Auto</div>
+          <div>[08:05] Historian: 4.8M registros/dia - STREAMING</div>
+          <div>[08:10] CMMS: enlace bidireccional activo</div>
+          <div>[08:15] BTP: flujo integracion OK - latencia 32ms</div>
+          <div>[08:20] DT Auto-WO: evaluando condicion CMP-01</div>
+          <div>[08:25] Regulatorio: proxima PST en 48h</div>
+          <div>[08:30] APM: indice salud compresores actualizado 87%</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ACC FULLSCREEN OVERLAY -->
+<div class="fs-overlay" id="accFullscreen">
+  <div class="acc-fs-header">
+    <div class="acc-fs-logo">ACC</div>
+    <div class="acc-fs-title">Autodesk Construction Cloud</div>
+    <div class="acc-fs-proj">DUC-CEN-01 Estacion Compresion</div>
+    <button class="acc-fs-close" onclick="closeAccFS()">X</button>
+  </div>
+  <div class="acc-fs-body">
+    <div class="acc-fs-tree" id="accDocTree">
+      <div class="acc-fs-tree-hdr">Documentos</div>
+      <div class="acc-fs-tree-item sel" onclick="selectAccDocDuc(this,'pid1')"><span class="acc-fs-tree-icon">[DOC]</span>P&amp;ID-DUC-001 Compresion</div>
+      <div class="acc-fs-tree-item" onclick="selectAccDocDuc(this,'pid2')"><span class="acc-fs-tree-icon">[DOC]</span>P&amp;ID-DUC-002 Separacion/Pigging</div>
+      <div class="acc-fs-tree-item" onclick="selectAccDocDuc(this,'ds')"><span class="acc-fs-tree-icon">[DOC]</span>Datasheet CMP-01</div>
+      <div class="acc-fs-tree-item" onclick="selectAccDocDuc(this,'pfd')"><span class="acc-fs-tree-icon">[DOC]</span>PFD Proceso</div>
+      <div class="acc-fs-tree-item" onclick="selectAccDocDuc(this,'hazop')"><span class="acc-fs-tree-icon">[DOC]</span>HAZOP Report</div>
+      <div class="acc-fs-tree-item" onclick="selectAccDocDuc(this,'elec')"><span class="acc-fs-tree-icon">[DOC]</span>Electricos</div>
+      <div class="acc-fs-tree-item" onclick="selectAccDocDuc(this,'ce')"><span class="acc-fs-tree-icon">[DOC]</span>Causa-Efecto</div>
+    </div>
+    <div class="acc-fs-viewer">
+      <div class="acc-fs-doc-title" id="accDocTitle">P&amp;ID-DUC-001 - Compresion</div>
+      <div class="acc-fs-doc-meta">
+        <span id="accDocRev">REV.04 | 2026-02-15 | Aprobado: Ing. R. Garza</span>
+      </div>
+      <div class="acc-fs-preview" id="accDocPreview">
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TANDEM FULLSCREEN OVERLAY -->
+<div class="fs-overlay" id="tandemFullscreen">
+  <div class="tandem-fs-header">
+    <div class="tandem-fs-logo">TDM</div>
+    <div class="tandem-fs-title">Autodesk Tandem -- Digital Twin</div>
+    <button class="tandem-fs-close" onclick="closeTandemFS()">X</button>
+  </div>
+  <div class="tandem-fs-body">
+    <div class="tandem-fs-tree">
+      <div class="tandem-fs-tree-hdr">[TREE] Asset Hierarchy</div>
+      <div class="tandem-fs-tree-item sel">DUC-CEN-01 Estacion</div>
+      <div class="tandem-fs-tree-sub"> |-- Pipeline Entrada PL-001</div>
+      <div class="tandem-fs-tree-sub"> |-- ESD Valve XV-001</div>
+      <div class="tandem-fs-tree-sub"> |-- Pig Launcher PIG-L01</div>
+      <div class="tandem-fs-tree-sub"> |-- Slug Catcher V-100</div>
+      <div class="tandem-fs-tree-sub"> |-- Scrubber V-101</div>
+      <div class="tandem-fs-tree-item">Tren Compresion 1</div>
+      <div class="tandem-fs-tree-sub"> |-- Turbina GT-101A</div>
+      <div class="tandem-fs-tree-sub"> |-- Compresor K-101A</div>
+      <div class="tandem-fs-tree-item">Tren Compresion 2</div>
+      <div class="tandem-fs-tree-sub"> |-- Turbina GT-101B</div>
+      <div class="tandem-fs-tree-sub"> |-- Compresor K-101B</div>
+      <div class="tandem-fs-tree-item">Aftercooler E-101</div>
+      <div class="tandem-fs-tree-item">Medicion FT-201</div>
+      <div class="tandem-fs-tree-item">Sistemas Auxiliares</div>
+      <div class="tandem-fs-tree-sub"> |-- Subestacion SE-001</div>
+      <div class="tandem-fs-tree-sub"> |-- Telecom TW-001</div>
+      <div class="tandem-fs-tree-sub"> |-- Aire Instr. C-201</div>
+      <div class="tandem-fs-tree-sub"> |-- Antorcha FL-001</div>
+    </div>
+    <div class="tandem-fs-content">
+      <div class="tandem-fs-card">
+        <div class="tandem-fs-card-title"><span style="color:var(--cy)">[DCS]</span> SCADA / DCS</div>
+        <div class="tandem-fs-row"><span class="tfk">Controlador</span><span class="tfv">Honeywell C300</span></div>
+        <div class="tandem-fs-row"><span class="tfk">Protocolo</span><span class="tfv">Modbus TCP/IP</span></div>
+        <div class="tandem-fs-row"><span class="tfk">Tags activos</span><span class="tfv">1,248</span></div>
+        <div class="tandem-fs-row"><span class="tfk">Latencia</span><span class="tfv">32 ms</span></div>
+        <div class="tandem-fs-row"><span class="tfk">Uptime</span><span class="tfv">99.95%</span></div>
+      </div>
+      <div class="tandem-fs-card">
+        <div class="tandem-fs-card-title"><span style="color:var(--or)">[IoT]</span> IoT Gateway</div>
+        <div class="tandem-fs-row"><span class="tfk">Sensores</span><span class="tfv">186</span></div>
+        <div class="tandem-fs-row"><span class="tfk">Frecuencia</span><span class="tfv">1 Hz</span></div>
+        <div class="tandem-fs-row"><span class="tfk">Buffer</span><span class="tfv">8,400 pts</span></div>
+        <div class="tandem-fs-row"><span class="tfk">Protocolo</span><span class="tfv">MQTT / OPC-UA</span></div>
+      </div>
+      <div class="tandem-fs-card">
+        <div class="tandem-fs-card-title"><span style="color:var(--ye)">[SIS]</span> SIS / ESD</div>
+        <div class="tandem-fs-row"><span class="tfk">SIL Level</span><span class="tfv">SIL 3</span></div>
+        <div class="tandem-fs-row"><span class="tfk">Detectores gas</span><span class="tfv">24</span></div>
+        <div class="tandem-fs-row"><span class="tfk">Detectores fuego</span><span class="tfv">12</span></div>
+        <div class="tandem-fs-row"><span class="tfk">Valvulas ESD</span><span class="tfv">8</span></div>
+        <div class="tandem-fs-row"><span class="tfk">Ult. proof test</span><span class="tfv">2026-03-15</span></div>
+      </div>
+      <div class="tandem-fs-card">
+        <div class="tandem-fs-card-title"><span style="color:var(--gr)">[HIS]</span> Historian</div>
+        <div class="tandem-fs-row"><span class="tfk">Registros/dia</span><span class="tfv">4.8M</span></div>
+        <div class="tandem-fs-row"><span class="tfk">Retencion</span><span class="tfv">730 dias</span></div>
+        <div class="tandem-fs-row"><span class="tfk">Almacenamiento</span><span class="tfv">420 GB</span></div>
+        <div class="tandem-fs-row"><span class="tfk">Compresion</span><span class="tfv">Swinging Door</span></div>
+      </div>
+      <div class="tandem-fs-card">
+        <div class="tandem-fs-card-title"><span style="color:var(--cy)">[TLC]</span> Telecom</div>
+        <div class="tandem-fs-row"><span class="tfk">Enlace principal</span><span class="tfv">Microondas 24GHz</span></div>
+        <div class="tandem-fs-row"><span class="tfk">Respaldo</span><span class="tfv">VSAT Ku-band</span></div>
+        <div class="tandem-fs-row"><span class="tfk">Ancho banda</span><span class="tfv">10 Mbps</span></div>
+        <div class="tandem-fs-row"><span class="tfk">Disponibilidad</span><span class="tfv">99.8%</span></div>
+      </div>
+      <div class="tandem-fs-stream" id="tandemStreamLog">
+        <div>[08:00] SCADA sync -- 1,248 tags activos</div>
+        <div>[08:05] IoT Gateway -- buffer procesado OK</div>
+        <div>[08:10] Historian -- registro continuo</div>
+        <div>[08:15] SIS -- proof test completado</div>
+        <div>[08:20] Telecom -- enlace microondas estable</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     APP LAYOUT
+     ══════════════════════════════════════════════════════ -->
+<div id="app">
+
+<!-- ══════════════════════════════════════════════════════
+     LEFT SIDEBAR
+     ══════════════════════════════════════════════════════ -->
+<div id="sidebar-left">
+  <div class="sl-tabs">
+    <div class="sl-tab active" data-sl="monitores">Monitores</div>
+    <div class="sl-tab" data-sl="sap">SAP</div>
+    <div class="sl-tab" data-sl="tandem">Tandem</div>
+    <div class="sl-tab" data-sl="acc">ACC</div>
+  </div>
+
+  <!-- MONITORES PANEL -->
+  <div class="sl-panel active" id="sl-monitores">
+    <div class="sl-section">
+      <div class="sl-label">KPIs Operativos</div>
+    </div>
+    <div class="kpi-grid">
+      <div class="kpi-card"><div class="kpi-val or" id="kPSuction">42</div><div class="kpi-unit">bar</div><div class="kpi-lbl">P. Succion</div></div>
+      <div class="kpi-card"><div class="kpi-val re" id="kPDischarge">67</div><div class="kpi-unit">bar</div><div class="kpi-lbl">P. Descarga</div></div>
+      <div class="kpi-card"><div class="kpi-val cy" id="kRatio">1.60</div><div class="kpi-lbl">Ratio Comp.</div></div>
+      <div class="kpi-card"><div class="kpi-val gr" id="kFlow">98</div><div class="kpi-unit">MMSCFD</div><div class="kpi-lbl">Flujo</div></div>
+      <div class="kpi-card"><div class="kpi-val ye" id="kRPM1">11,200</div><div class="kpi-unit">RPM</div><div class="kpi-lbl">RPM Comp 1</div></div>
+      <div class="kpi-card"><div class="kpi-val ye" id="kRPM2">10,800</div><div class="kpi-unit">RPM</div><div class="kpi-lbl">RPM Comp 2</div></div>
+      <div class="kpi-card"><div class="kpi-val or" id="kTemp1">118</div><div class="kpi-unit">&deg;C</div><div class="kpi-lbl">T. Desc. 1</div></div>
+      <div class="kpi-card"><div class="kpi-val or" id="kTemp2">115</div><div class="kpi-unit">&deg;C</div><div class="kpi-lbl">T. Desc. 2</div></div>
+      <div class="kpi-card"><div class="kpi-val gr" id="kVib1">3.2</div><div class="kpi-unit">mm/s</div><div class="kpi-lbl">Vib. Comp 1</div></div>
+      <div class="kpi-card"><div class="kpi-val gr" id="kVib2">2.8</div><div class="kpi-unit">mm/s</div><div class="kpi-lbl">Vib. Comp 2</div></div>
+      <div class="kpi-card"><div class="kpi-val cy" id="kPig">Standby</div><div class="kpi-lbl">Pig Status</div></div>
+      <div class="kpi-card"><div class="kpi-val gr" id="kAvail">99.5</div><div class="kpi-unit">%</div><div class="kpi-lbl">Disponibilidad</div></div>
+    </div>
+    <div class="sl-section">
+      <div class="sl-label">Activos</div>
+    </div>
+    <div class="asset-list" id="assetList"></div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     CENTER AREA
+     ══════════════════════════════════════════════════════ -->
+<div id="center">
+  <div id="tabs">
+    <div class="tab active" data-tab="3d">Gemelo 3D</div>
+    <div class="tab" data-tab="monitor">Monitores</div>
+    <div class="tab" data-tab="alerts">Alertas</div>
+  </div>
+
+  <!-- 3D VIEW -->
+  <div class="view active" id="view-3d">
+    <div class="overlay-3d" id="overlay3d">
+      <div class="sys-toggle active" data-sys="piping"><span class="dot" style="background:var(--ye)"></span>Piping</div>
+      <div class="sys-toggle active" data-sys="compressors"><span class="dot" style="background:var(--or)"></span>Compresores</div>
+      <div class="sys-toggle active" data-sys="vessels"><span class="dot" style="background:var(--cy)"></span>Recipientes</div>
+      <div class="sys-toggle active" data-sys="electrical"><span class="dot" style="background:var(--gr)"></span>Electrico</div>
+      <div class="sys-toggle active" data-sys="safety"><span class="dot" style="background:var(--re)"></span>Seguridad</div>
+    </div>
+    <div id="equip-panel">
+      <button class="ep-close" onclick="closePanel()">X</button>
+      <div id="ep-content"></div>
+    </div>
+  </div>
+
+  <!-- MONITOR VIEW -->
+  <div class="view" id="view-monitor">
+    <div class="dash-view">
+      <div class="dash-header">
+        <div><div class="dash-title">Panel de Monitoreo</div><div class="dash-sub">Estacion de Compresion DUC-CEN-01 -- Tiempo real</div></div>
+      </div>
+      <div class="dash-kpis">
+        <div class="dk-card"><div class="dk-val or" id="dkPSuction">42</div><div class="dk-lbl">Presion Succion</div><div class="dk-sub">bar</div></div>
+        <div class="dk-card"><div class="dk-val crit" id="dkPDischarge">67</div><div class="dk-lbl">Presion Descarga</div><div class="dk-sub">bar</div></div>
+        <div class="dk-card"><div class="dk-val info" id="dkRatio">1.60</div><div class="dk-lbl">Ratio Compresion</div><div class="dk-sub">Pd/Ps</div></div>
+        <div class="dk-card"><div class="dk-val ok" id="dkFlow">98</div><div class="dk-lbl">Flujo Gas</div><div class="dk-sub">MMSCFD</div></div>
+        <div class="dk-card"><div class="dk-val warn" id="dkRPM1">11,200</div><div class="dk-lbl">RPM Compresor 1</div><div class="dk-sub">rpm</div></div>
+        <div class="dk-card"><div class="dk-val warn" id="dkRPM2">10,800</div><div class="dk-lbl">RPM Compresor 2</div><div class="dk-sub">rpm</div></div>
+        <div class="dk-card"><div class="dk-val or" id="dkTemp1">118</div><div class="dk-lbl">Temp Descarga 1</div><div class="dk-sub">&deg;C</div></div>
+        <div class="dk-card"><div class="dk-val or" id="dkTemp2">115</div><div class="dk-lbl">Temp Descarga 2</div><div class="dk-sub">&deg;C</div></div>
+      </div>
+
+      <div class="dash-section">Compresores - Vibracion y Salud</div>
+      <div class="dash-grid2">
+        <div class="dash-card">
+          <div class="dash-card-title">Vibracion Compresor 1</div>
+          <div class="gauge-wrap"><canvas id="gaugeVib1" width="180" height="100"></canvas></div>
+          <div class="gauge-label" id="gaugeLabel1">3.2 mm/s -- Normal (&lt;4.5)</div>
+        </div>
+        <div class="dash-card">
+          <div class="dash-card-title">Vibracion Compresor 2</div>
+          <div class="gauge-wrap"><canvas id="gaugeVib2" width="180" height="100"></canvas></div>
+          <div class="gauge-label" id="gaugeLabel2">2.8 mm/s -- Normal (&lt;4.5)</div>
+        </div>
+      </div>
+
+      <div class="dash-section">Ratio de Compresion - Tendencia</div>
+      <div class="dash-card" style="margin-bottom:16px">
+        <canvas id="trendChart" width="800" height="200"></canvas>
+      </div>
+
+      <div class="dash-section">Estado de Equipos</div>
+      <div class="dash-card">
+        <table class="dt-table">
+          <thead><tr><th>Equipo</th><th>Estado</th><th>Salud</th><th>Hrs. Op.</th></tr></thead>
+          <tbody>
+            <tr><td>Turbina Gas 1</td><td><span class="status-badge ok">Operando</span></td><td><div class="health-bar"><div class="health-fill ok" style="width:94%"></div></div></td><td style="font-family:'IBM Plex Mono',monospace;font-size:10px">32,450</td></tr>
+            <tr><td>Turbina Gas 2</td><td><span class="status-badge ok">Operando</span></td><td><div class="health-bar"><div class="health-fill ok" style="width:91%"></div></div></td><td style="font-family:'IBM Plex Mono',monospace;font-size:10px">28,120</td></tr>
+            <tr><td>Compresor Centrif. 1</td><td><span class="status-badge ok">Operando</span></td><td><div class="health-bar"><div class="health-fill ok" style="width:88%"></div></div></td><td style="font-family:'IBM Plex Mono',monospace;font-size:10px">32,450</td></tr>
+            <tr><td>Compresor Centrif. 2</td><td><span class="status-badge ok">Operando</span></td><td><div class="health-bar"><div class="health-fill ok" style="width:92%"></div></div></td><td style="font-family:'IBM Plex Mono',monospace;font-size:10px">28,120</td></tr>
+            <tr><td>Scrubber Succion</td><td><span class="status-badge warn">Nivel Alto</span></td><td><div class="health-bar"><div class="health-fill warn" style="width:68%"></div></div></td><td style="font-family:'IBM Plex Mono',monospace;font-size:10px">42,000</td></tr>
+            <tr><td>Slug Catcher</td><td><span class="status-badge ok">Normal</span></td><td><div class="health-bar"><div class="health-fill ok" style="width:95%"></div></div></td><td style="font-family:'IBM Plex Mono',monospace;font-size:10px">42,000</td></tr>
+            <tr><td>Aftercooler</td><td><span class="status-badge warn">Degradado</span></td><td><div class="health-bar"><div class="health-fill warn" style="width:72%"></div></div></td><td style="font-family:'IBM Plex Mono',monospace;font-size:10px">38,500</td></tr>
+            <tr><td>Medidor Ultrasonico</td><td><span class="status-badge ok">Calibrado</span></td><td><div class="health-bar"><div class="health-fill ok" style="width:98%"></div></div></td><td style="font-family:'IBM Plex Mono',monospace;font-size:10px">15,200</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="dash-section">Pig Tracking</div>
+      <div class="dash-card">
+        <table class="dt-table">
+          <thead><tr><th>Pig ID</th><th>Tipo</th><th>Ultimo Corrido</th><th>Estado</th><th>Proxima Corrida</th></tr></thead>
+          <tbody>
+            <tr><td>PIG-001</td><td>Limpieza</td><td>2026-03-20</td><td><span class="status-badge ok">Completado</span></td><td>2026-04-20</td></tr>
+            <tr><td>PIG-002</td><td>Inspeccion MFL</td><td>2026-02-15</td><td><span class="status-badge ok">Completado</span></td><td>2026-08-15</td></tr>
+            <tr><td>PIG-003</td><td>Geometrico</td><td>2026-01-10</td><td><span class="status-badge ok">Completado</span></td><td>2027-01-10</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ALERTS VIEW -->
+  <div class="view" id="view-alerts">
+    <div class="dash-view">
+      <div class="dash-header">
+        <div><div class="dash-title">Alertas Activas</div><div class="dash-sub">Ultimas 24 horas</div></div>
+      </div>
+      <div class="alert-card warn">
+        <div class="ac-icon">!</div>
+        <div class="ac-body">
+          <div class="ac-title warn">Vibracion elevada - Compresor 1</div>
+          <div class="ac-desc">Vibracion axial en cojinete #2 alcanzando 3.8 mm/s. Umbral de alarma: 4.5 mm/s. Tendencia ascendente en ultimas 48 hrs.</div>
+          <div class="ac-meta"><span class="ac-tag">Equipo: <span>K-101A</span></span><span class="ac-tag">Prioridad: <span>Media</span></span><span class="ac-tag">14:32</span></div>
+        </div>
+      </div>
+      <div class="alert-card crit">
+        <div class="ac-icon">!</div>
+        <div class="ac-body">
+          <div class="ac-title crit">Temperatura alta descarga - Tren 1</div>
+          <div class="ac-desc">Temperatura de descarga del compresor 1 alcanzando 128C. Limite operativo: 135C. Revisar aftercooler y verificar fouling.</div>
+          <div class="ac-meta"><span class="ac-tag">Equipo: <span>K-101A</span></span><span class="ac-tag">Prioridad: <span>Alta</span></span><span class="ac-tag">13:15</span></div>
+        </div>
+      </div>
+      <div class="alert-card warn">
+        <div class="ac-icon">!</div>
+        <div class="ac-body">
+          <div class="ac-title warn">Aftercooler - Eficiencia reducida</div>
+          <div class="ac-desc">Diferencial de temperatura en aftercooler por debajo de parametro. Posible fouling en tubos. Programar limpieza.</div>
+          <div class="ac-meta"><span class="ac-tag">Equipo: <span>E-101</span></span><span class="ac-tag">Prioridad: <span>Media</span></span><span class="ac-tag">11:45</span></div>
+        </div>
+      </div>
+      <div class="alert-card warn">
+        <div class="ac-icon">!</div>
+        <div class="ac-body">
+          <div class="ac-title warn">Nivel alto - Scrubber succion</div>
+          <div class="ac-desc">Nivel de liquido en scrubber de succion al 68%. Drene automatico activado. Verificar valvula de drene y separador.</div>
+          <div class="ac-meta"><span class="ac-tag">Equipo: <span>V-101</span></span><span class="ac-tag">Prioridad: <span>Media</span></span><span class="ac-tag">10:20</span></div>
+        </div>
+      </div>
+      <div class="alert-card ok">
+        <div class="ac-icon">OK</div>
+        <div class="ac-body">
+          <div class="ac-title" style="color:var(--gr)">Prueba ESD completada</div>
+          <div class="ac-desc">Prueba parcial de valvulas ESD completada satisfactoriamente. Todas las valvulas responden dentro de parametros SIL 3.</div>
+          <div class="ac-meta"><span class="ac-tag">Sistema: <span>SIS</span></span><span class="ac-tag">Prioridad: <span>Info</span></span><span class="ac-tag">09:00</span></div>
+        </div>
+      </div>
+      <div class="alert-card ok">
+        <div class="ac-icon">OK</div>
+        <div class="ac-body">
+          <div class="ac-title" style="color:var(--gr)">Cromatografia de gas completada</div>
+          <div class="ac-desc">Analisis cromatografico de gas confirma composicion dentro de especificaciones. Pureza CH4: 95.2%, H2S &lt; 4 ppm.</div>
+          <div class="ac-meta"><span class="ac-tag">Sistema: <span>QM</span></span><span class="ac-tag">Prioridad: <span>Info</span></span><span class="ac-tag">08:30</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     BOTTOM BAR
+     ══════════════════════════════════════════════════════ -->
+<div id="bottombar">
+  <span class="bb-dot" style="background:var(--gr)"></span> DCS SYNC
+  <span>|</span>
+  <span class="bb-dot" style="background:var(--gr)"></span> SIS ARMED
+  <span>|</span>
+  <span class="bb-dot" style="background:var(--gr)"></span> F&amp;G OK
+  <span>|</span>
+  <span>TAGS: 1,248</span>
+  <span>|</span>
+  <span>LATENCIA: 32ms</span>
+  <span style="margin-left:auto">ESTACION COMPRESION DUC-CEN-01 -- PLATAFORMA GEMELO DIGITAL v2.4</span>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     THREE.JS + CSS2DRenderer
+     ══════════════════════════════════════════════════════ -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/renderers/CSS2DRenderer.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+<script>
+/* ═══════════════════════════════════════════════════════════
+   GLOBAL STATE & CONFIGURATION
+   ═══════════════════════════════════════════════════════════ */
+var ASSETS = window.ASSETS = [
+  {id:'pipeline-entry',name:'Pipeline Entrada',tag:'PL-001',type:'Pipeline',status:'ok',criticality:'alta',
+   specs:{Diametro:'24" API 5L X65',Presion_Diseno:'100 bar',MAOP:'85 bar',Longitud:'120 km'},
+   sensors:[{n:'Presion',v:42,u:'bar',s:'ok'},{n:'Temperatura',v:35,u:'\u00b0C',s:'ok'},{n:'Flujo',v:98,u:'MMSCFD',s:'ok'}]},
+  {id:'esd-valve-entry',name:'Valvula ESD Entrada',tag:'XV-001',type:'Valvula ESD',status:'ok',criticality:'alta',
+   specs:{Tipo:'Ball valve',Size:'24"',Actuador:'Neumatico',SIL:'SIL 3'},
+   sensors:[{n:'Posicion',v:100,u:'%',s:'ok'},{n:'Presion Up',v:42,u:'bar',s:'ok'},{n:'Presion Down',v:41.8,u:'bar',s:'ok'}]},
+  {id:'pig-launcher',name:'Pig Launcher',tag:'PIG-L01',type:'Pig Launcher',status:'ok',criticality:'media',
+   specs:{Diametro:'24"',Presion_Diseno:'100 bar',Material:'CS ASTM A106 Gr.B'},
+   sensors:[{n:'Presion',v:42,u:'bar',s:'ok'},{n:'Estado',v:'Standby',u:'',s:'ok'},{n:'Indicador',v:'Clear',u:'',s:'ok'}]},
+  {id:'slug-catcher',name:'Slug Catcher',tag:'V-100',type:'Recipiente Horizontal',status:'ok',criticality:'alta',
+   specs:{Diametro:'1.5m x 10m',Presion_Diseno:'65 bar',Material:'SA-516 Gr.70'},
+   sensors:[{n:'Nivel',v:22,u:'%',s:'ok'},{n:'Presion',v:41.5,u:'bar',s:'ok'},{n:'Temperatura',v:34,u:'\u00b0C',s:'ok'}]},
+  {id:'scrubber',name:'Scrubber Succion',tag:'V-101',type:'Recipiente Vertical',status:'warn',criticality:'alta',
+   specs:{Diametro:'1m x 6m',Presion_Diseno:'65 bar',Material:'SA-516 Gr.70',Internos:'Demister pad'},
+   sensors:[{n:'Nivel',v:68,u:'%',s:'warn'},{n:'Presion',v:41,u:'bar',s:'ok'},{n:'Temperatura',v:33,u:'\u00b0C',s:'ok'},{n:'dP',v:0.3,u:'bar',s:'ok'}]},
+  {id:'turbine1',name:'Turbina Gas 1',tag:'GT-101A',type:'Turbina Gas',status:'ok',criticality:'alta',
+   specs:{Modelo:'Solar Centaur 50',Potencia:'5.7 MW',Velocidad:'14,950 RPM',Combustible:'Gas Natural'},
+   sensors:[{n:'RPM',v:11200,u:'rpm',s:'ok'},{n:'T. Escape',v:520,u:'\u00b0C',s:'ok'},{n:'Vib. Radial',v:2.1,u:'mm/s',s:'ok'},{n:'P. Aceite',v:3.8,u:'bar',s:'ok'}]},
+  {id:'compressor1',name:'Compresor Centrif. 1',tag:'K-101A',type:'Compresor Centrifugo',status:'ok',criticality:'alta',
+   specs:{Modelo:'Dresser-Rand D12R6',Etapas:'6',Ratio:'1.6',Gas:'Natural CH4 95%'},
+   sensors:[{n:'RPM',v:11200,u:'rpm',s:'ok'},{n:'Vib. Axial',v:3.2,u:'mm/s',s:'ok'},{n:'Vib. Radial',v:2.4,u:'mm/s',s:'ok'},{n:'T. Descarga',v:118,u:'\u00b0C',s:'ok'},{n:'P. Succion',v:41,u:'bar',s:'ok'},{n:'P. Descarga',v:67,u:'bar',s:'ok'}]},
+  {id:'turbine2',name:'Turbina Gas 2',tag:'GT-101B',type:'Turbina Gas',status:'ok',criticality:'alta',
+   specs:{Modelo:'Solar Centaur 50',Potencia:'5.7 MW',Velocidad:'14,950 RPM',Combustible:'Gas Natural'},
+   sensors:[{n:'RPM',v:10800,u:'rpm',s:'ok'},{n:'T. Escape',v:515,u:'\u00b0C',s:'ok'},{n:'Vib. Radial',v:1.9,u:'mm/s',s:'ok'},{n:'P. Aceite',v:3.9,u:'bar',s:'ok'}]},
+  {id:'compressor2',name:'Compresor Centrif. 2',tag:'K-101B',type:'Compresor Centrifugo',status:'ok',criticality:'alta',
+   specs:{Modelo:'Dresser-Rand D12R6',Etapas:'6',Ratio:'1.6',Gas:'Natural CH4 95%'},
+   sensors:[{n:'RPM',v:10800,u:'rpm',s:'ok'},{n:'Vib. Axial',v:2.8,u:'mm/s',s:'ok'},{n:'Vib. Radial',v:2.1,u:'mm/s',s:'ok'},{n:'T. Descarga',v:115,u:'\u00b0C',s:'ok'},{n:'P. Succion',v:41,u:'bar',s:'ok'},{n:'P. Descarga',v:66.5,u:'bar',s:'ok'}]},
+  {id:'aftercooler',name:'Aftercooler',tag:'E-101',type:'Intercambiador Aire',status:'warn',criticality:'media',
+   specs:{Tipo:'Air-cooled',Area:'250 m2',Ventiladores:'2 x 30 kW',Material:'CS/AL fins'},
+   sensors:[{n:'T. Entrada',v:118,u:'\u00b0C',s:'ok'},{n:'T. Salida',v:48,u:'\u00b0C',s:'warn'},{n:'dT',v:70,u:'\u00b0C',s:'ok'},{n:'Motor Fan',v:1480,u:'rpm',s:'ok'}]},
+  {id:'metering',name:'Medidor Ultrasonico',tag:'FT-201',type:'Estacion Medicion',status:'ok',criticality:'media',
+   specs:{Tipo:'Ultrasonico USM',Paths:'6-path',Norma:'AGA-9',Clase:'Fiscal'},
+   sensors:[{n:'Flujo',v:98,u:'MMSCFD',s:'ok'},{n:'Presion',v:66,u:'bar',s:'ok'},{n:'Temperatura',v:45,u:'\u00b0C',s:'ok'},{n:'Vel. Sonido',v:412,u:'m/s',s:'ok'}]},
+  {id:'pig-receiver',name:'Pig Receiver',tag:'PIG-R01',type:'Pig Receiver',status:'ok',criticality:'media',
+   specs:{Diametro:'24"',Presion_Diseno:'100 bar',Material:'CS ASTM A106 Gr.B'},
+   sensors:[{n:'Presion',v:66,u:'bar',s:'ok'},{n:'Estado',v:'Standby',u:'',s:'ok'},{n:'Indicador',v:'Clear',u:'',s:'ok'}]},
+  {id:'esd-valve-exit',name:'Valvula ESD Salida',tag:'XV-002',type:'Valvula ESD',status:'ok',criticality:'alta',
+   specs:{Tipo:'Ball valve',Size:'24"',Actuador:'Neumatico',SIL:'SIL 3'},
+   sensors:[{n:'Posicion',v:100,u:'%',s:'ok'},{n:'Presion Up',v:66.5,u:'bar',s:'ok'},{n:'Presion Down',v:66,u:'bar',s:'ok'}]},
+  {id:'pipeline-exit',name:'Pipeline Salida',tag:'PL-002',type:'Pipeline',status:'ok',criticality:'alta',
+   specs:{Diametro:'24" API 5L X65',Presion_Diseno:'100 bar',MAOP:'85 bar'},
+   sensors:[{n:'Presion',v:66,u:'bar',s:'ok'},{n:'Temperatura',v:45,u:'\u00b0C',s:'ok'},{n:'Flujo',v:97.5,u:'MMSCFD',s:'ok'}]},
+  {id:'control-bldg',name:'Edificio Control',tag:'BLD-01',type:'Edificio',status:'ok',criticality:'media',
+   specs:{Area:'120 m2',Clasificacion:'Zona segura',UPS:'120 kVA'},
+   sensors:[{n:'Temperatura',v:22,u:'\u00b0C',s:'ok'},{n:'UPS',v:98,u:'%',s:'ok'},{n:'Generador',v:'Standby',u:'',s:'ok'}]},
+  {id:'flare',name:'Antorcha',tag:'FL-001',type:'Antorcha',status:'ok',criticality:'alta',
+   specs:{Altura:'30m',Tipo:'Elevada',Capacidad:'50 MMSCFD'},
+   sensors:[{n:'Piloto',v:'Encendido',u:'',s:'ok'},{n:'Flujo Gas',v:0.5,u:'MMSCFD',s:'ok'},{n:'Temperatura',v:850,u:'\u00b0C',s:'ok'}]},
+  {id:'substation',name:'Subestacion Electrica',tag:'SE-001',type:'Subestacion',status:'ok',criticality:'alta',
+   specs:{Voltaje:'13.8 kV / 480V',Transformador:'5 MVA',Proteccion:'ABB REF615'},
+   sensors:[{n:'Voltaje',v:13.8,u:'kV',s:'ok'},{n:'Carga',v:72,u:'%',s:'ok'},{n:'Temp. Transf.',v:65,u:'\u00b0C',s:'ok'}]},
+  {id:'telecom-tower',name:'Torre Telecom',tag:'TW-001',type:'Torre',status:'ok',criticality:'media',
+   specs:{Altura:'30m',Enlace:'Microondas 24GHz',Respaldo:'VSAT Ku'},
+   sensors:[{n:'Senal',v:-42,u:'dBm',s:'ok'},{n:'Enlace',v:'Up',u:'',s:'ok'},{n:'BER',v:'1e-9',u:'',s:'ok'}]},
+  {id:'air-compressor',name:'Compresor Aire Instr.',tag:'C-201',type:'Compresor Aire',status:'ok',criticality:'media',
+   specs:{Tipo:'Tornillo',Presion:'7.5 bar',Capacidad:'120 Nm3/h'},
+   sensors:[{n:'Presion',v:7.5,u:'bar',s:'ok'},{n:'Punto Rocio',v:-40,u:'\u00b0C',s:'ok'},{n:'Flujo',v:120,u:'Nm3/h',s:'ok'}]}
+];
+
+/* SAP Work Orders for equipment panel */
+var SAP_WOS = {
+  'K-101A': [{id:'PM-DUC-7001',desc:'Vibracion alta 5.8 mm/s',prio:'1-URGENTE',st:'ABIERTA'}],
+  'K-101B': [{id:'PM-DUC-7008',desc:'Cambio sellos secos',prio:'3-MEDIA',st:'CERT'}],
+  'GT-101A': [{id:'PM-DUC-7002',desc:'Overhaul 25,000h',prio:'2-ALTA',st:'PROGRAMADA'}],
+  'GT-101B': [{id:'PM-DUC-7010',desc:'Inspeccion boroscopica',prio:'2-ALTA',st:'PROGRAMADA'}],
+  'PIG-L01': [{id:'PM-DUC-7003',desc:'Preparacion corrida pigging',prio:'2-ALTA',st:'EN PROCESO'}],
+  'V-101': [{id:'PM-DUC-7004',desc:'Drenaje liquidos acumulados',prio:'3-MEDIA',st:'COMPLETADA'}],
+  'E-101': [{id:'PM-DUC-7005',desc:'Revision ventilador / motor',prio:'3-MEDIA',st:'PROGRAMADA'}],
+  'XV-001': [{id:'PM-DUC-7006',desc:'Prueba parcial PST',prio:'1-URGENTE',st:'PROGRAMADA'}],
+  'FT-201': [{id:'PM-DUC-7007',desc:'Verificacion USM fiscal',prio:'2-ALTA',st:'PROGRAMADA'}]
+};
+
+var DOC_MAP = {
+  'K-101A':['DS Compresor K-101A','P&ID-CS-001','HAZOP Nodo 4'],
+  'K-101B':['DS Compresor K-101B','P&ID-CS-001','HAZOP Nodo 5'],
+  'GT-101A':['DS Turbina GT-101A','P&ID-GT-001','Boroscopia Report'],
+  'GT-101B':['DS Turbina GT-101B','P&ID-GT-002'],
+  'V-101':['DS Scrubber V-101','P&ID-SEP-001','HAZOP Nodo 2'],
+  'default':['P&ID General','PFD Proceso']
+};
+
+let selectedAsset = null;
+let scene, camera, renderer, controls, css2DRenderer;
+let meshMap = {};
+let iotLabels = {};
+let raycaster, mouse;
+let animFrame = 0;
+let systemVisibility = { piping:true, compressors:true, vessels:true, electrical:true, safety:true };
+let trendData = [];
+for(let i=0;i<60;i++) trendData.push(1.55 + Math.random()*0.1);
+
+// -- LIVE PROCESS ANIMATION STATE --
+let gasFlowParticles = [];
+let flareParticles = null;
+let pigMesh = null;
+let pigProgress = 0;
+let pigActive = false;
+let pigTimer = 0;
+let compressorMeshes = [];
+let turbineMeshes = [];
+
+/* Live IoT data for floating labels */
+var iotData = {
+  'CMP-01': {Ps:42,Pd:65,RPM:11000,Vib:3.5},
+  'CMP-02': {Ps:41,Pd:64,RPM:10800},
+  'SCR-01': {Nivel:15,P:45},
+  'PIG-L1': {Status:'Standby'},
+  'MET-01': {Flow:85}
+};
+
+function getAssetSystem(id){
+  if(['turbine1','compressor1','turbine2','compressor2','aftercooler'].includes(id)) return 'compressors';
+  if(['scrubber','slug-catcher'].includes(id)) return 'vessels';
+  if(['substation','control-bldg'].includes(id)) return 'electrical';
+  if(['esd-valve-entry','esd-valve-exit','flare'].includes(id)) return 'safety';
+  return 'piping';
+}
+
+/* ═══════════════════════════════════════════════════════════
+   CLOCK
+   ═══════════════════════════════════════════════════════════ */
+function updateClock(){
+  var now=new Date();
+  document.getElementById('clock').textContent=now.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+setInterval(updateClock,1000);updateClock();
+
+/* ═══════════════════════════════════════════════════════════
+   TAB SYSTEMS
+   ═══════════════════════════════════════════════════════════ */
+document.querySelectorAll('.sl-tab').forEach(function(t){
+  t.addEventListener('click',function(){
+    var target = t.dataset.sl;
+    if(target === 'sap'){ openSapFS(); return; }
+    if(target === 'tandem'){ openTandemFS(); return; }
+    if(target === 'acc'){ openAccFS(); return; }
+    document.querySelectorAll('.sl-tab').forEach(function(x){x.classList.remove('active');});
+    document.querySelectorAll('.sl-panel').forEach(function(x){x.classList.remove('active');});
+    t.classList.add('active');
+    document.getElementById('sl-'+target).classList.add('active');
+  });
+});
+
+document.querySelectorAll('.tab').forEach(function(t){
+  t.addEventListener('click',function(){
+    document.querySelectorAll('.tab').forEach(function(x){x.classList.remove('active');});
+    document.querySelectorAll('.view').forEach(function(x){x.classList.remove('active');});
+    t.classList.add('active');
+    var viewId = {'3d':'view-3d','monitor':'view-monitor','alerts':'view-alerts'}[t.dataset.tab];
+    document.getElementById(viewId).classList.add('active');
+    if(t.dataset.tab==='3d' && renderer) onResize();
+  });
+});
+
+document.querySelectorAll('.sys-toggle').forEach(function(t){
+  t.addEventListener('click',function(){
+    t.classList.toggle('active');
+    systemVisibility[t.dataset.sys] = t.classList.contains('active');
+    updateSystemVisibility();
+  });
+});
+
+function updateSystemVisibility(){
+  Object.keys(meshMap).forEach(function(id){
+    var m = meshMap[id];
+    if(!m) return;
+    var sys = getAssetSystem(id);
+    m.visible = systemVisibility[sys];
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════
+   FULLSCREEN OVERLAY FUNCTIONS
+   ═══════════════════════════════════════════════════════════ */
+function openSapFS(){
+  document.getElementById('sapFullscreen').classList.add('open');
+  // Move 3D canvas into SAP
+  var canvas = document.querySelector('#center canvas');
+  var sapContainer = document.getElementById('sap3dContainer');
+  if(canvas && sapContainer){
+    sapContainer.appendChild(canvas);
+    canvas.style.width = '100%';
+    canvas.style.height = '100%';
+    if(typeof renderer !== 'undefined'){
+      var w = sapContainer.clientWidth;
+      var h = sapContainer.clientHeight;
+      renderer.setSize(w, h);
+      if(typeof camera !== 'undefined'){
+        camera.aspect = w/h;
+        camera.updateProjectionMatrix();
+      }
+    }
+  }
+  // Build equipment cards
+  buildSapGemeloEquips();
+}
+function closeSapFS(){
+  document.getElementById('sapFullscreen').classList.remove('open');
+  // Find canvas wherever it ended up
+  var canvas = document.querySelector('canvas');
+  var center = document.getElementById('center');
+  if(canvas && center && canvas.parentElement !== center){
+    center.insertBefore(canvas, center.firstChild);
+    canvas.style.width = '100%';
+    canvas.style.height = '100%';
+    if(typeof renderer !== 'undefined'){
+      setTimeout(function(){
+        var w = center.clientWidth;
+        var h = center.clientHeight;
+        renderer.setSize(w, h);
+        if(typeof camera !== 'undefined'){
+          camera.aspect = w/h;
+          camera.updateProjectionMatrix();
+        }
+      }, 100);
+    }
+  }
+}
+function buildSapGemeloEquips(){
+  var container = document.getElementById('sapGemeloEquips');
+  if(!container || container.children.length > 0) return;
+  var equips = [
+    {tag:'TC-001',name:'Turbocompresor 1',health:87},
+    {tag:'TC-002',name:'Turbocompresor 2',health:91},
+    {tag:'SC-001',name:'Scrubber Entrada',health:94},
+    {tag:'AC-001',name:'Aero-enfriador 1',health:89},
+    {tag:'AC-002',name:'Aero-enfriador 2',health:85},
+    {tag:'MV-001',name:'Valvula Motorizada',health:96},
+    {tag:'PIG-01',name:'Trampa de Diablos',health:93},
+    {tag:'MET-01',name:'Medicion Fiscal',health:98}
+  ];
+  var html = '';
+  equips.forEach(function(eq){
+    var cls = eq.health >= 80 ? '#27AE60' : eq.health >= 60 ? '#F39C12' : '#E74C3C';
+    html += '<div style="background:#f8f9fa;border-radius:8px;padding:12px;border-left:3px solid '+cls+'">' +
+      '<div style="font-weight:700;color:#354A5F;font-size:12px">'+eq.tag+'</div>' +
+      '<div style="font-size:10px;color:#666;margin:2px 0">'+eq.name+'</div>' +
+      '<div style="font-size:11px;font-weight:600;color:'+cls+'">Health: '+eq.health+'%</div>' +
+      '<button onclick="closeSapFS();setTimeout(function(){selectAsset(\''+eq.tag+'\')},300)" style="margin-top:6px;font-size:9px;padding:4px 10px;border:1px solid #ccc;border-radius:4px;background:#fff;cursor:pointer;font-family:inherit">Localizar</button>' +
+      '</div>';
+  });
+  container.innerHTML = html;
+}
+function openAccFS(){
+  document.getElementById('accFullscreen').classList.add('open');
+  setTimeout(function(){ selectAccDocDuc(document.querySelector('.acc-fs-tree-item.sel'),'pid1'); },50);
+}
+function closeAccFS(){ document.getElementById('accFullscreen').classList.remove('open'); }
+function openTandemFS(){ document.getElementById('tandemFullscreen').classList.add('open'); }
+function closeTandemFS(){ document.getElementById('tandemFullscreen').classList.remove('open'); }
+
+function switchSapFSNav(el, panelId){
+  document.querySelectorAll('.sap-fs-nav-item').forEach(function(x){x.classList.remove('active');});
+  document.querySelectorAll('.sap-fs-panel').forEach(function(x){x.classList.remove('active');});
+  el.classList.add('active');
+  document.getElementById(panelId).classList.add('active');
+}
+
+function selectAccDocDuc(el, docId){
+  document.querySelectorAll('.acc-fs-tree-item').forEach(function(x){x.classList.remove('sel');});
+  if(el) el.classList.add('sel');
+  var titleEl = document.getElementById('accDocTitle');
+  var revEl = document.getElementById('accDocRev');
+  var previewEl = document.getElementById('accDocPreview');
+  if(!previewEl) return;
+  if(docId === 'pid1'){
+    titleEl.textContent = 'P&ID-DUC-001 - Compresion';
+    revEl.textContent = 'REV.04 | 2026-02-15 | Aprobado: Ing. R. Garza';
+    previewEl.innerHTML = '<div style="position:relative;width:100%;min-height:420px;background:#fff;border:2px solid #333;overflow:auto;font-family:Arial,sans-serif;display:block;align-items:initial;justify-content:initial;flex-direction:initial;color:#333;">' +
+      '<div style="position:absolute;top:6px;left:6px;right:6px;height:32px;border:2px solid #333;display:flex;align-items:center;font-size:11px;color:#333;background:#f5f5f5;"><div style="flex:1;padding:0 8px;font-weight:700;">P&ID-DUC-001 | COMPRESION</div><div style="border-left:1px solid #333;padding:0 6px;font-size:8px;color:#555;">REV.04 | 15-Feb-2026 | Ing. Garza | APROBADO</div></div>' +
+      '<div style="position:absolute;top:60px;left:20px;width:85px;height:45px;border:2px solid #566573;background:#eaecee;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#566573;"><div>PIPELINE IN</div><div style="font-size:7px;">72 bar</div></div>' +
+      '<div style="position:absolute;top:81px;left:105px;width:25px;height:2px;background:#333;"></div>' +
+      '<div style="position:absolute;top:75px;left:115px;width:14px;height:14px;border:2px solid #c0392b;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-size:7px;color:#c0392b;font-weight:700;">E</div>' +
+      '<div style="position:absolute;top:60px;left:135px;width:80px;height:45px;border:2px solid #c0392b;background:#fdedec;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#c0392b;"><div>ESD-IN</div><div style="font-size:7px;">XV-001</div></div>' +
+      '<div style="position:absolute;top:81px;left:215px;width:25px;height:2px;background:#333;"></div>' +
+      '<div style="position:absolute;top:60px;left:245px;width:85px;height:45px;border:2px solid #7d3c98;background:#f4ecf7;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#7d3c98;"><div>V-101</div><div style="font-size:7px;">Scrubber</div></div>' +
+      '<div style="position:absolute;top:48px;left:275px;width:22px;height:22px;border:1.5px solid #333;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:700;">LT</div>' +
+      '<div style="position:absolute;top:81px;left:330px;width:25px;height:2px;background:#333;"></div>' +
+      '<div style="position:absolute;top:78px;left:340px;font-size:8px;color:#333;">--&gt;</div>' +
+      '<div style="position:absolute;top:55px;left:360px;width:100px;height:55px;border:2px solid #1e8449;background:#eafaf1;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#1e8449;"><div>CMP-01</div><div style="font-size:7px;">Compresor Centrif.</div><div style="font-size:7px;">GT-101A</div></div>' +
+      '<div style="position:absolute;top:125px;left:360px;width:100px;height:55px;border:2px solid #1e8449;background:#eafaf1;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#1e8449;"><div>CMP-02</div><div style="font-size:7px;">Compresor Centrif.</div><div style="font-size:7px;">GT-101B</div></div>' +
+      '<div style="position:absolute;top:110px;left:340px;width:2px;height:45px;background:#333;"></div>' +
+      '<div style="position:absolute;top:81px;left:340px;width:20px;height:2px;background:#333;"></div>' +
+      '<div style="position:absolute;top:152px;left:340px;width:20px;height:2px;background:#333;"></div>' +
+      '<div style="position:absolute;top:43px;left:395px;width:22px;height:22px;border:1.5px solid #333;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:700;">PT</div>' +
+      '<div style="position:absolute;top:43px;left:425px;width:22px;height:22px;border:1.5px solid #333;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:700;">TT</div>' +
+      '<div style="position:absolute;top:110px;left:460px;width:2px;height:0px;background:#333;"></div>' +
+      '<div style="position:absolute;top:81px;left:460px;width:25px;height:2px;background:#333;"></div>' +
+      '<div style="position:absolute;top:60px;left:490px;width:85px;height:45px;border:2px solid #2e86c1;background:#d6eaf8;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#2e86c1;"><div>E-101</div><div style="font-size:7px;">Aftercooler</div></div>' +
+      '<div style="position:absolute;top:81px;left:575px;width:25px;height:2px;background:#333;"></div>' +
+      '<div style="position:absolute;top:60px;left:605px;width:85px;height:45px;border:2px solid #8e44ad;background:#f5eef8;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#8e44ad;"><div>FT-201</div><div style="font-size:7px;">Medicion</div></div>' +
+      '<div style="position:absolute;top:48px;left:630px;width:22px;height:22px;border:1.5px solid #333;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:700;">FT</div>' +
+      '<div style="position:absolute;top:81px;left:690px;width:25px;height:2px;background:#333;"></div>' +
+      '<div style="position:absolute;top:75px;left:700px;width:14px;height:14px;border:2px solid #c0392b;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-size:7px;color:#c0392b;font-weight:700;">E</div>' +
+      '<div style="position:absolute;top:60px;left:720px;width:80px;height:45px;border:2px solid #c0392b;background:#fdedec;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#c0392b;"><div>ESD-OUT</div><div style="font-size:7px;">XV-002</div></div>' +
+      '<div style="position:absolute;top:81px;left:800px;width:25px;height:2px;background:#333;"></div>' +
+      '<div style="position:absolute;top:60px;left:830px;width:85px;height:45px;border:2px solid #566573;background:#eaecee;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#566573;"><div>PIPELINE OUT</div><div style="font-size:7px;">85 bar</div></div>' +
+      '<div style="position:absolute;top:110px;left:490px;font-size:7px;color:#888;font-family:monospace;">T: 45C</div>' +
+      '<div style="position:absolute;top:110px;left:610px;font-size:7px;color:#888;font-family:monospace;">85 bar</div>' +
+      '<div style="position:absolute;bottom:6px;left:6px;right:6px;border-top:1px solid #ccc;padding-top:4px;font-size:7px;color:#666;">NOTAS: 1. Compresores centrifugos con turbina gas. 2. ESD SIL-3. 3. Medicion fiscal. | DUC-CEN-01</div></div>';
+  } else if(docId === 'pid2'){
+    titleEl.textContent = 'P&ID-DUC-002 - Separacion y Pigging';
+    revEl.textContent = 'REV.03 | 2026-01-20 | Aprobado: Ing. L. Martinez';
+    previewEl.innerHTML = '<div style="position:relative;width:100%;min-height:420px;background:#fff;border:2px solid #333;overflow:auto;font-family:Arial,sans-serif;display:block;color:#333;">' +
+      '<div style="position:absolute;top:6px;left:6px;right:6px;height:32px;border:2px solid #333;display:flex;align-items:center;font-size:11px;color:#333;background:#f5f5f5;"><div style="flex:1;padding:0 8px;font-weight:700;">P&ID-DUC-002 | SEPARACION Y PIGGING</div><div style="border-left:1px solid #333;padding:0 6px;font-size:8px;color:#555;">REV.03 | 20-Ene-2026 | Ing. Martinez</div></div>' +
+      '<div style="position:absolute;top:60px;left:20px;width:85px;height:45px;border:2px solid #566573;background:#eaecee;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#566573;"><div>PIPELINE IN</div><div style="font-size:7px;">72 bar</div></div>' +
+      '<div style="position:absolute;top:81px;left:105px;width:30px;height:2px;background:#333;"></div>' +
+      '<div style="position:absolute;top:55px;left:140px;width:100px;height:55px;border:2px solid #d35400;background:#fdebd0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#d35400;"><div>PIG-L01</div><div style="font-size:7px;">Pig Launcher</div><div style="font-size:7px;">30" x 36"</div></div>' +
+      '<div style="position:absolute;top:81px;left:240px;width:30px;height:2px;background:#333;"></div>' +
+      '<div style="position:absolute;top:55px;left:275px;width:100px;height:55px;border:2px solid #7d3c98;background:#f4ecf7;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#7d3c98;"><div>V-100</div><div style="font-size:7px;">Slug Catcher</div></div>' +
+      '<div style="position:absolute;top:43px;left:310px;width:22px;height:22px;border:1.5px solid #333;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:700;">LT</div>' +
+      '<div style="position:absolute;top:81px;left:375px;width:30px;height:2px;background:#333;"></div>' +
+      '<div style="position:absolute;top:78px;left:388px;font-size:8px;color:#333;">--&gt;</div>' +
+      '<div style="position:absolute;top:55px;left:410px;width:100px;height:55px;border:2px solid #7d3c98;background:#f4ecf7;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#7d3c98;"><div>V-101</div><div style="font-size:7px;">Scrubber</div></div>' +
+      '<div style="position:absolute;top:43px;left:445px;width:22px;height:22px;border:1.5px solid #333;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:700;">PT</div>' +
+      '<div style="position:absolute;top:81px;left:510px;width:40px;height:2px;background:#333;"></div>' +
+      '<div style="position:absolute;top:78px;left:530px;font-size:8px;color:#333;">--&gt; A Compresion</div>' +
+      '<div style="position:absolute;top:140px;left:410px;width:100px;height:45px;border:2px solid #2e86c1;background:#d6eaf8;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#2e86c1;"><div>LIQUIDOS</div><div style="font-size:7px;">A Tanque Slop</div></div>' +
+      '<div style="position:absolute;top:110px;left:460px;width:2px;height:30px;background:#333;"></div>' +
+      '<div style="position:absolute;top:200px;left:520px;width:100px;height:55px;border:2px solid #d35400;background:#fdebd0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#d35400;"><div>PIG-R01</div><div style="font-size:7px;">Pig Receiver</div><div style="font-size:7px;">30" x 36"</div></div>' +
+      '<div style="position:absolute;top:200px;left:20px;width:85px;height:45px;border:2px solid #566573;background:#eaecee;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#566573;"><div>PIPELINE OUT</div><div style="font-size:7px;">Downstream</div></div>' +
+      '<div style="position:absolute;top:221px;left:105px;width:415px;height:2px;background:#333;"></div>' +
+      '<div style="position:absolute;top:218px;left:300px;font-size:8px;color:#333;">&lt;-- Pig Run</div>' +
+      '<div style="position:absolute;bottom:6px;left:6px;right:6px;border-top:1px solid #ccc;padding-top:4px;font-size:7px;color:#666;">NOTAS: 1. Pig Launcher/Receiver 30"x36" ANSI 600. 2. Slug catcher 3-phase. 3. Scrubber con mist eliminator. | DUC-CEN-01</div></div>';
+  } else if(docId === 'ds'){
+    titleEl.textContent = 'Ficha Tecnica - Compresor Centrifugo CMP-01';
+    revEl.textContent = 'REV.03 | 2026-02-01 | Varios';
+    previewEl.innerHTML = '<div style="width:100%;max-width:600px;background:#fff;border:2px solid #333;font-family:Arial,sans-serif;color:#333;">' +
+      '<div style="background:#1e8449;color:#fff;padding:10px 14px;font-size:13px;font-weight:700;text-align:center;">FICHA TECNICA - COMPRESOR CENTRIFUGO CMP-01</div>' +
+      '<div style="background:#27ae60;color:#fff;padding:5px 14px;font-size:9px;text-align:center;">Estacion Compresion | DUC-CEN-01 | Rev.03 | Feb-2026</div>' +
+      '<table style="width:100%;border-collapse:collapse;font-size:11px;">' +
+        '<tr style="background:#eafaf1;"><td style="border:1px solid #bbb;padding:5px 8px;font-weight:600;width:38%;">Tag</td><td style="border:1px solid #bbb;padding:5px 8px;">CMP-01 (K-101A)</td></tr>' +
+        '<tr><td style="border:1px solid #bbb;padding:5px 8px;font-weight:600;background:#f8f9fa;">Servicio</td><td style="border:1px solid #bbb;padding:5px 8px;">Compresion Gas Natural - Gasoducto</td></tr>' +
+        '<tr style="background:#eafaf1;"><td style="border:1px solid #bbb;padding:5px 8px;font-weight:600;">Tipo</td><td style="border:1px solid #bbb;padding:5px 8px;">Centrifugo, 2 etapas</td></tr>' +
+        '<tr><td style="border:1px solid #bbb;padding:5px 8px;font-weight:600;background:#f8f9fa;">Driver</td><td style="border:1px solid #bbb;padding:5px 8px;">Turbina de Gas GT-101A (Solar Titan 130)</td></tr>' +
+        '<tr style="background:#eafaf1;"><td style="border:1px solid #bbb;padding:5px 8px;font-weight:600;">Potencia</td><td style="border:1px solid #bbb;padding:5px 8px;">15,000 HP (11.2 MW)</td></tr>' +
+        '<tr><td style="border:1px solid #bbb;padding:5px 8px;font-weight:600;background:#f8f9fa;">P. Succion</td><td style="border:1px solid #bbb;padding:5px 8px;">72 bar</td></tr>' +
+        '<tr style="background:#eafaf1;"><td style="border:1px solid #bbb;padding:5px 8px;font-weight:600;">P. Descarga</td><td style="border:1px solid #bbb;padding:5px 8px;">85 bar</td></tr>' +
+        '<tr><td style="border:1px solid #bbb;padding:5px 8px;font-weight:600;background:#f8f9fa;">Capacidad</td><td style="border:1px solid #bbb;padding:5px 8px;">12 MMSCFD</td></tr>' +
+        '<tr style="background:#eafaf1;"><td style="border:1px solid #bbb;padding:5px 8px;font-weight:600;">RPM</td><td style="border:1px solid #bbb;padding:5px 8px;">8,500 (compresor) / 14,200 (turbina)</td></tr>' +
+        '<tr><td style="border:1px solid #bbb;padding:5px 8px;font-weight:600;background:#f8f9fa;">Fabricante</td><td style="border:1px solid #bbb;padding:5px 8px;">Solar Turbines (Caterpillar)</td></tr>' +
+        '<tr style="background:#eafaf1;"><td style="border:1px solid #bbb;padding:5px 8px;font-weight:600;">Instalacion</td><td style="border:1px solid #bbb;padding:5px 8px;">Mar-2024</td></tr>' +
+        '<tr><td style="border:1px solid #bbb;padding:5px 8px;font-weight:600;background:#f8f9fa;">Horas Acumuladas</td><td style="border:1px solid #bbb;padding:5px 8px;">6,432 h</td></tr>' +
+        '<tr style="background:#eafaf1;"><td style="border:1px solid #bbb;padding:5px 8px;font-weight:600;">Prox. Hot Gas Path Insp.</td><td style="border:1px solid #bbb;padding:5px 8px;">16,000 h</td></tr>' +
+        '<tr><td style="border:1px solid #bbb;padding:5px 8px;font-weight:600;background:#f8f9fa;">Vibracion Max.</td><td style="border:1px solid #bbb;padding:5px 8px;">25.4 um pp (alarm 38, trip 50)</td></tr>' +
+      '</table><div style="padding:6px 14px;font-size:8px;color:#888;border-top:1px solid #bbb;">Documento controlado | DUC-CEN-01</div></div>';
+  } else {
+    titleEl.textContent = docId + ' - DUC-CEN-01';
+    revEl.textContent = 'REV.03 | 2026-02-01';
+    previewEl.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:200px;color:#555;font-size:13px;"><div style="font-size:36px;opacity:.3;margin-bottom:8px;">[DOC]</div>' + docId + '<div style="font-size:10px;margin-top:4px;">Vista previa - DUC-CEN-01</div></div>';
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ASSET LIST
+   ═══════════════════════════════════════════════════════════ */
+function buildAssetList(){
+  var el = document.getElementById('assetList');
+  el.innerHTML = '';
+  ASSETS.forEach(function(a){
+    var div = document.createElement('div');
+    div.className = 'asset-item'+(selectedAsset===a.id?' active':'');
+    div.innerHTML = '<div class="ai-dot '+a.status+'"></div><div><div class="ai-name">'+a.name+'</div><div class="ai-sub">'+a.tag+'</div></div>';
+    div.addEventListener('click',function(){selectAsset(a.id);});
+    el.appendChild(div);
+  });
+}
+
+function selectAsset(id){
+  selectedAsset = id;
+  buildAssetList();
+  showEquipPanel(id);
+  Object.keys(meshMap).forEach(function(k){
+    var m=meshMap[k]; if(!m)return;
+    if(m._origColor!==undefined) m.material.color.setHex(m._origColor);
+    if(m.material.emissive) m.material.emissive.setHex(0x000000);
+  });
+  var mesh=meshMap[id];
+  if(mesh){
+    if(mesh._origColor===undefined) mesh._origColor=mesh.material.color.getHex();
+    if(mesh.material.emissive){mesh.material.emissive.setHex(0xFF5500);mesh.material.emissiveIntensity=0.3;}
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   RICH EQUIPMENT PANEL
+   ═══════════════════════════════════════════════════════════ */
+function showEquipPanel(id){
+  var a=ASSETS.find(function(x){return x.id===id;});if(!a)return;
+  var panel=document.getElementById('equip-panel');
+  var content=document.getElementById('ep-content');
+  var critClass=a.criticality==='alta'?'alta':a.criticality==='media'?'media':'baja';
+  var html='<div class="ep-tag">'+a.tag+'</div>';
+  html+='<div class="ep-name">'+a.name+'</div>';
+  html+='<div class="ep-conf '+critClass+'">CRITICIDAD '+a.criticality.toUpperCase()+'</div>';
+
+  // Specs
+  html+='<div class="ep-section">Especificaciones</div>';
+  if(a.specs){
+    Object.keys(a.specs).forEach(function(k){
+      html+='<div class="ep-row"><span class="k">'+k.replace(/_/g,' ')+'</span><span class="v">'+a.specs[k]+'</span></div>';
+    });
+  }
+  html+='<div class="ep-row"><span class="k">Tipo</span><span class="v">'+a.type+'</span></div>';
+  var stColor=a.status==='ok'?'gr':a.status==='warn'?'ye':'re';
+  var stText=a.status==='ok'?'Operando':a.status==='warn'?'Alerta':'Critico';
+  html+='<div class="ep-row"><span class="k">Estado</span><span class="v" style="color:var(--'+stColor+')">'+stText+'</span></div>';
+
+  // Live Sensors
+  html+='<div class="ep-section">Sensores en Tiempo Real</div>';
+  a.sensors.forEach(function(s){
+    var val=typeof s.v==='number'?s.v.toLocaleString():s.v;
+    html+='<div class="ep-sensor"><span class="sn">'+s.n+'</span><span class="sv '+s.s+'">'+val+' '+s.u+'</span></div>';
+  });
+
+  // Trend chart canvas
+  html+='<div class="ep-section">Tendencia (24h)</div>';
+  html+='<canvas class="ep-trend-canvas" id="epTrendCanvas" width="300" height="80"></canvas>';
+
+  // QR Code
+  html+='<div class="ep-section">QR Code</div>';
+  html+='<div class="qr-container"><div id="epQR"></div><span class="qr-label">Escanear para ficha tecnica movil</span></div>';
+
+  // Documents
+  html+='<div class="ep-section">Documentos</div>';
+  var docs = DOC_MAP[a.tag] || DOC_MAP['default'];
+  docs.forEach(function(d){
+    html+='<div class="ep-doc-item" onclick="openAccFS()">[DOC] '+d+'</div>';
+  });
+
+  // SAP Work Orders
+  var wos = SAP_WOS[a.tag];
+  if(wos && wos.length > 0){
+    html+='<div class="ep-section">SAP Work Orders</div>';
+    wos.forEach(function(wo){
+      html+='<div class="ep-wo-item"><div class="wo-id">'+wo.id+' | '+wo.prio+' | '+wo.st+'</div><div class="wo-desc">'+wo.desc+'</div></div>';
+    });
+  }
+
+  // Action buttons
+  html+='<div class="ep-section">Acciones</div>';
+  html+='<div class="ep-btn-row"><button class="ep-btn" onclick="openSapFS()">Abrir SAP PM</button><button class="ep-btn" onclick="openAccFS()">Ver Docs</button></div>';
+  html+='<button class="ep-btn" onclick="alert(\'Generando OT para '+a.tag+'...\')">Crear OT SAP</button>';
+  html+='<button class="ep-btn" onclick="alert(\'Abriendo historico de '+a.tag+'...\')">Ver Historico</button>';
+
+  content.innerHTML=html;
+  panel.style.display='block';
+
+  // Draw mini trend in panel
+  setTimeout(function(){ drawEpTrend(a); }, 50);
+  // Draw QR
+  setTimeout(function(){ drawQR(a.tag); }, 50);
+}
+
+function drawEpTrend(asset){
+  var c = document.getElementById('epTrendCanvas');
+  if(!c) return;
+  var ctx = c.getContext('2d');
+  var w = c.width, h = c.height;
+  ctx.clearRect(0,0,w,h);
+  ctx.fillStyle='#111D2B';ctx.fillRect(0,0,w,h);
+  // Generate random trend
+  var data = [];
+  var baseVal = asset.sensors[0] ? (typeof asset.sensors[0].v === 'number' ? asset.sensors[0].v : 50) : 50;
+  for(var i=0;i<30;i++) data.push(baseVal + (Math.random()-0.5)*baseVal*0.1);
+  var min = Math.min.apply(null,data), max = Math.max.apply(null,data);
+  if(max===min){max=min+1;}
+  ctx.beginPath();ctx.strokeStyle='#00C8F0';ctx.lineWidth=1.5;
+  for(var p=0;p<data.length;p++){
+    var px = (p/(data.length-1))*w;
+    var py = 5 + (1-(data[p]-min)/(max-min))*(h-10);
+    if(p===0)ctx.moveTo(px,py);else ctx.lineTo(px,py);
+  }
+  ctx.stroke();
+}
+
+function generateRealQR(containerId, data) {
+  var container = document.getElementById(containerId);
+  if (!container) return;
+  container.innerHTML = '';
+  var qr = qrcode(0, 'M');
+  qr.addData(data);
+  qr.make();
+  var size = 120;
+  var canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  canvas.style.width = size + 'px';
+  canvas.style.height = size + 'px';
+  canvas.style.borderRadius = '4px';
+  var ctx = canvas.getContext('2d');
+  var cellSize = size / qr.getModuleCount();
+  ctx.fillStyle = '#0a1420';
+  ctx.fillRect(0, 0, size, size);
+  ctx.fillStyle = '#FF5500';
+  for (var r = 0; r < qr.getModuleCount(); r++) {
+    for (var c = 0; c < qr.getModuleCount(); c++) {
+      if (qr.isDark(r, c)) {
+        ctx.fillRect(c * cellSize, r * cellSize, cellSize + 0.5, cellSize + 0.5);
+      }
+    }
+  }
+  container.appendChild(canvas);
+}
+function drawQR(tag){
+  var url = 'https://creas-demo.netlify.app/ductos-DT.html#' + tag;
+  generateRealQR('epQR', url);
+}
+
+function closePanel(){
+  document.getElementById('equip-panel').style.display='none';
+  selectedAsset=null;
+  buildAssetList();
+  Object.keys(meshMap).forEach(function(k){
+    var m=meshMap[k];if(!m)return;
+    if(m._origColor!==undefined) m.material.color.setHex(m._origColor);
+    if(m.material.emissive) m.material.emissive.setHex(0x000000);
+  });
+}
+
+function showAlerts(){
+  document.querySelectorAll('.tab').forEach(function(x){x.classList.remove('active');});
+  document.querySelectorAll('.view').forEach(function(x){x.classList.remove('active');});
+  document.querySelector('[data-tab="alerts"]').classList.add('active');
+  document.getElementById('view-alerts').classList.add('active');
+}
+
+buildAssetList();
+
+/* ═══════════════════════════════════════════════════════════
+   ORBIT CONTROLS (inline implementation for r128)
+   ═══════════════════════════════════════════════════════════ */
+THREE.OrbitControls=function(object,domElement){
+  this.object=object;this.domElement=domElement;this.enabled=true;
+  this.target=new THREE.Vector3();this.enableDamping=false;this.dampingFactor=0.05;
+  this.enableZoom=true;this.zoomSpeed=1.0;this.minDistance=0;this.maxDistance=Infinity;
+  this.enableRotate=true;this.rotateSpeed=0.8;this.enablePan=true;this.panSpeed=0.8;
+  this.minPolarAngle=0;this.maxPolarAngle=Math.PI;
+  var scope=this,STATE={NONE:-1,ROTATE:0,DOLLY:1,PAN:2,TOUCH_ROTATE:3,TOUCH_DOLLY_PAN:4},state=STATE.NONE;
+  var spherical=new THREE.Spherical(),sphericalDelta=new THREE.Spherical(),scale=1,panOffset=new THREE.Vector3();
+  var rotateStart=new THREE.Vector2(),rotateEnd=new THREE.Vector2(),rotateDelta=new THREE.Vector2();
+  var panStart=new THREE.Vector2(),panEnd=new THREE.Vector2(),panDelta=new THREE.Vector2();
+  var dollyStart=new THREE.Vector2(),dollyEnd=new THREE.Vector2(),dollyDelta=new THREE.Vector2();
+  function getZoomScale(){return Math.pow(0.95,scope.zoomSpeed);}
+  var offset=new THREE.Vector3(),quat=new THREE.Quaternion().setFromUnitVectors(object.up,new THREE.Vector3(0,1,0)),quatInverse=quat.clone().invert();
+  this.update=function(){
+    offset.copy(scope.object.position).sub(scope.target);offset.applyQuaternion(quat);
+    spherical.setFromVector3(offset);
+    if(scope.enableDamping){spherical.theta+=sphericalDelta.theta*scope.dampingFactor;spherical.phi+=sphericalDelta.phi*scope.dampingFactor;}
+    else{spherical.theta+=sphericalDelta.theta;spherical.phi+=sphericalDelta.phi;}
+    spherical.phi=Math.max(scope.minPolarAngle,Math.min(scope.maxPolarAngle,spherical.phi));
+    spherical.makeSafe();spherical.radius*=scale;
+    spherical.radius=Math.max(scope.minDistance,Math.min(scope.maxDistance,spherical.radius));
+    if(scope.enableDamping) scope.target.addScaledVector(panOffset,scope.dampingFactor);
+    else scope.target.add(panOffset);
+    offset.setFromSpherical(spherical);offset.applyQuaternion(quatInverse);
+    scope.object.position.copy(scope.target).add(offset);scope.object.lookAt(scope.target);
+    if(scope.enableDamping){sphericalDelta.theta*=(1-scope.dampingFactor);sphericalDelta.phi*=(1-scope.dampingFactor);panOffset.multiplyScalar(1-scope.dampingFactor);}
+    else{sphericalDelta.set(0,0,0);panOffset.set(0,0,0);}
+    scale=1;return false;
+  };
+  function rotateLeft(a){sphericalDelta.theta-=a;}function rotateUp(a){sphericalDelta.phi-=a;}
+  function dollyIn(s){scale/=s;}function dollyOut(s){scale*=s;}
+  function panLeft(d,m){var v=new THREE.Vector3();v.setFromMatrixColumn(m,0);v.multiplyScalar(-d);panOffset.add(v);}
+  function panUp(d,m){var v=new THREE.Vector3();v.setFromMatrixColumn(m,1);v.multiplyScalar(d);panOffset.add(v);}
+  function pan(dx,dy){var el=scope.domElement;offset.copy(scope.object.position).sub(scope.target);var td=offset.length();td*=Math.tan((scope.object.fov/2)*Math.PI/180);panLeft(2*dx*td/el.clientHeight,scope.object.matrix);panUp(2*dy*td/el.clientHeight,scope.object.matrix);}
+  function onPointerDown(e){if(!scope.enabled)return;if(e.button===0){state=STATE.ROTATE;rotateStart.set(e.clientX,e.clientY);}else if(e.button===1){state=STATE.DOLLY;dollyStart.set(e.clientX,e.clientY);}else if(e.button===2){state=STATE.PAN;panStart.set(e.clientX,e.clientY);}domElement.addEventListener('pointermove',onPointerMove);domElement.addEventListener('pointerup',onPointerUp);}
+  function onPointerMove(e){if(!scope.enabled)return;if(state===STATE.ROTATE){rotateEnd.set(e.clientX,e.clientY);rotateDelta.subVectors(rotateEnd,rotateStart).multiplyScalar(scope.rotateSpeed);rotateLeft(Math.PI*rotateDelta.x/domElement.clientHeight);rotateUp(Math.PI*rotateDelta.y/domElement.clientHeight);rotateStart.copy(rotateEnd);}else if(state===STATE.DOLLY){dollyEnd.set(e.clientX,e.clientY);dollyDelta.subVectors(dollyEnd,dollyStart);if(dollyDelta.y>0)dollyIn(getZoomScale());else if(dollyDelta.y<0)dollyOut(getZoomScale());dollyStart.copy(dollyEnd);}else if(state===STATE.PAN){panEnd.set(e.clientX,e.clientY);panDelta.subVectors(panEnd,panStart).multiplyScalar(scope.panSpeed);pan(panDelta.x,panDelta.y);panStart.copy(panEnd);}}
+  function onPointerUp(){state=STATE.NONE;domElement.removeEventListener('pointermove',onPointerMove);domElement.removeEventListener('pointerup',onPointerUp);}
+  function onMouseWheel(e){if(!scope.enabled||!scope.enableZoom)return;e.preventDefault();if(e.deltaY<0)dollyOut(getZoomScale());else if(e.deltaY>0)dollyIn(getZoomScale());}
+  function onContextMenu(e){e.preventDefault();}
+  function onTouchStart(e){if(!scope.enabled)return;e.preventDefault();if(e.touches.length===1){state=STATE.TOUCH_ROTATE;rotateStart.set(e.touches[0].pageX,e.touches[0].pageY);}else if(e.touches.length===2){state=STATE.TOUCH_DOLLY_PAN;var dx=e.touches[0].pageX-e.touches[1].pageX,dy=e.touches[0].pageY-e.touches[1].pageY;dollyStart.set(0,Math.sqrt(dx*dx+dy*dy));panStart.set((e.touches[0].pageX+e.touches[1].pageX)*0.5,(e.touches[0].pageY+e.touches[1].pageY)*0.5);}}
+  function onTouchMove(e){if(!scope.enabled)return;e.preventDefault();if(state===STATE.TOUCH_ROTATE&&e.touches.length===1){rotateEnd.set(e.touches[0].pageX,e.touches[0].pageY);rotateDelta.subVectors(rotateEnd,rotateStart).multiplyScalar(scope.rotateSpeed);rotateLeft(Math.PI*rotateDelta.x/domElement.clientHeight);rotateUp(Math.PI*rotateDelta.y/domElement.clientHeight);rotateStart.copy(rotateEnd);}else if(state===STATE.TOUCH_DOLLY_PAN&&e.touches.length===2){var dx=e.touches[0].pageX-e.touches[1].pageX,dy=e.touches[0].pageY-e.touches[1].pageY;dollyEnd.set(0,Math.sqrt(dx*dx+dy*dy));dollyDelta.set(0,Math.pow(dollyEnd.y/dollyStart.y,scope.zoomSpeed));dollyIn(dollyDelta.y);dollyStart.copy(dollyEnd);var mx=(e.touches[0].pageX+e.touches[1].pageX)*0.5,my=(e.touches[0].pageY+e.touches[1].pageY)*0.5;panEnd.set(mx,my);panDelta.subVectors(panEnd,panStart).multiplyScalar(scope.panSpeed);pan(panDelta.x,panDelta.y);panStart.copy(panEnd);}}
+  function onTouchEnd(){state=STATE.NONE;}
+  domElement.addEventListener('pointerdown',onPointerDown);domElement.addEventListener('wheel',onMouseWheel,{passive:false});domElement.addEventListener('contextmenu',onContextMenu);
+  domElement.addEventListener('touchstart',onTouchStart,{passive:false});domElement.addEventListener('touchmove',onTouchMove,{passive:false});domElement.addEventListener('touchend',onTouchEnd);
+  this.update();
+};
+
+/* ═══════════════════════════════════════════════════════════
+   THREE.JS 3D SCENE
+   ═══════════════════════════════════════════════════════════ */
+function init3D(){
+  var container = document.getElementById('view-3d');
+  var w = container.clientWidth, h = container.clientHeight;
+
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x060D18);
+  scene.fog = new THREE.FogExp2(0x060D18, 0.003);
+
+  camera = new THREE.PerspectiveCamera(50, w/h, 0.5, 500);
+  camera.position.set(60, 45, 80);
+  camera.lookAt(0, 5, 0);
+
+  renderer = new THREE.WebGLRenderer({antialias:true});
+  renderer.setSize(w, h);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.1;
+  container.appendChild(renderer.domElement);
+
+  /* CSS2D Renderer for floating IoT labels */
+  css2DRenderer = new THREE.CSS2DRenderer();
+  css2DRenderer.setSize(w, h);
+  css2DRenderer.domElement.style.position = 'absolute';
+  css2DRenderer.domElement.style.top = '0';
+  css2DRenderer.domElement.style.left = '0';
+  css2DRenderer.domElement.style.pointerEvents = 'none';
+  container.appendChild(css2DRenderer.domElement);
+
+  /* LIGHTING */
+  scene.add(new THREE.AmbientLight(0x334466, 0.4));
+  scene.add(new THREE.HemisphereLight(0x88aacc, 0x443322, 0.5));
+  var sunLight = new THREE.DirectionalLight(0xfff0dd, 1.2);
+  sunLight.position.set(60, 80, 40);
+  sunLight.castShadow = true;
+  sunLight.shadow.mapSize.set(2048,2048);
+  sunLight.shadow.camera.left=-80;sunLight.shadow.camera.right=80;
+  sunLight.shadow.camera.top=60;sunLight.shadow.camera.bottom=-60;
+  sunLight.shadow.camera.near=10;sunLight.shadow.camera.far=200;
+  scene.add(sunLight);
+  var fillLight = new THREE.DirectionalLight(0x88aaff, 0.3);
+  fillLight.position.set(-30, 20, -40);scene.add(fillLight);
+  var compLight1 = new THREE.PointLight(0xffa040, 0.6, 30);
+  compLight1.position.set(0, 8, 0);scene.add(compLight1);
+  var compLight2 = new THREE.PointLight(0xffa040, 0.6, 30);
+  compLight2.position.set(0, 8, -15);scene.add(compLight2);
+
+  /* CONTROLS */
+  controls = new THREE.OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;controls.dampingFactor = 0.08;
+  controls.rotateSpeed = 0.6;controls.panSpeed = 0.5;controls.zoomSpeed = 0.8;
+  controls.minDistance = 10;controls.maxDistance = 250;
+  controls.maxPolarAngle = Math.PI/2.05;
+  controls.enablePan = true;controls.screenSpacePanning = true;
+  controls.target.set(0, 5, 0);controls.update();
+
+  raycaster = new THREE.Raycaster();
+  mouse = new THREE.Vector2();
+
+  /* MATERIALS */
+  var M = {
+    ground:new THREE.MeshStandardMaterial({color:0x5a5040,roughness:0.95,metalness:0}),
+    concrete:new THREE.MeshStandardMaterial({color:0x8a8580,roughness:0.85,metalness:0}),
+    pipeline:new THREE.MeshStandardMaterial({color:0xd4a017,roughness:0.4,metalness:0.6}),
+    pipe:new THREE.MeshStandardMaterial({color:0x889098,roughness:0.35,metalness:0.7}),
+    vessel:new THREE.MeshStandardMaterial({color:0xa0a8b0,roughness:0.3,metalness:0.7}),
+    compBody:new THREE.MeshStandardMaterial({color:0xc8ccd0,roughness:0.4,metalness:0.5}),
+    turbine:new THREE.MeshStandardMaterial({color:0x909498,roughness:0.35,metalness:0.6}),
+    exhaust:new THREE.MeshStandardMaterial({color:0x555555,roughness:0.6,metalness:0.4}),
+    building:new THREE.MeshStandardMaterial({color:0x8a8878,roughness:0.8,metalness:0.1}),
+    roof:new THREE.MeshStandardMaterial({color:0x606060,roughness:0.7,metalness:0.2}),
+    fence:new THREE.MeshStandardMaterial({color:0x666666,roughness:0.7,metalness:0.5,wireframe:true}),
+    red:new THREE.MeshStandardMaterial({color:0xcc2020,roughness:0.5,metalness:0.3}),
+    yellow:new THREE.MeshStandardMaterial({color:0xd4a017,roughness:0.5,metalness:0.3}),
+    cooler:new THREE.MeshStandardMaterial({color:0x7090a0,roughness:0.4,metalness:0.5}),
+    glass:new THREE.MeshStandardMaterial({color:0x88ccff,roughness:0.1,metalness:0.1,transparent:true,opacity:0.35}),
+    flareG:new THREE.MeshBasicMaterial({color:0xff6600}),
+    road:new THREE.MeshStandardMaterial({color:0x4a4438,roughness:0.95,metalness:0}),
+    steel:new THREE.MeshStandardMaterial({color:0x707880,roughness:0.4,metalness:0.6}),
+    green:new THREE.MeshStandardMaterial({color:0x10a040,roughness:0.5,metalness:0.3}),
+    darkP:new THREE.MeshStandardMaterial({color:0x303540,roughness:0.6,metalness:0.3}),
+    tower:new THREE.MeshStandardMaterial({color:0x888888,roughness:0.5,metalness:0.6}),
+    enclosure:new THREE.MeshStandardMaterial({color:0xaab0b8,roughness:0.5,metalness:0.3,transparent:true,opacity:0.25}),
+  };
+
+  function addPipe(x1,y1,z1,x2,y2,z2,r,mat){
+    var dx=x2-x1,dy=y2-y1,dz=z2-z1,len=Math.sqrt(dx*dx+dy*dy+dz*dz);
+    var geo=new THREE.CylinderGeometry(r||0.3,r||0.3,len,12);
+    var p=new THREE.Mesh(geo,mat||M.pipe);
+    p.position.set((x1+x2)/2,(y1+y2)/2,(z1+z2)/2);
+    var dir=new THREE.Vector3(dx,dy,dz).normalize();
+    p.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),dir);
+    p.castShadow=true;scene.add(p);return p;
+  }
+  function addSupport(x,z,h){
+    h=h||4;
+    var p1=new THREE.Mesh(new THREE.BoxGeometry(0.3,h,0.3),M.concrete);p1.position.set(x-1,h/2,z);p1.castShadow=true;scene.add(p1);
+    var p2=new THREE.Mesh(new THREE.BoxGeometry(0.3,h,0.3),M.concrete);p2.position.set(x+1,h/2,z);p2.castShadow=true;scene.add(p2);
+    var beam=new THREE.Mesh(new THREE.BoxGeometry(3,0.2,0.2),M.steel);beam.position.set(x,h,z);scene.add(beam);
+  }
+  function addDetector(x,z){
+    var pole=new THREE.Mesh(new THREE.CylinderGeometry(0.05,0.05,3,6),M.steel);pole.position.set(x,1.5,z);scene.add(pole);
+    var det=new THREE.Mesh(new THREE.BoxGeometry(0.2,0.2,0.2),M.red);det.position.set(x,3.1,z);scene.add(det);
+  }
+  function addLabel(text,pos,color){
+    var c=document.createElement('canvas'),ctx=c.getContext('2d');c.width=256;c.height=64;
+    ctx.font='bold 22px Space Grotesk, sans-serif';ctx.fillStyle=color||'#E8F4FF';ctx.textAlign='center';ctx.fillText(text,128,38);
+    var tex=new THREE.CanvasTexture(c);
+    var sp=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,depthTest:false,transparent:true}));
+    sp.position.set(pos.x,pos.y,pos.z);sp.scale.set(8,2,1);scene.add(sp);
+  }
+
+  /* ── CSS2D IoT FLOATING LABELS ── */
+  function addIoTLabel(id, text, pos, borderClass){
+    var div = document.createElement('div');
+    div.className = 'iot-label ' + (borderClass||'border-or');
+    div.textContent = text;
+    div.id = 'iot-' + id;
+    var label = new THREE.CSS2DObject(div);
+    label.position.set(pos.x, pos.y, pos.z);
+    scene.add(label);
+    iotLabels[id] = {obj:label, div:div};
+  }
+
+  /* GROUND */
+  var ground=new THREE.Mesh(new THREE.PlaneGeometry(200,160),M.ground);
+  ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;scene.add(ground);
+
+  function addRoad(x,z,w,d){var r=new THREE.Mesh(new THREE.BoxGeometry(w,0.08,d),M.road);r.position.set(x,0.04,z);r.receiveShadow=true;scene.add(r);}
+  addRoad(0,0,150,5);addRoad(0,0,5,80);addRoad(-30,20,5,40);addRoad(30,20,5,40);
+  function addFence(x,z,w,d){var f=new THREE.Mesh(new THREE.BoxGeometry(w,3,d),M.fence);f.position.set(x,1.5,z);scene.add(f);}
+  addFence(0,50,160,0.1);addFence(0,-50,160,0.1);addFence(-80,0,0.1,100);addFence(80,0,0.1,100);
+  var gate=new THREE.Mesh(new THREE.BoxGeometry(8,3.5,0.3),M.yellow);gate.position.set(0,-50,0);scene.add(gate);
+  var drain=new THREE.Mesh(new THREE.BoxGeometry(20,0.05,10),new THREE.MeshStandardMaterial({color:0x3a3020,roughness:1}));
+  drain.position.set(50,-35,0);scene.add(drain);
+  var grid=new THREE.GridHelper(200,40,0x1a2a3a,0x0a1520);grid.position.y=0.01;scene.add(grid);
+
+  /* PIPELINE ENTRY */
+  var pipeEntry=new THREE.Mesh(new THREE.CylinderGeometry(0.6,0.6,30,16),M.pipeline);
+  pipeEntry.position.set(-65,2,0);pipeEntry.rotation.z=Math.PI/2;pipeEntry.castShadow=true;
+  pipeEntry.userData={assetId:'pipeline-entry'};scene.add(pipeEntry);meshMap['pipeline-entry']=pipeEntry;
+  var pipeUp=new THREE.Mesh(new THREE.CylinderGeometry(0.6,0.6,6,16),M.pipeline);
+  pipeUp.position.set(-75,0,0);pipeUp.rotation.z=Math.PI/6;pipeUp.castShadow=true;scene.add(pipeUp);
+  for(var i=-60;i<-40;i+=5) addSupport(i,0);
+
+  var esdEntry=new THREE.Mesh(new THREE.BoxGeometry(1.5,0.8,0.8),M.red);
+  esdEntry.position.set(-45,4.4,0);esdEntry.castShadow=true;
+  esdEntry.userData={assetId:'esd-valve-entry'};scene.add(esdEntry);meshMap['esd-valve-entry']=esdEntry;
+  var esdAct1=new THREE.Mesh(new THREE.CylinderGeometry(0.25,0.25,1,8),M.yellow);esdAct1.position.set(-45,5.3,0);scene.add(esdAct1);
+
+  var pigL=new THREE.Mesh(new THREE.CylinderGeometry(0.5,0.5,6,16),M.vessel);
+  pigL.rotation.z=Math.PI/2;pigL.position.set(-42,5,6);pigL.castShadow=true;
+  pigL.userData={assetId:'pig-launcher'};scene.add(pigL);meshMap['pig-launcher']=pigL;
+  var pigLF=new THREE.Mesh(new THREE.CylinderGeometry(0.7,0.7,0.2,16),M.steel);pigLF.rotation.z=Math.PI/2;pigLF.position.set(-45.2,5,6);scene.add(pigLF);
+  addPipe(-42,5,6,-42,5,2,0.15,M.pipe);
+  var bypass=new THREE.Mesh(new THREE.BoxGeometry(0.3,0.3,0.3),M.yellow);bypass.position.set(-40,5.5,6);scene.add(bypass);
+
+  addPipe(-50,4,0,-35,4,0,0.5,M.pipeline);addPipe(-35,4,0,-35,4,12,0.5,M.pipeline);addPipe(-35,4,12,-25,4,12,0.5,M.pipeline);
+  addPipe(-35,4,0,-25,4,0,0.4,M.pipe);addPipe(-25,4,0,-25,4,-5,0.4,M.pipe);addPipe(-25,4,-5,-20,4,-5,0.4,M.pipe);
+  for(i=-35;i<40;i+=5){addSupport(i,0);if(i>-20&&i<30)addSupport(i,-15);}
+  addPipe(-10,4,0,-10,4,3,0.3,M.pipe);addPipe(-10,4,3,-7,4,3,0.3,M.pipe);addPipe(-7,4,3,-7,4,0,0.3,M.pipe);
+  for(i=-30;i<40;i+=15){var dv=new THREE.Mesh(new THREE.CylinderGeometry(0.05,0.05,1,6),M.pipe);dv.position.set(i,0.5,0);scene.add(dv);}
+  for(i=-25;i<45;i+=15){var vv=new THREE.Mesh(new THREE.CylinderGeometry(0.05,0.05,1,6),M.pipe);vv.position.set(i,5.5,0);scene.add(vv);var vc=new THREE.Mesh(new THREE.SphereGeometry(0.08,6,6),M.pipe);vc.position.set(i,6,0);scene.add(vc);}
+
+  /* SLUG CATCHER */
+  var slugC=new THREE.Mesh(new THREE.CylinderGeometry(1.5,1.5,10,32),M.vessel);
+  slugC.rotation.z=Math.PI/2;slugC.position.set(-20,3,12);slugC.castShadow=true;
+  slugC.userData={assetId:'slug-catcher'};scene.add(slugC);meshMap['slug-catcher']=slugC;
+  var sad1=new THREE.Mesh(new THREE.BoxGeometry(3.5,2,0.8),M.concrete);sad1.position.set(-23,1,12);scene.add(sad1);
+  var sad2=new THREE.Mesh(new THREE.BoxGeometry(3.5,2,0.8),M.concrete);sad2.position.set(-17,1,12);scene.add(sad2);
+  var sc1=new THREE.Mesh(new THREE.SphereGeometry(1.5,16,16,0,Math.PI),M.vessel);sc1.rotation.z=-Math.PI/2;sc1.position.set(-25,3,12);scene.add(sc1);
+  var sc2=new THREE.Mesh(new THREE.SphereGeometry(1.5,16,16,0,Math.PI),M.vessel);sc2.rotation.z=Math.PI/2;sc2.position.set(-15,3,12);scene.add(sc2);
+  var lvl1=new THREE.Mesh(new THREE.BoxGeometry(0.08,3,0.08),M.glass);lvl1.position.set(-20,3,13.6);scene.add(lvl1);
+
+  /* SCRUBBER */
+  var scrub=new THREE.Mesh(new THREE.CylinderGeometry(1,1,6,32),M.vessel);
+  scrub.position.set(-18,4,-5);scrub.castShadow=true;
+  scrub.userData={assetId:'scrubber'};scene.add(scrub);meshMap['scrubber']=scrub;
+  var sDome=new THREE.Mesh(new THREE.SphereGeometry(1,16,16,0,Math.PI*2,0,Math.PI/2),M.vessel);sDome.position.set(-18,7,-5);scene.add(sDome);
+  var sSkirt=new THREE.Mesh(new THREE.CylinderGeometry(1.1,1.1,1,32),M.concrete);sSkirt.position.set(-18,0.5,-5);scene.add(sSkirt);
+  var sLvl=new THREE.Mesh(new THREE.BoxGeometry(0.08,4,0.08),M.glass);sLvl.position.set(-17,4,-5);scene.add(sLvl);
+  var sSV=new THREE.Mesh(new THREE.CylinderGeometry(0.15,0.15,0.8,8),M.red);sSV.position.set(-18,7.8,-5);scene.add(sSV);
+  addPipe(-18,1,-5,-18,0.5,-8,0.1,M.pipe);
+  var sPT=new THREE.Mesh(new THREE.BoxGeometry(0.15,0.15,0.15),M.darkP);sPT.position.set(-17.2,5,-5);scene.add(sPT);
+  addPipe(-15,4,-5,-8,4,-5,0.4,M.pipe);addPipe(-8,4,-5,-8,4,0,0.4,M.pipe);addPipe(-8,4,0,0,4,0,0.4,M.pipe);
+  addPipe(-8,4,-5,-8,4,-15,0.4,M.pipe);addPipe(-8,4,-15,0,4,-15,0.4,M.pipe);
+
+  /* COMPRESSOR TRAIN 1 */
+  var f1=new THREE.Mesh(new THREE.BoxGeometry(18,1,5),M.concrete);f1.position.set(8,0.5,0);f1.receiveShadow=true;scene.add(f1);
+  var turb1=new THREE.Mesh(new THREE.BoxGeometry(6,3,3.5),M.turbine);turb1.position.set(3,3,0);turb1.castShadow=true;turb1.userData={assetId:'turbine1'};scene.add(turb1);meshMap['turbine1']=turb1;
+  var enc1=new THREE.Mesh(new THREE.BoxGeometry(6.5,3.8,4),M.enclosure);enc1.position.set(3,3,0);scene.add(enc1);
+  var intake1=new THREE.Mesh(new THREE.BoxGeometry(2,2,2),M.darkP);intake1.position.set(-0.5,3.5,0);intake1.castShadow=true;scene.add(intake1);
+  var exh1=new THREE.Mesh(new THREE.CylinderGeometry(0.5,0.6,5,12),M.exhaust);exh1.position.set(5.5,7,0);exh1.castShadow=true;scene.add(exh1);
+  var hs1=new THREE.Mesh(new THREE.CylinderGeometry(0.7,0.7,0.5,12),M.exhaust);hs1.position.set(5.5,9.5,0);scene.add(hs1);
+  var cpl1=new THREE.Mesh(new THREE.CylinderGeometry(0.5,0.5,2,12),M.steel);cpl1.rotation.z=Math.PI/2;cpl1.position.set(7,2.5,0);scene.add(cpl1);
+  var comp1=new THREE.Mesh(new THREE.BoxGeometry(2.5,1.5,1.5),M.compBody);comp1.position.set(10,2.5,0);comp1.castShadow=true;comp1.userData={assetId:'compressor1'};scene.add(comp1);meshMap['compressor1']=comp1;
+  addPipe(10,2.5,-1.5,10,2.5,-3,0.3,M.pipe);addPipe(10,2.5,1.5,10,2.5,3,0.3,M.pipe);
+  var lo1=new THREE.Mesh(new THREE.BoxGeometry(1.5,1,1),M.darkP);lo1.position.set(3,1.5,-3);lo1.castShadow=true;scene.add(lo1);
+  var lp1=new THREE.Mesh(new THREE.BoxGeometry(1,1.8,0.4),M.darkP);lp1.position.set(7,2,-3);lp1.castShadow=true;scene.add(lp1);
+  var as1=new THREE.Mesh(new THREE.BoxGeometry(0.6,0.6,0.6),M.yellow);as1.position.set(12,3,0);scene.add(as1);
+  addPipe(12,3,0,12,3,4,0.2,M.pipe);addPipe(12,3,4,8,3,4,0.2,M.pipe);
+  var vp1a=new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.06,0.3,6),M.darkP);vp1a.position.set(9.2,3.4,0);scene.add(vp1a);
+  var vp1b=new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.06,0.3,6),M.darkP);vp1b.position.set(10.8,3.4,0);scene.add(vp1b);
+
+  /* COMPRESSOR TRAIN 2 */
+  var f2=new THREE.Mesh(new THREE.BoxGeometry(18,1,5),M.concrete);f2.position.set(8,0.5,-15);f2.receiveShadow=true;scene.add(f2);
+  var turb2=new THREE.Mesh(new THREE.BoxGeometry(6,3,3.5),M.turbine);turb2.position.set(3,3,-15);turb2.castShadow=true;turb2.userData={assetId:'turbine2'};scene.add(turb2);meshMap['turbine2']=turb2;
+  var enc2=new THREE.Mesh(new THREE.BoxGeometry(6.5,3.8,4),M.enclosure);enc2.position.set(3,3,-15);scene.add(enc2);
+  var intake2=new THREE.Mesh(new THREE.BoxGeometry(2,2,2),M.darkP);intake2.position.set(-0.5,3.5,-15);intake2.castShadow=true;scene.add(intake2);
+  var exh2=new THREE.Mesh(new THREE.CylinderGeometry(0.5,0.6,5,12),M.exhaust);exh2.position.set(5.5,7,-15);exh2.castShadow=true;scene.add(exh2);
+  var hs2=new THREE.Mesh(new THREE.CylinderGeometry(0.7,0.7,0.5,12),M.exhaust);hs2.position.set(5.5,9.5,-15);scene.add(hs2);
+  var cpl2=new THREE.Mesh(new THREE.CylinderGeometry(0.5,0.5,2,12),M.steel);cpl2.rotation.z=Math.PI/2;cpl2.position.set(7,2.5,-15);scene.add(cpl2);
+  var comp2=new THREE.Mesh(new THREE.BoxGeometry(2.5,1.5,1.5),M.compBody);comp2.position.set(10,2.5,-15);comp2.castShadow=true;comp2.userData={assetId:'compressor2'};scene.add(comp2);meshMap['compressor2']=comp2;
+  addPipe(10,2.5,-16.5,10,2.5,-18,0.3,M.pipe);addPipe(10,2.5,-13.5,10,2.5,-12,0.3,M.pipe);
+  var lo2=new THREE.Mesh(new THREE.BoxGeometry(1.5,1,1),M.darkP);lo2.position.set(3,1.5,-18);lo2.castShadow=true;scene.add(lo2);
+  var lp2=new THREE.Mesh(new THREE.BoxGeometry(1,1.8,0.4),M.darkP);lp2.position.set(7,2,-18);lp2.castShadow=true;scene.add(lp2);
+  var as2=new THREE.Mesh(new THREE.BoxGeometry(0.6,0.6,0.6),M.yellow);as2.position.set(12,3,-15);scene.add(as2);
+  addPipe(12,3,-15,12,3,-11,0.2,M.pipe);addPipe(12,3,-11,8,3,-11,0.2,M.pipe);
+  var vp2a=new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.06,0.3,6),M.darkP);vp2a.position.set(9.2,3.4,-15);scene.add(vp2a);
+  var vp2b=new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.06,0.3,6),M.darkP);vp2b.position.set(10.8,3.4,-15);scene.add(vp2b);
+
+  addPipe(10,4,3,15,4,3,0.4,M.pipe);addPipe(15,4,3,15,4,-7,0.4,M.pipe);
+  addPipe(10,4,-18,15,4,-18,0.4,M.pipe);addPipe(15,4,-18,15,4,-7,0.4,M.pipe);
+  addPipe(15,4,-7,22,4,-7,0.4,M.pipe);
+
+  /* AFTERCOOLER */
+  var cooler=new THREE.Mesh(new THREE.BoxGeometry(6,4,4),M.cooler);cooler.position.set(25,3,-7);cooler.castShadow=true;cooler.userData={assetId:'aftercooler'};scene.add(cooler);meshMap['aftercooler']=cooler;
+  var fan=new THREE.Mesh(new THREE.CylinderGeometry(1.5,1.5,0.2,24),M.steel);fan.position.set(25,5.2,-7);scene.add(fan);
+  var fanMotor=new THREE.Mesh(new THREE.CylinderGeometry(0.3,0.3,1,8),M.darkP);fanMotor.position.set(25,5.7,-7);scene.add(fanMotor);
+  for(var ti=0;ti<3;ti++)for(var tj=0;tj<4;tj++){var tube=new THREE.Mesh(new THREE.CylinderGeometry(0.08,0.08,5.5,6),M.pipe);tube.rotation.z=Math.PI/2;tube.position.set(25,1.5+ti*1.2,-5.5+tj*1);scene.add(tube);}
+  for(var dx=-2.5;dx<=2.5;dx+=5)for(var dz=-1.5;dz<=1.5;dz+=3){var leg=new THREE.Mesh(new THREE.BoxGeometry(0.2,5,0.2),M.steel);leg.position.set(25+dx,2.5,-7+dz);scene.add(leg);}
+  addPipe(28,4,-7,33,4,-7,0.4,M.pipe);addPipe(33,4,-7,33,4,0,0.4,M.pipe);addPipe(33,4,0,38,4,0,0.4,M.pipe);
+  for(i=20;i<55;i+=5) addSupport(i,0);
+
+  /* METERING */
+  var meter=new THREE.Mesh(new THREE.BoxGeometry(4,2,2),M.steel);meter.position.set(42,2,0);meter.castShadow=true;meter.userData={assetId:'metering'};scene.add(meter);meshMap['metering']=meter;
+  var usm=new THREE.Mesh(new THREE.CylinderGeometry(0.35,0.35,3,12),M.vessel);usm.rotation.z=Math.PI/2;usm.position.set(42,2.5,0);scene.add(usm);
+  var fc=new THREE.Mesh(new THREE.BoxGeometry(1,1.5,0.6),M.darkP);fc.position.set(42,1.5,-2);fc.castShadow=true;scene.add(fc);
+  var samp=new THREE.Mesh(new THREE.BoxGeometry(0.6,0.8,0.4),M.darkP);samp.position.set(44,1,-2);scene.add(samp);
+
+  var pigR=new THREE.Mesh(new THREE.CylinderGeometry(0.5,0.5,6,16),M.vessel);pigR.rotation.z=Math.PI/2;pigR.position.set(48,5,6);pigR.castShadow=true;
+  pigR.userData={assetId:'pig-receiver'};scene.add(pigR);meshMap['pig-receiver']=pigR;
+  var pigRF=new THREE.Mesh(new THREE.CylinderGeometry(0.7,0.7,0.2,16),M.steel);pigRF.rotation.z=Math.PI/2;pigRF.position.set(51.2,5,6);scene.add(pigRF);
+  addPipe(48,5,6,48,3.5,6,0.1,M.pipe);addPipe(48,5.8,6,48,6.5,6,0.1,M.pipe);
+  for(var ps=-30;ps<50;ps+=20){var sig=new THREE.Mesh(new THREE.CylinderGeometry(0.1,0.1,1,6),M.yellow);sig.position.set(ps,5,0);scene.add(sig);}
+
+  var esdExit=new THREE.Mesh(new THREE.BoxGeometry(1.5,0.8,0.8),M.red);esdExit.position.set(52,4.4,0);esdExit.castShadow=true;esdExit.userData={assetId:'esd-valve-exit'};scene.add(esdExit);meshMap['esd-valve-exit']=esdExit;
+  var esdAct2=new THREE.Mesh(new THREE.CylinderGeometry(0.25,0.25,1,8),M.yellow);esdAct2.position.set(52,5.3,0);scene.add(esdAct2);
+  var chkValve=new THREE.Mesh(new THREE.BoxGeometry(0.8,0.6,0.6),M.steel);chkValve.position.set(47,4,0);scene.add(chkValve);
+
+  addPipe(45,4,0,55,4,0,0.5,M.pipeline);
+  var pipeExit=new THREE.Mesh(new THREE.CylinderGeometry(0.6,0.6,30,16),M.pipeline);pipeExit.position.set(65,2,0);pipeExit.rotation.z=Math.PI/2;pipeExit.castShadow=true;
+  pipeExit.userData={assetId:'pipeline-exit'};scene.add(pipeExit);meshMap['pipeline-exit']=pipeExit;
+  var pipeDown=new THREE.Mesh(new THREE.CylinderGeometry(0.6,0.6,6,16),M.pipeline);pipeDown.position.set(75,0,0);pipeDown.rotation.z=-Math.PI/6;scene.add(pipeDown);
+  for(i=55;i<70;i+=5) addSupport(i,0);
+
+  /* CONTROL BUILDING */
+  var ctrlB=new THREE.Mesh(new THREE.BoxGeometry(12,4,8),M.building);ctrlB.position.set(-10,2,-30);ctrlB.castShadow=true;ctrlB.userData={assetId:'control-bldg'};scene.add(ctrlB);meshMap['control-bldg']=ctrlB;
+  var ctrlR=new THREE.Mesh(new THREE.BoxGeometry(13,0.3,9),M.roof);ctrlR.position.set(-10,4.15,-30);scene.add(ctrlR);
+  for(i=-14;i<=-6;i+=3){var win=new THREE.Mesh(new THREE.BoxGeometry(1.5,1.5,0.1),M.glass);win.position.set(i,3,-26);scene.add(win);}
+  var winL=new THREE.PointLight(0xffd088,0.5,15);winL.position.set(-10,3,-27);scene.add(winL);
+  var ac1=new THREE.Mesh(new THREE.BoxGeometry(1,0.6,0.8),M.steel);ac1.position.set(-12,4.6,-30);scene.add(ac1);
+  var ac2=new THREE.Mesh(new THREE.BoxGeometry(1,0.6,0.8),M.steel);ac2.position.set(-8,4.6,-30);scene.add(ac2);
+  var gen=new THREE.Mesh(new THREE.BoxGeometry(3,2,1.5),M.darkP);gen.position.set(-2,1,-30);gen.castShadow=true;scene.add(gen);
+  var genExh=new THREE.Mesh(new THREE.CylinderGeometry(0.1,0.1,2,6),M.exhaust);genExh.position.set(-1,3,-30);scene.add(genExh);
+
+  /* FLARE */
+  var flareStk=new THREE.Mesh(new THREE.CylinderGeometry(0.3,0.4,15,8),M.steel);flareStk.position.set(35,7.5,30);flareStk.castShadow=true;flareStk.userData={assetId:'flare'};scene.add(flareStk);meshMap['flare']=flareStk;
+  var flareTip=new THREE.Mesh(new THREE.SphereGeometry(0.5,8,8),M.flareG);flareTip.position.set(35,15.5,30);scene.add(flareTip);
+  var flareL=new THREE.PointLight(0xff5500,1,25);flareL.position.set(35,15.5,30);scene.add(flareL);
+  var flareDrum=new THREE.Mesh(new THREE.CylinderGeometry(0.8,0.8,3,16),M.vessel);flareDrum.position.set(32,1.5,30);scene.add(flareDrum);
+  addPipe(15,4,5,25,4,10,0.2,M.pipe);addPipe(25,4,10,32,4,20,0.2,M.pipe);addPipe(32,4,20,35,4,30,0.2,M.pipe);
+
+  /* SUBSTATION */
+  var substFence=new THREE.Mesh(new THREE.BoxGeometry(10,3,8),M.fence);substFence.position.set(30,1.5,-30);scene.add(substFence);
+  var transf=new THREE.Mesh(new THREE.BoxGeometry(3,3,2),M.steel);transf.position.set(30,1.5,-30);transf.castShadow=true;transf.userData={assetId:'substation'};scene.add(transf);meshMap['substation']=transf;
+  for(i=0;i<3;i++){var bush=new THREE.Mesh(new THREE.CylinderGeometry(0.1,0.1,1.5,6),M.red);bush.position.set(29+i,3.5,-30);scene.add(bush);}
+  var mcc=new THREE.Mesh(new THREE.BoxGeometry(4,3,3),M.building);mcc.position.set(37,1.5,-30);mcc.castShadow=true;scene.add(mcc);
+  for(var ct=25;ct<40;ct+=3){var tray=new THREE.Mesh(new THREE.BoxGeometry(0.3,0.1,30),M.steel);tray.position.set(ct,4.5,-15);scene.add(tray);}
+
+  /* TELECOM */
+  var twBase=new THREE.Mesh(new THREE.BoxGeometry(2,30,2),M.tower);twBase.position.set(-35,15,-35);twBase.castShadow=true;twBase.userData={assetId:'telecom-tower'};scene.add(twBase);meshMap['telecom-tower']=twBase;
+  for(var y=5;y<28;y+=5){var brace=new THREE.Mesh(new THREE.BoxGeometry(2.5,0.1,2.5),M.steel);brace.position.set(-35,y,-35);scene.add(brace);}
+  var dish1=new THREE.Mesh(new THREE.CylinderGeometry(0.8,0.8,0.15,12),M.vessel);dish1.rotation.x=Math.PI/4;dish1.position.set(-34,28,-34);scene.add(dish1);
+  var dish2=new THREE.Mesh(new THREE.CylinderGeometry(0.5,0.5,0.1,8),M.vessel);dish2.rotation.x=-Math.PI/5;dish2.position.set(-36,26,-36);scene.add(dish2);
+  var avL=new THREE.Mesh(new THREE.SphereGeometry(0.2,8,8),new THREE.MeshBasicMaterial({color:0xff0000}));avL.position.set(-35,30.2,-35);scene.add(avL);
+  var avPL=new THREE.PointLight(0xff0000,0.5,10);avPL.position.set(-35,30.2,-35);scene.add(avPL);
+  var twShelter=new THREE.Mesh(new THREE.BoxGeometry(2,2,2),M.building);twShelter.position.set(-35,1,-35);scene.add(twShelter);
+
+  /* AIR COMPRESSOR */
+  var airC=new THREE.Mesh(new THREE.BoxGeometry(2,1.5,1.5),M.darkP);airC.position.set(-30,0.75,-22);airC.castShadow=true;airC.userData={assetId:'air-compressor'};scene.add(airC);meshMap['air-compressor']=airC;
+  var airDry=new THREE.Mesh(new THREE.CylinderGeometry(0.4,0.4,2,8),M.vessel);airDry.position.set(-27,1,-22);scene.add(airDry);
+  var airRecv=new THREE.Mesh(new THREE.CylinderGeometry(0.5,0.5,2.5,12),M.vessel);airRecv.position.set(-25,1.25,-22);scene.add(airRecv);
+
+  /* WATER TANK */
+  var wTank=new THREE.Mesh(new THREE.CylinderGeometry(2,2,3,16),M.vessel);wTank.position.set(-50,1.5,-25);wTank.castShadow=true;scene.add(wTank);
+
+  /* SAFETY */
+  addDetector(-40,5);addDetector(-40,-5);addDetector(-15,5);addDetector(-15,-20);
+  addDetector(5,5);addDetector(5,-20);addDetector(20,5);addDetector(20,-20);
+  addDetector(40,5);addDetector(40,-5);addDetector(55,5);addDetector(55,-5);
+  var wPole=new THREE.Mesh(new THREE.CylinderGeometry(0.05,0.05,5,6),M.steel);wPole.position.set(50,2.5,35);scene.add(wPole);
+  var wSock=new THREE.Mesh(new THREE.ConeGeometry(0.3,1.5,6),M.red);wSock.rotation.z=Math.PI/2;wSock.position.set(50.5,5,35);scene.add(wSock);
+  function addAssembly(x,z){var pole=new THREE.Mesh(new THREE.CylinderGeometry(0.05,0.05,2.5,6),M.steel);pole.position.set(x,1.25,z);scene.add(pole);var sign=new THREE.Mesh(new THREE.BoxGeometry(0.6,0.4,0.05),M.green);sign.position.set(x,2.5,z);scene.add(sign);}
+  addAssembly(-60,-40);addAssembly(60,-40);
+  function addExtinguisher(x,z){var ext=new THREE.Mesh(new THREE.CylinderGeometry(0.08,0.08,0.5,6),M.red);ext.position.set(x,0.7,z);scene.add(ext);}
+  addExtinguisher(-15,3);addExtinguisher(5,3);addExtinguisher(15,-22);addExtinguisher(-5,-26);
+  var shower=new THREE.Mesh(new THREE.CylinderGeometry(0.05,0.05,2.5,6),M.yellow);shower.position.set(15,1.25,8);scene.add(shower);
+  var showerHead=new THREE.Mesh(new THREE.CylinderGeometry(0.2,0.2,0.05,8),M.yellow);showerHead.position.set(15,2.5,8);scene.add(showerHead);
+
+  /* LABELS */
+  addLabel('PIPELINE ENTRADA',{x:-65,y:7,z:0},'#d4a017');
+  addLabel('ESD-001',{x:-45,y:7,z:0},'#E02020');
+  addLabel('PIG LAUNCHER',{x:-42,y:8,z:6},'#7AAAC8');
+  addLabel('SLUG CATCHER V-100',{x:-20,y:7,z:12},'#00C8F0');
+  addLabel('SCRUBBER V-101',{x:-18,y:10,z:-5},'#00C8F0');
+  addLabel('TURBINA GT-101A',{x:3,y:7,z:0},'#FF5500');
+  addLabel('COMPRESOR K-101A',{x:10,y:6,z:0},'#FF5500');
+  addLabel('TURBINA GT-101B',{x:3,y:7,z:-15},'#FF5500');
+  addLabel('COMPRESOR K-101B',{x:10,y:6,z:-15},'#FF5500');
+  addLabel('AFTERCOOLER E-101',{x:25,y:8,z:-7},'#7AAAC8');
+  addLabel('MEDICION FT-201',{x:42,y:5,z:0},'#7AAAC8');
+  addLabel('PIG RECEIVER',{x:48,y:8,z:6},'#7AAAC8');
+  addLabel('ESD-002',{x:52,y:7,z:0},'#E02020');
+  addLabel('PIPELINE SALIDA',{x:65,y:7,z:0},'#d4a017');
+  addLabel('CONTROL',{x:-10,y:7,z:-30},'#F0A000');
+  addLabel('ANTORCHA',{x:35,y:18,z:30},'#FF5500');
+  addLabel('SUBESTACION',{x:30,y:5,z:-30},'#10D858');
+  addLabel('TELECOM',{x:-35,y:32,z:-35},'#7AAAC8');
+
+  /* CSS2D IoT FLOATING DATA LABELS */
+  addIoTLabel('CMP-01','CMP-01 | Ps: 42 bar | Pd: 65 bar | RPM: 11000 | Vib: 3.5 mm/s',{x:10,y:5,z:3},'border-or');
+  addIoTLabel('CMP-02','CMP-02 | Ps: 41 bar | Pd: 64 bar | RPM: 10800',{x:10,y:5,z:-18},'border-or');
+  addIoTLabel('SCR-01','SCR-01 | Nivel: 15% | P: 45 bar',{x:-18,y:9,z:-8},'border-cy');
+  addIoTLabel('PIG-L1','PIG-L1 | Status: Standby',{x:-42,y:9,z:9},'border-ye');
+  addIoTLabel('MET-01','MET-01 | Flow: 85 MMSCFD',{x:42,y:6,z:3},'border-gr');
+
+  /* EVENTS */
+  renderer.domElement.addEventListener('click', onCanvasClick);
+  window.addEventListener('resize', onResize);
+
+  // -- Store references for animation --
+  compressorMeshes = [meshMap['compressor1'], meshMap['compressor2']];
+  turbineMeshes = [meshMap['turbine1'], meshMap['turbine2']];
+
+  // -- Create process animations --
+  createGasFlowParticles();
+  createFlareEffect();
+  createPigMesh();
+
+  animate();
+}
+
+/* ═══════════════════════════════════════════════════════════
+   RAYCASTING
+   ═══════════════════════════════════════════════════════════ */
+function onCanvasClick(e){
+  var rect=renderer.domElement.getBoundingClientRect();
+  mouse.x=((e.clientX-rect.left)/rect.width)*2-1;
+  mouse.y=-((e.clientY-rect.top)/rect.height)*2+1;
+  raycaster.setFromCamera(mouse,camera);
+  var clickable=[];
+  Object.keys(meshMap).forEach(function(k){if(meshMap[k]&&meshMap[k].visible)clickable.push(meshMap[k]);});
+  var hits=raycaster.intersectObjects(clickable,false);
+  if(hits.length>0){var id=hits[0].object.userData.assetId;if(id)selectAsset(id);}
+}
+
+function onResize(){
+  var container=document.getElementById('view-3d');
+  var w=container.clientWidth,h=container.clientHeight;
+  if(w===0||h===0)return;
+  camera.aspect=w/h;camera.updateProjectionMatrix();
+  renderer.setSize(w,h);
+  if(css2DRenderer) css2DRenderer.setSize(w,h);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   GAS FLOW PARTICLES
+   ═══════════════════════════════════════════════════════════ */
+function createGasFlowParticles() {
+  // Path 1: Pipeline entry to scrubber (fast, large pipe)
+  var path1 = [{x:-65,y:2,z:0},{x:-50,y:4,z:0},{x:-35,y:4,z:0},{x:-18,y:4,z:-5}];
+  addGasFlowPath(path1, 10, 0xddaa22, 0.35, 0.012);
+  // Path 2: Scrubber to compressors
+  var path2 = [{x:-15,y:4,z:-5},{x:-8,y:4,z:-2},{x:0,y:4,z:0},{x:8,y:3,z:0}];
+  addGasFlowPath(path2, 8, 0xeeaa33, 0.3, 0.010);
+  // Path 3: Compressors to outlet (faster - compressed)
+  var path3 = [{x:12,y:4,z:0},{x:22,y:4,z:-7},{x:35,y:4,z:0},{x:55,y:4,z:0},{x:70,y:2,z:0}];
+  addGasFlowPath(path3, 10, 0xffbb44, 0.28, 0.018);
+}
+
+function addGasFlowPath(waypoints, count, color, size, speed) {
+  var positions = new Float32Array(count * 3);
+  var geo = new THREE.BufferGeometry();
+  var progress = new Float32Array(count);
+  for (var i = 0; i < count; i++) {
+    progress[i] = Math.random();
+    setGasPos(positions, i, waypoints, progress[i]);
+  }
+  geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  var mat = new THREE.PointsMaterial({
+    color: color, size: size, transparent: true, opacity: 0.7,
+    blending: THREE.AdditiveBlending, depthWrite: false
+  });
+  var pts = new THREE.Points(geo, mat);
+  scene.add(pts);
+  gasFlowParticles.push({mesh:pts, waypoints:waypoints, count:count, speed:speed, progress:progress});
+}
+
+function setGasPos(pos, i, wp, t) {
+  var seg = Math.min(Math.floor(t * (wp.length - 1)), wp.length - 2);
+  var lt = t * (wp.length - 1) - seg;
+  pos[i*3]   = wp[seg].x + (wp[seg+1].x - wp[seg].x)*lt + (Math.random()-0.5)*0.4;
+  pos[i*3+1] = wp[seg].y + (wp[seg+1].y - wp[seg].y)*lt + (Math.random()-0.5)*0.2;
+  pos[i*3+2] = wp[seg].z + (wp[seg+1].z - wp[seg].z)*lt + (Math.random()-0.5)*0.4;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   FLARE EFFECT
+   ═══════════════════════════════════════════════════════════ */
+function createFlareEffect() {
+  var count = 12;
+  var positions = new Float32Array(count * 3);
+  var geo = new THREE.BufferGeometry();
+  for (var i = 0; i < count; i++) {
+    positions[i*3]   = 35 + (Math.random()-0.5)*0.6;
+    positions[i*3+1] = 15.5 + Math.random()*2;
+    positions[i*3+2] = 30 + (Math.random()-0.5)*0.6;
+  }
+  geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  var mat = new THREE.PointsMaterial({
+    color: 0xff6600, size: 0.3, transparent: true, opacity: 0.6,
+    blending: THREE.AdditiveBlending, depthWrite: false
+  });
+  flareParticles = new THREE.Points(geo, mat);
+  scene.add(flareParticles);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   PIG (PIGGING) MESH
+   ═══════════════════════════════════════════════════════════ */
+function createPigMesh() {
+  var geo = new THREE.CylinderGeometry(0.35, 0.35, 0.8, 12);
+  var mat = new THREE.MeshStandardMaterial({color:0xff5500, roughness:0.5, metalness:0.3});
+  pigMesh = new THREE.Mesh(geo, mat);
+  pigMesh.rotation.z = Math.PI/2;
+  pigMesh.visible = false;
+  scene.add(pigMesh);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ANIMATION LOOP
+   ═══════════════════════════════════════════════════════════ */
+function animate(){
+  requestAnimationFrame(animate);
+  animFrame++;
+  var elapsed = animFrame * 0.016;
+  var dt = 0.016;
+  controls.update();
+
+  // -- GAS FLOW PARTICLES --
+  gasFlowParticles.forEach(function(fp) {
+    var pos = fp.mesh.geometry.attributes.position.array;
+    for (var i = 0; i < fp.count; i++) {
+      fp.progress[i] += fp.speed + Math.random()*0.003;
+      if (fp.progress[i] > 1) fp.progress[i] = 0;
+      setGasPos(pos, i, fp.waypoints, fp.progress[i]);
+      pos[i*3]   += Math.sin(elapsed*2+i)*0.1;
+      pos[i*3+1] += Math.sin(elapsed*3+i*0.7)*0.08;
+    }
+    fp.mesh.geometry.attributes.position.needsUpdate = true;
+    fp.mesh.material.opacity = 0.5 + 0.2*Math.sin(elapsed*1.5);
+  });
+
+  // -- COMPRESSOR VIBRATION --
+  compressorMeshes.forEach(function(m, idx) {
+    if (m) {
+      var baseY = 2.5;
+      var baseZ = idx === 0 ? 0 : -15;
+      m.position.y = baseY + Math.sin(elapsed*25+idx)*0.015;
+      m.position.z = baseZ + Math.cos(elapsed*30+idx)*0.01;
+    }
+  });
+
+  // -- TURBINE pseudo-rotation (enclosure wobble to suggest spinning) --
+  turbineMeshes.forEach(function(m, idx) {
+    if (m) {
+      var baseZ = idx === 0 ? 0 : -15;
+      m.rotation.y = Math.sin(elapsed*8+idx*2)*0.005;
+    }
+  });
+
+  // -- FLARE PARTICLES --
+  if (flareParticles) {
+    var fp = flareParticles.geometry.attributes.position.array;
+    for (var i = 0; i < fp.length/3; i++) {
+      fp[i*3+1] += dt*(0.8+Math.random()*1.2);
+      fp[i*3]   += Math.sin(elapsed*3+i)*dt*0.5;
+      fp[i*3+2] += Math.cos(elapsed*2.5+i*0.5)*dt*0.4;
+      if (fp[i*3+1] > 19) {
+        fp[i*3]   = 35 + (Math.random()-0.5)*0.6;
+        fp[i*3+1] = 15.5;
+        fp[i*3+2] = 30 + (Math.random()-0.5)*0.6;
+      }
+    }
+    flareParticles.geometry.attributes.position.needsUpdate = true;
+    flareParticles.material.opacity = 0.4 + 0.3*Math.sin(elapsed*5);
+  }
+
+  // -- PIGGING ANIMATION --
+  pigTimer++;
+  if (!pigActive && pigTimer > 1800) { pigActive = true; pigProgress = 0; pigTimer = 0; }
+  if (pigActive && pigMesh) {
+    pigMesh.visible = true;
+    pigProgress += 0.0005;
+    // Pig path: launcher (-42,5,6) to receiver (48,5,6) via pipeline
+    var pigPath = [{x:-42,y:5,z:6},{x:-42,y:4,z:2},{x:-35,y:4,z:0},{x:0,y:4,z:0},{x:33,y:4,z:0},{x:48,y:4,z:2},{x:48,y:5,z:6}];
+    var t = Math.min(pigProgress, 1.0);
+    var seg = Math.min(Math.floor(t * (pigPath.length - 1)), pigPath.length - 2);
+    var lt = t * (pigPath.length - 1) - seg;
+    pigMesh.position.set(
+      pigPath[seg].x + (pigPath[seg+1].x - pigPath[seg].x)*lt,
+      pigPath[seg].y + (pigPath[seg+1].y - pigPath[seg].y)*lt,
+      pigPath[seg].z + (pigPath[seg+1].z - pigPath[seg].z)*lt
+    );
+    if (pigProgress >= 1.0) { pigActive = false; pigMesh.visible = false; }
+  }
+
+  renderer.render(scene, camera);
+  if(css2DRenderer) css2DRenderer.render(scene, camera);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   REAL-TIME DATA SIMULATION
+   ═══════════════════════════════════════════════════════════ */
+function simulateData(){
+  function rnd(b,r){return +(b+(Math.random()-0.5)*2*r).toFixed(1);}
+  function rndI(b,r){return Math.round(b+(Math.random()-0.5)*2*r);}
+
+  var pS=rnd(42,1.5), pD=rnd(67,2), ratio=+(pD/pS).toFixed(2);
+  var flow=rnd(98,3), rpm1=rndI(11200,200), rpm2=rndI(10800,200);
+  var t1=rnd(118,4), t2=rnd(115,3), v1=rnd(3.2,0.5), v2=rnd(2.8,0.4);
+
+  // Left KPIs
+  document.getElementById('kPSuction').textContent=pS;
+  document.getElementById('kPDischarge').textContent=pD;
+  document.getElementById('kRatio').textContent=ratio;
+  document.getElementById('kFlow').textContent=flow.toFixed(0);
+  document.getElementById('kRPM1').textContent=rpm1.toLocaleString();
+  document.getElementById('kRPM2').textContent=rpm2.toLocaleString();
+  document.getElementById('kTemp1').textContent=t1.toFixed(0);
+  document.getElementById('kTemp2').textContent=t2.toFixed(0);
+  document.getElementById('kVib1').textContent=v1.toFixed(1);
+  document.getElementById('kVib2').textContent=v2.toFixed(1);
+  document.getElementById('kVib1').className='kpi-val '+(v1>4.5?'re':v1>3.5?'ye':'gr');
+  document.getElementById('kVib2').className='kpi-val '+(v2>4.5?'re':v2>3.5?'ye':'gr');
+
+  // Dashboard KPIs
+  var dk=document.getElementById('dkPSuction');
+  if(dk){
+    document.getElementById('dkPSuction').textContent=pS;
+    document.getElementById('dkPDischarge').textContent=pD;
+    document.getElementById('dkRatio').textContent=ratio;
+    document.getElementById('dkFlow').textContent=flow.toFixed(0);
+    document.getElementById('dkRPM1').textContent=rpm1.toLocaleString();
+    document.getElementById('dkRPM2').textContent=rpm2.toLocaleString();
+    document.getElementById('dkTemp1').textContent=t1.toFixed(0);
+    document.getElementById('dkTemp2').textContent=t2.toFixed(0);
+  }
+
+  // Update ASSETS data
+  var c1=ASSETS.find(function(a){return a.id==='compressor1';});
+  c1.sensors[0].v=rpm1;c1.sensors[1].v=v1;c1.sensors[1].s=v1>4.5?'crit':v1>3.5?'warn':'ok';
+  c1.sensors[3].v=+t1.toFixed(0);c1.sensors[4].v=pS;c1.sensors[5].v=pD;
+  var c2=ASSETS.find(function(a){return a.id==='compressor2';});
+  c2.sensors[0].v=rpm2;c2.sensors[1].v=v2;c2.sensors[1].s=v2>4.5?'crit':v2>3.5?'warn':'ok';
+  c2.sensors[3].v=+t2.toFixed(0);c2.sensors[4].v=pS;c2.sensors[5].v=+(pD-0.5).toFixed(1);
+  ASSETS.find(function(a){return a.id==='pipeline-entry';}).sensors[0].v=pS;
+  ASSETS.find(function(a){return a.id==='pipeline-entry';}).sensors[2].v=+flow.toFixed(0);
+
+  // Trend data
+  trendData.push(ratio);if(trendData.length>60)trendData.shift();
+
+  // Pig status
+  if(Math.random()<0.005){
+    var statuses=['Standby','Launching','In Transit','Receiving','Complete'];
+    var pigSt=statuses[Math.floor(Math.random()*statuses.length)];
+    document.getElementById('kPig').textContent=pigSt;
+    ASSETS.find(function(a){return a.id==='pig-launcher';}).sensors[1].v=pigSt;
+    iotData['PIG-L1'].Status=pigSt;
+  }
+
+  // Update IoT floating labels
+  iotData['CMP-01'] = {Ps:pS,Pd:pD,RPM:rpm1,Vib:v1};
+  iotData['CMP-02'] = {Ps:+(pS-1).toFixed(1),Pd:+(pD-1).toFixed(1),RPM:rpm2};
+  iotData['SCR-01'] = {Nivel:rndI(15,5),P:rnd(45,2)};
+  iotData['MET-01'] = {Flow:rndI(85,5)};
+
+  if(iotLabels['CMP-01']) iotLabels['CMP-01'].div.textContent = 'CMP-01 | Ps: '+pS+' bar | Pd: '+pD+' bar | RPM: '+rpm1+' | Vib: '+v1.toFixed(1)+' mm/s';
+  if(iotLabels['CMP-02']) iotLabels['CMP-02'].div.textContent = 'CMP-02 | Ps: '+(pS-1).toFixed(1)+' bar | Pd: '+(pD-1).toFixed(1)+' bar | RPM: '+rpm2;
+  if(iotLabels['SCR-01']) iotLabels['SCR-01'].div.textContent = 'SCR-01 | Nivel: '+iotData['SCR-01'].Nivel+'% | P: '+iotData['SCR-01'].P+' bar';
+  if(iotLabels['PIG-L1']) iotLabels['PIG-L1'].div.textContent = 'PIG-L1 | Status: '+iotData['PIG-L1'].Status;
+  if(iotLabels['MET-01']) iotLabels['MET-01'].div.textContent = 'MET-01 | Flow: '+iotData['MET-01'].Flow+' MMSCFD';
+
+  // Update SAP APM panel if visible
+  var apmV1=document.getElementById('apmVib1');
+  if(apmV1){
+    apmV1.textContent=v1.toFixed(1)+' mm/s';
+    var h1=Math.max(50,Math.min(100,100-((v1-2)*8)));
+    var el=document.getElementById('apmHealth1');if(el){el.textContent=Math.round(h1)+'%';el.style.color=h1>80?'#2b7c2b':h1>60?'#e78c07':'#bb0000';}
+    el=document.getElementById('apmBar1');if(el){el.style.width=h1+'%';el.style.background=h1>80?'#2b7c2b':h1>60?'#e78c07':'#bb0000';}
+  }
+
+  // Refresh panel if open
+  if(selectedAsset&&document.getElementById('equip-panel').style.display==='block') showEquipPanel(selectedAsset);
+
+  // Draw gauges
+  drawVibGauge('gaugeVib1',v1,7);
+  drawVibGauge('gaugeVib2',v2,7);
+  var gl1=document.getElementById('gaugeLabel1');
+  if(gl1) gl1.textContent=v1.toFixed(1)+' mm/s -- '+(v1>4.5?'ALARMA':v1>3.5?'Precaucion':'Normal')+' (<4.5)';
+  var gl2=document.getElementById('gaugeLabel2');
+  if(gl2) gl2.textContent=v2.toFixed(1)+' mm/s -- '+(v2>4.5?'ALARMA':v2>3.5?'Precaucion':'Normal')+' (<4.5)';
+  drawTrendChart();
+}
+
+/* ═══════════════════════════════════════════════════════════
+   GAUGES & CHARTS
+   ═══════════════════════════════════════════════════════════ */
+function drawVibGauge(id,value,max){
+  var c=document.getElementById(id);if(!c)return;
+  var ctx=c.getContext('2d'),w=c.width,h=c.height;
+  ctx.clearRect(0,0,w,h);
+  var cx=w/2,cy=h-10,r=70,sA=Math.PI,eA=2*Math.PI;
+  ctx.beginPath();ctx.arc(cx,cy,r,sA,eA);ctx.lineWidth=12;ctx.strokeStyle='#182838';ctx.stroke();
+  var gE=sA+(3.5/max)*(eA-sA);
+  ctx.beginPath();ctx.arc(cx,cy,r,sA,gE);ctx.lineWidth=12;ctx.strokeStyle='rgba(16,216,88,0.4)';ctx.stroke();
+  var yE=sA+(4.5/max)*(eA-sA);
+  ctx.beginPath();ctx.arc(cx,cy,r,gE,yE);ctx.lineWidth=12;ctx.strokeStyle='rgba(240,160,0,0.4)';ctx.stroke();
+  ctx.beginPath();ctx.arc(cx,cy,r,yE,eA);ctx.lineWidth=12;ctx.strokeStyle='rgba(224,32,32,0.4)';ctx.stroke();
+  var vA=sA+(Math.min(value,max)/max)*(eA-sA);
+  ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+Math.cos(vA)*(r-5),cy+Math.sin(vA)*(r-5));
+  ctx.lineWidth=2;ctx.strokeStyle=value>4.5?'#E02020':value>3.5?'#F0A000':'#10D858';ctx.stroke();
+  ctx.fillStyle=value>4.5?'#E02020':value>3.5?'#F0A000':'#10D858';
+  ctx.font='bold 18px Space Grotesk';ctx.textAlign='center';ctx.fillText(value.toFixed(1),cx,cy-15);
+  ctx.fillStyle='#3A607A';ctx.font='10px IBM Plex Mono';ctx.fillText('mm/s',cx,cy);
+}
+
+function drawTrendChart(){
+  var c=document.getElementById('trendChart');if(!c)return;
+  var ctx=c.getContext('2d'),w=c.width,h=c.height;
+  ctx.clearRect(0,0,w,h);
+  var pad={t:20,r:20,b:30,l:50},cw=w-pad.l-pad.r,ch=h-pad.t-pad.b;
+  ctx.strokeStyle='#1a2a3a';ctx.lineWidth=0.5;
+  for(var g=0;g<=4;g++){var gy=pad.t+ch*(g/4);ctx.beginPath();ctx.moveTo(pad.l,gy);ctx.lineTo(pad.l+cw,gy);ctx.stroke();}
+  ctx.fillStyle='#3A607A';ctx.font='10px IBM Plex Mono';ctx.textAlign='right';
+  var yL=[1.8,1.7,1.6,1.5,1.4];
+  for(g=0;g<5;g++) ctx.fillText(yL[g].toFixed(1),pad.l-8,pad.t+ch*(g/4)+4);
+  ctx.textAlign='center';
+  ctx.fillText('-60s',pad.l,h-8);ctx.fillText('-30s',pad.l+cw/2,h-8);ctx.fillText('Ahora',pad.l+cw,h-8);
+  if(trendData.length<2)return;
+  var minY=1.4,maxY=1.8;
+  ctx.beginPath();ctx.strokeStyle='#00C8F0';ctx.lineWidth=2;
+  for(var p=0;p<trendData.length;p++){
+    var px=pad.l+(p/(trendData.length-1))*cw;
+    var py=pad.t+(1-(trendData[p]-minY)/(maxY-minY))*ch;
+    if(p===0)ctx.moveTo(px,py);else ctx.lineTo(px,py);
+  }
+  ctx.stroke();
+  ctx.lineTo(pad.l+cw,pad.t+ch);ctx.lineTo(pad.l,pad.t+ch);ctx.closePath();
+  var grad=ctx.createLinearGradient(0,pad.t,0,pad.t+ch);
+  grad.addColorStop(0,'rgba(0,200,240,0.15)');grad.addColorStop(1,'rgba(0,200,240,0)');
+  ctx.fillStyle=grad;ctx.fill();
+  ctx.fillStyle='#7AAAC8';ctx.font='bold 12px Space Grotesk';ctx.textAlign='left';
+  ctx.fillText('Ratio de Compresion (Pd/Ps) - Ultimos 60s',pad.l,14);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   MOBILE SIDEBAR TOGGLE
+   ═══════════════════════════════════════════════════════════ */
+function toggleMobileSidebar(){
+  var sidebar=document.getElementById('sidebar-left');
+  var overlay=document.getElementById('mobileOverlay');
+  sidebar.classList.toggle('open');
+  overlay.classList.toggle('open');
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SAP/BTP STREAM LOG AUTO-UPDATE
+   ═══════════════════════════════════════════════════════════ */
+var sapStreamMessages=[
+  'OPC-UA: lectura 186 tags completada',
+  'SAP PM: sincronizacion OTs exitosa',
+  'Historian: compresion datos batch',
+  'DT Auto: evaluando condicion CMP-01',
+  'SCADA: heartbeat recibido - DCS OK',
+  'SAP MM: stock verificado - sin alertas',
+  'IoT Gateway: buffer 8,400 pts procesado',
+  'Regulatorio: proxima PST en 48h',
+  'APM: indice salud actualizado',
+  'Telecom: enlace VSAT estable -42 dBm'
+];
+setInterval(function(){
+  var msg=sapStreamMessages[Math.floor(Math.random()*sapStreamMessages.length)];
+  var time=new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  var text='['+time+'] '+msg;
+  // BTP log
+  var btpLog=document.getElementById('btpStreamLog');
+  if(btpLog){var d=document.createElement('div');d.textContent=text;btpLog.appendChild(d);btpLog.scrollTop=btpLog.scrollHeight;}
+  // Tandem log
+  var tLog=document.getElementById('tandemStreamLog');
+  if(tLog){var d2=document.createElement('div');d2.textContent=text;tLog.appendChild(d2);tLog.scrollTop=tLog.scrollHeight;}
+},8000);
+
+/* ═══════════════════════════════════════════════════════════
+   INIT
+   ═══════════════════════════════════════════════════════════ */
+init3D();
+setInterval(simulateData,2000);
+simulateData();
+
+// Safety: ensure canvas stays in center container
+setInterval(function(){
+  var sapOverlay = document.getElementById('sapFullscreen');
+  var sapVisible = sapOverlay && sapOverlay.classList.contains('open');
+  if(!sapVisible){
+    var canvas = document.querySelector('canvas');
+    var container = document.getElementById('center');
+    if(canvas && container && canvas.parentElement !== container){
+      container.insertBefore(canvas, container.firstChild);
+      renderer.setSize(container.clientWidth, container.clientHeight);
+      camera.aspect = container.clientWidth / container.clientHeight;
+      camera.updateProjectionMatrix();
+    }
+  }
+}, 2000);
+</script>
+<script src="dt-enhancements.js"></script>
+</body>
+</html>
