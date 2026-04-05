@@ -6,6 +6,7 @@
 <title>Digital Twin | Estación Compresora de Gas Natural</title>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -292,13 +293,41 @@ html,body{height:100%;width:100%;overflow:hidden;background:var(--bg);color:var(
 @media(max-width:1100px){
 .layout{grid-template-columns:0 1fr 0}
 .sidebar-left,.sidebar-right{display:none}
+.topbar{padding:0 8px}
+.tb-brand{padding:0 8px}
+.tb-plant{display:none}
+.demo-badge{display:none}
+.hotkeys{display:none}
+.cam-bar{top:8px;right:8px;flex-wrap:wrap;max-width:200px}
+.cam-btn{padding:4px 6px;font-size:7px}
+.flow-legend{bottom:50px;left:8px;font-size:9px}
+.cv-btns{bottom:8px;right:8px}
+.cv-btn{padding:5px 8px;font-size:8px}
+.iot-lbl{font-size:8px;min-width:140px;padding:4px 6px}
 }
+@media(max-width:600px){
+.tb-title{font-size:11px}
+.tb-sub{display:none}
+.cam-bar{display:none}
+.flow-legend{display:none}
+.topbar{height:44px}
+.layout{top:44px}
+}
+
+/* MOBILE HAMBURGER */
+.mobile-menu-btn{display:none;background:none;border:1px solid var(--b0);color:var(--t1);font-size:18px;padding:4px 10px;border-radius:4px;cursor:pointer}
+@media(max-width:1100px){.mobile-menu-btn{display:flex;align-items:center}}
+.mobile-sidebar{position:fixed;top:var(--topbar);left:0;bottom:0;width:300px;background:var(--s1);border-right:1px solid var(--b0);z-index:45;transform:translateX(-100%);transition:transform .3s;overflow-y:auto;padding:12px}
+.mobile-sidebar.open{transform:translateX(0)}
+.mobile-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:44;display:none}
+.mobile-backdrop.open{display:block}
 </style>
 </head>
 <body>
 
 <!-- TOPBAR -->
 <div class="topbar">
+  <button class="mobile-menu-btn" onclick="toggleMobile()">&#9776;</button>
   <div class="tb-brand">
     <span class="tb-ey">EY</span>
     <div>
@@ -331,6 +360,29 @@ html,body{height:100%;width:100%;overflow:hidden;background:var(--bg);color:var(
     <button class="ao-close" onclick="toggleAlertPanel()">&times;</button>
   </div>
   <div id="alertList"></div>
+</div>
+
+<!-- MOBILE SIDEBAR -->
+<div class="mobile-backdrop" id="mobileBD" onclick="toggleMobile()"></div>
+<div class="mobile-sidebar" id="mobileSB">
+  <div class="sec-hdr">Presiones</div>
+  <div class="kpi-grid">
+    <div class="kpi-card"><div class="kpi-val cy" id="mInletP">72.5</div><span class="kpi-unit">bar</span><div class="kpi-lbl">Succión</div></div>
+    <div class="kpi-card"><div class="kpi-val or" id="mOutletP">98.3</div><span class="kpi-unit">bar</span><div class="kpi-lbl">Descarga</div></div>
+  </div>
+  <div class="sec-hdr">Trenes</div>
+  <div class="train-card" onclick="selectEquipment('compressorA');toggleMobile()">
+    <div class="train-hdr"><span class="train-name">Tren A — K-201</span><span class="train-status ok" id="mTrainA">OK</span></div>
+    <div class="train-metrics"><span>Vib: <span class="v" id="mVibA">2.8</span> mm/s</span></div>
+  </div>
+  <div class="train-card" onclick="selectEquipment('compressorB');toggleMobile()">
+    <div class="train-hdr"><span class="train-name">Tren B — K-301</span><span class="train-status ok">OK</span></div>
+    <div class="train-metrics"><span>Vib: <span class="v" id="mVibB">2.5</span> mm/s</span></div>
+  </div>
+  <div class="sec-hdr">Acciones</div>
+  <button class="rp-btn" onclick="openSAP();toggleMobile()">Abrir SAP</button>
+  <button class="rp-btn" onclick="openACC();toggleMobile()" style="border-color:var(--cy);color:var(--cy)">Abrir ACC</button>
+  <button class="rp-btn" onclick="triggerAnomaly();toggleMobile()" style="border-color:var(--re);color:var(--re)">Simular Anomalía</button>
 </div>
 
 <!-- MAIN LAYOUT -->
@@ -962,12 +1014,19 @@ function initScene(){
   fill.position.set(-30,40,-20);scene.add(fill);
   const amb=new THREE.AmbientLight(0x112233,.3);scene.add(amb);
 
-  // Controls (OrbitControls inline)
+  // Controls - using CDN OrbitControls
   controls=new THREE.OrbitControls(camera,cv);
   controls.target.set(0,5,0);
-  controls.enableDamping=true;controls.dampingFactor=.08;
+  controls.enableDamping=true;
+  controls.dampingFactor=0.08;
+  controls.rotateSpeed=0.4;
+  controls.panSpeed=0.4;
+  controls.zoomSpeed=0.6;
   controls.maxPolarAngle=Math.PI/2.05;
-  controls.minDistance=20;controls.maxDistance=200;
+  controls.minDistance=10;
+  controls.maxDistance=180;
+  controls.enablePan=true;
+  controls.screenSpacePanning=true;
 
   raycaster=new THREE.Raycaster();
   mouse=new THREE.Vector2();
@@ -988,17 +1047,21 @@ function initScene(){
 
 // ── BUILD STATION ──
 function buildStation(){
-  // Ground - 120x80m site
-  const ground=mk(bx(140,0.3,100),MAT.gravel,0,-.15,0);ground.receiveShadow=true;scene.add(ground);
-  // Concrete pads
-  const pad1=mk(bx(130,0.15,90),MAT.concrete,0,0,0);pad1.receiveShadow=true;scene.add(pad1);
+  // Ground layers for realism
+  const ground=mk(bx(150,0.4,110),MAT.gravel,0,-.2,0);ground.receiveShadow=true;scene.add(ground);
+  // Main concrete area
+  const pad1=mk(bx(135,0.2,95),MAT.concrete,0,0,0);pad1.receiveShadow=true;scene.add(pad1);
+  // Process area pads (slightly raised)
+  scene.add(mk(bx(90,.08,50),MAT.concreteLight,0,.12,0));
 
-  // Internal roads (6m wide)
-  const roadMat=M(0x3A3A3A,{m:0,r:.9});
-  scene.add(mk(bx(130,.05,6),roadMat,0,.08,-35));// south road
-  scene.add(mk(bx(130,.05,6),roadMat,0,.08,35));// north road
-  scene.add(mk(bx(6,.05,70),roadMat,-55,.08,0));// west road
-  scene.add(mk(bx(6,.05,70),roadMat,55,.08,0));// east road
+  // Internal roads (6m wide, asphalt)
+  const roadMat=M(0x2A2A2A,{m:0,r:.95});
+  scene.add(mk(bx(135,.06,7),roadMat,0,.08,-37));// south road
+  scene.add(mk(bx(135,.06,7),roadMat,0,.08,37));// north road
+  scene.add(mk(bx(7,.06,74),roadMat,-58,.08,0));// west road
+  scene.add(mk(bx(7,.06,74),roadMat,58,.08,0));// east road
+  // Truck access road (wider, 8m)
+  scene.add(mk(bx(8,.06,20),roadMat,50,.08,-25));// to laydown
 
   // Perimeter fence
   buildFence();
@@ -1218,80 +1281,232 @@ function buildTrainB(){buildCompressionTrain('trainB','driverB','compressorB',-1
 
 function buildCompressionTrain(trainKey,driverKey,compKey,cx,cy_,cz){
   const tg=grp();
-  // Main pad 30x15m
-  tg.add(mk(bx(30,.25,14),MAT.concreteLight,cx,.12,cz));
+  // Main pad 30x15m with beveled edge
+  tg.add(mk(bx(32,.3,15),MAT.concreteLight,cx,.15,cz));
+  // Vibration isolation base pads
+  const dampMat=M(0x222222,{m:0,r:.8});
+  for(let dx=-10;dx<=10;dx+=5){for(let dz=-3;dz<=3;dz+=3){
+    tg.add(mk(bx(.5,.1,.5),dampMat,cx+dx,.31,cz+dz));
+  }}
+  scene.add(tg);
 
   // ── DRIVER (turbine package) ──
   const dg=grp();
-  // Turbine base/skid
-  dg.add(mk(bx(8,1,5),MAT.skid,cx-6,.5,cz));
-  // Turbine casing (cylindrical)
-  dg.add(mk(cy(1.6,1.6,7,20),MAT.darkSteel,cx-6,2.2,cz,0,0,Math.PI/2));
-  // Air intake filter module
-  dg.add(mk(bx(3,3,3),MAT.steel,cx-12,2.5,cz));
-  dg.add(mk(cy(1,1,.5,12),MAT.pipe,cx-12,4.2,cz));
-  // Exhaust stack
+  // Heavy steel skid base
+  dg.add(mk(bx(10,0.6,5.5),MAT.darkSteel,cx-6,.3,cz));
+  dg.add(mk(bx(10.2,.08,5.7),MAT.steel,cx-6,.61,cz));// top plate
+  // Turbine casing (main body)
+  dg.add(mk(cy(1.5,1.5,7,24),MAT.darkSteel,cx-6,2.2,cz,0,0,Math.PI/2));
+  // Turbine end bells
+  dg.add(mk(cy(1.6,1.5,.3,24),MAT.steel,cx-9.5,2.2,cz,0,0,Math.PI/2));
+  dg.add(mk(cy(1.6,1.5,.3,24),MAT.steel,cx-2.5,2.2,cz,0,0,Math.PI/2));
+  // Turbine flanges (bolted look)
+  for(let i=0;i<3;i++){
+    dg.add(mk(cy(1.7,1.7,.12,24),MAT.pipe,cx-8+i*3,2.2,cz,0,0,Math.PI/2));
+  }
+  // Bearing housings at each end
+  dg.add(mk(cy(.6,.6,.8,16),MAT.copper,cx-9.8,2.2,cz,0,0,Math.PI/2));
+  dg.add(mk(cy(.6,.6,.8,16),MAT.copper,cx-2.2,2.2,cz,0,0,Math.PI/2));
+  // Oil drain lines from bearings
+  dg.add(mk(cy(.06,.06,.8,6),MAT.pipeGreen,cx-9.8,1.4,cz));
+  dg.add(mk(cy(.06,.06,.8,6),MAT.pipeGreen,cx-2.2,1.4,cz));
+
+  // Air intake filter module (large box with louvers)
+  const intakeG=grp();
+  intakeG.add(mk(bx(3.5,3.5,4),MAT.steel,cx-13,2.8,cz));
+  // Louvers (horizontal slats)
+  for(let i=0;i<8;i++){
+    intakeG.add(mk(bx(3.6,.04,4.1),MAT.darkSteel,cx-13,1.2+i*.4,cz));
+  }
+  // Intake duct connecting to turbine
+  intakeG.add(mk(cy(1,1,2,16),MAT.pipe,cx-11,2.8,cz,0,0,Math.PI/2));
+  // Filter access doors
+  intakeG.add(mk(bx(.04,2,1.5),M(0x5A6A7A,{m:.4,r:.5}),cx-14.76,2.5,cz));
+  dg.add(intakeG);
+
+  // Exhaust system (silencer + stack)
   const exh=grp();
-  exh.add(mk(cy(.8,.6,6,12),MAT.exhaust,cx-2,6,cz));
-  exh.add(mk(cy(1,.8,1.5,12),MAT.exhaust,cx-2,9.5,cz));
-  // Silencer
-  exh.add(mk(cy(1.2,1.2,3,12),MAT.insulation,cx-2,4,cz));
+  // Exhaust transition duct
+  exh.add(mk(cy(1,1.3,1.5,16),MAT.exhaust,cx-2,3.5,cz));
+  // Silencer body (large cylinder, insulated)
+  exh.add(mk(cy(1.4,1.4,4,16),MAT.insulation,cx-2,5.5,cz));
+  // Silencer flanges
+  exh.add(mk(cy(1.55,1.55,.12,16),MAT.darkSteel,cx-2,3.6,cz));
+  exh.add(mk(cy(1.55,1.55,.12,16),MAT.darkSteel,cx-2,7.4,cz));
+  // Exhaust stack
+  exh.add(mk(cy(.7,.55,5,12),MAT.exhaust,cx-2,10,cz));
+  // Rain cap
+  exh.add(mk(cy(.8,.8,.15,12),MAT.darkSteel,cx-2,12.6,cz));
+  exh.add(mk(cy(.3,.3,.5,8),MAT.darkSteel,cx-2,12.85,cz));
+  // Exhaust stack support brackets
+  for(let a=0;a<4;a++){
+    const angle=a*Math.PI/2;
+    exh.add(mk(bx(.08,3,.08),MAT.darkSteel,cx-2+Math.cos(angle)*1,6.5,cz+Math.sin(angle)*1));
+  }
   dg.add(exh);
-  // Coupling guard
-  dg.add(mk(cy(.8,.8,2,12),MAT.yellow,cx-1.5,1.8,cz,0,0,Math.PI/2));
+
+  // Coupling guard (bright yellow safety)
+  const cGuard=grp();
+  const guardGeo=new THREE.CylinderGeometry(.85,.85,2.5,16,1,true);
+  const guardMesh=new THREE.Mesh(guardGeo,M(0xDDCC00,{m:.2,r:.5,t:true,o:.75,ds:true}));
+  guardMesh.position.set(cx-1.5,2,cz);guardMesh.rotation.z=Math.PI/2;
+  guardMesh.castShadow=true;
+  cGuard.add(guardMesh);
+  // Guard end plates with holes
+  cGuard.add(mk(cy(.85,.85,.05,16),MAT.yellow,cx-2.5,2,cz,0,0,Math.PI/2));
+  cGuard.add(mk(cy(.85,.85,.05,16),MAT.yellow,cx-.5,2,cz,0,0,Math.PI/2));
+  dg.add(cGuard);
+
+  // Local instrument panel
+  dg.add(mk(bx(1,1.5,.6),MAT.buildingLight,cx-6,1.7,cz+3.5));
+  dg.add(mk(bx(.8,.05,.4),MAT.grating,cx-6,2.5,cz+3.5));
+  // Small gauges on panel
+  for(let i=0;i<3;i++){
+    dg.add(mk(cy(.1,.1,.04,12),MAT.white,cx-6.2+i*.2,2.1,cz+3.2));
+  }
+
+  // Fuel gas piping to driver
+  dg.add(mk(cy(.08,.08,3,8),MAT.pipeYel,cx-6,1.2,cz-2.8,Math.PI/2,0,0));
+
   scene.add(dg);
   register(driverKey,dg,new THREE.Vector3(cx-6,5,cz));
 
   // ── COMPRESSOR (centrifugal) ──
   const cg=grp();
-  // Compressor casing
-  cg.add(mk(cy(1.4,1.4,4,20),MAT.steel,cx+2,2.2,cz,0,0,Math.PI/2));
-  // Volute/scroll shape approximation
-  cg.add(mk(bx(2.5,2.5,3.5),MAT.pipe,cx+2,2.2,cz));
-  // Suction nozzle
-  cg.add(mk(cy(.5,.5,1.5,12),MAT.pipe,cx-.5,2.2,cz,0,0,Math.PI/2));
-  // Discharge nozzle (top)
-  cg.add(mk(cy(.45,.45,1.2,12),MAT.pipe,cx+2,3.6,cz));
-  // Seal gas connections
-  cg.add(mk(cy(.1,.1,.4,6),MAT.pipeGreen,cx+.5,3,cz+1.2));
-  cg.add(mk(cy(.1,.1,.4,6),MAT.pipeGreen,cx+3.5,3,cz+1.2));
-  // Base plate
-  cg.add(mk(bx(5,.2,4),MAT.darkSteel,cx+2,.1,cz));
-  // Local instruments
-  cg.add(mk(bx(.2,.4,.2),MAT.skid,cx+4.5,2.5,cz+1.5));// PT
-  cg.add(mk(bx(.2,.4,.2),MAT.skid,cx+4.5,2.5,cz-1.5));// TT
-  cg.add(mk(bx(.15,.3,.15),MAT.skid,cx+.5,3.2,cz-1.8));// VT-DE
-  cg.add(mk(bx(.15,.3,.15),MAT.skid,cx+3.5,3.2,cz-1.8));// VT-NDE
+  // Heavy base plate
+  cg.add(mk(bx(6,.3,4.5),MAT.darkSteel,cx+2,.15,cz));
+  // Compressor barrel casing
+  cg.add(mk(cy(1.3,1.3,5,24),MAT.steel,cx+2,2.2,cz,0,0,Math.PI/2));
+  // Barrel end covers (bolted flanges)
+  cg.add(mk(cy(1.5,1.5,.2,24),MAT.pipe,cx-.5,2.2,cz,0,0,Math.PI/2));
+  cg.add(mk(cy(1.5,1.5,.2,24),MAT.pipe,cx+4.5,2.2,cz,0,0,Math.PI/2));
+  // Stud bolts around flanges (simulated)
+  for(let a=0;a<12;a++){
+    const ang=a*Math.PI*2/12;
+    const r=1.35;
+    cg.add(mk(cy(.04,.04,.15,6),MAT.darkSteel,cx-.55,2.2+Math.cos(ang)*r,cz+Math.sin(ang)*r,0,0,Math.PI/2));
+    cg.add(mk(cy(.04,.04,.15,6),MAT.darkSteel,cx+4.55,2.2+Math.cos(ang)*r,cz+Math.sin(ang)*r,0,0,Math.PI/2));
+  }
+  // Volute/scroll discharge (top)
+  cg.add(mk(bx(2,1.8,2.8),MAT.pipe,cx+2,3.5,cz));
+  cg.add(mk(cy(.45,.45,1.5,12),MAT.pipe,cx+2,4.6,cz));// discharge nozzle up
+  // Suction nozzle (side)
+  cg.add(mk(cy(.55,.55,2,12),MAT.pipe,cx-.8,2.2,cz,0,0,Math.PI/2));
+  // Suction flange
+  cg.add(mk(cy(.7,.7,.1,12),MAT.darkSteel,cx-1.8,2.2,cz,0,0,Math.PI/2));
+
+  // Bearing housings
+  cg.add(mk(cy(.5,.5,.6,16),MAT.copper,cx-.3,2.2,cz,0,0,Math.PI/2));// DE
+  cg.add(mk(cy(.5,.5,.6,16),MAT.copper,cx+4.3,2.2,cz,0,0,Math.PI/2));// NDE
+  // Vibration probes (small cylinders, visible)
+  cg.add(mk(cy(.04,.04,.25,6),MAT.skid,cx-.3,2.9,cz-.4));// VT-DE
+  cg.add(mk(cy(.04,.04,.25,6),MAT.skid,cx+4.3,2.9,cz-.4));// VT-NDE
+  cg.add(mk(cy(.04,.04,.25,6),MAT.skid,cx-.3,2.9,cz+.4));
+  cg.add(mk(cy(.04,.04,.25,6),MAT.skid,cx+4.3,2.9,cz+.4));
+
+  // Seal gas connections (small pipes)
+  cg.add(mk(cy(.06,.06,.5,6),MAT.pipeGreen,cx+.2,3.2,cz+1.5));
+  cg.add(mk(cy(.06,.06,.5,6),MAT.pipeGreen,cx+3.8,3.2,cz+1.5));
+  // Seal gas header
+  cg.add(mk(cy(.06,.06,4,8),MAT.pipeGreen,cx+2,3.5,cz+1.5,0,0,Math.PI/2));
+
+  // Local instrument transmitters
+  cg.add(mk(bx(.18,.35,.18),MAT.skid,cx+5,2.8,cz+1.2));// PT suction
+  cg.add(mk(bx(.18,.35,.18),MAT.skid,cx+5,2.8,cz-1.2));// TT suction
+  cg.add(mk(bx(.18,.35,.18),MAT.skid,cx+2,5.5,cz+.8));// PT discharge
+  cg.add(mk(bx(.18,.35,.18),MAT.skid,cx+2,5.5,cz-.8));// TT discharge
+
+  // PSV (safety relief valve) on discharge
+  cg.add(mk(cy(.15,.15,.8,8),MAT.red,cx+3,4.8,cz+1.5));
+  cg.add(mk(cy(.2,.2,.15,8),MAT.red,cx+3,5.2,cz+1.5));
+
   scene.add(cg);
   register(compKey,cg,new THREE.Vector3(cx+2,4,cz));
 
   // ── ANTISURGE RECYCLE LOOP ──
   const rg=grp();
-  // Recycle line (visible pipe arching over)
-  const recycR=.2;
-  rg.add(mk(cy(recycR,recycR,8,8),MAT.pipeYel,cx+2,5,cz,0,0,Math.PI/2));
-  // Recycle valve
-  rg.add(mk(cy(.35,.35,.6,8),MAT.darkSteel,cx-2,5,cz,0,0,Math.PI/2));
-  rg.add(mk(cy(.12,.12,.5,6),MAT.steel,cx-2,5.5,cz));
-  rg.add(mk(bx(.4,.1,.4),MAT.yellow,cx-2,5.8,cz));
+  // Recycle pipe (large, visible, arches up and over)
+  // Vertical rise from discharge
+  rg.add(mk(cy(.2,.2,2,8),MAT.pipeYel,cx+2,5.5,cz+2.5));
+  // Horizontal run
+  rg.add(mk(cy(.2,.2,10,8),MAT.pipeYel,cx-3,6.5,cz+2.5,0,0,Math.PI/2));
+  // Vertical drop to suction
+  rg.add(mk(cy(.2,.2,3,8),MAT.pipeYel,cx-8,5,cz+2.5));
+  // Recycle valve (large, prominent)
+  const rv=grp();
+  rv.add(mk(cy(.4,.4,.8,10),MAT.darkSteel,cx-3,6.5,cz+2.5,0,0,Math.PI/2));
+  rv.add(mk(cy(.15,.15,.8,6),MAT.steel,cx-3,7,cz+2.5));// stem
+  rv.add(mk(bx(.5,.15,.5),MAT.yellow,cx-3,7.4,cz+2.5));// handwheel
+  // Actuator
+  rv.add(mk(cy(.3,.3,.6,8),MAT.skid,cx-3,7.8,cz+2.5));
+  rg.add(rv);
+  // Pipe supports for recycle
+  for(let i=-6;i<=0;i+=3){
+    rg.add(mk(bx(.08,6.5,.08),MAT.darkSteel,cx+i,3.25,cz+2.5));
+  }
   scene.add(rg);
 
   // ── LUBE OIL SKID (per train) ──
   const lo=grp();
-  lo.add(mk(bx(3,1.8,2.5),MAT.skid,cx+8,1,cz-5));
-  lo.add(mk(cy(.4,.4,1.2,12),MAT.motor,cx+7,1.8,cz-5));// pump
-  lo.add(mk(cy(.3,.3,.8,8),MAT.copper,cx+9,1.5,cz-5));// cooler
+  lo.add(mk(bx(4,.15,3),MAT.concreteLight,cx+8,.08,cz-5.5));
+  lo.add(mk(bx(3.5,1.8,2.5),MAT.skid,cx+8,1,cz-5.5));
+  // Lube oil tank (small drum)
+  lo.add(mk(cy(.5,.5,1,12),MAT.vessel,cx+6.5,1.4,cz-5.5));
+  // Main pump
+  lo.add(mk(cy(.35,.35,.8,12),MAT.motor,cx+7.5,1.8,cz-5.5,0,0,Math.PI/2));
+  lo.add(mk(bx(.5,.4,.4),MAT.steel,cx+8,1.8,cz-5.5));
+  // Aux pump
+  lo.add(mk(cy(.3,.3,.7,12),MAT.motor,cx+7.5,1.2,cz-4.2,0,0,Math.PI/2));
+  // Oil cooler (finned)
+  lo.add(mk(bx(1.5,1,1),MAT.copper,cx+9.5,1.5,cz-5.5));
+  for(let i=0;i<6;i++){lo.add(mk(bx(1.6,.03,1.1),MAT.steel,cx+9.5,1.1+i*.15,cz-5.5))}
+  // Filter
+  lo.add(mk(cy(.2,.2,.8,8),MAT.steel,cx+9.5,1.5,cz-4.2));
+  // Piping from skid to compressor
+  lo.add(mk(cy(.08,.08,4,8),MAT.pipeGreen,cx+6,1.5,cz-3.5,Math.PI/4,0,0));
   scene.add(lo);
 
   // ── SEAL GAS PANEL (per train) ──
   const sg=grp();
-  sg.add(mk(bx(2,2,1),MAT.buildingLight,cx+8,1,cz+5));
-  sg.add(mk(bx(1.8,.05,.8),MAT.grating,cx+8,2.1,cz+5));
-  // Tubing runs
-  for(let i=0;i<3;i++){
-    sg.add(mk(cy(.04,.04,1.5,6),MAT.pipeGreen,cx+7.2+i*.4,1,cz+4.2));
+  sg.add(mk(bx(2.5,.15,1.5),MAT.concreteLight,cx+8,.08,cz+4.5));
+  // Panel cabinet
+  sg.add(mk(bx(2.2,2.2,1.2),MAT.buildingLight,cx+8,1.2,cz+4.5));
+  // Door
+  sg.add(mk(bx(1,.04,1),M(0x5A7A8A,{m:.3,r:.5}),cx+8,1.2,cz+3.85));
+  // Tubing runs (6 small tubes visible)
+  for(let i=0;i<6;i++){
+    sg.add(mk(cy(.025,.025,1.8,6),MAT.pipeGreen,cx+7.1+i*.35,1.2,cz+3.8));
   }
+  // Supply/vent piping
+  sg.add(mk(cy(.06,.06,3,8),MAT.pipeGreen,cx+6.5,1.5,cz+4.5,0,0,Math.PI/2));
   scene.add(sg);
+
+  // ── MAINTENANCE PLATFORM around compressor ──
+  const mp=grp();
+  // Grating platform on 3 sides of compressor
+  mp.add(mk(bx(8,.06,2),MAT.grating,cx+2,1.5,cz-3));// front
+  mp.add(mk(bx(2,.06,6),MAT.grating,cx-1.5,1.5,cz));// left side
+  mp.add(mk(bx(2,.06,6),MAT.grating,cx+5.5,1.5,cz));// right side
+  // Handrails
+  const hr=(x1,z1,x2,z2,h)=>{
+    const dx=x2-x1,dz=z2-z1,len=Math.sqrt(dx*dx+dz*dz);
+    const mx=(x1+x2)/2,mz=(z1+z2)/2;
+    const ang=Math.atan2(dz,dx);
+    mp.add(mk(cy(.025,.025,len,6),MAT.yellow,mx,h+1.5,mz,0,ang+Math.PI/2,Math.PI/2));
+    mp.add(mk(cy(.025,.025,len,6),MAT.yellow,mx,h+1,mz,0,ang+Math.PI/2,Math.PI/2));
+  };
+  hr(cx-2,cz-4,cx+6,cz-4,0);// front rail
+  hr(cx-2.5,cz-3,cx-2.5,cz+3,0);// left rail
+  hr(cx+6.5,cz-3,cx+6.5,cz+3,0);// right rail
+  // Vertical posts
+  for(let px=-2;px<=6;px+=2){
+    mp.add(mk(cy(.02,.02,1,6),MAT.yellow,cx+px,2,cz-4));
+  }
+  // Stairs (step-down from platform to ground)
+  for(let s=0;s<4;s++){
+    mp.add(mk(bx(1,.04,.3),MAT.grating,cx+6.5,1.35-s*.35,cz+3+s*.4));
+  }
+  scene.add(mp);
 
   // Register train group
   register(trainKey,tg,new THREE.Vector3(cx,4,cz));
@@ -1537,27 +1752,96 @@ function buildLaydown(){
 // ── PIPING NETWORK ──
 function buildPiping(){
   const pg=grp();
-  // Suction header to scrubbers
-  addPipe(pg,-38,1.5,0,-32,1.5,-8,.4,MAT.pipe);
-  addPipe(pg,-38,1.5,0,-32,1.5,8,.4,MAT.pipe);
-  // Scrubbers to trains
-  addPipe(pg,-26,1.5,-8,-18,1.5,-10,.35,MAT.pipe);
-  addPipe(pg,-26,1.5,8,-18,1.5,10,.35,MAT.pipe);
-  // Trains to coolers
-  addPipe(pg,5,3,-10,12,1.5,-10,.35,MAT.pipe);
-  addPipe(pg,5,3,10,12,1.5,10,.35,MAT.pipe);
-  // Coolers to discharge
-  addPipe(pg,26,1.5,-10,32,1.5,0,.35,MAT.pipe);
-  addPipe(pg,26,1.5,10,32,1.5,0,.35,MAT.pipe);
-  // Fuel gas lines (yellow)
-  addPipe(pg,-30,2,-20,-12,2,-12,.12,MAT.pipeYel);
-  addPipe(pg,-30,2,-20,-12,2,8,.12,MAT.pipeYel);
-  // Lube oil (green)
-  addPipe(pg,-15,1,-20,-8,1,-12,.1,MAT.pipeGreen);
-  // Instrument air (cyan)
-  addPipe(pg,15,1.5,-20,0,1.5,-18,.08,MAT.pipeCyan);
-  // Blowdown (red)
-  addPipe(pg,5,2,0,45,2,20,.25,MAT.pipeRed);
+  const R=.35;// main process pipe radius
+  const r=.12;// utility pipe radius
+
+  // ═══ PROCESS GAS (cyan-ish steel) ═══
+  // Inlet header → scrubber A (south branch)
+  addPipe(pg,-40,1.8,0,-40,1.8,-4,R,MAT.pipe);// tee down
+  addPipe(pg,-40,1.8,-4,-33,1.8,-8,R,MAT.pipe);// to scrubber A inlet nozzle
+  // Inlet header → scrubber B (north branch)
+  addPipe(pg,-40,1.8,0,-40,1.8,4,R,MAT.pipe);
+  addPipe(pg,-40,1.8,4,-33,1.8,8,R,MAT.pipe);
+
+  // Scrubber A outlet → Train A suction
+  addPipe(pg,-31,8,-8,-28,8,-8,R,MAT.pipe);// from scrubber top
+  addPipe(pg,-28,8,-8,-28,3,-8,R,MAT.pipe);// vertical drop
+  addPipe(pg,-28,3,-8,-22,2.2,-10,R,MAT.pipe);// to compressor suction
+  addPipe(pg,-22,2.2,-10,-14,2.2,-10,R,MAT.pipe);// into compressor A
+
+  // Scrubber B outlet → Train B suction
+  addPipe(pg,-31,8,8,-28,8,8,R,MAT.pipe);
+  addPipe(pg,-28,8,8,-28,3,8,R,MAT.pipe);
+  addPipe(pg,-28,3,8,-22,2.2,10,R,MAT.pipe);
+  addPipe(pg,-22,2.2,10,-14,2.2,10,R,MAT.pipe);
+
+  // Compressor A discharge → Cooler A
+  addPipe(pg,-10,4.6,-10,-10,6,-10,.3,MAT.pipe);// up from discharge nozzle
+  addPipe(pg,-10,6,-10,10,6,-10,.3,MAT.pipe);// horizontal run on pipe rack
+  addPipe(pg,10,6,-10,10,2,-10,.3,MAT.pipe);// drop to cooler
+  addPipe(pg,10,2,-10,12,1.5,-10,.3,MAT.pipe);// into cooler inlet
+
+  // Compressor B discharge → Cooler B
+  addPipe(pg,-10,4.6,10,-10,6,10,.3,MAT.pipe);
+  addPipe(pg,-10,6,10,10,6,10,.3,MAT.pipe);
+  addPipe(pg,10,6,10,10,2,10,.3,MAT.pipe);
+  addPipe(pg,10,2,10,12,1.5,10,.3,MAT.pipe);
+
+  // Cooler A outlet → Discharge header
+  addPipe(pg,26,1.5,-10,30,1.5,-10,R,MAT.pipe);
+  addPipe(pg,30,1.5,-10,33,1.8,-4,R,MAT.pipe);
+  addPipe(pg,33,1.8,-4,33,1.8,0,R,MAT.pipe);
+
+  // Cooler B outlet → Discharge header
+  addPipe(pg,26,1.5,10,30,1.5,10,R,MAT.pipe);
+  addPipe(pg,30,1.5,10,33,1.8,4,R,MAT.pipe);
+  addPipe(pg,33,1.8,4,33,1.8,0,R,MAT.pipe);
+
+  // ═══ FUEL GAS (yellow) ═══
+  addPipe(pg,-30,2,-24,-30,2,-14,r,MAT.pipeYel);// from FG skid up
+  addPipe(pg,-30,2,-14,-18,2,-14,r,MAT.pipeYel);// header east
+  addPipe(pg,-18,2,-14,-18,1.5,-10,r,MAT.pipeYel);// drop to driver A
+  addPipe(pg,-18,2,-14,-18,2,14,r,MAT.pipeYel);// cross to north side
+  addPipe(pg,-18,2,14,-18,1.5,10,r,MAT.pipeYel);// drop to driver B
+
+  // ═══ LUBE OIL (green) ═══
+  addPipe(pg,-15,1,-24,-15,1,-18,.08,MAT.pipeGreen);// from lube system
+  addPipe(pg,-15,1,-18,-4,1,-15,.08,MAT.pipeGreen);// to train A area
+  addPipe(pg,-4,1,-15,-4,1,15,.08,MAT.pipeGreen);// cross to train B
+
+  // ═══ SEAL GAS (green, smaller) ═══
+  addPipe(pg,0,1.5,-24,0,1.5,-18,.06,MAT.pipeGreen);
+  addPipe(pg,0,1.5,-18,0,3.5,-10,.06,MAT.pipeGreen);// to compressor A seal
+  addPipe(pg,0,1.5,-18,0,3.5,10,.06,MAT.pipeGreen);// to compressor B seal
+
+  // ═══ INSTRUMENT AIR (cyan) ═══
+  addPipe(pg,15,1.5,-24,15,1.5,-18,.06,MAT.pipeCyan);
+  addPipe(pg,15,1.5,-18,-20,1.5,-18,.06,MAT.pipeCyan);// main IA header
+  addPipe(pg,-20,1.5,-18,-20,1.5,-12,.06,MAT.pipeCyan);// branch to process
+
+  // ═══ BLOWDOWN (red) ═══
+  addPipe(pg,0,2,0,15,2,0,.2,MAT.pipeRed);// from process area
+  addPipe(pg,15,2,0,35,2,10,.2,MAT.pipeRed);// route to blowdown
+  addPipe(pg,35,2,10,45,2,20,.2,MAT.pipeRed);// to blowdown stack
+  addPipe(pg,45,2,20,45,7.5,20,.2,MAT.pipeRed);// rise to stack
+
+  // ═══ PIPE SUPPORTS (rack between trains and coolers) ═══
+  for(let x=-8;x<=8;x+=4){
+    // Pipe rack columns
+    pg.add(mk(bx(.15,6,.15),MAT.darkSteel,x,3,-14));
+    pg.add(mk(bx(.15,6,.15),MAT.darkSteel,x,3,14));
+    // Cross beams
+    pg.add(mk(bx(.1,.1,28),MAT.darkSteel,x,6,0));
+  }
+  // Horizontal rack beams
+  pg.add(mk(bx(16,.08,.08),MAT.darkSteel,0,6,-14));
+  pg.add(mk(bx(16,.08,.08),MAT.darkSteel,0,6,14));
+
+  // ═══ PIPE SLEEPERS on ground ═══
+  for(let x=-45;x<=35;x+=6){
+    pg.add(mk(bx(.3,.5,2),MAT.concrete,x,.25,0));
+  }
+
   scene.add(pg);
 }
 
@@ -1808,6 +2092,7 @@ function simTick(){
   SIM.trainB.dischP=SIM.outletP-.3;
 
   updateKPIs();
+  updateMobileKPIs();
   updateIoTContent();
 
   // Alerts
@@ -2138,6 +2423,25 @@ function resetCamera(){
   setTimeout(()=>{camera.position.set(80,55,90);controls.target.set(0,5,0)},800);
 }
 
+// ── MOBILE ──
+function toggleMobile(){
+  document.getElementById('mobileSB').classList.toggle('open');
+  document.getElementById('mobileBD').classList.toggle('open');
+}
+function updateMobileKPIs(){
+  const s=id=>document.getElementById(id);
+  if(s('mInletP'))s('mInletP').textContent=SIM.inletP.toFixed(1);
+  if(s('mOutletP'))s('mOutletP').textContent=SIM.outletP;
+  if(s('mVibA'))s('mVibA').textContent=SIM.trainA.vibDE.toFixed(1);
+  if(s('mVibB'))s('mVibB').textContent=SIM.trainB.vibDE.toFixed(1);
+  const mta=s('mTrainA');
+  if(mta){
+    if(SIM.trainA.vibDE>6){mta.textContent='ALARMA';mta.className='train-status crit'}
+    else if(SIM.trainA.vibDE>4){mta.textContent='ALERTA';mta.className='train-status warn'}
+    else{mta.textContent='OK';mta.className='train-status ok'}
+  }
+}
+
 // ── CLOCK ──
 function updateClock(){
   const now=new Date();
@@ -2146,64 +2450,7 @@ function updateClock(){
 }
 setInterval(updateClock,1000);updateClock();
 
-// ── ORBIT CONTROLS (inline) ──
-THREE.OrbitControls=function(camera,domElement){
-  this.camera=camera;this.domElement=domElement;this.target=new THREE.Vector3();
-  this.enableDamping=false;this.dampingFactor=.05;
-  this.minDistance=0;this.maxDistance=Infinity;
-  this.maxPolarAngle=Math.PI;
-  let spherical=new THREE.Spherical();let sphericalDelta=new THREE.Spherical();
-  let scale=1;let panOffset=new THREE.Vector3();
-  let rotateStart=new THREE.Vector2();let rotateEnd=new THREE.Vector2();let rotateDelta=new THREE.Vector2();
-  let panStart=new THREE.Vector2();let panEnd=new THREE.Vector2();let panDelta=new THREE.Vector2();
-  let state=0;// 0=none,1=rotate,2=zoom,3=pan
-  const ROTATE_SPEED=.5;const PAN_SPEED=.4;const ZOOM_SPEED=.6;
-  const scope=this;
-  function getAutoRotationAngle(){return 2*Math.PI/60/60}
-  function getZoomScale(){return Math.pow(.95,ZOOM_SPEED)}
-  function rotateLeft(angle){sphericalDelta.theta-=angle}
-  function rotateUp(angle){sphericalDelta.phi-=angle}
-  function panLeft(distance,objectMatrix){const v=new THREE.Vector3();v.setFromMatrixColumn(objectMatrix,0);v.multiplyScalar(-distance);panOffset.add(v)}
-  function panUp(distance,objectMatrix){const v=new THREE.Vector3();v.setFromMatrixColumn(objectMatrix,1);v.multiplyScalar(distance);panOffset.add(v)}
-  function pan(deltaX,deltaY){const element=scope.domElement;const offset=new THREE.Vector3();offset.copy(scope.camera.position).sub(scope.target);let targetDistance=offset.length();targetDistance*=Math.tan((scope.camera.fov/2)*Math.PI/180);panLeft(2*deltaX*targetDistance/element.clientHeight,scope.camera.matrix);panUp(2*deltaY*targetDistance/element.clientHeight,scope.camera.matrix)}
-  function onMouseDown(event){event.preventDefault();
-    if(event.button===0){state=1;rotateStart.set(event.clientX,event.clientY)}
-    else if(event.button===1){state=3;panStart.set(event.clientX,event.clientY)}
-    else if(event.button===2){state=3;panStart.set(event.clientX,event.clientY)}
-    document.addEventListener('mousemove',onMouseMove,false);document.addEventListener('mouseup',onMouseUp,false)}
-  function onMouseMove(event){event.preventDefault();
-    if(state===1){rotateEnd.set(event.clientX,event.clientY);rotateDelta.subVectors(rotateEnd,rotateStart);rotateLeft(2*Math.PI*rotateDelta.x/domElement.clientHeight*ROTATE_SPEED);rotateUp(2*Math.PI*rotateDelta.y/domElement.clientHeight*ROTATE_SPEED);rotateStart.copy(rotateEnd)}
-    else if(state===3){panEnd.set(event.clientX,event.clientY);panDelta.subVectors(panEnd,panStart);pan(panDelta.x*PAN_SPEED,panDelta.y*PAN_SPEED);panStart.copy(panEnd)}}
-  function onMouseUp(){state=0;document.removeEventListener('mousemove',onMouseMove);document.removeEventListener('mouseup',onMouseUp)}
-  function onWheel(event){event.preventDefault();if(event.deltaY<0){scale/=getZoomScale()}else{scale*=getZoomScale()}}
-  function onTouchStart(event){
-    if(event.touches.length===1){state=1;rotateStart.set(event.touches[0].pageX,event.touches[0].pageY)}
-    else if(event.touches.length===2){state=2;const dx=event.touches[0].pageX-event.touches[1].pageX;const dy=event.touches[0].pageY-event.touches[1].pageY;panStart.set(0,Math.sqrt(dx*dx+dy*dy))}}
-  function onTouchMove(event){event.preventDefault();
-    if(event.touches.length===1&&state===1){rotateEnd.set(event.touches[0].pageX,event.touches[0].pageY);rotateDelta.subVectors(rotateEnd,rotateStart);rotateLeft(2*Math.PI*rotateDelta.x/domElement.clientHeight*ROTATE_SPEED);rotateUp(2*Math.PI*rotateDelta.y/domElement.clientHeight*ROTATE_SPEED);rotateStart.copy(rotateEnd)}
-    else if(event.touches.length===2&&state===2){const dx=event.touches[0].pageX-event.touches[1].pageX;const dy=event.touches[0].pageY-event.touches[1].pageY;panEnd.set(0,Math.sqrt(dx*dx+dy*dy));panDelta.subVectors(panEnd,panStart);if(panDelta.y>0){scale/=getZoomScale()}else{scale*=getZoomScale()};panStart.copy(panEnd)}}
-  function onTouchEnd(){state=0}
-  this.update=function(){
-    const offset=new THREE.Vector3();offset.copy(camera.position).sub(this.target);
-    spherical.setFromVector3(offset);
-    spherical.theta+=sphericalDelta.theta;spherical.phi+=sphericalDelta.phi;
-    spherical.phi=Math.max(.01,Math.min(this.maxPolarAngle,spherical.phi));
-    spherical.radius*=scale;
-    spherical.radius=Math.max(this.minDistance,Math.min(this.maxDistance,spherical.radius));
-    this.target.add(panOffset);
-    offset.setFromSpherical(spherical);
-    camera.position.copy(this.target).add(offset);
-    camera.lookAt(this.target);
-    if(this.enableDamping){sphericalDelta.theta*=(1-this.dampingFactor);sphericalDelta.phi*=(1-this.dampingFactor);panOffset.multiplyScalar(1-this.dampingFactor)}else{sphericalDelta.set(0,0,0);panOffset.set(0,0,0)}
-    scale=1;
-  };
-  domElement.addEventListener('contextmenu',e=>e.preventDefault());
-  domElement.addEventListener('mousedown',onMouseDown);
-  domElement.addEventListener('wheel',onWheel,{passive:false});
-  domElement.addEventListener('touchstart',onTouchStart,{passive:false});
-  domElement.addEventListener('touchmove',onTouchMove,{passive:false});
-  domElement.addEventListener('touchend',onTouchEnd);
-};
+// OrbitControls loaded from CDN - no inline implementation needed
 
 // ── CAMERA PRESETS ──
 const CAM_PRESETS=[
