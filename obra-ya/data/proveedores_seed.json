@@ -1,0 +1,221 @@
+{
+  "proveedores": [
+    {
+      "nombre": "CEMEX Planta Guadalajara",
+      "tipo": "grande",
+      "municipio": "Tlaquepaque",
+      "telefono_whatsapp": "+5213312340001",
+      "categorias": ["concreto", "agregados", "cementantes"],
+      "metodo_contacto": "api",
+      "calificacion": 4.8,
+      "total_pedidos": 156,
+      "pedidos_cumplidos": 149,
+      "productos": [
+        { "nombre": "Concreto Premezclado f'c 150", "categoria": "concreto", "unidad": "m3", "precio_unitario": 1950, "disponibilidad": "24h" },
+        { "nombre": "Concreto Premezclado f'c 200", "categoria": "concreto", "unidad": "m3", "precio_unitario": 2150, "disponibilidad": "24h" },
+        { "nombre": "Concreto Premezclado f'c 250", "categoria": "concreto", "unidad": "m3", "precio_unitario": 2380, "disponibilidad": "24h" },
+        { "nombre": "Concreto Premezclado f'c 300", "categoria": "concreto", "unidad": "m3", "precio_unitario": 2650, "disponibilidad": "24h" },
+        { "nombre": "Concreto Bombeable f'c 250", "categoria": "concreto", "unidad": "m3", "precio_unitario": 2580, "disponibilidad": "24h" },
+        { "nombre": "Grava 3/4\"", "categoria": "agregados", "unidad": "m3", "precio_unitario": 320, "disponibilidad": "inmediata" },
+        { "nombre": "Arena #4", "categoria": "agregados", "unidad": "m3", "precio_unitario": 280, "disponibilidad": "inmediata" },
+        { "nombre": "Cemento Gris CPC 30R (50kg)", "categoria": "cementantes", "unidad": "bulto", "precio_unitario": 225, "disponibilidad": "inmediata" },
+        { "nombre": "Mortero Premezclado (50kg)", "categoria": "cementantes", "unidad": "bulto", "precio_unitario": 170, "disponibilidad": "inmediata" }
+      ]
+    },
+    {
+      "nombre": "Concretos Guadalajara (ConGDL)",
+      "tipo": "mediano",
+      "municipio": "Zapopan",
+      "telefono_whatsapp": "+5213312340002",
+      "categorias": ["concreto"],
+      "metodo_contacto": "whatsapp",
+      "calificacion": 4.5,
+      "total_pedidos": 23,
+      "pedidos_cumplidos": 21,
+      "productos": [
+        { "nombre": "Concreto Premezclado f'c 150", "categoria": "concreto", "unidad": "m3", "precio_unitario": 1850, "disponibilidad": "24h" },
+        { "nombre": "Concreto Premezclado f'c 200", "categoria": "concreto", "unidad": "m3", "precio_unitario": 2050, "disponibilidad": "24h" },
+        { "nombre": "Concreto Premezclado f'c 250", "categoria": "concreto", "unidad": "m3", "precio_unitario": 2280, "disponibilidad": "24h" },
+        { "nombre": "Concreto Premezclado f'c 300", "categoria": "concreto", "unidad": "m3", "precio_unitario": 2520, "disponibilidad": "48h" },
+        { "nombre": "Concreto Bombeable f'c 250", "categoria": "concreto", "unidad": "m3", "precio_unitario": 2480, "disponibilidad": "24h" }
+      ]
+    },
+    {
+      "nombre": "Holcim Apasco GDL",
+      "tipo": "grande",
+      "municipio": "Tonala",
+      "telefono_whatsapp": "+5213312340003",
+      "categorias": ["concreto", "agregados", "cementantes"],
+      "metodo_contacto": "api",
+      "calificacion": 4.3,
+      "total_pedidos": 89,
+      "pedidos_cumplidos": 82,
+      "productos": [
+        { "nombre": "Concreto Premezclado f'c 200", "categoria": "concreto", "unidad": "m3", "precio_unitario": 2100, "disponibilidad": "24h" },
+        { "nombre": "Concreto Premezclado f'c 250", "categoria": "concreto", "unidad": "m3", "precio_unitario": 2350, "disponibilidad": "24h" },
+        { "nombre": "Concreto Premezclado f'c 300", "categoria": "concreto", "unidad": "m3", "precio_unitario": 2600, "disponibilidad": "24h" },
+        { "nombre": "Grava 3/4\"", "categoria": "agregados", "unidad": "m3", "precio_unitario": 310, "disponibilidad": "inmediata" },
+        { "nombre": "Arena #4", "categoria": "agregados", "unidad": "m3", "precio_unitario": 270, "disponibilidad": "inmediata" },
+        { "nombre": "Cemento Gris CPC 30R (50kg)", "categoria": "cementantes", "unidad": "bulto", "precio_unitario": 218, "disponibilidad": "inmediata" }
+      ]
+    },
+    {
+      "nombre": "Aceros y Materiales del Bajio",
+      "tipo": "mediano",
+      "municipio": "Guadalajara",
+      "telefono_whatsapp": "+5213312340004",
+      "categorias": ["acero"],
+      "metodo_contacto": "whatsapp",
+      "calificacion": 4.6,
+      "total_pedidos": 67,
+      "pedidos_cumplidos": 64,
+      "productos": [
+        { "nombre": "Varilla Corrugada 3/8\" G42 (12m)", "categoria": "acero", "unidad": "pieza", "precio_unitario": 85, "disponibilidad": "inmediata" },
+        { "nombre": "Varilla Corrugada 1/2\" G42 (12m)", "categoria": "acero", "unidad": "pieza", "precio_unitario": 148, "disponibilidad": "inmediata" },
+        { "nombre": "Varilla Corrugada 5/8\" G42 (12m)", "categoria": "acero", "unidad": "pieza", "precio_unitario": 235, "disponibilidad": "inmediata" },
+        { "nombre": "Varilla Corrugada 3/4\" G42 (12m)", "categoria": "acero", "unidad": "pieza", "precio_unitario": 340, "disponibilidad": "inmediata" },
+        { "nombre": "Varilla Corrugada 1\" G42 (12m)", "categoria": "acero", "unidad": "pieza", "precio_unitario": 595, "disponibilidad": "24h" },
+        { "nombre": "Malla Electrosoldada 6x6 10/10", "categoria": "acero", "unidad": "pieza", "precio_unitario": 580, "disponibilidad": "inmediata" },
+        { "nombre": "Alambre Recocido", "categoria": "acero", "unidad": "kg", "precio_unitario": 32, "disponibilidad": "inmediata" },
+        { "nombre": "Alambre Galvanizado", "categoria": "acero", "unidad": "kg", "precio_unitario": 40, "disponibilidad": "inmediata" },
+        { "nombre": "Armex 15x20 cm (6m)", "categoria": "acero", "unidad": "pieza", "precio_unitario": 148, "disponibilidad": "inmediata" }
+      ]
+    },
+    {
+      "nombre": "Materiales La Construccion (Don Chuy)",
+      "tipo": "pequeno",
+      "municipio": "Tlaquepaque",
+      "telefono_whatsapp": "+5213312340005",
+      "categorias": ["acero", "agregados", "cementantes", "block"],
+      "metodo_contacto": "whatsapp",
+      "calificacion": 4.2,
+      "total_pedidos": 34,
+      "pedidos_cumplidos": 30,
+      "productos": [
+        { "nombre": "Varilla Corrugada 3/8\" G42 (12m)", "categoria": "acero", "unidad": "pieza", "precio_unitario": 82, "disponibilidad": "inmediata" },
+        { "nombre": "Varilla Corrugada 1/2\" G42 (12m)", "categoria": "acero", "unidad": "pieza", "precio_unitario": 142, "disponibilidad": "inmediata" },
+        { "nombre": "Alambre Recocido", "categoria": "acero", "unidad": "kg", "precio_unitario": 30, "disponibilidad": "inmediata" },
+        { "nombre": "Armex 15x20 cm (6m)", "categoria": "acero", "unidad": "pieza", "precio_unitario": 140, "disponibilidad": "inmediata" },
+        { "nombre": "Grava 3/4\"", "categoria": "agregados", "unidad": "m3", "precio_unitario": 290, "disponibilidad": "inmediata" },
+        { "nombre": "Arena #4", "categoria": "agregados", "unidad": "m3", "precio_unitario": 250, "disponibilidad": "inmediata" },
+        { "nombre": "Tepetate", "categoria": "agregados", "unidad": "m3", "precio_unitario": 180, "disponibilidad": "inmediata" },
+        { "nombre": "Piedra Braza", "categoria": "agregados", "unidad": "m3", "precio_unitario": 340, "disponibilidad": "24h" },
+        { "nombre": "Cemento Gris CPC 30R (50kg)", "categoria": "cementantes", "unidad": "bulto", "precio_unitario": 215, "disponibilidad": "inmediata" },
+        { "nombre": "Cemento Blanco (50kg)", "categoria": "cementantes", "unidad": "bulto", "precio_unitario": 375, "disponibilidad": "24h" },
+        { "nombre": "Cal Hidratada (25kg)", "categoria": "cementantes", "unidad": "bulto", "precio_unitario": 62, "disponibilidad": "inmediata" },
+        { "nombre": "Block Concreto 15x20x40", "categoria": "block", "unidad": "pieza", "precio_unitario": 12, "disponibilidad": "inmediata" },
+        { "nombre": "Block Concreto 20x20x40", "categoria": "block", "unidad": "pieza", "precio_unitario": 15.50, "disponibilidad": "inmediata" },
+        { "nombre": "Tabique Rojo Recocido", "categoria": "block", "unidad": "pieza", "precio_unitario": 4.80, "disponibilidad": "inmediata" }
+      ]
+    },
+    {
+      "nombre": "Ferreteria y Materiales Gonzalez",
+      "tipo": "pequeno",
+      "municipio": "Zapopan",
+      "telefono_whatsapp": "+5213312340006",
+      "categorias": ["acero", "agregados", "cementantes", "block", "tuberia", "impermeabilizante"],
+      "metodo_contacto": "whatsapp",
+      "calificacion": 4.0,
+      "total_pedidos": 45,
+      "pedidos_cumplidos": 40,
+      "productos": [
+        { "nombre": "Varilla Corrugada 3/8\" G42 (12m)", "categoria": "acero", "unidad": "pieza", "precio_unitario": 88, "disponibilidad": "inmediata" },
+        { "nombre": "Varilla Corrugada 1/2\" G42 (12m)", "categoria": "acero", "unidad": "pieza", "precio_unitario": 152, "disponibilidad": "inmediata" },
+        { "nombre": "Malla Electrosoldada 6x6 10/10", "categoria": "acero", "unidad": "pieza", "precio_unitario": 620, "disponibilidad": "24h" },
+        { "nombre": "Alambre Recocido", "categoria": "acero", "unidad": "kg", "precio_unitario": 31, "disponibilidad": "inmediata" },
+        { "nombre": "Grava 3/4\"", "categoria": "agregados", "unidad": "m3", "precio_unitario": 300, "disponibilidad": "inmediata" },
+        { "nombre": "Arena #4", "categoria": "agregados", "unidad": "m3", "precio_unitario": 260, "disponibilidad": "inmediata" },
+        { "nombre": "Tepetate", "categoria": "agregados", "unidad": "m3", "precio_unitario": 175, "disponibilidad": "inmediata" },
+        { "nombre": "Cemento Gris CPC 30R (50kg)", "categoria": "cementantes", "unidad": "bulto", "precio_unitario": 220, "disponibilidad": "inmediata" },
+        { "nombre": "Cal Hidratada (25kg)", "categoria": "cementantes", "unidad": "bulto", "precio_unitario": 65, "disponibilidad": "inmediata" },
+        { "nombre": "Mortero Premezclado (50kg)", "categoria": "cementantes", "unidad": "bulto", "precio_unitario": 162, "disponibilidad": "inmediata" },
+        { "nombre": "Block Concreto 15x20x40", "categoria": "block", "unidad": "pieza", "precio_unitario": 12.50, "disponibilidad": "inmediata" },
+        { "nombre": "Block Concreto 20x20x40", "categoria": "block", "unidad": "pieza", "precio_unitario": 16, "disponibilidad": "inmediata" },
+        { "nombre": "Tabique Rojo Recocido", "categoria": "block", "unidad": "pieza", "precio_unitario": 5, "disponibilidad": "inmediata" },
+        { "nombre": "Tubo PVC Sanitario 4\" (6m)", "categoria": "tuberia", "unidad": "pieza", "precio_unitario": 185, "disponibilidad": "inmediata" },
+        { "nombre": "Tubo PVC Hidraulico 1/2\" (6m)", "categoria": "tuberia", "unidad": "pieza", "precio_unitario": 48, "disponibilidad": "inmediata" },
+        { "nombre": "Impermeabilizante Acrilico 19L", "categoria": "impermeabilizante", "unidad": "cubeta", "precio_unitario": 1180, "disponibilidad": "24h" },
+        { "nombre": "Cable THW Cal 12 (100m)", "categoria": "electrico", "unidad": "rollo", "precio_unitario": 840, "disponibilidad": "inmediata" }
+      ]
+    },
+    {
+      "nombre": "Blockera del Sur GDL",
+      "tipo": "mediano",
+      "municipio": "Tlajomulco",
+      "telefono_whatsapp": "+5213312340007",
+      "categorias": ["block", "agregados"],
+      "metodo_contacto": "whatsapp",
+      "calificacion": 4.4,
+      "total_pedidos": 52,
+      "pedidos_cumplidos": 48,
+      "productos": [
+        { "nombre": "Block Concreto 15x20x40", "categoria": "block", "unidad": "pieza", "precio_unitario": 11, "disponibilidad": "inmediata" },
+        { "nombre": "Block Concreto 20x20x40", "categoria": "block", "unidad": "pieza", "precio_unitario": 14.50, "disponibilidad": "inmediata" },
+        { "nombre": "Grava 3/4\"", "categoria": "agregados", "unidad": "m3", "precio_unitario": 280, "disponibilidad": "inmediata" },
+        { "nombre": "Arena #4", "categoria": "agregados", "unidad": "m3", "precio_unitario": 240, "disponibilidad": "inmediata" },
+        { "nombre": "Tepetate", "categoria": "agregados", "unidad": "m3", "precio_unitario": 165, "disponibilidad": "inmediata" },
+        { "nombre": "Sello (Gravilla Fina)", "categoria": "agregados", "unidad": "m3", "precio_unitario": 290, "disponibilidad": "inmediata" }
+      ]
+    },
+    {
+      "nombre": "Home Depot Guadalajara (Patria)",
+      "tipo": "grande",
+      "municipio": "Zapopan",
+      "telefono_whatsapp": "+5213312340008",
+      "categorias": ["cementantes", "acero", "tuberia", "impermeabilizante", "electrico"],
+      "metodo_contacto": "api",
+      "calificacion": 4.1,
+      "total_pedidos": 120,
+      "pedidos_cumplidos": 108,
+      "productos": [
+        { "nombre": "Cemento Gris CPC 30R (50kg)", "categoria": "cementantes", "unidad": "bulto", "precio_unitario": 235, "disponibilidad": "inmediata" },
+        { "nombre": "Cemento Blanco (50kg)", "categoria": "cementantes", "unidad": "bulto", "precio_unitario": 395, "disponibilidad": "inmediata" },
+        { "nombre": "Cal Hidratada (25kg)", "categoria": "cementantes", "unidad": "bulto", "precio_unitario": 68, "disponibilidad": "inmediata" },
+        { "nombre": "Mortero Premezclado (50kg)", "categoria": "cementantes", "unidad": "bulto", "precio_unitario": 175, "disponibilidad": "inmediata" },
+        { "nombre": "Varilla Corrugada 3/8\" G42 (12m)", "categoria": "acero", "unidad": "pieza", "precio_unitario": 92, "disponibilidad": "inmediata" },
+        { "nombre": "Varilla Corrugada 1/2\" G42 (12m)", "categoria": "acero", "unidad": "pieza", "precio_unitario": 158, "disponibilidad": "inmediata" },
+        { "nombre": "Malla Electrosoldada 6x6 10/10", "categoria": "acero", "unidad": "pieza", "precio_unitario": 640, "disponibilidad": "inmediata" },
+        { "nombre": "Tubo PVC Sanitario 4\" (6m)", "categoria": "tuberia", "unidad": "pieza", "precio_unitario": 195, "disponibilidad": "inmediata" },
+        { "nombre": "Tubo PVC Hidraulico 1/2\" (6m)", "categoria": "tuberia", "unidad": "pieza", "precio_unitario": 52, "disponibilidad": "inmediata" },
+        { "nombre": "Impermeabilizante Acrilico 19L", "categoria": "impermeabilizante", "unidad": "cubeta", "precio_unitario": 1250, "disponibilidad": "inmediata" },
+        { "nombre": "Cable THW Cal 12 (100m)", "categoria": "electrico", "unidad": "rollo", "precio_unitario": 890, "disponibilidad": "inmediata" }
+      ]
+    },
+    {
+      "nombre": "Materiales GDL Test",
+      "tipo": "mediano",
+      "municipio": "Guadalajara",
+      "telefono_whatsapp": "5213333859426",
+      "categorias": ["concreto", "acero", "agregados", "cementantes", "block", "tuberia", "impermeabilizante", "electrico"],
+      "metodo_contacto": "whatsapp",
+      "calificacion": 4.0,
+      "total_pedidos": 0,
+      "pedidos_cumplidos": 0,
+      "productos": []
+    },
+    {
+      "nombre": "Construcciones Tlaquepaque",
+      "tipo": "pequeno",
+      "municipio": "Tlaquepaque",
+      "telefono_whatsapp": "5213319735257",
+      "categorias": ["concreto", "acero", "agregados", "cementantes", "block", "tuberia", "impermeabilizante", "electrico"],
+      "metodo_contacto": "whatsapp",
+      "calificacion": 4.0,
+      "total_pedidos": 0,
+      "pedidos_cumplidos": 0,
+      "productos": []
+    },
+    {
+      "nombre": "Ferremateriales Zapopan",
+      "tipo": "mediano",
+      "municipio": "Zapopan",
+      "telefono_whatsapp": "5213327425354",
+      "categorias": ["concreto", "acero", "agregados", "cementantes", "block", "tuberia", "impermeabilizante", "electrico"],
+      "metodo_contacto": "whatsapp",
+      "calificacion": 4.0,
+      "total_pedidos": 0,
+      "pedidos_cumplidos": 0,
+      "productos": []
+    }
+  ]
+}

@@ -1,0 +1,434 @@
+{
+  "catalogo": [
+    {
+      "id": 1,
+      "nombre": "Concreto Premezclado f'c 150",
+      "categoria": "concreto",
+      "subcategoria": "premezclado",
+      "unidad": "m3",
+      "descripcion": "Concreto premezclado resistencia 150 kg/cm2. Para firmes, banquetas, pisos.",
+      "precio_referencia": 1950,
+      "aliases": [
+        "concreto 150", "concreto del 150", "concreto fc 150", "concreto f'c 150",
+        "premezclado 150", "premezclado del 150", "concreto f prima c 150",
+        "concreto resistencia 150", "concreto R-150", "efe prima ce ciento cincuenta",
+        "concreto de ciento cincuenta", "fc150", "fc 150"
+      ]
+    },
+    {
+      "id": 2,
+      "nombre": "Concreto Premezclado f'c 200",
+      "categoria": "concreto",
+      "subcategoria": "premezclado",
+      "unidad": "m3",
+      "descripcion": "Concreto premezclado resistencia 200 kg/cm2. Losas, muros, cimentaciones ligeras.",
+      "precio_referencia": 2150,
+      "aliases": [
+        "concreto 200", "concreto del 200", "concreto fc 200", "concreto f'c 200",
+        "premezclado 200", "premezclado del 200", "concreto f prima c 200",
+        "concreto resistencia 200", "concreto R-200", "efe prima ce doscientos",
+        "concreto de doscientos", "fc200", "fc 200"
+      ]
+    },
+    {
+      "id": 3,
+      "nombre": "Concreto Premezclado f'c 250",
+      "categoria": "concreto",
+      "subcategoria": "premezclado",
+      "unidad": "m3",
+      "descripcion": "Concreto premezclado resistencia 250 kg/cm2. Estructural general, el mas pedido.",
+      "precio_referencia": 2380,
+      "aliases": [
+        "concreto 250", "concreto del 250", "concreto fc 250", "concreto f'c 250",
+        "premezclado 250", "premezclado del 250", "concreto f prima c 250",
+        "concreto resistencia 250", "concreto R-250", "efe prima ce doscientos cincuenta",
+        "concreto de doscientos cincuenta", "concreto estructural",
+        "fc250", "fc 250", "f'c250", "concreto premezclado 250"
+      ]
+    },
+    {
+      "id": 4,
+      "nombre": "Concreto Premezclado f'c 300",
+      "categoria": "concreto",
+      "subcategoria": "premezclado",
+      "unidad": "m3",
+      "descripcion": "Concreto premezclado resistencia 300 kg/cm2. Columnas, trabes, alta resistencia.",
+      "precio_referencia": 2650,
+      "aliases": [
+        "concreto 300", "concreto del 300", "concreto fc 300", "concreto f'c 300",
+        "premezclado 300", "concreto f prima c 300", "concreto R-300",
+        "efe prima ce trescientos", "concreto de trescientos",
+        "concreto alta resistencia", "fc300", "fc 300"
+      ]
+    },
+    {
+      "id": 5,
+      "nombre": "Concreto Bombeable f'c 250",
+      "categoria": "concreto",
+      "subcategoria": "bombeable",
+      "unidad": "m3",
+      "descripcion": "Concreto premezclado bombeable resistencia 250. Cuando no hay acceso directo.",
+      "precio_referencia": 2580,
+      "aliases": [
+        "concreto bombeable", "concreto con bomba", "bombeable 250", "bombeable del 250",
+        "concreto bombeable 250", "concreto bombeado", "premezclado con bomba",
+        "concreto con equipo de bombeo", "bombeable f'c 250", "bombeable fc 250"
+      ]
+    },
+    {
+      "id": 6,
+      "nombre": "Varilla Corrugada 3/8\" G42 (12m)",
+      "categoria": "acero",
+      "subcategoria": "varilla_corrugada",
+      "unidad": "pieza",
+      "descripcion": "Varilla corrugada 3/8 pulgada (#3) grado 42, longitud 12m. La mas usada.",
+      "precio_referencia": 85,
+      "aliases": [
+        "varilla 3/8", "varilla del 3/8", "varilla del tres octavos", "varilla #3",
+        "varilla numero 3", "varilla del numero 3", "varilla corrugada 3/8",
+        "fierro del 3/8", "fierro del tres octavos", "fierro corrugado 3/8",
+        "acero corrugado 3/8", "acero corrugado #3", "varilla 3/8 G42",
+        "varilla tres octavos grado cuarenta y dos", "acero #3 G42",
+        "varilla 3 octavos", "var 3/8", "fierro 3/8", "varilla del num 3"
+      ]
+    },
+    {
+      "id": 7,
+      "nombre": "Varilla Corrugada 1/2\" G42 (12m)",
+      "categoria": "acero",
+      "subcategoria": "varilla_corrugada",
+      "unidad": "pieza",
+      "descripcion": "Varilla corrugada 1/2 pulgada (#4) grado 42, longitud 12m.",
+      "precio_referencia": 148,
+      "aliases": [
+        "varilla 1/2", "varilla del 1/2", "varilla del medio", "varilla #4",
+        "varilla numero 4", "varilla del numero 4", "varilla corrugada 1/2",
+        "fierro del 1/2", "fierro del medio", "acero corrugado 1/2",
+        "acero corrugado #4", "varilla media pulgada", "varilla 1/2 G42",
+        "var 1/2", "fierro 1/2", "fierro medio", "varilla del num 4"
+      ]
+    },
+    {
+      "id": 8,
+      "nombre": "Varilla Corrugada 5/8\" G42 (12m)",
+      "categoria": "acero",
+      "subcategoria": "varilla_corrugada",
+      "unidad": "pieza",
+      "descripcion": "Varilla corrugada 5/8 pulgada (#5) grado 42, longitud 12m.",
+      "precio_referencia": 235,
+      "aliases": [
+        "varilla 5/8", "varilla del 5/8", "varilla del cinco octavos", "varilla #5",
+        "varilla numero 5", "varilla corrugada 5/8", "fierro del 5/8",
+        "acero corrugado 5/8", "acero #5", "varilla 5/8 G42",
+        "varilla cinco octavos grado cuarenta y dos", "var 5/8", "fierro 5/8"
+      ]
+    },
+    {
+      "id": 9,
+      "nombre": "Varilla Corrugada 3/4\" G42 (12m)",
+      "categoria": "acero",
+      "subcategoria": "varilla_corrugada",
+      "unidad": "pieza",
+      "descripcion": "Varilla corrugada 3/4 pulgada (#6) grado 42, longitud 12m.",
+      "precio_referencia": 340,
+      "aliases": [
+        "varilla 3/4", "varilla del 3/4", "varilla del tres cuartos", "varilla #6",
+        "varilla numero 6", "varilla corrugada 3/4", "fierro del 3/4",
+        "acero corrugado 3/4", "acero #6", "var 3/4", "fierro 3/4"
+      ]
+    },
+    {
+      "id": 10,
+      "nombre": "Varilla Corrugada 1\" G42 (12m)",
+      "categoria": "acero",
+      "subcategoria": "varilla_corrugada",
+      "unidad": "pieza",
+      "descripcion": "Varilla corrugada 1 pulgada (#8) grado 42, longitud 12m.",
+      "precio_referencia": 595,
+      "aliases": [
+        "varilla de 1", "varilla de una pulgada", "varilla #8",
+        "varilla numero 8", "varilla corrugada 1 pulgada", "fierro del 1",
+        "acero corrugado 1 pulgada", "acero #8", "var 1", "fierro de pulgada"
+      ]
+    },
+    {
+      "id": 11,
+      "nombre": "Malla Electrosoldada 6x6 10/10",
+      "categoria": "acero",
+      "subcategoria": "malla",
+      "unidad": "pieza",
+      "descripcion": "Malla electrosoldada 6x6 calibre 10/10, hoja 2.5x6m.",
+      "precio_referencia": 580,
+      "aliases": [
+        "malla 6x6", "malla electrosoldada", "malla electrosoldada 6x6",
+        "malla 6 por 6", "hoja de malla", "malla para losa", "malla 6x6 10/10",
+        "malla electro soldada", "maya 6x6", "maya electrosoldada"
+      ]
+    },
+    {
+      "id": 12,
+      "nombre": "Alambre Recocido (Negro)",
+      "categoria": "acero",
+      "subcategoria": "alambre",
+      "unidad": "kg",
+      "descripcion": "Alambre recocido negro para amarrar varilla.",
+      "precio_referencia": 30,
+      "aliases": [
+        "alambre recocido", "alambre negro", "alambre de amarre",
+        "alambre para amarrar", "alambre para amarrar varilla",
+        "alambre recocido negro", "alambre", "alambre de amarrar"
+      ]
+    },
+    {
+      "id": 13,
+      "nombre": "Alambre Galvanizado",
+      "categoria": "acero",
+      "subcategoria": "alambre",
+      "unidad": "kg",
+      "descripcion": "Alambre galvanizado para usos generales.",
+      "precio_referencia": 38,
+      "aliases": [
+        "alambre galvanizado", "alambre galvan", "alambre plateado"
+      ]
+    },
+    {
+      "id": 14,
+      "nombre": "Armex 15x20 cm (6m)",
+      "categoria": "acero",
+      "subcategoria": "armex",
+      "unidad": "pieza",
+      "descripcion": "Armadura prefabricada para castillos, seccion 15x20cm, 6m de largo.",
+      "precio_referencia": 145,
+      "aliases": [
+        "armex", "armex 15x20", "castillos armex", "armex del 15x20",
+        "armadura prefabricada", "castillo prefabricado", "armex 15 por 20",
+        "armex para castillos", "armex 15x20 cm"
+      ]
+    },
+    {
+      "id": 15,
+      "nombre": "Grava 3/4\"",
+      "categoria": "agregados",
+      "subcategoria": "grava",
+      "unidad": "m3",
+      "descripcion": "Grava triturada 3/4 de pulgada. La mas comun para concreto.",
+      "precio_referencia": 320,
+      "aliases": [
+        "grava", "grava 3/4", "grava de 3/4", "grava triturada",
+        "grava para concreto", "viaje de grava", "gravilla gruesa",
+        "grava tres cuartos", "piedra triturada"
+      ]
+    },
+    {
+      "id": 16,
+      "nombre": "Arena #4 (de rio)",
+      "categoria": "agregados",
+      "subcategoria": "arena",
+      "unidad": "m3",
+      "descripcion": "Arena numero 4 de rio. Para mezcla y morteros.",
+      "precio_referencia": 280,
+      "aliases": [
+        "arena", "arena #4", "arena de rio", "arena numero 4",
+        "arena para mezcla", "viaje de arena", "arena fina",
+        "arena lavada", "arena para mortero"
+      ]
+    },
+    {
+      "id": 17,
+      "nombre": "Tepetate",
+      "categoria": "agregados",
+      "subcategoria": "relleno",
+      "unidad": "m3",
+      "descripcion": "Material de relleno y base.",
+      "precio_referencia": 180,
+      "aliases": [
+        "tepetate", "tepe", "material de relleno", "relleno",
+        "tepetate para relleno", "viaje de tepetate", "viaje de tepe"
+      ]
+    },
+    {
+      "id": 18,
+      "nombre": "Piedra Braza",
+      "categoria": "agregados",
+      "subcategoria": "piedra",
+      "unidad": "m3",
+      "descripcion": "Piedra para cimentacion ciclopea.",
+      "precio_referencia": 350,
+      "aliases": [
+        "piedra braza", "piedra de rio", "piedra para cimentacion",
+        "piedra ciclope", "piedra bola", "viaje de piedra"
+      ]
+    },
+    {
+      "id": 19,
+      "nombre": "Sello (Gravilla Fina)",
+      "categoria": "agregados",
+      "subcategoria": "sello",
+      "unidad": "m3",
+      "descripcion": "Grava fina para relleno y acabado.",
+      "precio_referencia": 300,
+      "aliases": [
+        "sello", "gravilla", "gravilla fina", "grava fina",
+        "sello fino", "material de sello", "viaje de sello"
+      ]
+    },
+    {
+      "id": 20,
+      "nombre": "Cemento Gris CPC 30R (50kg)",
+      "categoria": "cementantes",
+      "subcategoria": "cemento",
+      "unidad": "bulto",
+      "descripcion": "Cemento Portland Compuesto gris, bulto de 50kg.",
+      "precio_referencia": 220,
+      "aliases": [
+        "cemento gris", "cemento", "bultos de cemento", "bultos del gris",
+        "cemento CPC 30R", "cemento portland", "cemento gris 50kg",
+        "bultos del gris", "sacos de cemento", "tonelada de cemento",
+        "pallet de cemento", "cemento normal", "cemento CPC",
+        "bultos de gris", "bultos cemento gris"
+      ]
+    },
+    {
+      "id": 21,
+      "nombre": "Cemento Blanco (50kg)",
+      "categoria": "cementantes",
+      "subcategoria": "cemento",
+      "unidad": "bulto",
+      "descripcion": "Cemento blanco, bulto de 50kg. Para acabados.",
+      "precio_referencia": 380,
+      "aliases": [
+        "cemento blanco", "bultos del blanco", "bultos de blanco",
+        "cemento blanco 50kg", "sacos de cemento blanco",
+        "bultos blanco", "cemento blanco para acabados"
+      ]
+    },
+    {
+      "id": 22,
+      "nombre": "Cal Hidratada (25kg)",
+      "categoria": "cementantes",
+      "subcategoria": "cal",
+      "unidad": "bulto",
+      "descripcion": "Cal hidratada, bulto de 25kg. Para mezcla de mortero.",
+      "precio_referencia": 65,
+      "aliases": [
+        "cal", "cal hidratada", "calera", "bultos de cal",
+        "cal para mezcla", "cal hidra", "sacos de cal",
+        "cal 25kg", "cal hidratada 25 kilos"
+      ]
+    },
+    {
+      "id": 23,
+      "nombre": "Mortero Premezclado (50kg)",
+      "categoria": "cementantes",
+      "subcategoria": "mortero",
+      "unidad": "bulto",
+      "descripcion": "Mortero premezclado listo para usar, bulto 50kg.",
+      "precio_referencia": 165,
+      "aliases": [
+        "mortero", "mortero premezclado", "mezcla lista", "mortero listo",
+        "bultos de mortero", "sacos de mortero", "mortero para pegar block",
+        "mezcla premezclada", "mortero 50kg"
+      ]
+    },
+    {
+      "id": 24,
+      "nombre": "Block de Concreto 15x20x40 cm",
+      "categoria": "block",
+      "subcategoria": "block_concreto",
+      "unidad": "pieza",
+      "descripcion": "Block de concreto 15x20x40 cm. El mas comun para muros.",
+      "precio_referencia": 12.50,
+      "aliases": [
+        "block del 15", "block 15", "block 15x20x40", "block de 15",
+        "blocks del 15", "bloque del 15", "bloque 15", "block de concreto 15",
+        "block concreto 15x20x40", "millar de block del 15",
+        "block quince", "blok del 15", "blok 15"
+      ]
+    },
+    {
+      "id": 25,
+      "nombre": "Block de Concreto 20x20x40 cm",
+      "categoria": "block",
+      "subcategoria": "block_concreto",
+      "unidad": "pieza",
+      "descripcion": "Block de concreto 20x20x40 cm. Muros de carga.",
+      "precio_referencia": 16,
+      "aliases": [
+        "block del 20", "block 20", "block 20x20x40", "block de 20",
+        "blocks del 20", "bloque del 20", "bloque 20", "block de concreto 20",
+        "block concreto 20x20x40", "millar de block del 20",
+        "block veinte", "blok del 20", "blok 20"
+      ]
+    },
+    {
+      "id": 26,
+      "nombre": "Tabique Rojo Recocido",
+      "categoria": "block",
+      "subcategoria": "tabique",
+      "unidad": "pieza",
+      "descripcion": "Tabique rojo recocido estandar.",
+      "precio_referencia": 5,
+      "aliases": [
+        "tabique", "tabique rojo", "tabique recocido", "tabicones",
+        "millar de tabique", "tabique rojo recocido", "tabiques",
+        "ladrillo rojo", "ladrillo"
+      ]
+    },
+    {
+      "id": 27,
+      "nombre": "Tubo PVC Sanitario 4\" (6m)",
+      "categoria": "tuberia",
+      "subcategoria": "pvc_sanitario",
+      "unidad": "pieza",
+      "descripcion": "Tubo PVC sanitario 4 pulgadas, tramo de 6 metros.",
+      "precio_referencia": 185,
+      "aliases": [
+        "tubo del 4", "tubo 4", "tubo sanitario 4", "tubo de drenaje",
+        "tubo PVC 4", "tubo PVC sanitario", "tubo drenaje 4 pulgadas",
+        "tubo de 4 pulgadas", "tuberia sanitaria 4", "tubo cuatro pulgadas"
+      ]
+    },
+    {
+      "id": 28,
+      "nombre": "Tubo PVC Hidraulico 1/2\" (6m)",
+      "categoria": "tuberia",
+      "subcategoria": "pvc_hidraulico",
+      "unidad": "pieza",
+      "descripcion": "Tubo PVC hidraulico 1/2 pulgada, tramo de 6 metros.",
+      "precio_referencia": 48,
+      "aliases": [
+        "tubo de agua", "tubo del medio", "tubo 1/2", "tubo hidraulico",
+        "tubo PVC 1/2", "tubo PVC hidraulico", "tubo agua 1/2",
+        "tubo media pulgada", "tuberia hidraulica", "tubo de agua potable"
+      ]
+    },
+    {
+      "id": 29,
+      "nombre": "Impermeabilizante Acrilico (19L)",
+      "categoria": "impermeabilizante",
+      "subcategoria": "acrilico",
+      "unidad": "cubeta",
+      "descripcion": "Impermeabilizante acrilico, cubeta de 19 litros.",
+      "precio_referencia": 1200,
+      "aliases": [
+        "impermeabilizante", "impermeable", "impermeabilizante acrilico",
+        "cubeta de impermeabilizante", "impermeabilizante 19 litros",
+        "impermeabilizante para losa", "impermeabilizante cubeta"
+      ]
+    },
+    {
+      "id": 30,
+      "nombre": "Cable THW Calibre 12 (100m)",
+      "categoria": "electrico",
+      "subcategoria": "cable",
+      "unidad": "rollo",
+      "descripcion": "Cable electrico THW calibre 12, rollo de 100 metros.",
+      "precio_referencia": 850,
+      "aliases": [
+        "cable del 12", "cable calibre 12", "cable electrico", "cable THW 12",
+        "cable THW", "rollo de cable 12", "cable electrico 12",
+        "cable cal 12", "cable numero 12", "cable thw calibre 12"
+      ]
+    }
+  ]
+}

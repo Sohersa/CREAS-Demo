@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+venv/
+.venv/
+env/
+
+# Base de datos local
+*.db
+*.sqlite3
+
+# Variables de entorno (NUNCA subir)
+.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Build
+dist/
+build/
+*.egg-info/

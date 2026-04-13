@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+  obraya:
+    build: .
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    volumes:
+      - ./obra_ya.db:/app/obra_ya.db
+    restart: unless-stopped

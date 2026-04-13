@@ -1,0 +1,1456 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>ObraYa - Mapa Completo de Procesos</title>
+<style>
+@page { size: A4; margin: 20mm; }
+body {
+  font-family: Segoe UI, Calibri, Arial, sans-serif;
+  font-size: 11pt;
+  line-height: 1.6;
+  color: #1a1a1a;
+  max-width: 100%;
+  padding: 0;
+}
+h1 { font-size: 24pt; color: #0f172a; border-bottom: 3px solid #ff6b2b; padding-bottom: 8px; margin-top: 30px; }
+h2 { font-size: 18pt; color: #1e293b; border-bottom: 2px solid #e2e8f0; padding-bottom: 6px; margin-top: 28px; page-break-after: avoid; }
+h3 { font-size: 14pt; color: #334155; margin-top: 20px; page-break-after: avoid; }
+h4 { font-size: 12pt; color: #475569; }
+table { border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 10pt; page-break-inside: avoid; }
+th { background: #1e293b; color: white; padding: 8px 12px; text-align: left; font-weight: 600; }
+td { padding: 6px 12px; border: 1px solid #cbd5e1; }
+tr:nth-child(even) { background: #f8fafc; }
+code { background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-size: 10pt; font-family: Consolas, monospace; }
+pre { background: #0f172a; color: #e2e8f0; padding: 16px; border-radius: 8px; overflow-x: auto; font-size: 9pt; line-height: 1.5; page-break-inside: avoid; }
+pre code { background: none; color: inherit; padding: 0; }
+strong { color: #0f172a; }
+hr { border: none; border-top: 2px solid #e2e8f0; margin: 24px 0; }
+p { margin: 8px 0; }
+ul, ol { margin: 8px 0; padding-left: 24px; }
+li { margin: 4px 0; }
+blockquote { border-left: 4px solid #ff6b2b; padding-left: 16px; margin: 12px 0; color: #475569; }
+</style>
+</head>
+<body>
+<h1>ObraYa -- Mapa Completo de Procesos</h1>
+<hr />
+<h2>1. Vision General</h2>
+<h3>1.1 Que es ObraYa</h3>
+<p>ObraYa es una plataforma de abastecimiento de materiales de construccion que opera 100% por WhatsApp. A diferencia de un marketplace con precios estaticos, ObraYa funciona como un agente inteligente ("Nico") que contacta proveedores en tiempo real, solicita cotizaciones por WhatsApp, compara respuestas y permite al comprador elegir la mejor opcion -- todo sin salir de la conversacion. El residente de obra pide material desde el campo, Nico hace el trabajo de llamar a 20 proveedores, y en minutos tiene una comparativa real con precios del momento.</p>
+<h3>1.2 Arquitectura Tecnica</h3>
+<pre class="codehilite"><code>                    +-------------------+
+                    |   WhatsApp Cloud  |
+                    |   API (Meta)      |
+                    +--------+----------+
+                             |
+                    +--------v----------+
+                    |   FastAPI Backend  |
+                    |   (Python 3.11+)  |
+                    +--------+----------+
+                             |
+          +------------------+------------------+
+          |                  |                  |
+  +-------v-------+  +------v------+  +--------v--------+
+  |   SQLite DB   |  | Claude AI   |  |  Stripe Payments|
+  |  (SQLAlchemy) |  | (Anthropic) |  |  (Checkout)     |
+  +---------------+  +------+------+  +-----------------+
+                             |
+                    +--------v----------+
+                    |   Groq Whisper    |
+                    |   (Audio -&gt; Text) |
+                    +-------------------+
+</code></pre>
+
+<p><strong>Stack principal:</strong>
+- <strong>Backend:</strong> FastAPI (Python) con SQLAlchemy ORM
+- <strong>Base de datos:</strong> SQLite (desarrollo), migracion a PostgreSQL en produccion
+- <strong>Mensajeria:</strong> WhatsApp Cloud API (Meta) + Twilio como fallback
+- <strong>IA:</strong> Anthropic Claude (interpretacion de pedidos, parseo de respuestas)
+- <strong>Voz:</strong> Groq Whisper (transcripcion de notas de voz)
+- <strong>Pagos:</strong> Stripe Checkout (tarjeta de credito/debito)
+- <strong>Geocoding:</strong> Nominatim/OpenStreetMap (ubicacion GPS a direccion)
+- <strong>Auth Web:</strong> Google OAuth (portales web)</p>
+<h3>1.3 Actores del Sistema</h3>
+<table>
+<thead>
+<tr>
+<th>Actor</th>
+<th>Descripcion</th>
+<th>Canal principal</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Cliente (Comprador)</strong></td>
+<td>Persona que necesita materiales de construccion</td>
+<td>WhatsApp</td>
+</tr>
+<tr>
+<td><strong>Residente de obra</strong></td>
+<td>Personal en campo que pide materiales dia a dia</td>
+<td>WhatsApp</td>
+</tr>
+<tr>
+<td><strong>Superintendente</strong></td>
+<td>Supervisa varios residentes, puede aprobar compras</td>
+<td>WhatsApp</td>
+</tr>
+<tr>
+<td><strong>Compras</strong></td>
+<td>Departamento de adquisiciones de la constructora</td>
+<td>WhatsApp / Web</td>
+</tr>
+<tr>
+<td><strong>Director</strong></td>
+<td>Maximo nivel de aprobacion corporativa</td>
+<td>WhatsApp / Web</td>
+</tr>
+<tr>
+<td><strong>Proveedor</strong></td>
+<td>Empresa que vende materiales (ferreteria, cementera, etc.)</td>
+<td>WhatsApp / Web</td>
+</tr>
+<tr>
+<td><strong>Vendedor</strong></td>
+<td>Persona especifica dentro de un proveedor que atiende</td>
+<td>WhatsApp</td>
+</tr>
+<tr>
+<td><strong>Agente Nico (IA)</strong></td>
+<td>Agente inteligente que orquesta todo el flujo</td>
+<td>Automatico</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>2. Proceso Principal: Pedido de Materiales</h2>
+<h3>2.1 Inicio del Pedido (WhatsApp)</h3>
+<p><strong>Entradas soportadas:</strong>
+- <strong>Texto:</strong> "Necesito 15 metros cubicos de concreto fc 250 para manana en Zapopan"
+- <strong>Audio:</strong> Nota de voz que se transcribe automaticamente con Groq Whisper
+- <strong>Ubicacion:</strong> Pin de GPS que se convierte a direccion via reverse geocoding (Nominatim)</p>
+<p><strong>Flujo de deteccion de contexto:</strong></p>
+<p>Antes de procesar el mensaje, el sistema detecta en que estado se encuentra el usuario:</p>
+<pre class="codehilite"><code>Mensaje entrante
+      |
+      v
+  Es proveedor? ----SI----&gt; manejar_respuesta_proveedor()
+      |NO
+      v
+  Es APROBAR/RECHAZAR? --SI--&gt; manejar_aprobacion() / manejar_rechazo()
+      |NO
+      v
+  Detectar contexto del usuario:
+      |
+      +-- Pedido en &quot;cotizando&quot;    --&gt; manejar_esperando_cotizaciones()
+      +-- Pedido en &quot;enviado&quot;      --&gt; manejar_seleccion_proveedor()
+      +-- Orden en &quot;en_obra&quot;       --&gt; manejar_confirmacion_entrega()
+      +-- Orden activa (otra)      --&gt; manejar_orden_activa()
+      +-- Nada activo              --&gt; manejar_nuevo_pedido()
+</code></pre>
+
+<p><strong>Interpretacion por Claude AI:</strong></p>
+<p>El agente Claude analiza el mensaje del usuario y extrae:
+- <strong>Items:</strong> producto, cantidad, unidad, categoria, especificaciones (resistencia, calibre, tipo)
+- <strong>Entrega:</strong> direccion, municipio, fecha, horario
+- <strong>Status:</strong> "completo" (tiene todo para cotizar) o "incompleto" (falta info)</p>
+<p>Si el pedido esta incompleto, Nico responde pidiendo lo que falta (ej: "Me dices la direccion de entrega?").</p>
+<h3>2.2 Cotizacion Activa (Real-time)</h3>
+<p>Este es el corazon de ObraYa. NO es un catalogo estatico -- es cotizacion en vivo.</p>
+<p><strong>Paso 1: Seleccion de proveedores (hasta 20)</strong></p>
+<pre class="codehilite"><code>Criterios de seleccion (en orden de prioridad):
+  1. Categorias: el proveedor maneja al menos 1 categoria del pedido
+  2. Activo: proveedor habilitado en el sistema
+  3. WhatsApp: tiene numero de WhatsApp registrado
+  4. Geografia: bonus por cercania al punto de entrega
+     - Mismo municipio: +5.0 puntos
+     - Misma zona metropolitana: +3.0 puntos
+     - Otra ciudad: -2.0 puntos
+  5. Calificacion: mejor rating tiene prioridad
+  6. Pedidos cumplidos: mas experiencia = mas arriba
+  7. Tiempo de respuesta: mas rapido = mas arriba
+</code></pre>
+
+<p><strong>Zonas metropolitanas soportadas:</strong>
+- Guadalajara (Zapopan, Tlaquepaque, Tonala, Tlajomulco, El Salto, etc.)
+- Monterrey (San Pedro, Apodaca, Guadalupe, Santa Catarina, etc.)
+- CDMX (Naucalpan, Tlalnepantla, Ecatepec, etc.)
+- Mazatlan, Culiacan, Leon, Queretaro, Puebla, Merida, Tijuana, Aguascalientes</p>
+<p><strong>Paso 2: Envio de mensaje al proveedor</strong></p>
+<pre class="codehilite"><code>Hola, buen dia. Soy Nico de ObraYa.
+
+Tengo un cliente que necesita los siguientes materiales:
+
+  - 15 m3 de concreto (fc 250)
+  - 20 varillas de 3/8
+
+Entrega en: Zapopan
+Direccion: Av. Patria 1234
+
+Me podrias pasar tu mejor precio con flete incluido?
+Si puedes indicar tiempo de entrega, mejor.
+
+Gracias!
+</code></pre>
+
+<p><strong>Routing inteligente vendedor/proveedor:</strong></p>
+<pre class="codehilite"><code>Para cada proveedor:
+  1. Buscar vendedor activo + disponible con menor tiempo de respuesta
+  2. Si hay vendedor --&gt; enviar a su WhatsApp personal
+  3. Si no hay vendedor --&gt; enviar al WhatsApp general del proveedor
+</code></pre>
+
+<p>El sistema intenta primero enviar un template de WhatsApp (funciona fuera de ventana 24h). Si el template no esta aprobado, envia texto libre como fallback.</p>
+<p><strong>Paso 3: Espera y recordatorios</strong></p>
+<pre class="codehilite"><code>Tiempo 0min  --&gt; Solicitud enviada
+Tiempo 15min --&gt; Primer recordatorio a proveedores sin respuesta
+Tiempo 25min --&gt; Segundo recordatorio (maximo 2 recordatorios)
+Tiempo 30min --&gt; Timeout: se arma comparativa con lo que haya
+</code></pre>
+
+<p>Mensaje de recordatorio:</p>
+<pre class="codehilite"><code>Hola, soy Nico de ObraYa.
+Te habia mandado una solicitud de cotizacion hace rato:
+[resumen del pedido]
+Todavia tienes chance de cotizar?
+Si no manejas algun material, no hay problema, dime.
+</code></pre>
+
+<p><strong>Paso 4: Parseo de respuestas por IA</strong></p>
+<p>Cuando un proveedor responde (texto libre por WhatsApp), Claude AI parsea:
+- <code>tiene_precio</code>: si incluye precio o no
+- <code>precio_total</code>: monto total cotizado
+- <code>desglose</code>: lista de items con precio unitario, cantidad, unidad, subtotal
+- <code>incluye_flete</code>: si el precio incluye flete
+- <code>costo_flete</code>: costo del flete por separado
+- <code>tiempo_entrega</code>: "2 horas", "manana", etc.
+- <code>notas</code>: condiciones adicionales
+- <code>sin_stock</code>: si dijo que no tiene material</p>
+<p><strong>Paso 5: Registro de precios historicos</strong></p>
+<p>Cada respuesta de proveedor se registra automaticamente en la tabla <code>PrecioHistorico</code>:
+- Producto normalizado contra catalogo maestro
+- Precio unitario + flete prorrateado = precio efectivo
+- Zona, fecha, dia de la semana, mes, trimestre
+- Deteccion de outliers (precio &gt; 3x o &lt; 0.3x del promedio)</p>
+<h3>2.3 Comparativa de Precios</h3>
+<p>Cuando hay suficientes respuestas (minimo 1), se arma la comparativa:</p>
+<pre class="codehilite"><code>Comparativa de precios para tu pedido #42:
+
+  1. Materiales Zapopan -- $18,500
+     - 15 m3 concreto fc250: $1,100/m3
+     - Flete incluido
+     - Entrega: 2 horas
+
+  2. Concretos del Bajio -- $19,200
+     - 15 m3 concreto fc250: $1,180/m3
+     - Flete: $1,500
+     - Entrega: manana 8am
+
+Responde con el NUMERO del proveedor que prefieras (ej: 1)
+</code></pre>
+
+<p>El usuario responde "1", "el primero", "el mas barato", etc. El sistema interpreta respuestas naturales.</p>
+<h3>2.4 Cotizacion Estatica (Fallback)</h3>
+<p>Si no hay proveedores con WhatsApp o mientras se espera respuestas reales, se generan cotizaciones de la base de datos:</p>
+<p><strong>Motor de cotizacion (cotizador.py):</strong></p>
+<pre class="codehilite"><code>1. Usuario dice &quot;varilla del tres octavos&quot;
+2. Buscar en aliases_producto --&gt; catalogo_id = 6
+3. Buscar todos los productos con catalogo_id = 6
+4. Agrupar por proveedor, calcular subtotales
+5. Sumar flete estimado por municipio
+6. Ordenar por precio total
+</code></pre>
+
+<p><strong>Calculo de flete por municipio (desde centro GDL):</strong></p>
+<table>
+<thead>
+<tr>
+<th>Municipio</th>
+<th>Flete estimado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Guadalajara</td>
+<td>$800</td>
+</tr>
+<tr>
+<td>Tlaquepaque</td>
+<td>$1,000</td>
+</tr>
+<tr>
+<td>Zapopan</td>
+<td>$1,200</td>
+</tr>
+<tr>
+<td>Tonala</td>
+<td>$1,500</td>
+</tr>
+<tr>
+<td>Tlajomulco</td>
+<td>$1,800</td>
+</tr>
+<tr>
+<td>El Salto</td>
+<td>$2,000</td>
+</tr>
+<tr>
+<td>Ixtlahuacan</td>
+<td>$2,500</td>
+</tr>
+</tbody>
+</table>
+<p>Reglas especiales:
+- Mismo municipio proveedor/entrega: flete al 50%
+- Proveedor grande con subtotal &gt; $30,000: flete gratis</p>
+<hr />
+<h2>3. Proceso de Aprobacion Corporativa</h2>
+<h3>3.1 Verificacion de Limites</h3>
+<pre class="codehilite"><code>Compra solicitada
+      |
+      v
+  Usuario pertenece a empresa? --NO--&gt; Compra directa (sin aprobacion)
+      |SI
+      v
+  Empresa requiere aprobacion? --NO--&gt; Compra directa
+      |SI
+      v
+  Monto &lt;= limite_sin_aprobacion de la empresa? --SI--&gt; Compra directa
+      |NO
+      v
+  El usuario puede auto-aprobar este monto? --SI--&gt; Compra directa
+      |NO
+      v
+  REQUIERE APROBACION --&gt; solicitar_aprobacion()
+</code></pre>
+
+<p><strong>Jerarquia de roles y limites (ejemplo demo):</strong></p>
+<table>
+<thead>
+<tr>
+<th>Rol</th>
+<th>Puede pedir</th>
+<th>Puede aprobar</th>
+<th>Puede pagar</th>
+<th>Limite aprobacion</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Residente</td>
+<td>Si</td>
+<td>No</td>
+<td>No</td>
+<td>$50,000</td>
+</tr>
+<tr>
+<td>Superintendente</td>
+<td>Si</td>
+<td>Si</td>
+<td>No</td>
+<td>$150,000</td>
+</tr>
+<tr>
+<td>Compras</td>
+<td>Si</td>
+<td>Si</td>
+<td>Si</td>
+<td>$500,000</td>
+</tr>
+<tr>
+<td>Director</td>
+<td>Si</td>
+<td>Si</td>
+<td>Si</td>
+<td>Sin limite</td>
+</tr>
+</tbody>
+</table>
+<h3>3.2 Solicitud de Aprobacion</h3>
+<p>Al crearse la solicitud:
+1. Se crea registro <code>Aprobacion</code> con status "pendiente" y expiracion en 24 horas
+2. Se buscan todos los miembros de la empresa con <code>puede_aprobar = True</code>
+3. Solo se notifica a aprobadores cuyo limite_aprobacion &gt;= monto de la orden
+4. Se envia WhatsApp a cada aprobador con contexto completo</p>
+<p><strong>Mensaje al aprobador:</strong></p>
+<pre class="codehilite"><code>*Solicitud de Aprobacion*
+
+*Detalle del pedido:*
+  - Concreto fc250 x15 m3 -- $16,500
+  - Varilla 3/8 x20 pza -- $2,000
+  *Total: $18,500 MXN*
+
+*Solicitante:* Juan Perez (residente)
+*Entrega:* Av. Patria 1234, Zapopan
+
+*Consumo acumulado:* $125,000 de $500,000 limite
+
+*Alerta de presupuesto:*
+La obra &quot;Torre Norte&quot; lleva 65% consumido
+($325,000 de $500,000)
+Este pedido llevaria el consumo a 69%
+
+Para responder:
+  APROBAR 42 -- autorizar compra
+  RECHAZAR 42 [motivo] -- rechazar
+
+Expira en 24 horas.
+</code></pre>
+
+<h3>3.3 Aprobacion / Rechazo</h3>
+<p><strong>Via WhatsApp:</strong>
+- <code>APROBAR 42</code> --&gt; aprueba orden #42
+- <code>APROBAR 42 adelante con todo</code> --&gt; aprueba con nota
+- <code>RECHAZAR 42 muy caro, busca otra opcion</code> --&gt; rechaza con motivo</p>
+<p><strong>Via portal web:</strong> boton de aprobar/rechazar en <code>/aprobaciones/</code></p>
+<p><strong>Validaciones al aprobar:</strong>
+- El aprobador debe pertenecer a la misma empresa
+- Debe tener <code>puede_aprobar = True</code> y estar activo
+- Su <code>limite_aprobacion</code> debe ser &gt;= al monto de la orden</p>
+<p><strong>Expiracion:</strong>
+- Aprobaciones pendientes por mas de 24 horas se marcan como "expirada"
+- Un scheduler periodico ejecuta <code>verificar_expiradas()</code></p>
+<p><strong>Notificacion al solicitante:</strong></p>
+<pre class="codehilite"><code>(Aprobada)
+*Compra aprobada!*
+Orden #42 -- $18,500 MXN
+Aprobada por: Carlos Gonzalez
+Tu pedido se esta procesando.
+
+(Rechazada)
+*Compra rechazada*
+Orden #42 -- $18,500 MXN
+Rechazada por: Carlos Gonzalez
+Motivo: muy caro, busca otra opcion
+Si necesitas ajustar el pedido, mandame mensaje.
+</code></pre>
+
+<hr />
+<h2>4. Proceso de Orden y Entrega</h2>
+<h3>4.1 Creacion de Orden</h3>
+<p>Cuando el usuario elige un proveedor:</p>
+<pre class="codehilite"><code>Usuario responde &quot;1&quot;
+      |
+      v
+  Crear Orden desde Cotizacion:
+    - proveedor_id
+    - items (JSON)
+    - total
+    - direccion_entrega
+    - status: &quot;confirmada&quot;
+      |
+      v
+  Registrar en SeguimientoEntrega (timeline)
+      |
+      v
+  Incrementar total_pedidos del proveedor
+      |
+      v
+  Auto-consumo presupuestal:
+    - Buscar presupuesto activo del usuario
+    - Sumar al gastado_total
+    - Recalcular porcentaje_consumido
+      |
+      v
+  Necesita aprobacion? --SI--&gt; Flujo de aprobacion (seccion 3)
+      |NO
+      v
+  Notificar al usuario: &quot;Pedido confirmado con [proveedor]!&quot;
+  Limpiar historial de conversacion
+</code></pre>
+
+<h3>4.2 Ciclo de Vida de la Orden</h3>
+<pre class="codehilite"><code>  confirmada --&gt; preparando --&gt; en_transito --&gt; en_obra --&gt; entregada
+                                                   |
+                                                   +--&gt; con_incidencia --&gt; entregada
+
+  (Cualquier estado) --&gt; cancelada
+</code></pre>
+
+<p><strong>Transiciones validas:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Desde</th>
+<th>Hacia</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>confirmada</td>
+<td>preparando, cancelada</td>
+</tr>
+<tr>
+<td>preparando</td>
+<td>en_transito, cancelada</td>
+</tr>
+<tr>
+<td>en_transito</td>
+<td>en_obra, cancelada</td>
+</tr>
+<tr>
+<td>en_obra</td>
+<td>entregada, con_incidencia, cancelada</td>
+</tr>
+<tr>
+<td>con_incidencia</td>
+<td>entregada, cancelada</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Timestamps registrados por etapa:</strong>
+- <code>confirmada_at</code>, <code>preparando_at</code>, <code>en_transito_at</code>, <code>en_obra_at</code>, <code>entregada_at</code>, <code>cancelada_at</code></p>
+<p><strong>Datos de transporte (al pasar a en_transito):</strong>
+- <code>nombre_chofer</code>
+- <code>telefono_chofer</code>
+- <code>placas_vehiculo</code>
+- <code>tipo_vehiculo</code></p>
+<p><strong>Al entregarse:</strong>
+- Se calcula <code>tiempo_entrega_minutos</code> (desde en_transito hasta entregada)
+- Se incrementa <code>pedidos_cumplidos</code> del proveedor
+- Se registra <code>fecha_entrega_real</code></p>
+<h3>4.3 Tracking de Entrega (SeguimientoEntrega)</h3>
+<p>Cada cambio de status se registra en la tabla <code>SeguimientoEntrega</code>:
+- <code>status_anterior</code>
+- <code>status_nuevo</code>
+- <code>origen</code> (usuario, admin, proveedor, agente)
+- <code>nota</code> (contexto del cambio)
+- <code>created_at</code> (timestamp)</p>
+<p>Esto genera un timeline completo consultable via API.</p>
+<h3>4.4 Agente Proactivo -- Alertas Automaticas</h3>
+<p>El agente proactivo se ejecuta cada 10-15 minutos y realiza las siguientes acciones:</p>
+<p><strong>1. Recordatorio de entrega proxima a proveedores</strong>
+- Condicion: orden en "confirmada" o "preparando" con fecha de entrega para hoy o manana
+- Mensaje al proveedor con datos de la orden
+- Pide responder PREPARANDO o PROBLEMA</p>
+<p><strong>2. Alerta de recepcion a la obra</strong>
+- Condicion: orden cambio a "en_transito" en los ultimos 5 minutos
+- Mensaje al usuario con datos del chofer, placas, vehiculo
+- Pide responder RECIBIDO o PROBLEMA</p>
+<p><strong>3. Confirmacion de entrega (insistencia)</strong>
+- Condicion: orden en "en_obra" por mas de 2 horas sin confirmacion
+- Se envia a las 2h y 6h
+- No se insiste despues de 24 horas</p>
+<p><strong>4. Recordatorio de compromiso a proveedor</strong>
+- Condicion: orden en "confirmada" por mas de 4 horas sin avanzar a "preparando"
+- Se envia a las 4h y 12h
+- No se insiste despues de 48 horas</p>
+<p><strong>5. Solicitud de calificacion post-entrega</strong>
+- Condicion: orden entregada hace exactamente 24 horas
+- Solo si el usuario no ha calificado aun
+- Pide calificacion 1-5 estrellas</p>
+<p><strong>6. Alerta de retraso de entrega</strong>
+- Condicion: fecha_entrega_prometida ya paso y la orden no esta entregada
+- Se alerta a AMBAS partes (proveedor y comprador)
+- Se envia a la 1h, 4h y 12h de retraso
+- No se insiste despues de 72 horas</p>
+<p><strong>7. Recordatorio de cotizaciones pendientes</strong>
+- Condicion: solicitud a proveedor con 15+ minutos sin respuesta
+- Maximo 2 recordatorios por solicitud
+- Se envia a los 15 y 25 minutos</p>
+<h3>4.5 Incidencias</h3>
+<p><strong>Tipos de incidencia:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Tipo</th>
+<th>Descripcion</th>
+<th>Severidad default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>cantidad_incorrecta</code></td>
+<td>Llego menos material del pedido</td>
+<td>media</td>
+</tr>
+<tr>
+<td><code>especificacion</code></td>
+<td>Llego material diferente al pedido</td>
+<td>grave</td>
+</tr>
+<tr>
+<td><code>entrega_tarde</code></td>
+<td>No llego a la hora acordada</td>
+<td>leve</td>
+</tr>
+<tr>
+<td><code>material_danado</code></td>
+<td>Material roto, mojado, golpeado</td>
+<td>media</td>
+</tr>
+<tr>
+<td><code>no_llego</code></td>
+<td>El pedido nunca llego</td>
+<td>grave</td>
+</tr>
+<tr>
+<td><code>cobro_diferente</code></td>
+<td>El precio cobrado no coincide con la cotizacion</td>
+<td>media</td>
+</tr>
+<tr>
+<td><code>otro</code></td>
+<td>Cualquier otro problema</td>
+<td>media</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Auto-clasificacion desde texto:</strong></p>
+<p>El sistema analiza el mensaje del usuario buscando palabras clave:
+- "faltaron 5 metros" --&gt; <code>cantidad_incorrecta</code>
+- "no era lo que pedi" --&gt; <code>especificacion</code>
+- "llego 3 horas tarde" --&gt; <code>entrega_tarde</code>
+- "las varillas venian dobladas" --&gt; <code>material_danado</code>
+- "nunca llego" --&gt; <code>no_llego</code>
+- "me cobraron de mas" --&gt; <code>cobro_diferente</code></p>
+<p>Intensificadores de severidad: "nunca", "jamas", "todo mal", "inaceptable", "pesimo" --&gt; severidad "grave"</p>
+<p><strong>Extraccion inteligente de cantidades:</strong></p>
+<p>El sistema intenta extraer datos numericos del texto:
+- "pedi 15 metros y llegaron 12" --&gt; esperado: 15, recibido: 12, unidad: m3
+- "20 bultos y solo vinieron 18" --&gt; esperado: 20, recibido: 18, unidad: bultos</p>
+<p><strong>Flujo de resolucion:</strong></p>
+<pre class="codehilite"><code>Incidencia creada (status: &quot;abierta&quot;)
+      |
+      v
+  Orden pasa a status &quot;con_incidencia&quot;
+      |
+      v
+  Notificacion al usuario confirmando registro
+      |
+      v
+  Admin resuelve: resolver_incidencia(id, resolucion)
+      |
+      v
+  Status: &quot;resuelta&quot; + fecha_resolucion
+</code></pre>
+
+<hr />
+<h2>5. Sistema de Pagos (Stripe)</h2>
+<h3>5.1 Desglose de Montos</h3>
+<pre class="codehilite"><code>  Subtotal (precio del proveedor)     $18,500.00
+  + Comision ObraYa (2%)              +   $370.00
+  ----------------------------------------
+  Total cobrado al cliente            $18,870.00
+
+  Monto que recibe el proveedor:      $18,500.00
+  Comision ObraYa:                       $370.00
+</code></pre>
+
+<h3>5.2 Flujo de Pago</h3>
+<pre class="codehilite"><code>  1. Crear sesion Stripe Checkout
+     - line_item: &quot;ObraYa - Orden #42&quot;
+     - monto: total + 2% comision (en centavos MXN)
+     - metadata: orden_id, subtotal, comision
+     |
+     v
+  2. Redirigir al cliente a Stripe (URL de checkout)
+     |
+     v
+  3. Cliente paga con tarjeta en Stripe
+     |
+     v
+  4. Stripe redirige a /pagos/exito?session_id=xxx
+     |
+     v
+  5. confirmar_pago():
+     - Recuperar sesion de Stripe
+     - Marcar orden como pagada
+     - Registrar: metodo_pago, stripe_payment_id, fecha_pago
+     - Registrar: comision_obraya, monto_proveedor
+     - pago_proveedor_status = &quot;pendiente&quot;
+     - Actualizar credit scoring del usuario
+     |
+     v
+  6. Pago al proveedor (manual/SPEI):
+     - registrar_pago_proveedor()
+     - pago_proveedor_status = &quot;pagado&quot;
+</code></pre>
+
+<h3>5.3 Simulacion (Testing)</h3>
+<p>Endpoint <code>simular_pago(orden_id)</code> que:
+- Marca la orden como pagada sin pasar por Stripe
+- metodo_pago = "simulado"
+- stripe_payment_id = "sim_{orden_id}_{timestamp}"
+- Ejecuta la misma logica de credit scoring</p>
+<hr />
+<h2>6. Presupuestos de Obra</h2>
+<h3>6.1 Creacion de Presupuesto</h3>
+<pre class="codehilite"><code>crear_presupuesto(
+    nombre_obra=&quot;Torre Norte Fase 2&quot;,
+    direccion=&quot;Av. Patria 1234, Zapopan&quot;,
+    fecha_inicio=...,
+    fecha_fin_estimada=...,
+    partidas=[
+        {
+            &quot;nombre_material&quot;: &quot;Concreto fc 250&quot;,
+            &quot;categoria&quot;: &quot;concreto&quot;,
+            &quot;unidad&quot;: &quot;m3&quot;,
+            &quot;cantidad_presupuestada&quot;: 500,
+            &quot;precio_unitario_estimado&quot;: 1200,
+            &quot;catalogo_id&quot;: 1
+        },
+        ...
+    ]
+)
+</code></pre>
+
+<p>Cada partida tiene:
+- Nombre del material y categoria
+- Unidad de medida
+- Cantidad presupuestada y precio unitario estimado
+- Monto presupuestado (cantidad x precio)
+- Campos de tracking: cantidad_consumida, monto_gastado, porcentaje_consumido
+- Flags de alerta: alerta_50_enviada, alerta_80_enviada, alerta_100_enviada
+- Flag de bloqueo: bloqueado (true/false)</p>
+<h3>6.2 Tracking de Consumo</h3>
+<p><strong>Registro automatico al comprar:</strong></p>
+<p>Al crear una orden, el sistema automaticamente:
+1. Busca el presupuesto activo del usuario
+2. Suma el total de la orden al <code>gastado_total</code>
+3. Recalcula <code>porcentaje_consumido</code></p>
+<p><strong>Registro manual por partida:</strong></p>
+<p><code>registrar_consumo()</code> actualiza una partida especifica:
+- Incrementa cantidad_consumida y monto_gastado
+- Recalcula porcentaje de la partida
+- Recalcula totales del presupuesto
+- Dispara verificacion de alertas</p>
+<h3>6.3 Alertas por WhatsApp</h3>
+<pre class="codehilite"><code>  Consumo al 50%:
+    &quot;Tu partida de concreto para Torre Norte ya lleva el 50%
+    consumido (250/500 m3). Vas bien, pero toma nota.&quot;
+
+  Consumo al 80%:
+    &quot;*ALERTA:* Tu partida de concreto ya va al 80%.
+    Solo te quedan 100 m3 del presupuesto.&quot;
+
+  Consumo al 100%:
+    &quot;*PRESUPUESTO AGOTADO:* La partida de concreto llego al 100%.
+    Se bloqueo la compra de este material.
+    Contacta a tu administrador para ampliar el presupuesto.&quot;
+</code></pre>
+
+<p>Al 100% la partida se bloquea automaticamente. Se puede desbloquear manualmente por un admin.</p>
+<h3>6.4 Verificacion de Disponibilidad</h3>
+<p>Antes de cada compra, <code>verificar_disponibilidad()</code> revisa:
+- Existe presupuesto activo con partida para ese material?
+- La partida esta bloqueada?
+- La cantidad solicitada excede lo restante?</p>
+<p>Respuestas posibles:
+- <code>permitido: True</code> --&gt; la compra puede proceder
+- <code>permitido: False, partida bloqueada</code> --&gt; presupuesto agotado
+- <code>permitido: False, excede disponible</code> --&gt; la cantidad solicitada es mayor a lo restante
+- Sin presupuesto --&gt; compra libre (no hay restriccion)</p>
+<hr />
+<h2>7. Credit Scoring</h2>
+<h3>7.1 Calculo del Score (0--100)</h3>
+<table>
+<thead>
+<tr>
+<th>Componente</th>
+<th>Peso</th>
+<th>Que mide</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Historial de pagos</td>
+<td>40%</td>
+<td>Ratio pagos a tiempo vs tarde (&lt;=7 dias = a tiempo)</td>
+</tr>
+<tr>
+<td>Volumen de compras</td>
+<td>20%</td>
+<td>Total gastado, normalizado a $500k MXN = 100%</td>
+</tr>
+<tr>
+<td>Frecuencia</td>
+<td>15%</td>
+<td>Pedidos completados, normalizado a 50 pedidos = 100%</td>
+</tr>
+<tr>
+<td>Antiguedad</td>
+<td>10%</td>
+<td>Dias desde registro, normalizado a 365 dias = 100%</td>
+</tr>
+<tr>
+<td>Diversidad proveedores</td>
+<td>10%</td>
+<td>Proveedores distintos usados, normalizado a 10 = 100%</td>
+</tr>
+<tr>
+<td>Metodo de pago</td>
+<td>5%</td>
+<td>Tarjeta=100, Transferencia=70, Efectivo=40</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Formula:</strong></p>
+<pre class="codehilite"><code>Score = (pagos * 0.40) + (volumen * 0.20) + (frecuencia * 0.15)
+      + (antiguedad * 0.10) + (diversidad * 0.10) + (metodo * 0.05)
+</code></pre>
+
+<h3>7.2 Clasificacion</h3>
+<table>
+<thead>
+<tr>
+<th>Score</th>
+<th>Nivel</th>
+<th>Riesgo</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>85-100</td>
+<td>Excelente</td>
+<td>Bajo</td>
+</tr>
+<tr>
+<td>70-84</td>
+<td>Bueno</td>
+<td>Bajo</td>
+</tr>
+<tr>
+<td>50-69</td>
+<td>Regular</td>
+<td>Medio</td>
+</tr>
+<tr>
+<td>0-49</td>
+<td>Malo</td>
+<td>Alto</td>
+</tr>
+<tr>
+<td>Sin pedidos</td>
+<td>Sin historial</td>
+<td>N/A</td>
+</tr>
+</tbody>
+</table>
+<h3>7.3 Evaluacion de Credito</h3>
+<p><strong>Requisitos minimos para credito:</strong>
+- Al menos 5 pedidos completados
+- Score &gt;= 65</p>
+<p><strong>Limite de credito sugerido:</strong></p>
+<pre class="codehilite"><code>limite = score * total_gastado * 0.1 / 100
+</code></pre>
+
+<p>Ejemplo: score 80, $200,000 gastado --&gt; limite = $16,000</p>
+<p><strong>Actualizacion automatica:</strong></p>
+<p>Cada vez que se confirma un pago:
+1. Se actualiza <code>total_gastado</code> del usuario
+2. Se incrementa <code>total_pedidos_completados</code>
+3. Se calcula promedio movil de dias de pago
+4. Se clasifica como pago a tiempo (&lt;=7 dias) o tarde
+5. Se recalcula el score completo</p>
+<hr />
+<h2>8. Calificacion de Proveedores</h2>
+<h3>8.1 Calificacion Auto-calculada</h3>
+<p>Se ejecuta automaticamente al confirmar entrega de una orden.</p>
+<table>
+<thead>
+<tr>
+<th>Eje</th>
+<th>Peso</th>
+<th>Como se calcula</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Puntualidad</td>
+<td>35%</td>
+<td>5.0 base, -1 punto por cada 30 min de retraso</td>
+</tr>
+<tr>
+<td>Cantidad correcta</td>
+<td>25%</td>
+<td>5.0 base, se reduce por ratio recibido/esperado</td>
+</tr>
+<tr>
+<td>Especificacion correcta</td>
+<td>25%</td>
+<td>5.0 si correcto, 2.0 si incidencia de especificacion</td>
+</tr>
+<tr>
+<td>Sin incidencias</td>
+<td>15%</td>
+<td>5.0 base, -1.5 por cada incidencia registrada</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Resultado:</strong> calificacion total ponderada de 1.0 a 5.0</p>
+<h3>8.2 Calificacion Manual</h3>
+<p>24 horas despues de la entrega, Nico pide calificacion al usuario:</p>
+<pre class="codehilite"><code>Como calificas la experiencia? (1-5 estrellas)
+1 - Muy mal
+2 - Mal
+3 - Regular
+4 - Bien
+5 - Excelente
+
+Tambien puedes agregar un comentario despues del numero.
+</code></pre>
+
+<h3>8.3 Impacto en el Sistema</h3>
+<p>Al registrar una calificacion se recalculan las metricas agregadas del proveedor (ultimas 50 ordenes):</p>
+<ul>
+<li><code>calificacion</code>: promedio general (1.0-5.0)</li>
+<li><code>tasa_puntualidad</code>: % de ordenes con puntualidad &gt;= 4.0</li>
+<li><code>tasa_cantidad_correcta</code>: % de ordenes con cantidad &gt;= 4.5</li>
+<li><code>tasa_especificacion_correcta</code>: % de ordenes con spec &gt;= 4.5</li>
+<li><code>total_incidencias</code>: conteo total de incidencias</li>
+<li><code>total_ordenes_completadas</code>: conteo de ordenes entregadas</li>
+</ul>
+<p>Estas metricas afectan directamente el orden de seleccion de proveedores en cotizacion activa.</p>
+<hr />
+<h2>9. Inteligencia de Precios</h2>
+<h3>9.1 Registro de Precios</h3>
+<p>Cada cotizacion de proveedor se guarda automaticamente en <code>PrecioHistorico</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Campo</th>
+<th>Descripcion</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>catalogo_id</code></td>
+<td>Producto normalizado del catalogo maestro</td>
+</tr>
+<tr>
+<td><code>producto_nombre</code></td>
+<td>Nombre original como lo dijo el proveedor</td>
+</tr>
+<tr>
+<td><code>producto_normalizado</code></td>
+<td>Nombre del catalogo maestro</td>
+</tr>
+<tr>
+<td><code>proveedor_id/nombre</code></td>
+<td>Quien cotizo</td>
+</tr>
+<tr>
+<td><code>precio_unitario</code></td>
+<td>Precio por unidad</td>
+</tr>
+<tr>
+<td><code>precio_efectivo</code></td>
+<td>Precio + flete prorrateado</td>
+</tr>
+<tr>
+<td><code>unidad</code></td>
+<td>m3, pieza, bulto, etc.</td>
+</tr>
+<tr>
+<td><code>cantidad_cotizada</code></td>
+<td>Volumen cotizado</td>
+</tr>
+<tr>
+<td><code>incluye_flete</code></td>
+<td>Si/No</td>
+</tr>
+<tr>
+<td><code>costo_flete</code></td>
+<td>Costo del flete (prorrateado)</td>
+</tr>
+<tr>
+<td><code>zona</code></td>
+<td>Zona geografica</td>
+</tr>
+<tr>
+<td><code>tiempo_entrega</code></td>
+<td>Compromiso de entrega</td>
+</tr>
+<tr>
+<td><code>fuente</code></td>
+<td>"cotizacion_activa", "manual", "referencia"</td>
+</tr>
+<tr>
+<td><code>fecha, dia_semana, mes, anio, trimestre</code></td>
+<td>Para analisis temporal</td>
+</tr>
+<tr>
+<td><code>es_outlier</code></td>
+<td>Flag de precio anomalo</td>
+</tr>
+<tr>
+<td><code>confianza</code></td>
+<td>Nivel de confianza del dato (0-1)</td>
+</tr>
+</tbody>
+</table>
+<h3>9.2 Deteccion de Outliers</h3>
+<p>Un precio se marca como outlier si:
+- Hay al menos 5 datos historicos para ese producto+unidad
+- El precio es &gt; 3x del promedio historico, o &lt; 0.3x del promedio</p>
+<p>Los outliers se excluyen del calculo de precio de referencia.</p>
+<h3>9.3 Precio de Referencia del Catalogo</h3>
+<p>El catalogo maestro mantiene un <code>precio_referencia</code> que se recalcula automaticamente:
+- Se toman los ultimos 30 precios no-outlier
+- Se calcula el promedio
+- Se actualiza en el catalogo</p>
+<h3>9.4 Analytics Disponibles</h3>
+<ul>
+<li><strong>Tendencia de precio:</strong> precio promedio/min/max por mes, ultimos 6-12 meses</li>
+<li><strong>Variacion mensual:</strong> cambio % mes a mes, deteccion de tendencia (alza/baja/estable)</li>
+<li><strong>Ranking de proveedores:</strong> por precio promedio efectivo para un producto</li>
+<li><strong>Resumen de mercado:</strong> total de datos, proveedores y productos trackeados, top 5 productos mas cotizados</li>
+<li><strong>Precio actual:</strong> promedio de ultimas 10 cotizaciones no-outlier</li>
+</ul>
+<hr />
+<h2>10. Gestion de Equipos</h2>
+<h3>10.1 Empresas</h3>
+<table>
+<thead>
+<tr>
+<th>Campo</th>
+<th>Descripcion</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>nombre</code></td>
+<td>Razon social</td>
+</tr>
+<tr>
+<td><code>rfc</code></td>
+<td>RFC de la empresa</td>
+</tr>
+<tr>
+<td><code>direccion</code></td>
+<td>Direccion fiscal</td>
+</tr>
+<tr>
+<td><code>telefono</code></td>
+<td>Telefono de contacto</td>
+</tr>
+<tr>
+<td><code>email</code></td>
+<td>Email corporativo</td>
+</tr>
+<tr>
+<td><code>requiere_aprobacion</code></td>
+<td>Si las compras necesitan autorizacion</td>
+</tr>
+<tr>
+<td><code>limite_sin_aprobacion</code></td>
+<td>Monto maximo para compra directa sin autorizacion</td>
+</tr>
+<tr>
+<td><code>activo</code></td>
+<td>Si la empresa esta habilitada</td>
+</tr>
+</tbody>
+</table>
+<h3>10.2 Miembros de Empresa</h3>
+<p>Cada miembro tiene:</p>
+<table>
+<thead>
+<tr>
+<th>Campo</th>
+<th>Descripcion</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>rol</code></td>
+<td>residente, superintendente, compras, director</td>
+</tr>
+<tr>
+<td><code>puede_pedir</code></td>
+<td>Puede solicitar materiales</td>
+</tr>
+<tr>
+<td><code>puede_aprobar</code></td>
+<td>Puede autorizar compras de otros</td>
+</tr>
+<tr>
+<td><code>puede_pagar</code></td>
+<td>Puede realizar pagos</td>
+</tr>
+<tr>
+<td><code>limite_aprobacion</code></td>
+<td>Monto maximo que puede aprobar (null = sin limite)</td>
+</tr>
+<tr>
+<td><code>activo</code></td>
+<td>Si el miembro esta habilitado</td>
+</tr>
+</tbody>
+</table>
+<h3>10.3 Vendedores (Personal de Proveedores)</h3>
+<p>Cada proveedor puede tener multiples vendedores:</p>
+<table>
+<thead>
+<tr>
+<th>Campo</th>
+<th>Descripcion</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>nombre</code></td>
+<td>Nombre del vendedor</td>
+</tr>
+<tr>
+<td><code>telefono_whatsapp</code></td>
+<td>Su WhatsApp personal</td>
+</tr>
+<tr>
+<td><code>rol</code></td>
+<td>vendedor, gerente, mostrador, almacen</td>
+</tr>
+<tr>
+<td><code>solicitudes_atendidas</code></td>
+<td>Contador de solicitudes</td>
+</tr>
+<tr>
+<td><code>tiempo_respuesta_promedio</code></td>
+<td>En minutos</td>
+</tr>
+<tr>
+<td><code>calificacion</code></td>
+<td>Rating individual (1-5)</td>
+</tr>
+<tr>
+<td><code>disponible</code></td>
+<td>True/False (vacaciones, etc.)</td>
+</tr>
+<tr>
+<td><code>horario</code></td>
+<td>"L-V 8:00-18:00"</td>
+</tr>
+<tr>
+<td><code>categorias_especialidad</code></td>
+<td>JSON con categorias que domina</td>
+</tr>
+<tr>
+<td><code>activo</code></td>
+<td>Si esta habilitado</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Routing inteligente:</strong></p>
+<p>Al contactar un proveedor, el sistema busca el mejor vendedor:
+1. Activo y disponible
+2. Ordenado por tiempo_respuesta_promedio (mas rapido primero)
+3. Si no hay vendedor disponible, usa el WhatsApp general del proveedor</p>
+<hr />
+<h2>11. Plataformas Web</h2>
+<h3>11.1 Hub Central (<code>/hub/</code>)</h3>
+<p>Pagina principal con acceso a todos los modulos. Dashboard general del sistema.</p>
+<h3>11.2 Portal Clientes (<code>/portal/</code>)</h3>
+<p>Portal de autoservicio para compradores:
+- Ver ordenes activas y completadas
+- Timeline de seguimiento
+- Historial de pedidos
+- Calificaciones dadas</p>
+<h3>11.3 Portal Proveedores (<code>/portal/</code>)</h3>
+<p>Portal de autoservicio para proveedores:
+- Solicitudes pendientes de cotizacion
+- Ordenes en proceso
+- Metricas de desempeno
+- Calificaciones recibidas</p>
+<h3>11.4 Panel Admin (<code>/admin/</code>)</h3>
+<p>Panel de administracion del sistema:
+- CRUD de proveedores, productos, usuarios
+- Gestion de catalogo maestro
+- Importacion de precios historicos
+- Resolucion de incidencias</p>
+<h3>11.5 Dashboard Analytics (<code>/dashboard/</code>)</h3>
+<p>Metricas y graficas:
+- Ordenes por status
+- Ingresos y comisiones
+- Proveedores mas usados
+- Tiempos de respuesta</p>
+<h3>11.6 Simulador WhatsApp (<code>/sim/</code>)</h3>
+<p>Simulador web para probar el flujo de WhatsApp sin necesidad de un numero real. Permite:
+- Enviar mensajes como comprador
+- Enviar respuestas como proveedor
+- Ver el flujo completo en tiempo real</p>
+<h3>11.7 Inteligencia de Precios (<code>/precios/</code>)</h3>
+<p>Panel de analisis de precios:
+- Tendencias por producto
+- Comparativa entre proveedores
+- Deteccion de outliers
+- Top productos mas cotizados</p>
+<h3>11.8 Presupuestos (<code>/presupuesto/</code>)</h3>
+<p>Gestion de presupuestos de obra:
+- Crear/editar presupuestos con partidas
+- Visualizar consumo por partida
+- Alertas de porcentaje</p>
+<h3>11.9 Aprobaciones (<code>/aprobaciones/</code>)</h3>
+<p>Portal web para aprobar/rechazar ordenes:
+- Lista de aprobaciones pendientes
+- Detalle de cada solicitud
+- Botones de aprobar/rechazar</p>
+<h3>11.10 Credit Scoring (<code>/credito/</code>)</h3>
+<p>Panel de credit scoring:
+- Perfil crediticio de cada usuario
+- Ranking de usuarios por score
+- Evaluacion de elegibilidad</p>
+<h3>11.11 Pagos (<code>/pagos/</code>)</h3>
+<p>Modulo de pagos:
+- Iniciar pago Stripe
+- Simular pago (testing)
+- Historial de pagos
+- Pagos pendientes a proveedores</p>
+<hr />
+<h2>12. Integraciones Externas</h2>
+<table>
+<thead>
+<tr>
+<th>Servicio</th>
+<th>Uso</th>
+<th>Configuracion</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>WhatsApp Cloud API (Meta)</strong></td>
+<td>Canal principal de comunicacion con usuarios y proveedores</td>
+<td>WHATSAPP_TOKEN, PHONE_NUMBER_ID, VERIFY_TOKEN</td>
+</tr>
+<tr>
+<td><strong>WhatsApp via Twilio</strong></td>
+<td>Fallback cuando Meta Cloud API no funciona</td>
+<td>TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN</td>
+</tr>
+<tr>
+<td><strong>Anthropic Claude</strong></td>
+<td>Interpretacion de pedidos, parseo de respuestas de proveedores, clasificacion de incidencias</td>
+<td>ANTHROPIC_API_KEY</td>
+</tr>
+<tr>
+<td><strong>Groq Whisper</strong></td>
+<td>Transcripcion de notas de voz a texto</td>
+<td>GROQ_API_KEY</td>
+</tr>
+<tr>
+<td><strong>Stripe</strong></td>
+<td>Procesamiento de pagos con tarjeta, checkout</td>
+<td>STRIPE_SECRET_KEY, STRIPE_PUBLISHABLE_KEY</td>
+</tr>
+<tr>
+<td><strong>Nominatim/OpenStreetMap</strong></td>
+<td>Conversion de coordenadas GPS a direcciones legibles</td>
+<td>Sin API key (rate-limited)</td>
+</tr>
+<tr>
+<td><strong>Google OAuth</strong></td>
+<td>Autenticacion en portales web</td>
+<td>GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>13. Cuentas Demo</h2>
+<h3>Empresa Demo</h3>
+<table>
+<thead>
+<tr>
+<th>Campo</th>
+<th>Valor</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Nombre</td>
+<td>Constructora Demo SA de CV</td>
+</tr>
+<tr>
+<td>RFC</td>
+<td>CDM000101XXX</td>
+</tr>
+<tr>
+<td>Direccion</td>
+<td>Av. Patria 1234, Zapopan, Jalisco</td>
+</tr>
+<tr>
+<td>Requiere aprobacion</td>
+<td>Si</td>
+</tr>
+<tr>
+<td>Limite sin aprobacion</td>
+<td>$100,000 MXN</td>
+</tr>
+</tbody>
+</table>
+<h3>Usuarios Demo</h3>
+<table>
+<thead>
+<tr>
+<th>Telefono</th>
+<th>Nombre</th>
+<th>Rol</th>
+<th>Puede pedir</th>
+<th>Puede aprobar</th>
+<th>Puede pagar</th>
+<th>Limite</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>5200000001</td>
+<td>Admin Demo</td>
+<td>Director</td>
+<td>Si</td>
+<td>Si</td>
+<td>Si</td>
+<td>Sin limite</td>
+</tr>
+<tr>
+<td>5200000002</td>
+<td>Residente Demo</td>
+<td>Residente</td>
+<td>Si</td>
+<td>No</td>
+<td>No</td>
+<td>$50,000</td>
+</tr>
+<tr>
+<td>5200000003</td>
+<td>Superintendente Demo</td>
+<td>Superintendente</td>
+<td>Si</td>
+<td>Si</td>
+<td>No</td>
+<td>$150,000</td>
+</tr>
+<tr>
+<td>5200000004</td>
+<td>Compras Demo</td>
+<td>Compras</td>
+<td>Si</td>
+<td>Si</td>
+<td>Si</td>
+<td>$500,000</td>
+</tr>
+</tbody>
+</table>
+<h3>Proveedores Demo</h3>
+<table>
+<thead>
+<tr>
+<th>Telefono WA</th>
+<th>Nombre</th>
+<th>Tipo</th>
+<th>Municipio</th>
+<th>Categorias</th>
+<th>Calificacion</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>5200000010</td>
+<td>Materiales Zapopan Demo</td>
+<td>Mediano</td>
+<td>Zapopan</td>
+<td>acero, cemento, arena, grava, block</td>
+<td>4.2</td>
+</tr>
+<tr>
+<td>5200000011</td>
+<td>Ferreteria GDL Demo</td>
+<td>Pequeno</td>
+<td>Guadalajara</td>
+<td>ferreteria, plomeria, electricidad, pintura</td>
+<td>4.5</td>
+</tr>
+<tr>
+<td>5200000012</td>
+<td>Concretos del Bajio Demo</td>
+<td>Grande</td>
+<td>Tlaquepaque</td>
+<td>concreto, cemento, mortero, prefabricados</td>
+<td>3.8</td>
+</tr>
+</tbody>
+</table>
+<h3>Como probar</h3>
+<ol>
+<li><strong>Simulador web:</strong> Usar <code>/sim/</code> para enviar mensajes como cualquier usuario demo</li>
+<li><strong>Flujo comprador:</strong> Enviar mensaje desde telefono 5200000002 (Residente) pidiendo material</li>
+<li><strong>Flujo proveedor:</strong> Responder desde telefono 5200000010 con precios</li>
+<li><strong>Flujo aprobacion:</strong> Crear orden &gt; $100,000 desde Residente --&gt; Director recibe solicitud</li>
+<li><strong>Pagos:</strong> Usar endpoint de simulacion para probar sin Stripe real</li>
+</ol>
+<hr />
+<h2>Anexo: Flujo Completo End-to-End</h2>
+<pre class="codehilite"><code>RESIDENTE                    NICO (IA)                   PROVEEDORES
+    |                            |                            |
+    |-- &quot;Necesito 15m3 de       |                            |
+    |   concreto fc250 para     |                            |
+    |   manana en Zapopan&quot; ----&gt;|                            |
+    |                            |                            |
+    |                            |-- Interpretar con Claude   |
+    |                            |-- Seleccionar 20 provs     |
+    |                            |                            |
+    |                            |-- &quot;Hola, soy Nico...&quot; ---&gt;|-- Proveedor A
+    |                            |-- &quot;Hola, soy Nico...&quot; ---&gt;|-- Proveedor B
+    |                            |-- &quot;Hola, soy Nico...&quot; ---&gt;|-- Proveedor C
+    |                            |                            |
+    |&lt;-- &quot;Estoy cotizando con   |                            |
+    |    3 proveedores...&quot;      |                            |
+    |                            |                            |
+    |                            |&lt;-- &quot;$16,500 con flete&quot; ----|-- Proveedor A
+    |&lt;-- &quot;1 proveedor respondio&quot;|                            |
+    |                            |                            |
+    |                            |&lt;-- &quot;$18,200 sin flete&quot; ----|-- Proveedor C
+    |                            |                            |
+    |                            |-- (15min sin resp.) ------&gt;|-- Recordatorio a B
+    |                            |                            |
+    |&lt;-- &quot;Comparativa:          |                            |
+    |    1. Zapopan $16,500     |                            |
+    |    2. Bajio $19,700       |                            |
+    |    Elige un numero&quot; ------|                            |
+    |                            |                            |
+    |-- &quot;1&quot; -------------------&gt;|                            |
+    |                            |                            |
+    |                            |-- Verificar aprobacion     |
+    |                            |-- Crear orden              |
+    |                            |-- Registrar presupuesto    |
+    |                            |                            |
+    |&lt;-- &quot;Pedido confirmado     |                            |
+    |    con Materiales Zapopan |                            |
+    |    Orden #42, $16,500&quot; ---|                            |
+    |                            |                            |
+    |                   ... HORAS DESPUES ...                 |
+    |                            |                            |
+    |                            |-- Alerta entrega --------&gt;|-- Proveedor A
+    |&lt;-- &quot;Tu pedido va en       |                            |
+    |    camino! Chofer: Juan   |                            |
+    |    Placas: ABC-123&quot; ------|                            |
+    |                            |                            |
+    |&lt;-- &quot;El camion ya llego.   |                            |
+    |    Responde OK o          |                            |
+    |    Problema&quot; -------------|                            |
+    |                            |                            |
+    |-- &quot;OK&quot; ------------------&gt;|                            |
+    |                            |                            |
+    |                            |-- Calcular calificacion    |
+    |                            |-- Actualizar metricas      |
+    |                            |-- Registrar precios hist.  |
+    |                            |                            |
+    |&lt;-- &quot;Entrega completada!   |                            |
+    |    Calificacion: 4.7/5    |                            |
+    |    Gracias por usar       |                            |
+    |    ObraYa!&quot; --------------|                            |
+    |                            |                            |
+    |                   ... 24 HORAS DESPUES ...              |
+    |                            |                            |
+    |&lt;-- &quot;Como calificas tu     |                            |
+    |    pedido? (1-5)&quot; --------|                            |
+    |                            |                            |
+    |-- &quot;5 excelente servicio&quot;-&gt;|                            |
+    |                            |-- Registrar calificacion   |
+    |                            |-- Recalcular metricas prov |
+</code></pre>
+
+<hr />
+<p><em>Documento generado como referencia operativa del sistema ObraYa.</em>
+<em>Ultima actualizacion: Abril 2026</em></p>
+</body>
+</html>
