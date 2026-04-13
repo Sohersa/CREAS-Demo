@@ -4,13 +4,21 @@ Agente de IA para cotizacion de materiales de construccion en Guadalajara.
 """
 import logging
 from collections import deque
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from sqlalchemy import text
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 
 from app.database import crear_tablas
 from app.routers import webhook, admin, simulador, landing, portal, portal_api, dashboard, pagos, presupuesto, aprobaciones, credito, auth, hub, precios
 from app.services.scheduler import iniciar_scheduler
 from app.services.seed_demo import sembrar_datos_demo
+
+# Rate limiter global
+limiter = Limiter(key_func=get_remote_address)
 
 # Buffer de logs en memoria (ultimos 200 mensajes)
 log_buffer = deque(maxlen=200)
@@ -36,6 +44,10 @@ app = FastAPI(
     description="Agente de IA para cotizacion de materiales de construccion",
     version="0.1.0",
 )
+
+# Rate limiter
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # CORS (para el panel admin)
 app.add_middleware(
@@ -75,8 +87,21 @@ async def startup():
 
 @app.get("/health")
 def health():
-    """Health check para monitoreo."""
-    return {"status": "ok"}
+    """Health check para monitoreo — Railway, uptime bots, etc."""
+    from app.database import SessionLocal
+    try:
+        db = SessionLocal()
+        db.execute(text("SELECT 1"))
+        db.close()
+        db_ok = True
+    except Exception:
+        db_ok = False
+
+    return {
+        "status": "ok" if db_ok else "degraded",
+        "db": "connected" if db_ok else "error",
+        "version": "0.2.0",
+    }
 
 
 @app.get("/admin/api/logs")

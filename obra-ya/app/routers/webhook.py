@@ -15,7 +15,12 @@ from fastapi import APIRouter, Request, Query, Depends, BackgroundTasks
 from fastapi.responses import PlainTextResponse
 from sqlalchemy.orm import Session
 
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+
 from app.config import settings
+
+limiter = Limiter(key_func=get_remote_address)
 from app.database import get_db, SessionLocal
 from app.services.whatsapp import (
     parsear_webhook, enviar_mensaje_texto, marcar_como_leido, descargar_audio,
@@ -295,6 +300,7 @@ async def verificar_webhook(
 
 
 @router.post("/whatsapp")
+@limiter.limit("30/minute")
 async def recibir_mensaje(
     request: Request,
     background_tasks: BackgroundTasks,
@@ -319,6 +325,7 @@ async def recibir_mensaje(
 
 
 @router.post("/twilio")
+@limiter.limit("30/minute")
 async def recibir_mensaje_twilio(
     request: Request,
     background_tasks: BackgroundTasks,
