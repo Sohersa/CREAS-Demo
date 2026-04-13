@@ -151,11 +151,16 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
     # Procesar evento de pago completado
     if event["type"] == "checkout.session.completed":
         session = event["data"]["object"]
-        orden = confirmar_pago(db, session["id"])
-        if orden:
-            logger.info(f"Webhook: pago confirmado para orden {orden.id}")
-        else:
-            logger.error(f"Webhook: no se pudo confirmar pago para session {session['id']}")
+        session_id = session["id"]
+
+        try:
+            orden = confirmar_pago(db, session_id)
+            if orden:
+                logger.info(f"Webhook: pago confirmado para orden {orden.id}")
+            else:
+                logger.error(f"Webhook: no se pudo confirmar pago para session {session_id}")
+        except Exception as e:
+            logger.error(f"Webhook: error procesando pago session {session_id}: {e}")
 
     return {"received": True}
 

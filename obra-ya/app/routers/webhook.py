@@ -684,12 +684,18 @@ async def manejar_confirmacion_entrega(db, usuario, orden, texto, telefono):
             calificacion = None
 
         # Notificar
-        notificar_entrega_completada(db, orden, calificacion)
+        try:
+            notificar_entrega_completada(db, orden, calificacion)
+        except Exception as e:
+            logger.error(f"Error notificando entrega completada: {e}")
 
     elif es_reporte_problema(texto):
         # Crear incidencia
         incidencia = crear_incidencia(db, orden.id, texto)
-        notificar_incidencia_registrada(db, incidencia)
+        try:
+            notificar_incidencia_registrada(db, incidencia)
+        except Exception as e:
+            logger.error(f"Error notificando incidencia: {e}")
 
     else:
         await enviar_mensaje_texto(
@@ -726,7 +732,10 @@ async def manejar_orden_activa(db, usuario, orden, texto, telefono):
 
     elif es_reporte_problema(texto):
         incidencia = crear_incidencia(db, orden.id, texto)
-        notificar_incidencia_registrada(db, incidencia)
+        try:
+            notificar_incidencia_registrada(db, incidencia)
+        except Exception as e:
+            logger.error(f"Error notificando incidencia: {e}")
 
     else:
         # Si dice algo que no es status ni problema → podria ser un nuevo pedido
@@ -830,7 +839,10 @@ async def manejar_respuesta_proveedor(db, telefono, texto):
 
         # Notificar al usuario del cambio
         from app.services.notificaciones import enviar_notificacion_por_status
-        enviar_notificacion_por_status(db, orden)
+        try:
+            enviar_notificacion_por_status(db, orden)
+        except Exception as e:
+            logger.error(f"Error notificando status a usuario: {e}")
         return
 
     # === Si no es comando de status, buscar solicitud de cotizacion pendiente ===

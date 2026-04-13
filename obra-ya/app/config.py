@@ -46,5 +46,14 @@ class Settings:
     ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development")
     LOG_LEVEL: str = os.getenv("LOG_LEVEL", "debug")
 
+    def validate_production(self):
+        """Valida que secretos criticos esten configurados en produccion."""
+        if self.ENVIRONMENT == "production":
+            if self.JWT_SECRET == "obraya-secret-change-in-production-2026":
+                raise ValueError("JWT_SECRET must be set in production")
+            if self.WHATSAPP_VERIFY_TOKEN == "obra_ya_verify_2026":
+                raise ValueError("WHATSAPP_VERIFY_TOKEN must be set in production")
+
 
 settings = Settings()
+settings.validate_production()
