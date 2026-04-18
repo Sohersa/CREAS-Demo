@@ -8,11 +8,23 @@
       "port": 3000
     },
     {
+      "name": "crm",
+      "runtimeExecutable": "C:/Program Files/nodejs/npm.cmd",
+      "runtimeArgs": ["--prefix", "C:/Users/geren/Downloads/creas-crm-repo", "run", "dev", "--", "-p", "3001"],
+      "port": 3001
+    },
+    {
       "name": "obraya",
       "runtimeExecutable": "C:/Users/geren/Downloads/CREAS/obra-ya/venv/Scripts/python.exe",
       "runtimeArgs": ["-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"],
       "port": 8000,
       "cwd": "C:/Users/geren/Downloads/CREAS/obra-ya"
+    },
+    {
+      "name": "showcase",
+      "runtimeExecutable": "C:/Program Files/nodejs/node.exe",
+      "runtimeArgs": ["node_modules/serve/build/main.js", "obra-ya"],
+      "port": 3002
     }
   ]
 }

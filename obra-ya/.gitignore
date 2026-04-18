@@ -31,3 +31,9 @@ Thumbs.db
 dist/
 build/
 *.egg-info/
+
+# Node / Playwright
+node_modules/
+package.json
+package-lock.json
+*.webm
