@@ -31,9 +31,9 @@ const fs = require('fs');
   await page.goto(url);
   await page.waitForLoadState('networkidle');
 
-  console.log('⏱️  Recording for 40 seconds...');
-  // Wait for one full loop (40s)
-  await page.waitForTimeout(40500);
+  console.log('⏱️  Recording for 45 seconds...');
+  // Wait for one full loop (45s)
+  await page.waitForTimeout(45500);
 
   console.log('💾 Saving video...');
   await page.close();
