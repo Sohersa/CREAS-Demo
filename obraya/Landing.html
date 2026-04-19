@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>OBRA YA — Infraestructura de compra para obras</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="design/tokens.css?v=6">
+<link rel="stylesheet" href="design/components.css?v=6">
+</head>
+<body>
+
+<div id="root"></div>
+
+<script>
+  window.__OY_CFG = /*EDITMODE-BEGIN*/{
+    "accent": "cyan",
+    "motion": "default",
+    "lang": "es",
+    "heroVariant": "mesh",
+    "variant": "dashboard",
+    "type": "geist"
+  }/*EDITMODE-END*/;
+</script>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="design/Icon.jsx"></script>
+<script type="text/babel" src="design/Viz.jsx"></script>
+<script type="text/babel" src="design/WhatsAppConversation.jsx"></script>
+<script type="text/babel" src="design/MiniWhatsApp.jsx"></script>
+<script type="text/babel" src="design/InteractiveCockpit.jsx"></script>
+<script type="text/babel" src="design/CapMap.jsx"></script>
+<script type="text/babel" src="design/ProcessMovie.jsx"></script>
+
+<script type="text/babel">
+const { useState, useEffect, useRef } = React;
+
+function App() {
+  const [lang, setLang] = useState(window.__OY_CFG.lang || 'es');
+  const [accent, setAccent] = useState(window.__OY_CFG.accent || 'violet');
+  const [motion, setMotion] = useState(window.__OY_CFG.motion || 'default');
+  const [heroVariant, setHeroVariant] = useState(window.__OY_CFG.heroVariant || 'mesh');
+  const [tweaksOn, setTweaksOn] = useState(false);
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-accent', accent);
+    document.documentElement.setAttribute('data-motion', motion);
+  }, [accent, motion]);
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (!e.data || typeof e.data !== 'object') return;
+      if (e.data.type === '__activate_edit_mode') setTweaksOn(true);
+      if (e.data.type === '__deactivate_edit_mode') setTweaksOn(false);
+    };
+    window.addEventListener('message', handler);
+    window.parent.postMessage({ type: '__edit_mode_available' }, '*');
+    return () => window.removeEventListener('message', handler);
+  }, []);
+
+  const persist = (k, v) => window.parent.postMessage({ type: '__edit_mode_set_keys', edits: { [k]: v } }, '*');
+
+  const t = (es, en) => lang === 'es' ? es : en;
+
+  return (
+    <>
+      {/* NAV */}
+      <nav className="nav">
+        <div className="nav-left">
+          <div className="nav-logo">
+            <svg width="28" height="28" viewBox="0 0 32 32" fill="none" className="nav-logo-svg">
+              <defs>
+                <linearGradient id="oyg" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+                  <stop offset="0" stopColor="#FF7A45"/>
+                  <stop offset="1" stopColor="#635BFF"/>
+                </linearGradient>
+              </defs>
+              <rect x="2" y="2" width="28" height="28" rx="8" fill="url(#oyg)"/>
+              <path d="M10 22V14a6 6 0 0 1 12 0v8" stroke="white" strokeWidth="2.4" fill="none" strokeLinecap="round"/>
+              <circle cx="16" cy="14" r="1.6" fill="white"/>
+            </svg>
+            <span className="nav-logo-wm">OBRA YA</span>
+          </div>
+          <a href="#producto">{t('Producto', 'Product')}</a>
+          <a href="#como">{t('Cómo funciona', 'How it works')}</a>
+          <a href="#precios">{t('Precios', 'Pricing')}</a>
+          <a href="#clientes">{t('Clientes', 'Customers')}</a>
+        </div>
+        <div className="nav-right">
+          <div className="lang-toggle">
+            <button className={lang === 'es' ? 'on' : ''} onClick={() => { setLang('es'); persist('lang', 'es'); }}>ES</button>
+            <button className={lang === 'en' ? 'on' : ''} onClick={() => { setLang('en'); persist('lang', 'en'); }}>EN</button>
+          </div>
+          <button className="nav-pill">{t('Iniciar sesión', 'Sign in')}</button>
+          <button className="nav-cta">{t('Hablar con ventas', 'Talk to sales')} →</button>
+        </div>
+      </nav>
+
+      {/* HERO */}
+      <section className="hero-wrap">
+        <div className="hero-mesh">
+          <div className="blob b1"/><div className="blob b2"/><div className="blob b3"/><div className="blob b4"/>
+        </div>
+        <div className="hero hero-split">
+          <div className="hero-left">
+            <div className="eyebrow">
+              <span className="eyebrow-num">01</span>
+              <span>{t('GMV procesado', 'GMV processed')}</span>
+              <span style={{ color: 'var(--ink)', fontWeight: 600 }}>$41.7M</span>
+              <span className="live-dot" style={{ width: 6, height: 6, borderRadius: '50%', background: '#00D97E', display: 'inline-block' }}/>
+            </div>
+            <h1 className="hero-title" style={{fontSize:'clamp(44px,6vw,76px)', lineHeight:1.02}}>
+              <span className="accent">WhatsApp</span> {t('manda.','ships.')}<br/>
+              <span className="soft">{t('IA cotiza.','AI quotes.')}</span><br/>
+              {t('Obra recibe.','Site receives.')}
+            </h1>
+            <div className="hero-cta-row" style={{marginTop:32}}>
+              <a className="btn btn-primary" href="#producto">{t('Ver demo en vivo', 'See live demo')} →</a>
+              <a className="btn btn-wa" href="https://wa.me/523300000000">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 14.4c-.3-.1-1.7-.8-2-.9-.3-.1-.5-.2-.7.2-.2.3-.7.9-.9 1.1-.2.2-.3.2-.6.1-.3-.1-1.2-.4-2.3-1.4-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.5.1-.6.1-.1.3-.3.4-.5.1-.1.2-.3.2-.4 0-.2 0-.3-.1-.5 0-.1-.6-1.5-.9-2.1-.2-.5-.5-.5-.7-.5H7.7c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.4 0 1.4 1 2.8 1.2 3 .1.2 2.1 3.1 5 4.3.7.3 1.2.5 1.7.6.7.2 1.3.2 1.8.1.6-.1 1.7-.7 1.9-1.3.2-.7.2-1.2.2-1.3 0-.2-.3-.3-.6-.4zM12 2C6.5 2 2 6.5 2 12c0 1.7.5 3.4 1.3 4.8L2 22l5.2-1.3C8.6 21.5 10.3 22 12 22c5.5 0 10-4.5 10-10S17.5 2 12 2z"/></svg>
+                {t('Probar', 'Try it')}
+              </a>
+            </div>
+            <div className="hero-kpi-row">
+              <div className="hero-kpi"><div className="v"><span className="live-dot" style={{display:'inline-block', width:8, height:8, borderRadius:'50%', background:'#00D97E', marginRight:6, verticalAlign:'middle'}}/>12,847</div><div className="k">{t('cotizaciones hoy','quotes today')}</div></div>
+              <div className="hero-kpi"><div className="v">1,247</div><div className="k">{t('proveedores','suppliers')}</div></div>
+              <div className="hero-kpi"><div className="v" style={{color:'#00A95F'}}>8.4%</div><div className="k">{t('ahorro vs lista','vs list savings')}</div></div>
+              <div className="hero-kpi"><div className="v">4<span style={{fontSize:'0.5em', fontWeight:500, color:'var(--ink-dim)', marginLeft:2}}>min</span></div><div className="k">{t('cotizar','to quote')}</div></div>
+            </div>
+          </div>
+
+          <div className="hero-right">
+            <div className="hero-wa-stage">
+              <div className="hero-wa-label">
+                <span className="live-dot" style={{display:'inline-block', width:8, height:8, borderRadius:'50%', background:'#00D97E', marginRight:8, verticalAlign:'middle'}}/>
+                {t('SIMULACIÓN EN VIVO · PEDIDO REAL','LIVE SIMULATION · REAL ORDER')}
+              </div>
+              <div className="hero-wa-device">
+                <WhatsAppConversation lang={lang}/>
+              </div>
+              <div className="hero-wa-caption">
+                {t('Mira cómo un residente pide 50 bultos de cemento. Nico cotiza 8 proveedores y cierra la orden en 13 minutos.',
+                   'Watch a foreman order 50 bags of cement. Nico quotes 8 suppliers and closes the order in 13 minutes.')}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* LOGOS */}
+      <section className="section" style={{ paddingTop: 40, paddingBottom: 40 }}>
+        <div style={{ fontSize: 12, color: 'var(--ink-muted)', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 20, textAlign: 'center' }}>
+          {t('Constructoras y residentes que ya compran con OBRA YA', 'Builders and site managers already buying with OBRA YA')}
+        </div>
+        <div className="logos-row" style={{ justifyContent: 'space-around' }}>
+          <div className="logo-item">CONSTRUMAX</div>
+          <div className="logo-item light">edifica</div>
+          <div className="logo-item">GRUPO·GSH</div>
+          <div className="logo-item light">nortec</div>
+          <div className="logo-item">ICA·MX</div>
+          <div className="logo-item light">devmex</div>
+          <div className="logo-item">SOL·obras</div>
+        </div>
+      </section>
+
+      {/* EMBEDDED PLAYGROUND — full product demo in-page */}
+      <section className="section" id="producto" style={{paddingBottom: 40}}>
+        <div className="section-hdr">
+          <div className="section-tag">{t('LA PLATAFORMA · EN VIVO', 'THE PLATFORM · LIVE')}</div>
+          <h2>{t('OBRA YA, completo y funcional — aquí mismo.', 'OBRA YA, fully working — right here.')} <span className="soft">{t('9 pantallas conectadas: Dashboard, Captura, Cotización en vivo, Pedidos, Tracking, Finanzas, Reportes, Proveedores y Admin. Navega, crea pedidos, aprueba POs, paga por SPEI. Todo en vivo.', '9 connected screens: Dashboard, Capture, Live Quote, Orders, Tracking, Finance, Reports, Suppliers & Admin. Navigate, create orders, approve POs, pay via SPEI. All live.')}</span></h2>
+        </div>
+        <div className="pg-embed-frame">
+          <div className="pg-embed-bar">
+            <div className="pg-embed-dots"><span/><span/><span/></div>
+            <div className="pg-embed-url">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              app.obraya.mx<span style={{color:'var(--ink-muted)'}}>/{t('residente','foreman')}/rs</span>
+            </div>
+            <div className="pg-embed-live"><span className="live-dot"/>{t('DEMO EN VIVO','LIVE DEMO')}</div>
+            <a className="pg-embed-open" href="Playground.html" target="_blank" rel="noopener">
+              {t('Abrir en pantalla completa','Open full screen')}
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M7 17 17 7M17 7H9M17 7v8"/></svg>
+            </a>
+          </div>
+          <iframe src={`Playground.html${lang === 'en' ? '#en' : ''}`} className="pg-embed-iframe" title="OBRA YA Playground" loading="lazy"/>
+        </div>
+        <div className="pg-embed-cta-row">
+          <div className="pg-embed-caption">
+            <b>{t('Tip:','Tip:')}</b> {t('Empieza en "Captura pedido" → describe un material → mira la cotización en vivo → aprueba → paga. El estado persiste entre recargas.','Start at "Capture request" → describe a material → watch live quoting → approve → pay. State persists across reloads.')}
+          </div>
+          <div style={{display:'flex', gap:8}}>
+            <a className="btn btn-primary" href="Playground.html" target="_blank" rel="noopener">{t('Probar Playground completo','Try full Playground')} →</a>
+            <a className="btn btn-wa" href="https://wa.me/523300000000">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 14.4c-.3-.1-1.7-.8-2-.9-.3-.1-.5-.2-.7.2-.2.3-.7.9-.9 1.1-.2.2-.3.2-.6.1-.3-.1-1.2-.4-2.3-1.4-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.5.1-.6.1-.1.3-.3.4-.5.1-.1.2-.3.2-.4 0-.2 0-.3-.1-.5 0-.1-.6-1.5-.9-2.1-.2-.5-.5-.5-.7-.5H7.7c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.4 0 1.4 1 2.8 1.2 3 .1.2 2.1 3.1 5 4.3.7.3 1.2.5 1.7.6.7.2 1.3.2 1.8.1.6-.1 1.7-.7 1.9-1.3.2-.7.2-1.2.2-1.3 0-.2-.3-.3-.6-.4zM12 2C6.5 2 2 6.5 2 12c0 1.7.5 3.4 1.3 4.8L2 22l5.2-1.3C8.6 21.5 10.3 22 12 22c5.5 0 10-4.5 10-10S17.5 2 12 2z"/></svg>
+              {t('Probar en WhatsApp','Try on WhatsApp')}
+            </a>
+          </div>
+        </div>
+      </section>
+
+      {/* BIG CARDS */}
+      <section className="section" id="producto-detalle">
+        <div className="section-hdr">
+          <div className="section-tag">{t('TODO LO QUE HACE OBRA YA', 'EVERYTHING OBRA YA DOES')}</div>
+          <h2>{t('Una plataforma, doce features.', 'One platform, twelve features.')} <span className="soft">{t('Cotizaciones, comparativas, órdenes, pagos, tracking, facturación, presupuestos, alertas, reportes, integraciones — todo desde un WhatsApp.', 'Quotes, comparisons, orders, payments, tracking, invoicing, budgets, alerts, reports, integrations — all from one WhatsApp.')}</span></h2>
+        </div>
+
+        {/* Capability map — interactive cycling tour */}
+        <CapMap lang={lang}/>
+
+        <div style={{height: 60}}/>
+        <div className="section-hdr">
+          <div className="section-tag">{t('EL PROCESO EN CINE','THE PROCESS ON FILM')}</div>
+          <h2>{t('Mira qué pasa ','Watch what happens ')}<span className="accent">{t('entre WhatsApp y la plataforma','between WhatsApp and the platform')}</span>.
+            <span className="soft">{t('18 estaciones reales del pipeline OBRA YA. Cada una muestra exactamente qué hace Nico — desde que llega el voice note hasta que sale el CFDI. Auto-play o click para saltar.',
+              '18 real stations of the OBRA YA pipeline. Each shows exactly what Nico does — from the incoming voice note to the CFDI going out. Auto-plays, or click to jump.')}</span>
+          </h2>
+        </div>
+        <ProcessMovie lang={lang}/>
+      </section>
+
+      {/* STATS + NETWORK BURST */}
+      <section className="band band-paper-2 stats-burst-band">
+        <div className="stats-burst-inner">
+          <div className="stats-burst-hdr">
+            <div className="section-tag">{t('LA RED OBRA YA', 'THE OBRA YA NETWORK')}</div>
+            <h2>
+              {t('Una red de ', 'A network of ')}
+              <span className="accent">{t('1,247 proveedores', '1,247 suppliers')}</span>
+              {t(' cotizando en paralelo, cada minuto del día hábil.', ' quoting in parallel, every minute of the business day.')}
+            </h2>
+          </div>
+          <div className="stats-band">
+            <div className="stat-v2"><div className="num"><span className="accent">$41.7M</span></div><div className="label">{t('en volumen de compras procesadas en 2025', 'in purchase volume processed in 2025')}</div></div>
+            <div className="stat-v2"><div className="num">1,247<span className="unit">+</span></div><div className="label">{t('proveedores activos en 32 ciudades', 'active suppliers across 32 cities')}</div></div>
+            <div className="stat-v2"><div className="num">4<span className="unit">min</span></div><div className="label">{t('tiempo promedio para recibir 3 cotizaciones', 'avg time to receive 3 quotes')}</div></div>
+            <div className="stat-v2"><div className="num">8.4<span className="unit">%</span></div><div className="label">{t('ahorro promedio vs. precio de lista', 'avg savings vs list price')}</div></div>
+          </div>
+          <div className="stats-burst-wrap">
+            <BurstChart/>
+          </div>
+          <div className="stats-burst-caption">
+            <span className="live-dot" style={{width:8,height:8,borderRadius:'50%',background:'#00D97E',display:'inline-block',marginRight:8,verticalAlign:'middle'}}/>
+            {t('Vista en tiempo real · cada rayo = una cotización activa ahora mismo', 'Live view · each ray = an active quote right now')}
+          </div>
+        </div>
+      </section>
+
+      {/* PROCESS */}
+      <section className="section" id="como">
+        <div className="section-hdr">
+          <div className="section-tag">{t('CÓMO FUNCIONA', 'HOW IT WORKS')}</div>
+          <h2>{t('De "necesito material" a "llegó a obra" — en 4 pasos.', 'From "I need material" to "it\'s on site" — in 4 steps.')}</h2>
+        </div>
+        <div className="process-v2">
+          <div className="process-card">
+            <div className="num">01</div>
+            <h4>{t('El residente escribe', 'The foreman writes')}</h4>
+            <p>{t('Un WhatsApp: material, cantidad, dirección y fecha. Nico confirma y normaliza.', 'A WhatsApp: material, qty, address, date. Nico confirms and normalizes.')}</p>
+            <div className="time">⚡ {t('10 seg', '10 sec')}</div>
+          </div>
+          <div className="process-card">
+            <div className="num">02</div>
+            <h4>{t('Nico cotiza 8 proveedores', 'Nico quotes 8 suppliers')}</h4>
+            <p>{t('En paralelo. Considera distancia, inventario y rating de entregas previas.', 'In parallel. Considers distance, inventory and past delivery ratings.')}</p>
+            <div className="time">⚡ {t('2-4 min', '2-4 min')}</div>
+          </div>
+          <div className="process-card">
+            <div className="num">03</div>
+            <h4>{t('Eliges ganador', 'You pick the winner')}</h4>
+            <p>{t('Comparativa con precio, ETA y proveedor. Respondes 1, 2 ó 3. O dejas que Nico decida por política.', 'Comparison with price, ETA, provider. You reply 1, 2 or 3. Or let Nico auto-choose by policy.')}</p>
+            <div className="time">⚡ {t('15 seg', '15 sec')}</div>
+          </div>
+          <div className="process-card">
+            <div className="num">04</div>
+            <h4>{t('Entrega y factura', 'Delivery & invoice')}</h4>
+            <p>{t('Proveedor entrega a obra. Residente confirma con foto. CFDI llega a tu contador.', 'Supplier delivers on site. Foreman confirms with a photo. CFDI hits your accountant.')}</p>
+            <div className="time">⚡ {t('Mismo día', 'Same day')}</div>
+          </div>
+        </div>
+      </section>
+
+      {/* LIVE DEMO */}
+      <section className="section" id="demo">
+        <div className="section-hdr">
+          <div className="section-tag">{t('DEMO EN VIVO', 'LIVE DEMO')}</div>
+          <h2>{t('Prueba a Nico ahora mismo.', 'Talk to Nico right now.')} <span className="soft">{t('Escribe lo que necesitas para tu obra y mira cómo responde.', 'Type what your site needs and watch him reply.')}</span></h2>
+        </div>
+        <div className="demo-grid">
+          <MiniWhatsApp lang={lang}/>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: '20px 0' }}>
+            <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink)', letterSpacing: '-0.01em' }}>{t('Prueba con:', 'Try with:')}</div>
+            {[
+              t('"50 bultos de cemento Tolteca para mañana en Zapopan"', '"50 bags of Tolteca cement tomorrow in Zapopan"'),
+              t('"Varilla del 3/8, 2 toneladas, obra en Guadalajara"', '"3/8 rebar, 2 tons, site in Guadalajara"'),
+              t('"Necesito 30 m³ de concreto premezclado el viernes 7am"', '"I need 30 m³ of ready-mix this Friday 7am"'),
+              t('"Grava de 3/4, un camión, entregar en Tlajomulco"', '"3/4 gravel, one truck, deliver in Tlajomulco"')
+            ].map((s, i) => (
+              <div key={i} style={{ padding: '14px 16px', background: 'white', border: '1px solid var(--line)', borderRadius: 12, fontSize: 13, color: 'var(--ink-2)', fontFamily: 'var(--font-mono)', fontWeight: 400 }}>
+                <span style={{ color: 'var(--ink-ghost)', marginRight: 10 }}>{String(i + 1).padStart(2, '0')}</span>{s}
+              </div>
+            ))}
+            <div style={{ marginTop: 12, padding: 16, borderRadius: 12, background: 'linear-gradient(135deg, var(--violet-soft), #FFF0E8)', fontSize: 12, color: 'var(--ink-2)', lineHeight: 1.5 }}>
+              <strong style={{ color: 'var(--ink)' }}>{t('Tip:', 'Tip:')}</strong> {t('habla como le hablarías a tu ferretero. Nico entiende slang de obra mexicano.', 'talk to him like you\'d talk to your hardware guy. Nico understands Mexican jobsite slang.')}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* TESTIMONIAL */}
+      <section id="clientes" style={{background:'#0A2540',color:'#fff',padding:'120px 28px',position:'relative',overflow:'hidden'}}>
+        <div style={{position:'absolute',inset:0,background:'radial-gradient(circle at 20% 30%, rgba(99,91,255,0.35), transparent 50%), radial-gradient(circle at 80% 70%, rgba(255,122,69,0.25), transparent 50%)',pointerEvents:'none'}}/>
+        <div style={{maxWidth:1100,margin:'0 auto',position:'relative'}}>
+          <div style={{fontFamily:'var(--font-mono)',fontSize:11,letterSpacing:'0.14em',color:'#8FA3BA',fontWeight:500,marginBottom:32}}>{t('CLIENTES','CUSTOMERS')}</div>
+          <svg width="48" height="36" viewBox="0 0 48 36" style={{marginBottom:24}}><path d="M0 36V18C0 8 6 2 16 0V6C10 8 8 12 8 18H16V36H0ZM32 36V18C32 8 38 2 48 0V6C42 8 40 12 40 18H48V36H32Z" fill="#FF7A45" opacity="0.9"/></svg>
+          <blockquote style={{fontSize:'clamp(28px,3.6vw,44px)',fontWeight:500,lineHeight:1.25,letterSpacing:'-0.02em',color:'#FFFFFF',maxWidth:960,margin:0}}>
+            {t('Antes mi residente gastaba','My foreman used to spend')} <span style={{color:'#FF7A45'}}>{t('2 horas al día','2 hours a day')}</span> {t('hablándole a ferreteros. Ahora manda un WhatsApp y en 5 minutos tiene la mejor cotización. Bajamos','on the phone with hardware stores. Now he sends a WhatsApp and in 5 minutes has the best quote. We cut')} <span style={{color:'#FF7A45'}}>11%</span> {t('el costo de materiales en tres meses.','material cost in three months.')}
+          </blockquote>
+          <div style={{display:'flex',alignItems:'center',gap:16,marginTop:48,paddingTop:32,borderTop:'1px solid rgba(255,255,255,0.12)'}}>
+            <div style={{width:56,height:56,borderRadius:'50%',background:'linear-gradient(135deg,#FF7A45,#635BFF)',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:700,fontSize:18,color:'#fff'}}>RS</div>
+            <div>
+              <div style={{fontWeight:600,fontSize:16,color:'#fff'}}>Roberto Sánchez</div>
+              <div style={{fontSize:13,color:'#8FA3BA',marginTop:2}}>{t('Director de Obra · Constructora del Valle','Site Director · Constructora del Valle')}</div>
+            </div>
+            <div style={{marginLeft:'auto',display:'flex',gap:32,fontFamily:'var(--font-mono)'}}>
+              <div><div style={{fontSize:28,fontWeight:600,color:'#fff'}}>11%</div><div style={{fontSize:10,color:'#8FA3BA',textTransform:'uppercase',letterSpacing:'0.1em',marginTop:2}}>{t('menos costo','lower cost')}</div></div>
+              <div><div style={{fontSize:28,fontWeight:600,color:'#fff'}}>14</div><div style={{fontSize:10,color:'#8FA3BA',textTransform:'uppercase',letterSpacing:'0.1em',marginTop:2}}>{t('obras activas','active sites')}</div></div>
+              <div><div style={{fontSize:28,fontWeight:600,color:'#fff'}}>$3.2M</div><div style={{fontSize:10,color:'#8FA3BA',textTransform:'uppercase',letterSpacing:'0.1em',marginTop:2}}>{t('compras/mes','purchases/mo')}</div></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* PRICING */}
+      <section id="precios" style={{padding:'120px 28px 100px',background:'#FFF',position:'relative'}}>
+        <div style={{maxWidth:1240,margin:'0 auto'}}>
+          <div style={{textAlign:'center',marginBottom:64}}>
+            <div style={{fontFamily:'var(--font-mono)',fontSize:11,letterSpacing:'0.14em',color:'#8792A2',fontWeight:500,marginBottom:20}}>{t('MODELO DE NEGOCIO','BUSINESS MODEL')}</div>
+            <h2 style={{fontSize:'clamp(38px,4.5vw,60px)',fontWeight:600,letterSpacing:'-0.03em',lineHeight:1.05,color:'var(--ink)',maxWidth:900,margin:'0 auto'}}>{t('Gratis para la constructora.','Free for the builder.')} <span style={{color:'#8792A2'}}>{t('El proveedor paga una pequeña comisión por cada orden cerrada — sólo cuando vende.','The supplier pays a small commission per closed order — only when they sell.')}</span></h2>
+          </div>
+
+          {/* 3-party flow diagram */}
+          <div style={{display:'grid',gridTemplateColumns:'1fr auto 1fr auto 1fr',alignItems:'center',gap:20,maxWidth:1100,margin:'0 auto 72px',padding:'40px 32px',background:'linear-gradient(180deg,#F6F9FC 0%,#FFFFFF 100%)',border:'1px solid var(--line)',borderRadius:20}}>
+            <div style={{textAlign:'center'}}>
+              <div style={{width:56,height:56,margin:'0 auto 12px',borderRadius:14,background:'linear-gradient(135deg,#FF7A45,#FF80B5)',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:22}}>🏗️</div>
+              <div style={{fontSize:13,fontWeight:700,color:'var(--ink)',letterSpacing:'-0.01em'}}>{t('CONSTRUCTORA','BUILDER')}</div>
+              <div style={{fontFamily:'var(--font-mono)',fontSize:22,fontWeight:600,color:'#00A862',marginTop:6}}>$0</div>
+              <div style={{fontSize:11,color:'var(--ink-muted)',marginTop:2}}>{t('paga cero','pays zero')}</div>
+            </div>
+            <svg width="40" height="20" viewBox="0 0 40 20"><path d="M0 10h34M30 5l5 5-5 5" stroke="#635BFF" strokeWidth="1.5" fill="none" strokeLinecap="round"/></svg>
+            <div style={{textAlign:'center'}}>
+              <div style={{width:56,height:56,margin:'0 auto 12px',borderRadius:14,background:'linear-gradient(135deg,#635BFF,#00D4FF)',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontWeight:800,fontSize:14}}>OY</div>
+              <div style={{fontSize:13,fontWeight:700,color:'var(--ink)',letterSpacing:'-0.01em'}}>OBRA YA</div>
+              <div style={{fontSize:11,color:'var(--ink-muted)',marginTop:12}}>{t('enruta la orden','routes the order')}</div>
+            </div>
+            <svg width="40" height="20" viewBox="0 0 40 20"><path d="M0 10h34M30 5l5 5-5 5" stroke="#635BFF" strokeWidth="1.5" fill="none" strokeLinecap="round"/></svg>
+            <div style={{textAlign:'center'}}>
+              <div style={{width:56,height:56,margin:'0 auto 12px',borderRadius:14,background:'linear-gradient(135deg,#0A2540,#425466)',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:22}}>🏭</div>
+              <div style={{fontSize:13,fontWeight:700,color:'var(--ink)',letterSpacing:'-0.01em'}}>{t('PROVEEDOR','SUPPLIER')}</div>
+              <div style={{fontFamily:'var(--font-mono)',fontSize:22,fontWeight:600,color:'#635BFF',marginTop:6}}>{t('comisión','commission')}</div>
+              <div style={{fontSize:11,color:'var(--ink-muted)',marginTop:2}}>{t('sólo si vende','only if they sell')}</div>
+            </div>
+          </div>
+
+          {/* Plans — clean 2-column, no overlap */}
+          <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(320px,1fr))',gap:20,maxWidth:1000,margin:'0 auto'}}>
+            <div style={{background:'#FFF',border:'1px solid var(--line)',borderRadius:20,padding:'36px 32px',display:'flex',flexDirection:'column'}}>
+              <div style={{fontFamily:'var(--font-mono)',fontSize:10,fontWeight:600,letterSpacing:'0.14em',color:'var(--ink-muted)',marginBottom:16}}>STARTER</div>
+              <div style={{fontSize:28,fontWeight:600,letterSpacing:'-0.02em',color:'var(--ink)',marginBottom:8}}>{t('Para la constructora','For the builder')}</div>
+              <div style={{display:'flex',alignItems:'baseline',gap:8,marginBottom:8}}>
+                <span style={{fontSize:56,fontWeight:700,letterSpacing:'-0.04em',color:'var(--ink)',lineHeight:1,fontFamily:'var(--font-mono)'}}>$0</span>
+                <span style={{fontSize:14,color:'var(--ink-muted)'}}>/{t('siempre','always')}</span>
+              </div>
+              <div style={{fontSize:14,color:'var(--ink-2)',lineHeight:1.5,marginBottom:24}}>{t('Cotizaciones, órdenes, tracking y CFDI ilimitados. No pagas setup, no hay límite de obras.','Unlimited quotes, orders, tracking and CFDI. No setup fee, no site limit.')}</div>
+              <ul style={{listStyle:'none',padding:0,margin:'0 0 32px',display:'flex',flexDirection:'column',gap:12,flex:1}}>
+                {[
+                  t('Cotizaciones y órdenes ilimitadas','Unlimited quotes and orders'),
+                  t('Agente Nico en WhatsApp','Nico agent on WhatsApp'),
+                  t('Dashboard multi-obra','Multi-site dashboard'),
+                  t('CFDI 4.0 automático','Automatic CFDI 4.0'),
+                  t('Integración con SAP, Contpaqi, Aspel','SAP, Contpaqi, Aspel integration'),
+                  t('Soporte por WhatsApp y email','WhatsApp and email support')
+                ].map((f,i)=>(
+                  <li key={i} style={{display:'flex',gap:10,alignItems:'flex-start',fontSize:14,color:'var(--ink-2)'}}>
+                    <svg width="18" height="18" viewBox="0 0 18 18" style={{flexShrink:0,marginTop:2}}><circle cx="9" cy="9" r="9" fill="#E8F5E9"/><path d="M5 9l3 3 5-6" stroke="#00A862" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    {f}
+                  </li>
+                ))}
+              </ul>
+              <button style={{width:'100%',padding:'14px 20px',background:'var(--ink)',color:'#fff',border:'none',borderRadius:10,fontSize:14,fontWeight:600,cursor:'pointer',fontFamily:'inherit'}}>{t('Empezar gratis','Start free')} →</button>
+            </div>
+
+            <div style={{background:'linear-gradient(180deg,#0A2540 0%,#1A3756 100%)',color:'#fff',borderRadius:20,padding:'36px 32px',display:'flex',flexDirection:'column',position:'relative',overflow:'hidden'}}>
+              <div style={{position:'absolute',top:0,right:0,background:'#FF7A45',color:'#fff',fontSize:10,fontWeight:600,letterSpacing:'0.14em',padding:'6px 14px',borderBottomLeftRadius:10,fontFamily:'var(--font-mono)'}}>ENTERPRISE</div>
+              <div style={{fontFamily:'var(--font-mono)',fontSize:10,fontWeight:600,letterSpacing:'0.14em',color:'#8FA3BA',marginBottom:16}}>PARA VOLUMEN ALTO</div>
+              <div style={{fontSize:28,fontWeight:600,letterSpacing:'-0.02em',marginBottom:8}}>{t('Setup dedicado','Dedicated setup')}</div>
+              <div style={{display:'flex',alignItems:'baseline',gap:8,marginBottom:8}}>
+                <span style={{fontSize:56,fontWeight:700,letterSpacing:'-0.04em',lineHeight:1,color:'#fff'}}>{t('A medida','Custom')}</span>
+              </div>
+              <div style={{fontSize:14,color:'#B8C7D9',lineHeight:1.5,marginBottom:24}}>{t('Constructoras con volumen > $50M/año o 50+ obras activas. Incluye setup, onboarding y SLA.','Builders with volume > $50M/year or 50+ active sites. Includes setup, onboarding and SLA.')}</div>
+              <ul style={{listStyle:'none',padding:0,margin:'0 0 32px',display:'flex',flexDirection:'column',gap:12,flex:1}}>
+                {[
+                  t('Todo lo del plan Starter','Everything in Starter'),
+                  t('Fee fijo por orden procesada — sin porcentaje','Flat fee per order processed — no percentage'),
+                  t('SLA 99.9% garantizado','99.9% SLA guaranteed'),
+                  t('Proveedores exclusivos de tu red','Exclusive suppliers from your network'),
+                  t('Account manager + onboarding presencial','Account manager + on-site onboarding'),
+                  t('API dedicada + webhooks personalizados','Dedicated API + custom webhooks')
+                ].map((f,i)=>(
+                  <li key={i} style={{display:'flex',gap:10,alignItems:'flex-start',fontSize:14,color:'#E4EAF2'}}>
+                    <svg width="18" height="18" viewBox="0 0 18 18" style={{flexShrink:0,marginTop:2}}><circle cx="9" cy="9" r="9" fill="rgba(255,122,69,0.25)"/><path d="M5 9l3 3 5-6" stroke="#FF7A45" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    {f}
+                  </li>
+                ))}
+              </ul>
+              <button style={{width:'100%',padding:'14px 20px',background:'#FF7A45',color:'#fff',border:'none',borderRadius:10,fontSize:14,fontWeight:600,cursor:'pointer',fontFamily:'inherit'}}>{t('Hablar con ventas','Talk to sales')} →</button>
+            </div>
+          </div>
+
+          {/* FAQ hint */}
+          <div style={{textAlign:'center',marginTop:56,fontSize:13,color:'var(--ink-muted)'}}>
+            {t('¿Tienes dudas sobre el modelo?','Questions about the model?')} <a href="#" style={{color:'var(--ink)',fontWeight:600,textDecoration:'underline',textDecorationColor:'var(--line-2)',textUnderlineOffset:4}}>{t('Habla con el equipo →','Talk to the team →')}</a>
+          </div>
+        </div>
+      </section>
+
+      {/* FOOTER */}
+      <footer className="footer">
+        <div className="footer-grid">
+          <div className="footer-brand">
+            <div className="brand-big">OBRA YA</div>
+            <p>{t('Infraestructura de compra para obras en México. Construido en Guadalajara, Jalisco.', 'Procurement infrastructure for Mexican construction. Built in Guadalajara, Jalisco.')}</p>
+          </div>
+          <div><h5>{t('Producto', 'Product')}</h5><ul><li><a href="#producto">{t('Cotizaciones', 'Quotes')}</a></li><li><a href="#como">{t('Cómo funciona', 'How it works')}</a></li><li><a href="#precios">{t('Precios', 'Pricing')}</a></li></ul></div>
+          <div><h5>{t('Compañía', 'Company')}</h5><ul><li><a href="#">{t('Sobre nosotros', 'About')}</a></li><li><a href="#">{t('Carreras', 'Careers')}</a></li><li><a href="#">{t('Proveedores', 'Suppliers')}</a></li></ul></div>
+          <div><h5>{t('Recursos', 'Resources')}</h5><ul><li><a href="#">{t('Centro de ayuda', 'Help')}</a></li><li><a href="#">{t('API docs', 'API docs')}</a></li><li><a href="#">{t('Status', 'Status')}</a></li></ul></div>
+        </div>
+        <div className="footer-bottom">
+          <div>© 2026 OBRA YA · {t('Grupo Sohersa', 'Grupo Sohersa')}</div>
+          <div>{t('Hecho en Guadalajara, Jalisco 🇲🇽', 'Made in Guadalajara, Jalisco 🇲🇽')}</div>
+        </div>
+      </footer>
+
+      {/* TWEAKS */}
+      <div className={`tweaks ${tweaksOn ? 'on' : ''}`}>
+        <div className="tweaks-hdr"><h4>Tweaks</h4><div className="v">v2.0</div></div>
+        <div className="tweaks-body">
+          <div className="tweak">
+            <label>{t('Acento', 'Accent')}</label>
+            <div className="tweak-swatches">
+              {['violet', 'orange', 'cyan', 'mono'].map(c => (
+                <div key={c} className={`tweak-swatch ${accent === c ? 'on' : ''}`} data-k={c} onClick={() => { setAccent(c); persist('accent', c); }}/>
+              ))}
+            </div>
+          </div>
+          <div className="tweak">
+            <label>{t('Animación', 'Motion')}</label>
+            <div className="tweak-pills">
+              {['default', 'calm', 'off'].map(m => (
+                <button key={m} className={`tweak-pill ${motion === m ? 'on' : ''}`} onClick={() => { setMotion(m); persist('motion', m); }}>{m === 'default' ? (lang === 'es' ? 'Normal' : 'Normal') : m === 'calm' ? (lang === 'es' ? 'Calma' : 'Calm') : (lang === 'es' ? 'Apagada' : 'Off')}</button>
+              ))}
+            </div>
+          </div>
+          <div className="tweak">
+            <label>{t('Idioma', 'Language')}</label>
+            <div className="tweak-pills">
+              {['es', 'en'].map(l => (
+                <button key={l} className={`tweak-pill ${lang === l ? 'on' : ''}`} onClick={() => { setLang(l); persist('lang', l); }}>{l.toUpperCase()}</button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
