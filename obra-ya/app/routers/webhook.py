@@ -562,8 +562,13 @@ async def procesar_mensaje(msg: dict, _db_unused: Session = None):
             await manejar_orden_activa(db, usuario, objeto, texto, telefono)
 
         else:
-            # Flujo original — nuevo pedido
-            await manejar_nuevo_pedido(db, usuario, texto, telefono)
+            # Detectar si es pregunta de asesor (consulta compleja con datos reales)
+            # ej: "que proveedor me conviene", "es justo este precio", "tengo presupuesto"
+            if es_pregunta_asesor(texto):
+                await manejar_consulta_asesor(db, usuario, texto, telefono)
+            else:
+                # Flujo original — nuevo pedido
+                await manejar_nuevo_pedido(db, usuario, texto, telefono)
 
     except Exception as e:
         logger.error(f"Error procesando mensaje de {telefono}: {e}", exc_info=True)
@@ -576,6 +581,67 @@ async def procesar_mensaje(msg: dict, _db_unused: Session = None):
 
 
 # === Handlers por contexto ===
+
+def es_pregunta_asesor(texto: str) -> bool:
+    """
+    Detecta si el mensaje es una pregunta compleja de asesor (no un pedido).
+    El agente autonomo con tools responde mejor estas preguntas que el flujo normal.
+
+    Ejemplos:
+      - "¿que proveedor de concreto me conviene en Zapopan?"
+      - "¿es justo pagar $45k por 15m3 de concreto?"
+      - "¿tengo presupuesto para esta compra?"
+      - "¿como esta el precio de la varilla este mes?"
+    """
+    t = texto.lower().strip()
+
+    # Debe ser pregunta explicita (contiene ? o palabra interrogativa)
+    tiene_pregunta = "?" in t or any(
+        w in t for w in ["que ", "qué ", "cual", "cuál", "como ", "cómo ",
+                         "donde", "dónde", "cuando", "cuándo", "porque", "porqué"]
+    )
+    if not tiene_pregunta:
+        return False
+
+    # Keywords de intencion de asesor
+    ASESOR_KEYWORDS = [
+        "conviene", "recomienda", "mejor proveedor", "mas barato", "más barato",
+        "es justo", "es caro", "es razonable", "precio promedio",
+        "presupuesto", "puedo gastar", "tengo para", "alcanza",
+        "como esta el precio", "cómo está el precio", "precio del mes",
+        "historial", "comparacion", "comparación",
+        "calificacion", "calificación", "reputacion", "reputación",
+        "vale la pena", "conviene mas", "conviene más",
+    ]
+    return any(kw in t for kw in ASESOR_KEYWORDS)
+
+
+async def manejar_consulta_asesor(db, usuario, texto, telefono):
+    """
+    Invoca el agente autonomo con tool use para responder preguntas
+    que requieren consultar datos reales (proveedores, precios, presupuesto).
+    """
+    from app.services.agente_autonomo import procesar_consulta_compleja
+
+    # Feedback instantaneo (puede tardar varios segundos con tool calls)
+    await enviar_mensaje_texto(telefono, "Dejame revisar los datos…")
+
+    try:
+        respuesta = await procesar_consulta_compleja(db, usuario.id, texto)
+        if respuesta:
+            await enviar_mensaje_texto(telefono, respuesta)
+        else:
+            await enviar_mensaje_texto(
+                telefono,
+                "No pude procesar tu pregunta. ¿Me la puedes reformular?"
+            )
+    except Exception as e:
+        logger.error(f"Error en agente asesor para {telefono}: {e}")
+        await enviar_mensaje_texto(
+            telefono,
+            "Tuve un problema consultando la informacion. Intenta mas tarde."
+        )
+
 
 async def manejar_seleccion_proveedor(db, usuario, pedido, texto, telefono):
     """El usuario tiene un pedido enviado y esta eligiendo proveedor."""

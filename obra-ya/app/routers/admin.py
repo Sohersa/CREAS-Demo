@@ -469,6 +469,32 @@ def normalizar_telefonos_proveedores(db: Session = Depends(get_db)):
     return {"ok": True, "total_normalizados": len(cambios), "cambios": cambios}
 
 
+# --- REANALISIS BATCH (Claude Batch API, 50% descuento) ---
+
+@router.post("/api/reanalisis/lanzar")
+def lanzar_reanalisis(dias_atras: int = 30, db: Session = Depends(get_db)):
+    """Lanza un batch de reanalisis de incidencias con Opus 4.7 (50% descuento)."""
+    from app.services.reanalisis_batch import lanzar_reanalisis_incidencias
+    batch_id = lanzar_reanalisis_incidencias(db, dias_atras=dias_atras)
+    if not batch_id:
+        return {"ok": False, "error": "No hay incidencias abiertas para reanalizar"}
+    return {"ok": True, "batch_id": batch_id, "mensaje": "Batch enviado. Consulta /api/reanalisis/{batch_id}/status"}
+
+
+@router.get("/api/reanalisis/{batch_id}/status")
+def status_reanalisis(batch_id: str):
+    """Consulta el estado de un batch en curso."""
+    from app.services.reanalisis_batch import verificar_batch
+    return verificar_batch(batch_id)
+
+
+@router.post("/api/reanalisis/{batch_id}/procesar")
+def procesar_reanalisis(batch_id: str, db: Session = Depends(get_db)):
+    """Procesa los resultados de un batch completado y actualiza incidencias."""
+    from app.services.reanalisis_batch import procesar_resultados_batch
+    return procesar_resultados_batch(db, batch_id)
+
+
 # --- ORDENES API ---
 
 @router.get("/api/ordenes")

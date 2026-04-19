@@ -55,6 +55,42 @@ Reglas:
 """
 
 
+# Schema para structured outputs (garantiza JSON valido, sin parsing errors)
+SCHEMA_RESPUESTA_PROVEEDOR = {
+    "type": "object",
+    "properties": {
+        "tiene_precio": {"type": "boolean"},
+        "sin_stock": {"type": "boolean"},
+        "precio_total": {"type": "number"},
+        "desglose": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "producto": {"type": "string"},
+                    "precio_unitario": {"type": "number"},
+                    "cantidad": {"type": "number"},
+                    "unidad": {"type": "string"},
+                    "subtotal": {"type": "number"},
+                },
+                "required": ["producto", "precio_unitario", "cantidad", "unidad", "subtotal"],
+                "additionalProperties": False,
+            },
+        },
+        "incluye_flete": {"type": "boolean"},
+        "costo_flete": {"type": "number"},
+        "tiempo_entrega": {"type": "string"},
+        "disponibilidad": {"type": "string"},
+        "condiciones": {"type": "string"},
+        "notas": {"type": "string"},
+    },
+    "required": ["tiene_precio", "sin_stock", "precio_total", "desglose",
+                 "incluye_flete", "costo_flete", "tiempo_entrega",
+                 "disponibilidad", "condiciones", "notas"],
+    "additionalProperties": False,
+}
+
+
 async def parsear_respuesta_proveedor(
     texto_proveedor: str,
     contexto_pedido: str = "",
@@ -88,26 +124,28 @@ async def parsear_respuesta_proveedor(
 
     texto_respuesta = ""
     try:
+        # Structured output: Claude GARANTIZA que el JSON cumple el schema
+        # Elimina JSONDecodeError, markdown leakage, y campos faltantes
         response = client.messages.create(
-            model=settings.CLAUDE_MODEL_PARSER,  # Haiku 4.5 — rapido y barato para extraccion
+            model=settings.CLAUDE_MODEL_PARSER,  # Haiku 4.5 — rapido y barato
             max_tokens=1000,
             system=system_block,
             messages=[{"role": "user", "content": mensaje_usuario}],
+            output_config={
+                "format": {
+                    "type": "json_schema",
+                    "schema": SCHEMA_RESPUESTA_PROVEEDOR,
+                },
+            },
         )
 
         texto_respuesta = response.content[0].text.strip()
-
-        # Limpiar markdown si viene envuelto en ```json
-        if texto_respuesta.startswith("```"):
-            texto_respuesta = texto_respuesta.split("\n", 1)[-1]
-            texto_respuesta = texto_respuesta.rsplit("```", 1)[0]
-            texto_respuesta = texto_respuesta.strip()
-
         resultado = json.loads(texto_respuesta)
         logger.info(f"Respuesta parseada: precio_total={resultado.get('precio_total')}")
         return resultado
 
     except json.JSONDecodeError as e:
+        # No deberia pasar con structured outputs, pero por seguridad
         logger.error(f"Error parseando JSON: {e} | Texto: {texto_respuesta[:200]}")
         return {"tiene_precio": False, "error": "No se pudo parsear la respuesta"}
 
