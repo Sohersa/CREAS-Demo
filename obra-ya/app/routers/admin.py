@@ -332,6 +332,273 @@ async def whatsapp_health():
     return await verificar_whatsapp()
 
 
+class UpdateTokenRequest(BaseModel):
+    token: str
+
+
+@router.post("/api/whatsapp/update-token")
+async def update_whatsapp_token(body: UpdateTokenRequest):
+    """
+    Recibe un nuevo token de WhatsApp, lo valida contra Meta, y si es correcto
+    lo guarda en .env y lo recarga en memoria SIN reiniciar el servidor.
+    """
+    import httpx
+    from app.config import settings
+    from app.services.env_updater import actualizar_env_var
+
+    nuevo_token = body.token.strip()
+    if not nuevo_token:
+        return {"ok": False, "error": "Token vacio"}
+    if len(nuevo_token) < 50:
+        return {"ok": False, "error": "Token demasiado corto — deberia tener 200+ caracteres"}
+
+    # Validar contra Meta antes de guardar
+    url = f"https://graph.facebook.com/v21.0/{settings.WHATSAPP_PHONE_ID}"
+    headers = {"Authorization": f"Bearer {nuevo_token}"}
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            r = await client.get(url, headers=headers)
+    except Exception as e:
+        return {"ok": False, "error": f"No se pudo validar contra Meta: {e}"}
+
+    if r.status_code != 200:
+        try:
+            err = r.json().get("error", {})
+        except Exception:
+            err = {}
+        return {
+            "ok": False,
+            "error": f"Token rechazado por Meta (status {r.status_code})",
+            "meta_error": err.get("message", r.text[:200]),
+        }
+
+    # Token valido, guardar en .env y recargar
+    ok, mensaje = actualizar_env_var("WHATSAPP_TOKEN", nuevo_token)
+    if not ok:
+        return {"ok": False, "error": mensaje}
+
+    data = r.json()
+    return {
+        "ok": True,
+        "mensaje": "Token actualizado y validado",
+        "phone_number": data.get("display_phone_number"),
+        "verified_name": data.get("verified_name"),
+        "quality_rating": data.get("quality_rating"),
+    }
+
+
+@router.get("/whatsapp", response_class=HTMLResponse)
+def whatsapp_admin_page():
+    """Pagina admin para renovar el token de WhatsApp con UI friendly."""
+    return HTMLResponse(content=WHATSAPP_ADMIN_HTML)
+
+
+WHATSAPP_ADMIN_HTML = """<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Renovar token WhatsApp — ObraYa</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #0a0a0a; color: #e5e5e5;
+    min-height: 100vh; padding: 40px 20px;
+    line-height: 1.5;
+  }
+  .container { max-width: 720px; margin: 0 auto; }
+  h1 {
+    font-size: 32px; font-weight: 600; letter-spacing: -0.02em;
+    margin-bottom: 8px;
+  }
+  .subtitle { color: #888; margin-bottom: 32px; }
+
+  .status-card {
+    background: #151515; border: 1px solid #262626;
+    border-radius: 12px; padding: 20px; margin-bottom: 24px;
+  }
+  .status-card.healthy { border-left: 4px solid #22c55e; }
+  .status-card.error { border-left: 4px solid #ef4444; }
+  .status-card.warning { border-left: 4px solid #f59e0b; }
+  .status-card h3 { font-size: 16px; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+  .status-card p { color: #a3a3a3; font-size: 14px; }
+
+  .step {
+    background: #151515; border: 1px solid #262626;
+    border-radius: 12px; padding: 24px; margin-bottom: 16px;
+  }
+  .step-num {
+    display: inline-block; width: 28px; height: 28px; border-radius: 50%;
+    background: #ff5a1f; color: #fff; text-align: center; line-height: 28px;
+    font-weight: 700; margin-right: 12px;
+  }
+  .step h2 { display: inline-block; font-size: 18px; font-weight: 600; }
+  .step p { color: #a3a3a3; margin: 12px 0 12px 40px; font-size: 14px; }
+  .step-link {
+    display: inline-block; padding: 10px 18px;
+    background: #1877f2; color: #fff;
+    border-radius: 8px; text-decoration: none;
+    font-size: 14px; font-weight: 500;
+    margin-left: 40px;
+    transition: background 0.2s;
+  }
+  .step-link:hover { background: #0e60c9; }
+
+  .input-row { margin-left: 40px; margin-top: 16px; }
+  textarea {
+    width: 100%; background: #0a0a0a; border: 1px solid #333;
+    color: #e5e5e5; padding: 12px; border-radius: 8px;
+    font-family: 'SF Mono', Monaco, monospace; font-size: 12px;
+    min-height: 120px; resize: vertical;
+  }
+  textarea:focus { outline: none; border-color: #ff5a1f; }
+
+  .btn {
+    padding: 12px 24px; background: #ff5a1f; color: #fff;
+    border: none; border-radius: 8px; font-size: 14px; font-weight: 600;
+    cursor: pointer; margin-top: 12px;
+    transition: background 0.2s;
+  }
+  .btn:hover:not(:disabled) { background: #ea580c; }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .result {
+    margin: 16px 0 0 40px; padding: 14px;
+    border-radius: 8px; font-size: 14px;
+    white-space: pre-wrap; font-family: 'SF Mono', monospace;
+  }
+  .result.ok { background: rgba(34,197,94,0.1); border: 1px solid #22c55e; color: #4ade80; }
+  .result.err { background: rgba(239,68,68,0.1); border: 1px solid #ef4444; color: #f87171; }
+
+  code { background: #0a0a0a; padding: 2px 6px; border-radius: 4px; font-size: 12px; }
+  .hint { color: #666; font-size: 12px; margin-left: 40px; margin-top: 8px; }
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>WhatsApp — Renovar token</h1>
+  <p class="subtitle">Meta expira los tokens temporales cada 24h-60 dias. Esta pagina te guia a renovarlo.</p>
+
+  <div id="status-box" class="status-card">
+    <h3 id="status-title">Verificando estado…</h3>
+    <p id="status-msg">Un momento…</p>
+  </div>
+
+  <div class="step">
+    <span class="step-num">1</span>
+    <h2>Abre Meta Developer Portal</h2>
+    <p>Entra a tu app, ve a <b>WhatsApp → API Setup</b>, y copia el <b>Temporary access token</b>.</p>
+    <a class="step-link" href="https://developers.facebook.com/apps" target="_blank">Abrir Meta Developers →</a>
+  </div>
+
+  <div class="step">
+    <span class="step-num">2</span>
+    <h2>Pega el token nuevo</h2>
+    <p>Empieza con <code>EAA…</code> y tiene ~200+ caracteres.</p>
+    <div class="input-row">
+      <textarea id="token-input" placeholder="EAAB..."></textarea>
+      <button class="btn" id="submit-btn" onclick="submitToken()">Validar y guardar</button>
+    </div>
+    <div class="hint">El token se valida contra Meta antes de guardarse. Si es invalido, no se guarda.</div>
+    <div id="result" class="result hidden"></div>
+  </div>
+
+  <div class="step">
+    <span class="step-num">3</span>
+    <h2>(Opcional) Token permanente — no vuelve a expirar</h2>
+    <p>Para no hacer esto nunca mas: crea un <b>System User</b> en Meta Business Manager.
+    Sigue las instrucciones en <code>obra-ya/WHATSAPP_SETUP.md</code>.</p>
+    <a class="step-link" href="https://business.facebook.com/settings/system-users" target="_blank">Abrir System Users →</a>
+  </div>
+</div>
+
+<script>
+  // Verificar estado al cargar
+  async function checkStatus() {
+    const box = document.getElementById('status-box');
+    const title = document.getElementById('status-title');
+    const msg = document.getElementById('status-msg');
+    try {
+      const r = await fetch('/admin/api/whatsapp/health');
+      const data = await r.json();
+      if (data.ok) {
+        box.className = 'status-card healthy';
+        title.textContent = '✓ WhatsApp funcionando';
+        const d = data.detalles || {};
+        msg.textContent = `${d.phone_number || '?'} — ${d.verified_name || '?'} (calidad: ${d.quality_rating || '?'})`;
+      } else {
+        box.className = 'status-card error';
+        title.textContent = '✗ WhatsApp no operativo';
+        msg.textContent = data.mensaje || 'Error desconocido';
+      }
+    } catch (e) {
+      box.className = 'status-card error';
+      title.textContent = '✗ Error consultando estado';
+      msg.textContent = e.message;
+    }
+  }
+
+  async function submitToken() {
+    const btn = document.getElementById('submit-btn');
+    const input = document.getElementById('token-input');
+    const result = document.getElementById('result');
+    const token = input.value.trim();
+
+    if (!token) {
+      result.className = 'result err';
+      result.textContent = 'Pega un token primero';
+      result.classList.remove('hidden');
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Validando…';
+    result.className = 'result';
+    result.textContent = 'Consultando Meta…';
+    result.classList.remove('hidden');
+
+    try {
+      const r = await fetch('/admin/api/whatsapp/update-token', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({token}),
+      });
+      const data = await r.json();
+      if (data.ok) {
+        result.className = 'result ok';
+        result.textContent = `✓ ${data.mensaje}
+Numero: ${data.phone_number}
+Nombre: ${data.verified_name}
+Calidad: ${data.quality_rating}
+
+El .env se actualizo y el servidor ya esta usando el token nuevo. No necesitas reiniciar.`;
+        input.value = '';
+        // Refrescar status
+        setTimeout(checkStatus, 500);
+      } else {
+        result.className = 'result err';
+        result.textContent = `✗ ${data.error}${data.meta_error ? '\\n\\n' + data.meta_error : ''}`;
+      }
+    } catch (e) {
+      result.className = 'result err';
+      result.textContent = 'Error de red: ' + e.message;
+    }
+
+    btn.disabled = false;
+    btn.textContent = 'Validar y guardar';
+  }
+
+  checkStatus();
+  setInterval(checkStatus, 60000);
+</script>
+
+</body>
+</html>"""
+
+
 @router.get("/api/stats")
 def obtener_stats(db: Session = Depends(get_db)):
     total_proveedores = db.query(func.count(Proveedor.id)).filter(Proveedor.activo == True).scalar()
