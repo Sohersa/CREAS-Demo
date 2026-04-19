@@ -89,6 +89,23 @@ def _extraer_municipio(direccion: str) -> str:
 # Idempotencia: evitar procesar el mismo mensaje dos veces (WhatsApp retries)
 from collections import OrderedDict
 _mensajes_procesados = OrderedDict()
+
+# Cache en memoria de la ultima ubicacion GPS recibida por telefono.
+# Se usa cuando se crea el pedido para copiar coords/municipio/codigo_postal.
+# LRU de 1000 entradas (auto-limpieza).
+_ubicacion_reciente: "OrderedDict[str, dict]" = OrderedDict()
+
+
+def _guardar_ubicacion_reciente(telefono: str, info: dict):
+    """Guarda la ultima ubicacion del usuario, mantiene tamano maximo."""
+    _ubicacion_reciente[telefono] = info
+    if len(_ubicacion_reciente) > 1000:
+        _ubicacion_reciente.popitem(last=False)
+
+
+def _obtener_ubicacion_reciente(telefono: str) -> dict | None:
+    """Devuelve la ultima ubicacion GPS que mando el usuario (si hay)."""
+    return _ubicacion_reciente.get(telefono)
 _MAX_DEDUP_SIZE = 5000
 
 def _ya_procesado(message_id: str) -> bool:
@@ -411,30 +428,69 @@ async def procesar_mensaje(msg: dict, _db_unused: Session = None):
             logger.info(f"Audio transcrito de {telefono}: {texto[:100]}")
 
         elif msg["tipo_mensaje"] == "ubicacion":
-            # Convertir ubicacion GPS a direccion real via reverse geocoding
+            # Feedback inmediato para que el usuario sepa que llego
+            await enviar_mensaje_texto(telefono, "Recibi tu ubicacion. Un segundo…")
+
+            from app.services.geocoding import resolver_ubicacion, formatear_ubicacion_corta
             loc = msg["contenido"]
-            lat = loc.get("latitude", "")
-            lng = loc.get("longitude", "")
+            lat_raw = loc.get("latitude", "")
+            lng_raw = loc.get("longitude", "")
             nombre_lugar = loc.get("name", "")
             direccion_lugar = loc.get("address", "")
 
-            # Si WhatsApp no mando direccion, hacer reverse geocoding
-            if not direccion_lugar and lat and lng:
-                direccion_lugar = await _reverse_geocode(lat, lng)
+            info_ubicacion = await resolver_ubicacion(
+                latitud=lat_raw,
+                longitud=lng_raw,
+                direccion_whatsapp=direccion_lugar,
+                nombre_lugar=nombre_lugar,
+            )
 
-            partes_ubicacion = []
-            if nombre_lugar:
-                partes_ubicacion.append(nombre_lugar)
-            if direccion_lugar:
-                partes_ubicacion.append(direccion_lugar)
-            if lat and lng:
-                partes_ubicacion.append(f"(coordenadas: {lat}, {lng})")
+            if not info_ubicacion.get("ok"):
+                await enviar_mensaje_texto(
+                    telefono,
+                    "No pude leer esa ubicacion. Puedes mandarla de nuevo o escribirme la direccion?"
+                )
+                return
 
-            ubicacion_texto = ", ".join(partes_ubicacion) if partes_ubicacion else f"Lat: {lat}, Lng: {lng}"
+            # Validar area de servicio
+            if not info_ubicacion.get("en_area_servicio"):
+                motivo = info_ubicacion.get("fuera_servicio_motivo", "")
+                lugar = formatear_ubicacion_corta(info_ubicacion)
+                await enviar_mensaje_texto(
+                    telefono,
+                    f"Detecte tu ubicacion en {lugar}.\n\n"
+                    f"*Por ahora solo operamos en el area metropolitana de Guadalajara* "
+                    f"(GDL, Zapopan, Tlaquepaque, Tonala, Tlajomulco, El Salto).\n\n"
+                    f"Si crees que es un error o quieres que nos expandamos a tu zona, escribe *contactar* y te ayudamos."
+                )
+                return
 
-            # Inyectar como mensaje de texto para que Claude lo procese como direccion
-            texto = f"La entrega es en esta ubicacion: {ubicacion_texto}"
-            logger.info(f"Ubicacion recibida de {telefono}: {ubicacion_texto}")
+            # Guardar la info en la sesion del usuario para que los handlers la usen
+            _guardar_ubicacion_reciente(telefono, info_ubicacion)
+
+            # Actualizar municipio principal del usuario si esta vacio
+            if not usuario.municipio_principal and info_ubicacion.get("municipio"):
+                usuario.municipio_principal = info_ubicacion["municipio"]
+                db.commit()
+
+            # Confirmacion visual al usuario
+            resumen = formatear_ubicacion_corta(info_ubicacion)
+            await enviar_mensaje_texto(
+                telefono,
+                f"*Ubicacion confirmada*: {resumen}\n\n"
+                f"Esta direccion quedo guardada para tu pedido. "
+                f"Ahora dime que materiales necesitas (o si ya me los habias dicho, "
+                f"voy a cotizar con proveedores cercanos)."
+            )
+
+            # Inyectar como texto estructurado para Claude (con municipio explicito)
+            muni = info_ubicacion.get("municipio", "")
+            coords = f"{info_ubicacion['latitud']},{info_ubicacion['longitud']}"
+            texto = (
+                f"La entrega es en: {resumen}. "
+                f"Municipio: {muni}. Coordenadas GPS: {coords}."
+            )
+            logger.info(f"Ubicacion validada de {telefono}: {resumen} ({muni})")
 
         elif msg["tipo_mensaje"] == "imagen":
             # Soporte de imágenes — fotos de listas de materiales, planos, etc.
@@ -1169,14 +1225,32 @@ async def manejar_nuevo_pedido(db, usuario, texto, telefono):
     status = resultado.get("status", "")
 
     if status == "completo":
-        # Guardar pedido
+        # Si el usuario mando su ubicacion GPS recientemente, usar esos datos
+        # (tienen precedencia sobre lo que Claude extraiga del texto)
+        ubicacion_gps = _obtener_ubicacion_reciente(telefono) or {}
+        direccion_final = (
+            ubicacion_gps.get("direccion_completa")
+            or resultado.get("pedido", {}).get("entrega", {}).get("direccion", "")
+        )
+        municipio_final = (
+            ubicacion_gps.get("municipio")
+            or resultado.get("pedido", {}).get("entrega", {}).get("municipio", "")
+            or _extraer_municipio(
+                resultado.get("pedido", {}).get("entrega", {}).get("direccion", "")
+            )
+        )
+
         pedido = Pedido(
             usuario_id=usuario.id,
             status="cotizando",
             mensaje_original=texto,
             pedido_interpretado=str(resultado),
-            direccion_entrega=resultado.get("pedido", {}).get("entrega", {}).get("direccion", ""),
-            municipio_entrega=resultado.get("pedido", {}).get("entrega", {}).get("municipio", "") or _extraer_municipio(resultado.get("pedido", {}).get("entrega", {}).get("direccion", "")),
+            direccion_entrega=direccion_final,
+            municipio_entrega=municipio_final,
+            latitud_entrega=ubicacion_gps.get("latitud"),
+            longitud_entrega=ubicacion_gps.get("longitud"),
+            colonia_entrega=ubicacion_gps.get("colonia"),
+            codigo_postal_entrega=ubicacion_gps.get("codigo_postal"),
         )
         db.add(pedido)
         db.commit()

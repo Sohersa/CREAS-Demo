@@ -76,6 +76,10 @@ def crear_orden(db: Session, cotizacion_id: int, usuario_id: int, status_inicial
         total=cotizacion.total,
         direccion_entrega=pedido.direccion_entrega or "",
         municipio_entrega=pedido.municipio_entrega or "",
+        latitud_entrega=pedido.latitud_entrega,
+        longitud_entrega=pedido.longitud_entrega,
+        colonia_entrega=pedido.colonia_entrega,
+        codigo_postal_entrega=pedido.codigo_postal_entrega,
         confirmada_at=ahora if status_inicial == "confirmada" else None,
         fecha_entrega_prometida=fecha_entrega,
     )

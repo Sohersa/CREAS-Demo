@@ -25,6 +25,10 @@ class Orden(Base):
     total = Column(Float)
     direccion_entrega = Column(String(300))
     municipio_entrega = Column(String(100))
+    latitud_entrega = Column(Float)
+    longitud_entrega = Column(Float)
+    colonia_entrega = Column(String(100))
+    codigo_postal_entrega = Column(String(10))
 
     # Timestamps por etapa (se llenan conforme avanza)
     confirmada_at = Column(DateTime, default=datetime.utcnow)
