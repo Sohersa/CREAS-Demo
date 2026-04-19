@@ -15,7 +15,7 @@ from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 
 from app.database import crear_tablas
-from app.routers import webhook, admin, simulador, landing, portal, portal_api, dashboard, pagos, presupuesto, aprobaciones, credito, auth, hub, precios
+from app.routers import webhook, admin, simulador, landing, portal, portal_api, dashboard, pagos, presupuesto, aprobaciones, credito, auth, hub, precios, dashboard_v2
 from app.services.scheduler import iniciar_scheduler
 from app.services.seed_demo import sembrar_datos_demo
 
@@ -98,6 +98,7 @@ app.include_router(landing.router)
 app.include_router(credito.router)
 app.include_router(precios.router)
 app.include_router(hub.router)
+app.include_router(dashboard_v2.router)
 
 
 @app.on_event("startup")

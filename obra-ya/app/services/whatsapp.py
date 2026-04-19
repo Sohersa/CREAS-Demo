@@ -18,6 +18,31 @@ def _using_twilio():
     return settings.WHATSAPP_PROVIDER.lower() == "twilio"
 
 
+def _usuario_prefiere_audio(telefono: str) -> bool:
+    """
+    Devuelve True si el usuario tiene la preferencia 'prefiere_audio' = 'si'.
+    Se consulta via las preferencias guardadas por el memory tool.
+    """
+    try:
+        from app.database import SessionLocal
+        from app.models.usuario import Usuario
+        from app.models.preferencia import PreferenciaUsuario
+        db = SessionLocal()
+        try:
+            u = db.query(Usuario).filter(Usuario.telefono == telefono).first()
+            if not u:
+                return False
+            p = db.query(PreferenciaUsuario).filter(
+                PreferenciaUsuario.usuario_id == u.id,
+                PreferenciaUsuario.clave == "prefiere_audio",
+            ).first()
+            return bool(p and (p.valor or "").lower() in ("si", "yes", "true", "1"))
+        finally:
+            db.close()
+    except Exception:
+        return False
+
+
 async def enviar_mensaje_texto(telefono: str, mensaje: str) -> dict:
     """
     Envia un mensaje de texto por WhatsApp.
@@ -26,6 +51,15 @@ async def enviar_mensaje_texto(telefono: str, mensaje: str) -> dict:
 
     Si el proveedor principal falla, intenta con el otro automaticamente.
     """
+    # Si el usuario prefiere audio, intentar TTS primero
+    if _usuario_prefiere_audio(telefono) and len(mensaje) > 20:
+        try:
+            from app.services.tts import responder_con_voz
+            if await responder_con_voz(telefono, mensaje):
+                return {"audio_sent": True}
+        except Exception as e:
+            logger.warning(f"TTS fallo, cayendo a texto: {e}")
+
     resultado = await _enviar_con_provider(telefono, mensaje, _using_twilio())
 
     # Si el error es critico (token expirado/invalido), intentar fallback

@@ -44,6 +44,59 @@ client = Anthropic(
 
 TOOLS = [
     {
+        "name": "guardar_preferencia_usuario",
+        "description": (
+            "Guarda una preferencia del usuario para recordarla en futuras conversaciones. "
+            "Ej: proveedor favorito, municipio principal, metodo de pago preferido, "
+            "frecuencia de compras. Se usa cuando el usuario expresa una preferencia clara."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "usuario_id": {"type": "integer"},
+                "clave": {
+                    "type": "string",
+                    "description": "slug de la preferencia (ej: 'proveedor_favorito', 'municipio_principal')",
+                },
+                "valor": {"type": "string", "description": "valor de la preferencia"},
+            },
+            "required": ["usuario_id", "clave", "valor"],
+        },
+    },
+    {
+        "name": "leer_preferencias_usuario",
+        "description": (
+            "Lee todas las preferencias guardadas de un usuario. Usalo al inicio de cada "
+            "conversacion compleja para personalizar la respuesta."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "usuario_id": {"type": "integer"},
+            },
+            "required": ["usuario_id"],
+        },
+    },
+    {
+        "name": "buscar_proveedores_web",
+        "description": (
+            "Busca proveedores de materiales de construccion en Google / internet cuando "
+            "no tenemos suficientes en la BD. Util cuando el cliente pide algo exotico "
+            "o en una zona donde tenemos poca cobertura. Retorna lista con nombres, "
+            "telefonos publicos, y URLs que luego se pueden agregar como prospectos."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "query": {
+                    "type": "string",
+                    "description": "Consulta de busqueda (ej: 'concreto premezclado Tlaquepaque')",
+                },
+            },
+            "required": ["query"],
+        },
+    },
+    {
         "name": "buscar_proveedores",
         "description": (
             "Busca proveedores activos por categoria y municipio. Devuelve hasta 10 "
@@ -235,6 +288,61 @@ def _tool_verificar_presupuesto(db: Session, usuario_id: int, monto: float) -> d
     }
 
 
+def _tool_guardar_preferencia(db: Session, usuario_id: int, clave: str, valor: str) -> dict:
+    """Guarda preferencia persistente del usuario (upsert)."""
+    from app.models.preferencia import PreferenciaUsuario
+    existente = db.query(PreferenciaUsuario).filter(
+        PreferenciaUsuario.usuario_id == usuario_id,
+        PreferenciaUsuario.clave == clave,
+    ).first()
+    if existente:
+        existente.valor = valor[:2000]
+    else:
+        db.add(PreferenciaUsuario(usuario_id=usuario_id, clave=clave, valor=valor[:2000]))
+    db.commit()
+    return {"guardado": True, "clave": clave}
+
+
+def _tool_leer_preferencias(db: Session, usuario_id: int) -> dict:
+    """Lee todas las preferencias guardadas del usuario."""
+    from app.models.preferencia import PreferenciaUsuario
+    prefs = db.query(PreferenciaUsuario).filter(
+        PreferenciaUsuario.usuario_id == usuario_id
+    ).all()
+    return {"preferencias": {p.clave: p.valor for p in prefs}}
+
+
+def _tool_buscar_web(query: str) -> dict:
+    """
+    Busca proveedores en web via DuckDuckGo (sin API key).
+    Es basico — retorna top 5 resultados. Para resultados mejores se puede
+    upgradear a Brave Search API o Google Custom Search.
+    """
+    import httpx
+    try:
+        # DuckDuckGo Instant Answer API (gratis, sin key)
+        url = f"https://duckduckgo.com/?q={query} proveedor material construccion Guadalajara&format=json&no_html=1&skip_disambig=1"
+        with httpx.Client(timeout=8, follow_redirects=True) as c:
+            r = c.get(url)
+            if r.status_code == 200:
+                data = r.json() if r.headers.get("content-type", "").startswith("application/json") else {}
+                results = [
+                    {"title": t.get("Text", ""), "url": t.get("FirstURL", "")}
+                    for t in (data.get("RelatedTopics") or [])[:5]
+                    if t.get("Text")
+                ]
+                if results:
+                    return {"resultados": results}
+        # Fallback: sugerir al usuario lo haga manualmente
+        return {
+            "resultados": [],
+            "nota": f"Sin resultados automaticos. Buscar manualmente: 'https://www.google.com/search?q={query.replace(' ','+')}+proveedor+material+Guadalajara'"
+        }
+    except Exception as e:
+        logger.error(f"Error web search: {e}")
+        return {"resultados": [], "error": str(e)}
+
+
 def _ejecutar_tool(db: Session, nombre: str, inputs: dict) -> str:
     """Dispatcher de tools — devuelve JSON string del resultado."""
     try:
@@ -246,6 +354,12 @@ def _ejecutar_tool(db: Session, nombre: str, inputs: dict) -> str:
             r = _tool_historial_precios(db, **inputs)
         elif nombre == "verificar_presupuesto":
             r = _tool_verificar_presupuesto(db, **inputs)
+        elif nombre == "guardar_preferencia_usuario":
+            r = _tool_guardar_preferencia(db, **inputs)
+        elif nombre == "leer_preferencias_usuario":
+            r = _tool_leer_preferencias(db, **inputs)
+        elif nombre == "buscar_proveedores_web":
+            r = _tool_buscar_web(**inputs)
         else:
             return json.dumps({"error": f"Tool desconocida: {nombre}"})
         return json.dumps(r, default=str, ensure_ascii=False)

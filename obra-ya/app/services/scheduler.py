@@ -26,6 +26,7 @@ from app.services.notificaciones import notificar_recordatorio_confirmacion
 from app.services.whatsapp import enviar_mensaje_texto
 from app.services.agente_proactivo import ejecutar_ciclo_agente
 from app.services.outreach_scheduler import ejecutar_ciclo_outreach
+from app.services.notificaciones_proactivas import ejecutar_notificaciones_proactivas
 
 logger = logging.getLogger(__name__)
 
@@ -308,4 +309,10 @@ async def iniciar_scheduler():
         fn=ejecutar_ciclo_outreach,
     ))
 
-    logger.info("Scheduler: 6 tareas en background activas")
+    asyncio.create_task(_loop(
+        "notificaciones_proactivas",
+        intervalo_segundos=300,  # 5 minutos
+        fn=ejecutar_notificaciones_proactivas,
+    ))
+
+    logger.info("Scheduler: 7 tareas en background activas")
