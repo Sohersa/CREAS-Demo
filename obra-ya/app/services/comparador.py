@@ -4,13 +4,19 @@ Toma cotizaciones y genera un mensaje legible y visual.
 """
 import json
 import logging
+
+import anthropic
 from anthropic import Anthropic
+
 from app.config import settings
 from app.prompts.generar_comparativa import SYSTEM_PROMPT_COMPARATIVA
 
 logger = logging.getLogger(__name__)
 
-client = Anthropic(api_key=settings.ANTHROPIC_API_KEY)
+client = Anthropic(
+    api_key=settings.ANTHROPIC_API_KEY,
+    max_retries=settings.CLAUDE_MAX_RETRIES,
+)
 
 MEDALLAS = ["1.", "2.", "3."]
 
@@ -78,25 +84,45 @@ def generar_comparativa_simple(cotizaciones: list[dict], pedido_resumen: str) ->
 
 async def generar_comparativa_con_ia(cotizaciones: list[dict], pedido_resumen: str) -> str:
     """
-    Genera la comparativa USANDO Claude para un formato mas natural.
-    Usa mas tokens pero da mejor resultado para pedidos complejos.
+    Genera la comparativa USANDO Claude Opus 4.7 con adaptive thinking.
+    Razona sobre tradeoffs (precio vs calificacion vs tiempo de entrega) antes
+    de escribir la recomendacion final.
+
+    Prompt cacheado: despues de la primera llamada el costo es ~10% del normal.
     """
     if not cotizaciones:
         return "X No encontre proveedores disponibles para tu pedido."
 
     cotizaciones_json = json.dumps(cotizaciones, ensure_ascii=False, indent=2)
 
-    response = client.messages.create(
-        model="claude-sonnet-4-5-20250514",
-        max_tokens=1500,
-        system=SYSTEM_PROMPT_COMPARATIVA,
-        messages=[{
-            "role": "user",
-            "content": f"Genera la comparativa para WhatsApp.\n\nPedido: {pedido_resumen}\n\nCotizaciones:\n{cotizaciones_json}"
-        }]
-    )
+    system_block = [{"type": "text", "text": SYSTEM_PROMPT_COMPARATIVA}]
+    if settings.CLAUDE_USE_PROMPT_CACHE:
+        system_block[0]["cache_control"] = {"type": "ephemeral"}
 
-    return response.content[0].text
+    try:
+        response = client.messages.create(
+            model=settings.CLAUDE_MODEL_AGENTE,  # Opus 4.7 — razonamiento de tradeoffs
+            max_tokens=2500,
+            thinking={"type": "adaptive"},  # Piensa antes de recomendar
+            system=system_block,
+            messages=[{
+                "role": "user",
+                "content": (
+                    f"Genera la comparativa para WhatsApp.\n\n"
+                    f"Pedido: {pedido_resumen}\n\n"
+                    f"Cotizaciones:\n{cotizaciones_json}"
+                ),
+            }],
+        )
+        # Extraer solo el texto (Opus 4.7 puede incluir thinking blocks)
+        for block in response.content:
+            if block.type == "text":
+                return block.text
+        return ""
+    except anthropic.APIError as e:
+        logger.error(f"Error comparativa con IA: {e} — cayendo a modo simple")
+        # Fallback a la version sin IA
+        return generar_comparativa_simple(cotizaciones, pedido_resumen)
 
 
 def resumir_pedido(pedido_data: dict) -> str:

@@ -11,12 +11,18 @@ flete son 800 pesos", este servicio usa Claude para extraer:
 """
 import json
 import logging
+
+import anthropic
 from anthropic import Anthropic
+
 from app.config import settings
 
 logger = logging.getLogger(__name__)
 
-client = Anthropic(api_key=settings.ANTHROPIC_API_KEY)
+client = Anthropic(
+    api_key=settings.ANTHROPIC_API_KEY,
+    max_retries=settings.CLAUDE_MAX_RETRIES,
+)
 
 SYSTEM_PROMPT_PARSER = """Eres un asistente que extrae informacion de precios de mensajes de proveedores de materiales de construccion en Mexico.
 
@@ -75,11 +81,17 @@ async def parsear_respuesta_proveedor(
 
     mensaje_usuario += "\nExtrae los datos de precio y entrega. Responde SOLO con JSON."
 
+    # System prompt con cache — el prompt es estable y se envia en cada parseo
+    system_block = [{"type": "text", "text": SYSTEM_PROMPT_PARSER}]
+    if settings.CLAUDE_USE_PROMPT_CACHE:
+        system_block[0]["cache_control"] = {"type": "ephemeral"}
+
+    texto_respuesta = ""
     try:
         response = client.messages.create(
-            model="claude-sonnet-4-20250514",
+            model=settings.CLAUDE_MODEL_PARSER,  # Haiku 4.5 — rapido y barato para extraccion
             max_tokens=1000,
-            system=SYSTEM_PROMPT_PARSER,
+            system=system_block,
             messages=[{"role": "user", "content": mensaje_usuario}],
         )
 
@@ -96,11 +108,14 @@ async def parsear_respuesta_proveedor(
         return resultado
 
     except json.JSONDecodeError as e:
-        logger.error(f"Error parseando JSON de Claude: {e}\nTexto: {texto_respuesta}")
+        logger.error(f"Error parseando JSON: {e} | Texto: {texto_respuesta[:200]}")
         return {"tiene_precio": False, "error": "No se pudo parsear la respuesta"}
 
-    except Exception as e:
-        logger.error(f"Error en parser de respuesta: {e}")
+    except anthropic.RateLimitError:
+        logger.error("Rate limit en parser de proveedor")
+        return {"tiene_precio": False, "error": "rate_limit"}
+    except anthropic.APIError as e:
+        logger.error(f"Error API Claude en parser: {e}")
         return {"tiene_precio": False, "error": str(e)}
 
 

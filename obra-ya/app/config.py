@@ -17,6 +17,21 @@ class Settings:
     # Anthropic API
     ANTHROPIC_API_KEY: str = os.getenv("ANTHROPIC_API_KEY", "")
 
+    # ─── Modelos Claude ──────────────────────────────────────────
+    # Opus 4.7: tareas complejas (razonamiento profundo, negociacion, analisis)
+    # Sonnet 4.6: interpretacion conversacional rapida (volumen alto)
+    # Haiku 4.5: tareas simples y rapidas (confirmaciones, extraccion basica)
+    CLAUDE_MODEL_AGENTE: str = os.getenv("CLAUDE_MODEL_AGENTE", "claude-opus-4-7")
+    CLAUDE_MODEL_INTERPRETE: str = os.getenv("CLAUDE_MODEL_INTERPRETE", "claude-sonnet-4-6")
+    CLAUDE_MODEL_PARSER: str = os.getenv("CLAUDE_MODEL_PARSER", "claude-haiku-4-5")
+    CLAUDE_MODEL_VISION: str = os.getenv("CLAUDE_MODEL_VISION", "claude-sonnet-4-6")
+
+    # Prompt caching: activar para reducir costos 90% en prompts repetidos
+    CLAUDE_USE_PROMPT_CACHE: bool = os.getenv("CLAUDE_USE_PROMPT_CACHE", "true").lower() == "true"
+
+    # Max reintentos en caso de error transiente de API
+    CLAUDE_MAX_RETRIES: int = int(os.getenv("CLAUDE_MAX_RETRIES", "3"))
+
     # WhatsApp Cloud API
     WHATSAPP_TOKEN: str = os.getenv("WHATSAPP_TOKEN", "")
     WHATSAPP_PHONE_ID: str = os.getenv("WHATSAPP_PHONE_ID", "")
