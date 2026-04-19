@@ -4,9 +4,11 @@ Agente de IA para cotizacion de materiales de construccion en Guadalajara.
 """
 import logging
 from collections import deque
+from pathlib import Path
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy import text
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
@@ -57,6 +59,29 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Servir el design bundle de Claude Design (Landing + Playground + componentes)
+_static_dir = Path(__file__).resolve().parent.parent / "static"
+if _static_dir.exists():
+    app.mount("/static", StaticFiles(directory=str(_static_dir)), name="static")
+
+
+@app.get("/landing")
+def serve_landing():
+    """Landing principal — design system de Claude Design."""
+    f = _static_dir / "design" / "Landing.html"
+    if f.exists():
+        return FileResponse(str(f))
+    return JSONResponse({"error": "Landing not found"}, status_code=404)
+
+
+@app.get("/playground")
+def serve_playground():
+    """Playground interactivo — visualiza el flujo end-to-end."""
+    f = _static_dir / "design" / "Playground.html"
+    if f.exists():
+        return FileResponse(str(f))
+    return JSONResponse({"error": "Playground not found"}, status_code=404)
 
 # Registrar routers — landing va al final para que "/" no sobreescriba otros
 app.include_router(auth.router)

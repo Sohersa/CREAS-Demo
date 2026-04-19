@@ -3,12 +3,15 @@ Landing page de ObraYa — pagina principal publica.
 Diseno basado en Style Guide: Paleta A (Dark Navy + Naranja Obra).
 Agente NICO. Copy que vende.
 """
+from pathlib import Path
 from fastapi import APIRouter
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, FileResponse, RedirectResponse
 
 from app.config import settings
 
 router = APIRouter(tags=["landing"])
+
+_landing_nueva = Path(__file__).resolve().parent.parent.parent / "static" / "design" / "Landing.html"
 
 
 @router.get("/auth/config")
@@ -22,6 +25,10 @@ def auth_config():
 
 @router.get("/", response_class=HTMLResponse)
 def landing_page():
+    """Landing principal — sirve el diseno oficial de Claude Design."""
+    if _landing_nueva.exists():
+        return FileResponse(str(_landing_nueva))
+    # Fallback al landing viejo si no esta el bundle
     html = """
 <!DOCTYPE html>
 <html lang="es">

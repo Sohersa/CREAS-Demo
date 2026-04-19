@@ -1,0 +1,84 @@
+/* OBRA YA v2 — Stripe-inspired: bold sans, mesh gradients, huge cards */
+:root {
+  --paper: #FFFFFF;
+  --paper-2: #F6F9FC;
+  --paper-3: #EBEEF2;
+  --ink: #0A2540;
+  --ink-2: #425466;
+  --ink-dim: #697386;
+  --ink-muted: #8792A2;
+  --ink-ghost: #AAB7C4;
+  --line: rgba(10, 37, 64, 0.08);
+  --line-2: rgba(10, 37, 64, 0.14);
+
+  /* Stripe-ish violet + our construction orange */
+  --violet: #635BFF;
+  --violet-ink: #4F46E5;
+  --violet-soft: #EEEEFF;
+  --orange: #FF7A45;
+  --orange-ink: #E85D2B;
+  --pink: #FF80B5;
+  --cyan: #00D4FF;
+  --amber: #FFB84D;
+
+  --accent: var(--violet);
+  --accent-ink: var(--violet-ink);
+  --accent-soft: var(--violet-soft);
+
+  --whatsapp: #25D366;
+
+  --font-sans: 'Inter Tight', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-display: 'Inter Tight', sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', monospace;
+
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-quick: cubic-bezier(0.32, 0.72, 0, 1);
+
+  --r-1: 6px;
+  --r-2: 10px;
+  --r-3: 16px;
+  --r-4: 24px;
+}
+
+/* Accent variants (tweak) */
+[data-accent="orange"] {
+  --accent: #FF7A45;
+  --accent-ink: #E85D2B;
+  --accent-soft: #FFF0E8;
+}
+[data-accent="cyan"] {
+  --accent: #0EA5E9;
+  --accent-ink: #0369A1;
+  --accent-soft: #E0F2FE;
+}
+[data-accent="mono"] {
+  --accent: #0A2540;
+  --accent-ink: #0A2540;
+  --accent-soft: #F6F9FC;
+}
+
+/* Motion */
+[data-motion="calm"] * { animation-duration: 2s !important; }
+[data-motion="off"] *, [data-motion="off"] *::before, [data-motion="off"] *::after {
+  animation: none !important;
+  transition: none !important;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-feature-settings: 'ss01', 'cv11';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  letter-spacing: -0.011em;
+}
+body { min-height: 100vh; overflow-x: hidden; }
+
+::selection { background: var(--accent); color: white; }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: var(--paper-2); }
+::-webkit-scrollbar-thumb { background: var(--ink-ghost); border-radius: 10px; border: 2px solid var(--paper-2); }
+
+.mono { font-family: var(--font-mono); font-feature-settings: normal; }
