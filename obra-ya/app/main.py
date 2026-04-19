@@ -84,10 +84,34 @@ async def startup():
     sembrar_datos_demo()
     await iniciar_scheduler()
 
+    # Validar WhatsApp — si esta mal configurado, ALERTA en logs pero no crashea
+    try:
+        from app.services.whatsapp_health import verificar_whatsapp
+        wa = await verificar_whatsapp()
+        if wa["ok"]:
+            det = wa.get("detalles", {})
+            logging.info(
+                f"WhatsApp OK — {det.get('phone_number', '?')} "
+                f"({det.get('verified_name', '?')}) quality={det.get('quality_rating', '?')}"
+            )
+        else:
+            logging.critical("=" * 70)
+            logging.critical(f"WHATSAPP NO OPERATIVO — status: {wa['status']}")
+            logging.critical(f"Mensaje: {wa['mensaje']}")
+            if wa.get("sugerencia"):
+                logging.critical(f"Sugerencia: {wa['sugerencia']}")
+            logging.critical("Consulta /admin/api/whatsapp/health para mas detalles")
+            logging.critical("=" * 70)
+    except Exception as e:
+        logging.warning(f"No se pudo validar estado de WhatsApp: {e}")
+
 
 @app.get("/health")
-def health():
-    """Health check para monitoreo — Railway, uptime bots, etc."""
+async def health():
+    """
+    Health check para monitoreo — Railway, uptime bots, etc.
+    Verifica: BD, configuracion, y estado de WhatsApp (token valido).
+    """
     from app.database import SessionLocal
     try:
         db = SessionLocal()
@@ -97,9 +121,25 @@ def health():
     except Exception:
         db_ok = False
 
+    # WhatsApp health (valida token contra Meta en vivo)
+    whatsapp_status = "not_checked"
+    try:
+        from app.services.whatsapp_health import verificar_whatsapp
+        wa = await verificar_whatsapp()
+        whatsapp_status = wa["status"]
+    except Exception:
+        whatsapp_status = "check_failed"
+
+    overall = "ok"
+    if not db_ok:
+        overall = "degraded"
+    elif whatsapp_status not in ("healthy", "not_checked"):
+        overall = "degraded"
+
     return {
-        "status": "ok" if db_ok else "degraded",
+        "status": overall,
         "db": "connected" if db_ok else "error",
+        "whatsapp": whatsapp_status,
         "version": "0.2.0",
     }
 

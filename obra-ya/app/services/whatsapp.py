@@ -28,14 +28,35 @@ async def enviar_mensaje_texto(telefono: str, mensaje: str) -> dict:
     """
     resultado = await _enviar_con_provider(telefono, mensaje, _using_twilio())
 
-    # Fallback: si fallo, intentar con el otro proveedor
+    # Si el error es critico (token expirado/invalido), intentar fallback
+    # solo si el otro provider esta configurado con credenciales distintas
     if "error" in resultado:
-        logger.warning(f"Provider principal fallo, intentando fallback para {telefono}")
-        resultado_fallback = await _enviar_con_provider(telefono, mensaje, not _using_twilio())
-        if "error" not in resultado_fallback:
-            return resultado_fallback
-        # Ambos fallaron — retornar el error del principal
-        logger.error(f"Ambos providers fallaron para {telefono}")
+        # No reintentar en mismo provider si el token esta mal
+        if resultado.get("critical"):
+            logger.error(
+                f"Error critico de WhatsApp ({resultado.get('error')}). "
+                f"Revisa /admin/api/whatsapp/health"
+            )
+            return resultado
+
+        # Fallback si hay otro provider configurado
+        otro_configurado = (
+            settings.TWILIO_ACCOUNT_SID and settings.TWILIO_AUTH_TOKEN
+            if not _using_twilio()
+            else settings.WHATSAPP_TOKEN and settings.WHATSAPP_PHONE_ID
+        )
+        if otro_configurado:
+            logger.warning(f"Provider principal fallo, intentando fallback para {telefono}")
+            resultado_fallback = await _enviar_con_provider(
+                telefono, mensaje, not _using_twilio()
+            )
+            if "error" not in resultado_fallback:
+                return resultado_fallback
+            logger.error(f"Ambos providers fallaron para {telefono}")
+        else:
+            logger.warning(
+                f"Envio fallo para {telefono} y no hay provider fallback configurado"
+            )
 
     return resultado
 
@@ -120,14 +141,53 @@ async def _enviar_texto(url: str, headers: dict, telefono: str, mensaje: str) ->
         "text": {"body": mensaje}
     }
 
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=15) as client:
         response = await client.post(url, json=payload, headers=headers)
         if response.status_code == 200:
             logger.info(f"Mensaje enviado a {telefono}")
             return response.json()
-        else:
-            logger.error(f"Error enviando mensaje: {response.status_code} - {response.text}")
-            return {"error": response.text}
+
+        # Categorizar errores para mejor diagnostico
+        try:
+            err = response.json().get("error", {})
+        except Exception:
+            err = {}
+        codigo = err.get("code")
+        subcodigo = err.get("error_subcode")
+        meta_msg = err.get("message", response.text)[:200]
+
+        # Errores de token — criticos, afectan todos los envios
+        if response.status_code == 401 or codigo == 190:
+            if subcodigo == 463:
+                logger.critical(
+                    f"TOKEN WHATSAPP EXPIRADO — renuevalo en Meta Business. "
+                    f"Ver /admin/api/whatsapp/health para instrucciones. Msg: {meta_msg}"
+                )
+                return {"error": "token_expired", "detail": meta_msg, "critical": True}
+            logger.critical(f"TOKEN WHATSAPP INVALIDO (code=190): {meta_msg}")
+            return {"error": "token_invalid", "detail": meta_msg, "critical": True}
+
+        # Destinatario no es tester (dev) o no acepta mensajes
+        if codigo == 131026:
+            logger.warning(f"Destinatario {telefono} no es tester o bloqueo mensajes")
+            return {"error": "recipient_not_allowed", "detail": meta_msg}
+
+        # Fuera de ventana 24h — requiere template
+        if codigo == 131047:
+            logger.info(f"Fuera de ventana 24h para {telefono}, requiere template")
+            return {"error": "requires_template", "detail": meta_msg}
+
+        # Rate limit
+        if response.status_code == 429 or codigo == 80007:
+            logger.warning(f"Rate limit de WhatsApp para {telefono}")
+            return {"error": "rate_limit", "detail": meta_msg}
+
+        # Otros errores
+        logger.error(
+            f"Error WhatsApp status={response.status_code} code={codigo} "
+            f"subcode={subcodigo} msg={meta_msg}"
+        )
+        return {"error": meta_msg, "status_code": response.status_code, "code": codigo}
 
 
 async def marcar_como_leido(message_id: str) -> dict:

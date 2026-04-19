@@ -322,6 +322,16 @@ def diagnostico_whatsapp():
     }
 
 
+@router.get("/api/whatsapp/health")
+async def whatsapp_health():
+    """
+    Valida EN VIVO el token y phone_id contra Meta Graph API.
+    Detecta token expirado, invalido, o phone_id incorrecto, con sugerencia de fix.
+    """
+    from app.services.whatsapp_health import verificar_whatsapp
+    return await verificar_whatsapp()
+
+
 @router.get("/api/stats")
 def obtener_stats(db: Session = Depends(get_db)):
     total_proveedores = db.query(func.count(Proveedor.id)).filter(Proveedor.activo == True).scalar()
