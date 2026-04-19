@@ -746,6 +746,162 @@ def normalizar_telefonos_proveedores(db: Session = Depends(get_db)):
     return {"ok": True, "total_normalizados": len(cambios), "cambios": cambios}
 
 
+# --- PROSPECTOS OUTREACH ---
+
+from app.models.prospecto import ProspectoProveedor
+
+
+class ProspectoImport(BaseModel):
+    nombre: str
+    telefono: str
+    categoria: str = ""
+    municipio: str = ""
+    direccion: str = ""
+    origen: str = "manual"
+    calificacion_google: float | None = None
+    campana: str = ""
+
+
+@router.post("/api/prospectos/importar")
+def importar_prospectos(body: list[ProspectoImport], db: Session = Depends(get_db)):
+    """
+    Importa prospectos en bulk. Dedupa contra telefono existente (proveedor o prospecto).
+    Devuelve: {creados: N, duplicados: [telefonos], invalidos: [razones]}.
+    """
+    from app.utils.telefono import normalizar_telefono_mx
+
+    creados = 0
+    duplicados = []
+    invalidos = []
+
+    for p in body:
+        tel = normalizar_telefono_mx(p.telefono) if p.telefono else ""
+        if not tel or len(tel) < 10:
+            invalidos.append({"nombre": p.nombre, "razon": "telefono invalido"})
+            continue
+
+        # Dedupe contra prospectos y proveedores existentes
+        dup_prospecto = db.query(ProspectoProveedor).filter(
+            ProspectoProveedor.telefono == tel
+        ).first()
+        dup_proveedor = db.query(Proveedor).filter(
+            Proveedor.telefono_whatsapp == tel
+        ).first()
+
+        if dup_prospecto or dup_proveedor:
+            duplicados.append(tel)
+            continue
+
+        nuevo = ProspectoProveedor(
+            nombre=p.nombre.strip()[:200],
+            telefono=tel,
+            categoria=p.categoria or None,
+            municipio=p.municipio or None,
+            direccion=p.direccion or None,
+            origen=p.origen,
+            calificacion_google=p.calificacion_google,
+            campana=p.campana or None,
+            status="pendiente",
+        )
+        db.add(nuevo)
+        creados += 1
+
+    db.commit()
+    return {
+        "creados": creados,
+        "duplicados": duplicados,
+        "invalidos": invalidos,
+    }
+
+
+@router.get("/api/prospectos/dashboard")
+def dashboard_prospectos(db: Session = Depends(get_db)):
+    """Metricas del funnel de outreach."""
+    total = db.query(func.count(ProspectoProveedor.id)).scalar() or 0
+
+    by_status = {}
+    for (status, count) in db.query(
+        ProspectoProveedor.status, func.count(ProspectoProveedor.id)
+    ).group_by(ProspectoProveedor.status).all():
+        by_status[status] = count
+
+    # Conversion rate
+    convertidos = by_status.get("convertido", 0)
+    interesados = by_status.get("interesado", 0)
+    contactados = sum(by_status.get(s, 0) for s in
+                      ["contactado", "dialogo_activo", "interesado", "rechazado",
+                       "sin_respuesta", "convertido", "opt_out"])
+
+    conv_rate = round((convertidos / contactados) * 100, 1) if contactados else 0
+    interest_rate = round(((interesados + convertidos) / contactados) * 100, 1) if contactados else 0
+
+    # Top campanas
+    campanas = db.query(
+        ProspectoProveedor.campana,
+        func.count(ProspectoProveedor.id).label("total"),
+    ).group_by(ProspectoProveedor.campana).all()
+
+    # Score interes promedio
+    score_promedio = db.query(func.avg(ProspectoProveedor.score_interes)).filter(
+        ProspectoProveedor.score_interes > 0
+    ).scalar() or 0
+
+    return {
+        "total_prospectos": total,
+        "by_status": by_status,
+        "contactados": contactados,
+        "convertidos": convertidos,
+        "conversion_rate_pct": conv_rate,
+        "interest_rate_pct": interest_rate,
+        "score_interes_promedio": round(float(score_promedio), 1),
+        "campanas": [{"campana": c[0] or "(sin campana)", "total": c[1]} for c in campanas],
+    }
+
+
+@router.get("/api/prospectos")
+def listar_prospectos(
+    status: str = "",
+    limit: int = 50,
+    db: Session = Depends(get_db),
+):
+    """Lista prospectos, filtrable por status."""
+    q = db.query(ProspectoProveedor).order_by(ProspectoProveedor.updated_at.desc())
+    if status:
+        q = q.filter(ProspectoProveedor.status == status)
+    prospectos = q.limit(limit).all()
+    return [
+        {
+            "id": p.id,
+            "nombre": p.nombre,
+            "telefono": p.telefono,
+            "categoria": p.categoria,
+            "municipio": p.municipio,
+            "status": p.status,
+            "score_interes": p.score_interes,
+            "intentos": p.intentos_contacto,
+            "mensajes_enviados": p.mensajes_enviados,
+            "mensajes_recibidos": p.mensajes_recibidos,
+            "ultima_respuesta": (p.ultima_respuesta or "")[:100],
+            "campana": p.campana,
+            "created_at": p.created_at.isoformat() if p.created_at else None,
+        }
+        for p in prospectos
+    ]
+
+
+@router.post("/api/prospectos/{prospecto_id}/contactar-ahora")
+async def contactar_prospecto_ahora(prospecto_id: int, db: Session = Depends(get_db)):
+    """Fuerza el contacto inicial de un prospecto (skip rate limit)."""
+    from app.services.outreach_agent import enviar_contacto_inicial
+    prospecto = db.query(ProspectoProveedor).filter(
+        ProspectoProveedor.id == prospecto_id
+    ).first()
+    if not prospecto:
+        return {"ok": False, "error": "No encontrado"}
+    ok = await enviar_contacto_inicial(db, prospecto)
+    return {"ok": ok, "status": prospecto.status}
+
+
 # --- REANALISIS BATCH (Claude Batch API, 50% descuento) ---
 
 @router.post("/api/reanalisis/lanzar")

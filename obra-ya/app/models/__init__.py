@@ -19,3 +19,4 @@ from app.models.aprobacion import Aprobacion
 from app.models.presupuesto import PresupuestoObra, PartidaPresupuesto
 from app.models.mensaje_historico import MensajeHistorico
 from app.models.vendedor import Vendedor
+from app.models.prospecto import ProspectoProveedor

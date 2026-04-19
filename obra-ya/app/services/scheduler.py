@@ -25,6 +25,7 @@ from app.services.comparativa_activa import generar_comparativa_desde_respuestas
 from app.services.notificaciones import notificar_recordatorio_confirmacion
 from app.services.whatsapp import enviar_mensaje_texto
 from app.services.agente_proactivo import ejecutar_ciclo_agente
+from app.services.outreach_scheduler import ejecutar_ciclo_outreach
 
 logger = logging.getLogger(__name__)
 
@@ -301,4 +302,10 @@ async def iniciar_scheduler():
         fn=ejecutar_ciclo_agente,
     ))
 
-    logger.info("Scheduler: 5 tareas en background activas")
+    asyncio.create_task(_loop(
+        "outreach",
+        intervalo_segundos=300,  # 5 minutos (2 prospectos por ciclo, max 20/hora)
+        fn=ejecutar_ciclo_outreach,
+    ))
+
+    logger.info("Scheduler: 6 tareas en background activas")

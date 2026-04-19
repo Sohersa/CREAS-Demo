@@ -593,6 +593,20 @@ async def procesar_mensaje(msg: dict, _db_unused: Session = None):
                 await enviar_mensaje_texto(telefono, "Codigo de registro no valido. Verifica con tu contacto de ObraYa.")
                 return
 
+        # === DETECTAR SI ES PROSPECTO DE OUTREACH (respuesta a nuestro contacto) ===
+        from app.models.prospecto import ProspectoProveedor
+        prospecto = db.query(ProspectoProveedor).filter(
+            ProspectoProveedor.telefono == telefono,
+            ProspectoProveedor.activo == True,
+            ProspectoProveedor.status.in_([
+                "contactado", "dialogo_activo", "interesado", "sin_respuesta"
+            ]),
+        ).first()
+        if prospecto:
+            from app.services.prospect_response import procesar_respuesta_prospecto
+            await procesar_respuesta_prospecto(db, prospecto, texto)
+            return
+
         # === DETECTAR SI ES PROVEEDOR ===
         if es_mensaje_de_proveedor(db, telefono):
             await manejar_respuesta_proveedor(db, telefono, texto)
