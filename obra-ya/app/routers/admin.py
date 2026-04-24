@@ -394,11 +394,13 @@ def whatsapp_admin_page():
 
 
 WHATSAPP_ADMIN_HTML = """<!DOCTYPE html>
-<html lang="es">
+<html lang="es" translate="no">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="google" content="notranslate">
 <title>Renovar token WhatsApp — ObraYa</title>
+<link rel="stylesheet" href="/static/design/design/mobile.css?v=1">
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {

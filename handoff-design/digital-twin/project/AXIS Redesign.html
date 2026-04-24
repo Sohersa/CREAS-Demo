@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>AXIS · Digital Twin — Redesign</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<style>
+  :root{
+    --bg: #fafaf9;
+    --surface: #ffffff;
+    --surface-2: #f5f5f4;
+    --surface-3: #eeeeec;
+    --border: #e7e5e2;
+    --border-strong: #d6d3cf;
+    --text: #0c0c0c;
+    --text-2: #454545;
+    --text-3: #767676;
+    --text-4: #a3a3a3;
+
+    --accent: #FF5500;
+    --accent-soft: #FFF1EA;
+    --accent-border: #FFD4BD;
+
+    --ok: #2B8A3E;
+    --ok-soft: #E6F4EA;
+    --warn: #B5730C;
+    --warn-soft: #FDF6E3;
+    --err: #C23A3A;
+    --err-soft: #FBE9E9;
+    --info: #1F6FEB;
+    --info-soft: #E7F0FE;
+
+    --radius: 10px;
+    --radius-sm: 6px;
+    --radius-lg: 14px;
+
+    --shadow-xs: 0 1px 0 rgba(17,17,17,.04);
+    --shadow-sm: 0 1px 2px rgba(17,17,17,.06), 0 1px 0 rgba(17,17,17,.04);
+    --shadow-md: 0 6px 16px -6px rgba(17,17,17,.12), 0 2px 4px rgba(17,17,17,.05);
+    --shadow-lg: 0 24px 48px -16px rgba(17,17,17,.18), 0 8px 16px -8px rgba(17,17,17,.08);
+
+    --font-sans: 'Geist', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif;
+    --font-mono: 'Geist Mono', ui-monospace, 'SF Mono', Menlo, Monaco, Consolas, monospace;
+
+    --density-row: 34px;
+    --density-pad: 14px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:var(--font-sans);font-feature-settings:"ss01","cv11";-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;letter-spacing:-0.005em}
+  button{font-family:inherit;color:inherit}
+  .mono{font-family:var(--font-mono);font-feature-settings:"ss02","zero";letter-spacing:-0.01em}
+  ::selection{background:var(--accent-soft);color:var(--accent)}
+  /* scrollbars */
+  ::-webkit-scrollbar{width:10px;height:10px}
+  ::-webkit-scrollbar-thumb{background:#e2e0dc;border-radius:10px;border:2px solid var(--bg)}
+  ::-webkit-scrollbar-thumb:hover{background:#cfccc7}
+  ::-webkit-scrollbar-track{background:transparent}
+
+  /* pulse for LIVE dot */
+  @keyframes axis-pulse{
+    0%{box-shadow:0 0 0 0 rgba(43,138,62,.45)}
+    100%{box-shadow:0 0 0 8px rgba(43,138,62,0)}
+  }
+  .live-dot{animation:axis-pulse 1.8s ease-out infinite}
+
+  @keyframes axis-shimmer{
+    0%{background-position:-400px 0}
+    100%{background-position:400px 0}
+  }
+
+  /* Hatched pattern for placeholder 3D */
+  .hatched{
+    background-image:
+      linear-gradient(135deg, rgba(0,0,0,0.04) 25%, transparent 25%),
+      linear-gradient(225deg, rgba(0,0,0,0.04) 25%, transparent 25%),
+      linear-gradient(45deg, rgba(0,0,0,0.04) 25%, transparent 25%),
+      linear-gradient(315deg, rgba(0,0,0,0.04) 25%, transparent 25%);
+    background-size: 14px 14px;
+    background-position: 0 0, 7px 0, 7px -7px, 0 7px;
+  }
+
+  /* Dotted grid bg for 3D placeholder */
+  .dotgrid{
+    background-image: radial-gradient(circle at 1px 1px, rgba(12,12,12,0.06) 1px, transparent 0);
+    background-size: 20px 20px;
+  }
+
+  /* focus ring */
+  button:focus-visible, input:focus-visible, select:focus-visible{
+    outline:2px solid var(--accent);
+    outline-offset:2px;
+    border-radius:6px;
+  }
+
+  /* modal overlay */
+  .modal-overlay{
+    position:fixed; inset:0; background:rgba(17,17,17,0.25); backdrop-filter:blur(4px);
+    display:flex; align-items:center; justify-content:center; z-index:90;
+    animation:fadein .15s ease;
+  }
+  @keyframes fadein{from{opacity:0}to{opacity:1}}
+  @keyframes slideup{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .modal-card{animation:slideup .18s cubic-bezier(.2,.8,.2,1)}
+
+  /* density variants applied via data attr on root */
+  [data-density="compact"]{ --density-row: 28px; --density-pad: 10px; }
+  [data-density="balanced"]{ --density-row: 34px; --density-pad: 14px; }
+  [data-density="spacious"]{ --density-row: 42px; --density-pad: 20px; }
+
+  /* glass treatment for 3D overlays */
+  [data-glass="glass"] .pane-floating{
+    background: rgba(255,255,255,0.72);
+    backdrop-filter: saturate(1.4) blur(14px);
+    -webkit-backdrop-filter: saturate(1.4) blur(14px);
+    border: 1px solid rgba(255,255,255,0.6);
+    box-shadow: 0 6px 24px -8px rgba(17,17,17,0.14), 0 1px 0 rgba(255,255,255,0.7) inset;
+  }
+  [data-glass="solid"] .pane-floating{
+    background: var(--surface);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-md);
+  }
+
+  /* typography variants */
+  [data-type="geist"] { --font-sans: 'Geist', ui-sans-serif, system-ui, sans-serif; --font-mono: 'Geist Mono', ui-monospace, monospace; }
+  [data-type="inter"] { --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif; --font-mono: 'JetBrains Mono', ui-monospace, monospace; }
+  [data-type="system"] { --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; --font-mono: ui-monospace, 'SF Mono', Menlo, monospace; }
+
+  /* accent variants - overrides --accent + soft + border */
+  [data-accent="orange"]{--accent:#FF5500;--accent-soft:#FFF1EA;--accent-border:#FFD4BD}
+  [data-accent="graphite"]{--accent:#111111;--accent-soft:#F3F3F3;--accent-border:#D6D3CF}
+  [data-accent="indigo"]{--accent:#4C4CFF;--accent-soft:#EEEEFF;--accent-border:#C7C7FF}
+  [data-accent="teal"]{--accent:#006B6B;--accent-soft:#E6F2F2;--accent-border:#A8D4D4}
+
+  /* subtle divider label */
+  .eyebrow{
+    font-family:var(--font-mono); font-size:10.5px; letter-spacing:.08em; text-transform:uppercase;
+    color:var(--text-3);
+  }
+
+  /* Pill */
+  .pill{
+    display:inline-flex;align-items:center;gap:6px;
+    padding:3px 8px; border-radius:999px;
+    font-family:var(--font-mono); font-size:10.5px; letter-spacing:.02em;
+    background:var(--surface-2); color:var(--text-2); border:1px solid var(--border);
+    line-height:1;
+  }
+  .pill.live{background:var(--ok-soft); color:var(--ok); border-color:#CDE9D3}
+  .pill.warn{background:var(--warn-soft); color:var(--warn); border-color:#F2E1B7}
+  .pill.err{background:var(--err-soft); color:var(--err); border-color:#F4C9C9}
+  .pill.accent{background:var(--accent-soft); color:var(--accent); border-color:var(--accent-border)}
+
+  /* btn */
+  .btn{
+    display:inline-flex;align-items:center;gap:6px;
+    height:30px;padding:0 12px;border-radius:8px;
+    background:var(--surface); color:var(--text);
+    border:1px solid var(--border); font-size:13px; font-weight:500;
+    cursor:pointer; transition:background .12s, border-color .12s, box-shadow .12s, transform .08s;
+    box-shadow: var(--shadow-xs);
+  }
+  .btn:hover{background:var(--surface-2); border-color:var(--border-strong)}
+  .btn:active{transform:translateY(.5px)}
+  .btn.primary{background:var(--text); color:#fff; border-color:var(--text)}
+  .btn.primary:hover{background:#222}
+  .btn.accent{background:var(--accent); color:#fff; border-color:var(--accent)}
+  .btn.ghost{background:transparent; border-color:transparent; box-shadow:none}
+  .btn.ghost:hover{background:var(--surface-2)}
+  .btn.sm{height:24px;padding:0 8px;font-size:12px;border-radius:6px}
+  .btn.icon{width:30px;padding:0;justify-content:center}
+  .btn.icon.sm{width:24px}
+
+  /* tabs */
+  .tabs{display:flex;gap:2px;background:var(--surface-2);padding:3px;border-radius:8px;border:1px solid var(--border)}
+  .tabs button{height:24px;padding:0 10px;border-radius:5px;background:transparent;border:none;font-size:12px;color:var(--text-2);cursor:pointer;font-weight:500}
+  .tabs button[data-active="true"]{background:var(--surface);color:var(--text);box-shadow:var(--shadow-xs)}
+
+  /* card */
+  .card{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow-xs);}
+  .card-pad{padding:var(--density-pad);}
+
+  /* kbd */
+  kbd{
+    font-family:var(--font-mono); font-size:10.5px;
+    padding:1px 5px;border-radius:4px;
+    background:var(--surface-2);border:1px solid var(--border);
+    color:var(--text-2);
+  }
+
+  /* table reset */
+  table.axis{width:100%; border-collapse:collapse}
+  table.axis th, table.axis td{padding:8px 12px; text-align:left; font-size:12.5px; border-bottom:1px solid var(--border)}
+  table.axis thead th{background:var(--surface-2); font-weight:500; color:var(--text-3); font-size:11px; text-transform:uppercase; letter-spacing:.04em; font-family:var(--font-mono)}
+  table.axis tbody tr:hover{background:var(--surface-2)}
+
+  /* spark path anim */
+  @keyframes draw{from{stroke-dashoffset:var(--dash)}to{stroke-dashoffset:0}}
+
+  /* custom range slider */
+  input[type="range"].axis-range{
+    -webkit-appearance:none; appearance:none;
+    height:4px; background:var(--surface-3); border-radius:999px; outline:none;
+  }
+  input[type="range"].axis-range::-webkit-slider-thumb{
+    -webkit-appearance:none; appearance:none;
+    width:14px;height:14px;border-radius:50%;background:var(--text); cursor:pointer;
+    border:2px solid #fff; box-shadow:var(--shadow-sm);
+  }
+  input[type="range"].axis-range::-moz-range-thumb{
+    width:14px;height:14px;border-radius:50%;background:var(--text); cursor:pointer;
+    border:2px solid #fff; box-shadow:var(--shadow-sm);
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<!-- component modules -->
+<script type="text/babel" src="components/icons.jsx"></script>
+<script type="text/babel" src="components/atoms.jsx"></script>
+<script type="text/babel" src="components/topbar.jsx"></script>
+<script type="text/babel" src="components/sidebar.jsx"></script>
+<script type="text/babel" src="components/viewer3d.jsx"></script>
+<script type="text/babel" src="components/inspector.jsx"></script>
+<script type="text/babel" src="components/kpibar.jsx"></script>
+<script type="text/babel" src="components/copilot.jsx"></script>
+<script type="text/babel" src="components/modals.jsx"></script>
+<script type="text/babel" src="components/tweaks.jsx"></script>
+<script type="text/babel" src="app.jsx"></script>
+</body>
+</html>

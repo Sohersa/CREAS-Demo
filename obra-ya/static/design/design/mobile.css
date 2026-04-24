@@ -1,0 +1,1005 @@
+/* ObraYa Mobile Overrides — aplica a Landing, Playground, Probar, Dashboard, Admin.
+   Carga ULTIMO para que gane a los estilos base. */
+
+/* iOS Safari fix: evita zoom al focus en inputs */
+@media (max-width: 920px) {
+  input, textarea, select, button {
+    font-size: 16px !important;
+  }
+}
+
+/* ═══ GLOBAL MOBILE ADJUSTMENTS ═══ */
+@media (max-width: 920px) {
+  html, body {
+    overflow-x: hidden !important;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  /* Nav global */
+  nav, .nav, .ph-header {
+    padding: 14px 16px !important;
+  }
+
+  /* Contenedores principales */
+  .container, .dash-wrap, .ph-wrap {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+  }
+
+  /* ═══ HERO ═══ */
+  .hero, .hero-section {
+    padding: 100px 16px 60px !important;
+    text-align: center;
+  }
+  .hero h1,
+  h1.section-title,
+  h2.section-title {
+    font-size: clamp(28px, 7vw, 42px) !important;
+    letter-spacing: -0.025em !important;
+    line-height: 1.05 !important;
+  }
+  .hero p, .section-sub {
+    font-size: 15px !important;
+    line-height: 1.5 !important;
+  }
+
+  /* ═══ HERO CTA ROWS ═══ */
+  .hero-cta-row, .cta-row, .finale-ctas {
+    flex-direction: column !important;
+    width: 100% !important;
+    gap: 10px !important;
+  }
+  .hero-cta-row > *, .cta-row > *, .finale-ctas > *,
+  .btn-primary, .btn-wa, .btn-ghost, .btn {
+    width: 100% !important;
+    justify-content: center !important;
+    padding: 14px 20px !important;
+    font-size: 15px !important;
+    min-height: 48px !important;
+  }
+
+  /* ═══ HERO KPI ROW ═══ */
+  .hero-kpi-row {
+    flex-direction: column !important;
+    gap: 12px !important;
+    align-items: center !important;
+  }
+
+  /* ═══ NAV LINKS (hide on very small) ═══ */
+  .nav-links a:not(.btn-sm):not(.btn):not(.btn-primary):not(.btn-ghost) {
+    display: none !important;
+  }
+  .nav-links {
+    gap: 10px !important;
+  }
+
+  /* ═══ GRIDS ═══ */
+  /* Dos columnas -> una */
+  .two-sided, .comparison, .steps, .today, .vision, .graph-scene, .demo {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+  /* Tres columnas -> una o dos */
+  .features-grid {
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+  }
+  /* KPIs grid */
+  .kpi-grid, .stats-strip, .metrics-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px !important;
+  }
+  .stats-strip { border-radius: 12px !important; }
+  .stat-v, .kpi-value, .metric-num {
+    font-size: clamp(26px, 7vw, 40px) !important;
+  }
+  .stat-u, .metric-num .unit, .kpi-value .unit {
+    font-size: clamp(14px, 3.5vw, 20px) !important;
+  }
+
+  /* ═══ CARDS ═══ */
+  .card, .feature-card, .side-card, .step-item, .ph-input-card, .step {
+    padding: 18px 16px !important;
+  }
+  .side-card h3 {
+    font-size: 22px !important;
+  }
+
+  /* ═══ SECTIONS ═══ */
+  section {
+    padding: 60px 16px !important;
+  }
+
+  /* ═══ PHONE MOCKUP ═══ */
+  .phone-mock, .phone, .phone-frame {
+    width: 100% !important;
+    max-width: 340px !important;
+    margin: 0 auto !important;
+    aspect-ratio: 360 / 740 !important;
+    height: auto !important;
+  }
+  .phone-mock .phone-screen,
+  .phone .phone-screen,
+  .phone-frame .phone-screen {
+    height: 100% !important;
+  }
+
+  /* Sticky phone en /probar — no sticky en mobile, flujo normal */
+  .sim-layout .phone,
+  .phone.sticky,
+  [class*="phone"][style*="sticky"] {
+    position: static !important;
+    top: auto !important;
+  }
+
+  /* ═══ SIM LAYOUT (/probar) ═══ */
+  .sim-layout {
+    grid-template-columns: 1fr !important;
+    gap: 20px !important;
+  }
+  .sim-layout .phone {
+    order: -1 !important; /* Phone primero */
+  }
+  .backend .step {
+    padding: 14px !important;
+  }
+  .supplier {
+    flex-wrap: wrap !important;
+    gap: 4px !important;
+    font-size: 12px !important;
+  }
+  .supplier-status {
+    font-size: 10px !important;
+  }
+
+  /* ═══ TESTIMONIAL ═══ */
+  .testimonial {
+    padding: 32px 20px !important;
+  }
+  .testimonial blockquote {
+    font-size: 18px !important;
+    line-height: 1.4 !important;
+  }
+
+  /* ═══ DASHBOARD ═══ */
+  .dash-header {
+    padding: 14px 16px !important;
+    flex-wrap: wrap !important;
+    gap: 10px !important;
+  }
+  .dash-header h1 {
+    font-size: 18px !important;
+  }
+  .row {
+    grid-template-columns: 1fr !important;
+  }
+  .dash-kpis {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  .kpi { padding: 14px !important; }
+
+  /* ═══ PROBAR (/probar) ═══ */
+  .ph-wrap {
+    padding: 20px 16px 80px !important;
+  }
+  .ph-intro h1 {
+    font-size: clamp(24px, 7vw, 36px) !important;
+  }
+  .ph-input-row {
+    flex-direction: column !important;
+  }
+  .ph-go {
+    width: 100% !important;
+    padding: 14px !important;
+  }
+  .ph-examples {
+    gap: 6px !important;
+  }
+  .ph-chip {
+    font-size: 12px !important;
+    padding: 5px 10px !important;
+  }
+
+  /* ═══ PLAYGROUND ═══ */
+  .pg-embed, .pg-container {
+    padding: 0 12px !important;
+  }
+  .pg-embed-chrome {
+    flex-wrap: wrap !important;
+    padding: 10px !important;
+    gap: 6px !important;
+  }
+  .pg-embed-url {
+    font-size: 11px !important;
+  }
+  .pg-embed-iframe {
+    min-height: 500px !important;
+    height: 70vh !important;
+  }
+
+  /* ═══ FOOTER ═══ */
+  footer {
+    padding: 40px 16px 30px !important;
+  }
+  .footer-inner {
+    flex-direction: column !important;
+    text-align: center !important;
+    gap: 16px !important;
+  }
+  .footer-links {
+    justify-content: center !important;
+    flex-wrap: wrap !important;
+    gap: 14px !important;
+  }
+
+  /* ═══ TABLE / FILAS horizontales ═══ */
+  .tr {
+    grid-template-columns: 50px 1fr 80px !important;
+    gap: 4px !important;
+    padding: 8px !important;
+    font-size: 11px !important;
+  }
+  .tr > *:nth-child(n+4) {
+    display: none !important;
+  }
+  .tr.hdr > *:nth-child(n+4) {
+    display: none !important;
+  }
+
+  /* ═══ LANDING: ocultar elementos solo-desktop del mockup Safari ═══ */
+  .browser-chrome,
+  .mac-dots {
+    transform: scale(0.85) !important;
+    transform-origin: left top !important;
+  }
+
+  /* Hero logos / trust row */
+  .trust-row {
+    font-size: 9px !important;
+    gap: 12px !important;
+    margin-top: 32px !important;
+  }
+
+  /* ═══ FORMS INPUT ═══ */
+  input[type="text"], input[type="email"], input[type="tel"], textarea {
+    padding: 12px 14px !important;
+    border-radius: 10px !important;
+  }
+
+  /* ═══ IMAGES ═══ */
+  img, svg {
+    max-width: 100%;
+    height: auto;
+  }
+
+  /* Badge / pill tags */
+  .badge, .pill, .card-tag {
+    font-size: 10px !important;
+    padding: 4px 9px !important;
+  }
+
+  /* Section tags */
+  .section-tag {
+    font-size: 10px !important;
+    letter-spacing: 0.1em !important;
+  }
+}
+
+/* ═══ VERY SMALL (iPhone SE) ═══ */
+@media (max-width: 380px) {
+  .hero h1, h1.section-title, h2.section-title {
+    font-size: clamp(22px, 6vw, 30px) !important;
+  }
+  .kpi-grid, .stats-strip, .metrics-grid, .dash-kpis {
+    grid-template-columns: 1fr !important;
+  }
+  .phone-mock, .phone, .phone-frame {
+    max-width: 300px !important;
+  }
+}
+
+/* ═══ TABLET (landscape phone / small tablet) ═══ */
+@media (min-width: 601px) and (max-width: 920px) {
+  .two-sided, .comparison, .features-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  .sim-layout {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ═══ LANDSCAPE PHONE: menos padding vertical ═══ */
+@media (max-width: 920px) and (orientation: landscape) {
+  .hero {
+    padding: 70px 16px 40px !important;
+  }
+  section {
+    padding: 40px 16px !important;
+  }
+}
+
+/* ═══ FIXES ESPECIFICOS DEL LANDING REACT ═══ */
+@media (max-width: 920px) {
+  /* Hero container — asegurar no overflow */
+  #root { overflow-x: hidden !important; }
+
+  /* Navbar ObraYa */
+  nav, [class*="navbar"], [class*="header-top"] {
+    padding: 12px 14px !important;
+    gap: 8px !important;
+  }
+
+  /* Language switcher (ES/EN) no se rompe */
+  [class*="lang-switch"], [class*="lang-toggle"] {
+    font-size: 12px !important;
+  }
+
+  /* Playground embed frame — apilar bar en 2 filas */
+  .pg-embed-frame { margin: 0 !important; border-radius: 12px !important; }
+  .pg-embed-bar {
+    flex-wrap: wrap !important;
+    padding: 8px 10px !important;
+    gap: 6px !important;
+    height: auto !important;
+    min-height: 40px !important;
+  }
+  .pg-embed-dots { order: 1 !important; }
+  .pg-embed-url {
+    order: 2 !important;
+    font-size: 10px !important;
+    max-width: 100% !important;
+    flex: 1 1 140px !important;
+    padding: 4px 8px !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+  .pg-embed-live {
+    order: 4 !important;
+    font-size: 8px !important;
+    padding: 2px 6px !important;
+    flex-shrink: 0 !important;
+  }
+  .pg-embed-open {
+    order: 3 !important;
+    margin-left: 0 !important;
+    font-size: 10px !important;
+    padding: 5px 8px !important;
+    flex-shrink: 0 !important;
+  }
+  .pg-embed-open span { display: none !important; }
+  .pg-embed-iframe {
+    height: 520px !important;
+    min-height: 460px !important;
+    border-radius: 0 0 12px 12px !important;
+  }
+  .pg-embed-cta-row {
+    flex-direction: column !important;
+    padding: 14px !important;
+    gap: 10px !important;
+  }
+  .pg-embed-caption {
+    font-size: 12px !important;
+    padding: 12px !important;
+  }
+
+  /* ════════════════════════════════════════════════════
+     PLAYGROUND COMPONENTE-POR-COMPONENTE MOBILE FIX
+     ════════════════════════════════════════════════════ */
+
+  /* ── 1. Top bar (header del Playground) ────────────── */
+  .pg-top {
+    height: auto !important;
+    min-height: 52px !important;
+    padding: 8px 10px !important;
+    gap: 6px !important;
+    flex-wrap: nowrap !important;   /* no wrap — compactar todo */
+    overflow-x: auto !important;    /* si no cabe, scroll horizontal */
+    overflow-y: hidden !important;
+    scrollbar-width: none !important;
+  }
+  .pg-top::-webkit-scrollbar { display: none !important; }
+
+  /* Brand: OBRA YA + pill PLAYGROUND · demo */
+  .pg-top-brand {
+    font-size: 13px !important;
+    gap: 6px !important;
+    flex-shrink: 0 !important;
+    white-space: nowrap !important;
+  }
+  .pg-top-brand span:first-of-type {
+    font-size: 13px !important;
+    letter-spacing: -0.01em !important;
+  }
+  .pg-top-env {
+    display: none !important;       /* oculta "PLAYGROUND · demo" en móvil */
+  }
+
+  /* Search bar oculto */
+  .pg-top-search { display: none !important; }
+
+  .pg-top-spacer { flex: 1 !important; min-width: 0 !important; }
+
+  /* Site switcher compacto */
+  .pg-top-site {
+    font-size: 10px !important;
+    padding: 4px 7px !important;
+    gap: 5px !important;
+    flex-shrink: 0 !important;
+    max-width: 140px !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+  .pg-top-site span:nth-of-type(2) {
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  /* Icons en top bar — más chicos */
+  .pg-top-ic {
+    width: 28px !important;
+    height: 28px !important;
+    flex-shrink: 0 !important;
+    font-size: 13px !important;
+  }
+  .pg-top-ic .badge {
+    width: 12px !important;
+    height: 12px !important;
+    font-size: 8px !important;
+    top: 1px !important;
+    right: 1px !important;
+  }
+
+  .pg-top-avatar {
+    width: 26px !important;
+    height: 26px !important;
+    font-size: 10px !important;
+    flex-shrink: 0 !important;
+  }
+
+  /* "← Volver al sitio" compacto — solo icono en mobile muy chico */
+  .pg-top-close {
+    padding: 5px 10px !important;
+    font-size: 11px !important;
+    flex-shrink: 0 !important;
+    white-space: nowrap !important;
+  }
+
+  /* ── 2. Body layout: sidebar pasa a bottom tabs ────── */
+  .pg-body {
+    grid-template-columns: 1fr !important;
+    grid-template-rows: 1fr auto !important;
+    height: calc(100vh - 52px) !important;
+  }
+
+  /* ── 3. Sidebar → Bottom horizontal scrollable nav ──── */
+  .pg-side {
+    order: 2 !important;
+    flex-direction: row !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    border-right: none !important;
+    border-top: 1px solid var(--line) !important;
+    padding: 6px 8px !important;
+    gap: 4px !important;
+    flex-shrink: 0 !important;
+    align-items: center !important;
+    scrollbar-width: none !important;
+    background: white !important;
+    position: sticky !important;
+    bottom: 0 !important;
+    z-index: 10 !important;
+    box-shadow: 0 -4px 12px rgba(10,37,64,0.04) !important;
+  }
+  .pg-side::-webkit-scrollbar { display: none !important; }
+  .pg-side-label { display: none !important; }
+  .pg-side-group {
+    flex-direction: row !important;
+    flex-shrink: 0 !important;
+    gap: 2px !important;
+  }
+  .pg-side-item {
+    flex-shrink: 0 !important;
+    padding: 8px 10px !important;
+    font-size: 11px !important;
+    white-space: nowrap !important;
+    border-radius: 8px !important;
+    min-height: 44px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+  }
+  .pg-side-item.on::before {
+    left: auto !important;
+    top: auto !important;
+    bottom: 0 !important;
+    right: 10% !important;
+    width: 80% !important;
+    height: 2px !important;
+    border-radius: 2px 2px 0 0 !important;
+  }
+  .pg-side-ic { font-size: 14px !important; }
+  /* Oculta texto en items — solo emoji en mobile chico */
+  .pg-side-item > span:not(.pg-side-ic):not(.pg-side-badge) {
+    font-size: 10px !important;
+    max-width: 70px !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+  .pg-side-badge {
+    font-size: 9px !important;
+    padding: 1px 5px !important;
+    min-width: 16px !important;
+  }
+
+  /* Ocultar el card de crédito en mobile (ahorra mucho espacio) */
+  .pg-side > div:last-child {
+    display: none !important;
+  }
+
+  /* ── 4. Main content area ──────────────────────────── */
+  .pg-main {
+    order: 1 !important;
+    overflow-y: auto !important;
+    padding: 16px 14px 80px !important;  /* padding bottom para nav sticky */
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  /* Page header */
+  .pg-page-hdr, .pg-head {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 10px !important;
+    padding-bottom: 12px !important;
+    margin-bottom: 12px !important;
+  }
+  .pg-page-t, .pg-h1 {
+    font-size: 20px !important;
+    letter-spacing: -0.02em !important;
+  }
+  .pg-page-d, .pg-sub {
+    font-size: 12px !important;
+    max-width: 100% !important;
+  }
+  .pg-crumb {
+    font-size: 10px !important;
+    margin-bottom: 2px !important;
+  }
+
+  /* Language toggle */
+  .pg-lang-toggle {
+    align-self: flex-end !important;
+  }
+  .pg-lang-toggle button {
+    font-size: 11px !important;
+    padding: 4px 10px !important;
+    min-height: 32px !important;
+  }
+
+  /* Action buttons row */
+  .pg-head-actions {
+    width: 100% !important;
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+  }
+  .pg-btn {
+    padding: 8px 12px !important;
+    font-size: 12px !important;
+    min-height: 36px !important;
+  }
+  .pg-btn.primary { flex: 1 !important; justify-content: center !important; }
+
+  /* ── 5. KPI grids ──────────────────────────────────── */
+  .pg-grid-2 { grid-template-columns: 1fr 1fr !important; gap: 8px !important; }
+  .pg-grid-3 { grid-template-columns: 1fr 1fr !important; gap: 8px !important; }
+  .pg-grid-4 { grid-template-columns: 1fr 1fr !important; gap: 8px !important; }
+
+  /* ── 6. Cards genéricas ───────────────────────────── */
+  .pg-card {
+    padding: 12px !important;
+    border-radius: 10px !important;
+  }
+  .pg-card-hdr {
+    padding: 10px 12px !important;
+    gap: 6px !important;
+    flex-wrap: wrap !important;
+  }
+  .pg-card-t { font-size: 12px !important; }
+  .pg-card-sub { font-size: 10px !important; }
+
+  /* ── 7. Tablas: scroll horizontal ───────────────────── */
+  .pg-table {
+    font-size: 11px !important;
+    min-width: 100% !important;
+  }
+  .pg-table thead th, .pg-table tbody td {
+    padding: 6px 8px !important;
+    font-size: 11px !important;
+  }
+  /* Wrapper para hacer scroll horizontal en tablas */
+  .pg-card.pad-0 {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  /* ── 8. Tweaks panel (esquina inf. derecha) ─────── */
+  .tweaks {
+    bottom: 70px !important;         /* arriba del bottom nav */
+    right: 10px !important;
+    left: 10px !important;
+    width: auto !important;
+    max-width: 100% !important;
+  }
+
+  /* ── 9. Toast ──────────────────────────────────── */
+  .pg-toast {
+    bottom: 90px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    font-size: 12px !important;
+    max-width: 90% !important;
+  }
+
+  /* ── 10. Pipeline / stage tabs (Captura, Flujo) ───── */
+  .pipeline-tabs, .pipeline-stages,
+  [class*="stage-tabs"], [class*="step-tabs"] {
+    overflow-x: auto !important;
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    gap: 4px !important;
+    padding: 8px !important;
+    scrollbar-width: none !important;
+  }
+  .pipeline-tabs::-webkit-scrollbar,
+  .pipeline-stages::-webkit-scrollbar { display: none !important; }
+  .pipeline-tabs > *, .pipeline-stages > * {
+    flex-shrink: 0 !important;
+    font-size: 11px !important;
+    padding: 6px 10px !important;
+  }
+
+  /* ── 11. Stages de Playground (01 El pedido llega, etc) ── */
+  [class*="stage-"] > div,
+  [class*="step-tab"] {
+    padding: 10px !important;
+    font-size: 12px !important;
+  }
+
+  /* ── 12. SVG icons dentro del Playground (no gigantes) ── */
+  .pg-main svg { max-width: 100% !important; }
+
+  /* ── 13. Screen-specific content ────────────────── */
+  /* Charts: full width */
+  .pg-chart, [class*="chart"] {
+    max-width: 100% !important;
+    overflow-x: auto !important;
+  }
+  /* Long text in alerts / notifications */
+  [class*="alert"] p, [class*="alert"] .body {
+    font-size: 12px !important;
+    line-height: 1.4 !important;
+  }
+
+  /* ═══ CAPABILITY MAP — solo muestra col activa en mobile ═══ */
+  .capmap2 {
+    padding: 20px 12px 12px !important;
+  }
+
+  /* Spine horizontal scrolleable arriba */
+  .capmap2-spine {
+    height: 50px !important;
+    margin-bottom: 16px !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    scrollbar-width: none !important;
+  }
+  .capmap2-spine::-webkit-scrollbar { display: none !important; }
+  .capmap2-spine-line {
+    left: 5% !important;
+    right: 5% !important;
+  }
+  .capmap2-spine-node {
+    min-width: 60px !important;
+  }
+  .capmap2-spine-label {
+    font-size: 9px !important;
+  }
+
+  /* Solo muestra la col activa, las demás ocultas */
+  .capmap2-cols {
+    grid-template-columns: 1fr !important;
+    gap: 0 !important;
+    position: relative !important;
+  }
+  .capmap2-col {
+    display: none !important;
+    padding: 16px 14px 12px !important;
+  }
+  .capmap2-col.live {
+    display: flex !important;
+    animation: capColIn 0.4s var(--ease) !important;
+  }
+  @keyframes capColIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .capmap2-col-hdr { padding-bottom: 10px !important; }
+  .capmap2-col-name { font-size: 14px !important; }
+  .capmap2-col-n { font-size: 9px !important; }
+  .capmap2-col-ct { font-size: 9px !important; }
+
+  /* Capacidades dentro del col — stack bonito */
+  .capmap2-cap {
+    padding: 10px !important;
+    font-size: 13px !important;
+  }
+  .capmap2-cap-title { font-size: 13px !important; }
+  .capmap2-cap-desc { font-size: 11px !important; }
+
+  /* Contador de capacidades footer */
+  .capmap2-footer, .capmap2-counter {
+    font-size: 11px !important;
+    text-align: center !important;
+    margin-top: 12px !important;
+  }
+
+  /* Testimonial / quote cards */
+  .quote-block, .testimonial-quote {
+    padding: 24px 16px !important;
+  }
+
+  /* Mini whatsapp conversation */
+  .mini-wa, .mini-whatsapp {
+    max-width: 100% !important;
+    margin: 0 auto !important;
+  }
+
+  /* Floating orbs / decorative elements */
+  .hero-orb, .hero-glow, [class*="orb"] {
+    opacity: 0.4 !important;
+    transform: scale(0.7) !important;
+  }
+
+  /* KPI hero row (3 columnas) */
+  .hero-kpi-row {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 8px !important;
+    padding: 0 !important;
+  }
+  .hero-kpi-row .kpi-item,
+  .hero-kpi-row > div {
+    padding: 10px !important;
+    font-size: 11px !important;
+  }
+  .hero-kpi-row .kpi-v,
+  .hero-kpi-row .big {
+    font-size: 20px !important;
+  }
+
+  /* Tabla/listas de precios */
+  table, .pricing-table {
+    font-size: 12px !important;
+  }
+  table th, table td {
+    padding: 8px 6px !important;
+  }
+
+  /* Cards con hover — disable lift en mobile */
+  .card:hover, .feature-card:hover, .kpi:hover, .step:hover {
+    transform: none !important;
+  }
+
+  /* Touch targets minimos */
+  button, a.btn, [role="button"], .ph-chip, .quote-btn,
+  input[type="button"], input[type="submit"] {
+    min-height: 44px !important;
+    min-width: 44px !important;
+  }
+  .ph-chip { padding: 8px 14px !important; min-height: 36px !important; }
+
+  /* Chat body height en /probar */
+  .phone-screen {
+    height: 500px !important;
+    min-height: 440px !important;
+  }
+
+  /* Finale CTA card */
+  .finale {
+    padding: 28px 20px !important;
+    margin: 24px 0 !important;
+    border-radius: 16px !important;
+  }
+  .finale h2 {
+    font-size: 22px !important;
+    line-height: 1.2 !important;
+  }
+  .finale p {
+    font-size: 14px !important;
+    margin-bottom: 18px !important;
+  }
+}
+
+/* ═══ HERO MOBILE — mostrar el phone mockup WhatsApp en móvil ═══ */
+/* El CSS base oculta .hero-right en móvil; lo volvemos a mostrar */
+@media (max-width: 920px) {
+  .hero-right {
+    display: block !important;
+    margin-top: 24px !important;
+    width: 100% !important;
+  }
+  .hero-split {
+    grid-template-columns: 1fr !important;
+    gap: 20px !important;
+    padding: 80px 16px 40px !important;
+  }
+  .hero-left {
+    text-align: center !important;
+  }
+  .hero-cta-row {
+    align-items: center !important;
+  }
+  .hero-kpi-row {
+    justify-content: center !important;
+  }
+  /* Phone mockup WhatsApp — más compacto y centrado */
+  .hero-wa-stage {
+    max-width: 380px !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+  }
+  .hero-wa-label {
+    font-size: 10px !important;
+    margin-bottom: 10px !important;
+    text-align: center !important;
+  }
+  .hero-wa-device {
+    transform: none !important;
+    justify-content: center !important;
+  }
+  .hero-wa-device .wa-phone {
+    transform: scale(0.85) !important;
+    transform-origin: top center !important;
+    margin-bottom: -60px !important;
+  }
+  .hero-wa-caption {
+    font-size: 12px !important;
+    padding: 0 8px !important;
+    text-align: center !important;
+    margin-top: -40px !important;
+  }
+}
+
+/* ═══ PG MOBILE ALT — reemplaza iframe Playground en mobile ═══ */
+/* Por default (desktop) oculta el alt */
+.pg-mobile-alt { display: none; }
+
+@media (max-width: 920px) {
+  /* En mobile OCULTA el iframe y el frame completo */
+  .pg-embed-frame, .pg-embed-cta-row {
+    display: none !important;
+  }
+
+  /* MUESTRA el alt en mobile */
+  .pg-mobile-alt {
+    display: block !important;
+    background: linear-gradient(135deg, var(--paper) 0%, var(--paper-2) 100%);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 32px 24px;
+    margin: 20px 0;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .pg-mobile-alt::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 200px; height: 200px;
+    background: radial-gradient(circle, color-mix(in srgb, var(--accent) 15%, transparent) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .pg-mobile-alt-badge {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 700;
+    color: #00A95F;
+    background: rgba(0,169,95,0.1);
+    border: 1px solid rgba(0,169,95,0.25);
+    padding: 4px 10px;
+    border-radius: 999px;
+    letter-spacing: 0.08em;
+    margin-bottom: 16px;
+    position: relative;
+  }
+  .pg-mobile-alt h3 {
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+    color: var(--ink);
+    margin-bottom: 10px;
+    position: relative;
+  }
+  .pg-mobile-alt p {
+    font-size: 14px;
+    color: var(--ink-dim);
+    line-height: 1.5;
+    margin-bottom: 20px;
+    position: relative;
+  }
+  .pg-mobile-alt-ctas {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+    margin-bottom: 24px !important;
+    position: relative;
+  }
+  .pg-mobile-alt-ctas .btn {
+    width: 100% !important;
+    padding: 13px 20px !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    border-radius: 12px !important;
+    text-decoration: none !important;
+    min-height: 48px !important;
+  }
+  .pg-mobile-alt-ctas .btn-primary {
+    background: var(--accent) !important;
+    color: #fff !important;
+    box-shadow: 0 8px 20px color-mix(in srgb, var(--accent) 25%, transparent) !important;
+  }
+  .pg-mobile-alt-ctas .btn-ghost {
+    background: var(--paper) !important;
+    color: var(--ink) !important;
+    border: 1px solid var(--line-2) !important;
+  }
+  .pg-mobile-alt-steps {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 6px !important;
+    margin-top: 8px !important;
+    position: relative;
+  }
+  .pg-mobile-alt-steps > div {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 8px;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--ink-dim);
+    text-align: left;
+  }
+}
+
+/* ═══ BOTÓN FLOTANTE WhatsApp (mobile only) ═══ */
+.mobile-wa-fab {
+  display: none;
+}
+@media (max-width: 920px) {
+  .mobile-wa-fab {
+    display: flex !important;
+    position: fixed !important;
+    bottom: 18px !important;
+    right: 18px !important;
+    width: 56px !important;
+    height: 56px !important;
+    border-radius: 50% !important;
+    background: #25D366 !important;
+    color: #fff !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-shadow: 0 8px 24px rgba(37,211,102,0.4) !important;
+    z-index: 9999 !important;
+    text-decoration: none !important;
+    animation: fabPulse 3s infinite !important;
+  }
+  @keyframes fabPulse {
+    0%, 100% { box-shadow: 0 8px 24px rgba(37,211,102,0.4); }
+    50% { box-shadow: 0 8px 32px rgba(37,211,102,0.65); }
+  }
+}

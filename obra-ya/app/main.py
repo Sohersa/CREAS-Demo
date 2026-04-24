@@ -15,7 +15,7 @@ from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 
 from app.database import crear_tablas
-from app.routers import webhook, admin, simulador, landing, portal, portal_api, dashboard, pagos, presupuesto, aprobaciones, credito, auth, hub, precios, dashboard_v2
+from app.routers import webhook, admin, simulador, landing, portal, portal_api, dashboard, pagos, presupuesto, aprobaciones, credito, auth, hub, precios, dashboard_v2, demo
 from app.services.scheduler import iniciar_scheduler
 from app.services.seed_demo import sembrar_datos_demo
 
@@ -65,6 +65,12 @@ _static_dir = Path(__file__).resolve().parent.parent / "static"
 if _static_dir.exists():
     app.mount("/static", StaticFiles(directory=str(_static_dir)), name="static")
 
+# Mount adicional: Landing.html usa paths relativos como "design/tokens.css"
+# que desde / se resuelven a "/design/tokens.css". Servimos esa ruta.
+_design_inner = _static_dir / "design" / "design"
+if _design_inner.exists():
+    app.mount("/design", StaticFiles(directory=str(_design_inner)), name="design_assets")
+
 
 @app.get("/landing")
 def serve_landing():
@@ -76,12 +82,86 @@ def serve_landing():
 
 
 @app.get("/playground")
+@app.get("/Playground.html")
 def serve_playground():
     """Playground interactivo — visualiza el flujo end-to-end."""
     f = _static_dir / "design" / "Playground.html"
     if f.exists():
         return FileResponse(str(f))
     return JSONResponse({"error": "Playground not found"}, status_code=404)
+
+
+@app.get("/Landing.html")
+def serve_landing_explicit():
+    """El iframe puede pedir Landing.html explicitamente."""
+    f = _static_dir / "design" / "Landing.html"
+    if f.exists():
+        return FileResponse(str(f))
+    return JSONResponse({"error": "Landing not found"}, status_code=404)
+
+
+@app.get("/probar")
+@app.get("/Probar.html")
+def serve_probar():
+    """Pagina interactiva que simula el flujo completo de cotizacion."""
+    f = _static_dir / "design" / "Probar.html"
+    if f.exists():
+        return FileResponse(str(f))
+    return RedirectResponse(url="/", status_code=307)
+
+
+# Rutas mock del Landing — redirigen a las paginas reales del portal
+from fastapi.responses import RedirectResponse
+
+
+@app.get("/residente")
+@app.get("/residente/{path:path}")
+def ir_portal_residente(path: str = ""):
+    """URLs del Landing mockup que van al portal real de residente."""
+    return RedirectResponse(url="/portal", status_code=307)
+
+
+@app.get("/proveedor")
+@app.get("/proveedor/{path:path}")
+def ir_portal_proveedor(path: str = ""):
+    """URLs del Landing mockup que van al portal real de proveedor."""
+    return RedirectResponse(url="/portal", status_code=307)
+
+
+@app.get("/ops")
+@app.get("/ops/{path:path}")
+def ir_admin_ops(path: str = ""):
+    """URLs del Landing mockup que van al admin/dashboard."""
+    return RedirectResponse(url="/dashboard", status_code=307)
+
+
+@app.get("/demo")
+def ir_demo():
+    """Atajo a la demo interactiva."""
+    return RedirectResponse(url="/playground", status_code=307)
+
+
+@app.get("/app")
+@app.get("/app/{path:path}")
+def ir_app(path: str = ""):
+    """Atajo: app.obraya.mx -> portal."""
+    return RedirectResponse(url="/portal", status_code=307)
+
+
+# 404 handler — en vez de JSON feo, redirige al Landing
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import HTMLResponse
+
+
+@app.exception_handler(404)
+async def not_found_handler(request: Request, exc):
+    """Cualquier 404 redirige al Landing (excepto rutas API)."""
+    path = request.url.path
+    if path.startswith("/api/") or path.startswith("/admin/api/") or path.startswith("/webhook/"):
+        # APIs sí devuelven JSON 404
+        return JSONResponse({"detail": "Not Found", "path": path}, status_code=404)
+    # Rutas web → Landing
+    return RedirectResponse(url="/", status_code=307)
 
 # Registrar routers — landing va al final para que "/" no sobreescriba otros
 app.include_router(auth.router)
@@ -99,6 +179,7 @@ app.include_router(credito.router)
 app.include_router(precios.router)
 app.include_router(hub.router)
 app.include_router(dashboard_v2.router)
+app.include_router(demo.router)
 
 
 @app.on_event("startup")
@@ -110,33 +191,40 @@ async def startup():
     sembrar_datos_demo()
     await iniciar_scheduler()
 
-    # Validar WhatsApp — si esta mal configurado, ALERTA en logs pero no crashea
-    try:
-        from app.services.whatsapp_health import verificar_whatsapp
-        wa = await verificar_whatsapp()
-        if wa["ok"]:
-            det = wa.get("detalles", {})
-            logging.info(
-                f"WhatsApp OK — {det.get('phone_number', '?')} "
-                f"({det.get('verified_name', '?')}) quality={det.get('quality_rating', '?')}"
-            )
-        else:
-            logging.critical("=" * 70)
-            logging.critical(f"WHATSAPP NO OPERATIVO — status: {wa['status']}")
-            logging.critical(f"Mensaje: {wa['mensaje']}")
-            if wa.get("sugerencia"):
-                logging.critical(f"Sugerencia: {wa['sugerencia']}")
-            logging.critical("Consulta /admin/api/whatsapp/health para mas detalles")
-            logging.critical("=" * 70)
-    except Exception as e:
-        logging.warning(f"No se pudo validar estado de WhatsApp: {e}")
+    # Validar WhatsApp en background (no bloquea startup)
+    async def _validar_whatsapp_bg():
+        try:
+            from app.services.whatsapp_health import verificar_whatsapp
+            wa = await verificar_whatsapp()
+            if wa["ok"]:
+                det = wa.get("detalles", {})
+                logging.info(
+                    f"WhatsApp OK — {det.get('phone_number', '?')} "
+                    f"({det.get('verified_name', '?')}) quality={det.get('quality_rating', '?')}"
+                )
+            else:
+                logging.warning(f"WhatsApp status: {wa['status']} — {wa.get('mensaje', '')}")
+        except Exception as e:
+            logging.warning(f"No se pudo validar estado de WhatsApp: {e}")
+
+    import asyncio
+    asyncio.create_task(_validar_whatsapp_bg())
 
 
 @app.get("/health")
-async def health():
+def health():
     """
-    Health check para monitoreo — Railway, uptime bots, etc.
-    Verifica: BD, configuracion, y estado de WhatsApp (token valido).
+    Health check rapido para Railway — SOLO verifica que el proceso este up.
+    No hace llamadas externas. El healthcheck completo esta en /health/full.
+    """
+    return {"status": "ok", "version": "0.3.0"}
+
+
+@app.get("/health/full")
+async def health_full():
+    """
+    Health check completo — BD + WhatsApp.
+    NO usar para healthchecks de Railway (hace llamadas externas con latency).
     """
     from app.database import SessionLocal
     try:

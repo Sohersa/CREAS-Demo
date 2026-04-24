@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="es" translate="no">
+<head>
+<meta charset="UTF-8">
+<title>Probar ObraYa · Simulación interactiva</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="google" content="notranslate">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/design/design/tokens.css">
+<link rel="stylesheet" href="/static/design/design/components.css">
+<link rel="stylesheet" href="/static/design/design/mobile.css?v=1">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--paper);
+    font-family: var(--font-sans);
+    min-height: 100vh;
+  }
+
+  /* Header */
+  .ph-header {
+    padding: 18px 32px;
+    border-bottom: 1px solid var(--line);
+    background: var(--paper);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .ph-brand {
+    display: flex; align-items: center; gap: 10px;
+    text-decoration: none; color: var(--ink);
+    font-weight: 600; font-size: 18px; letter-spacing: -0.02em;
+  }
+  .ph-brand-dot {
+    width: 20px; height: 20px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--orange));
+  }
+  .ph-back {
+    color: var(--ink-dim); text-decoration: none; font-size: 14px;
+  }
+
+  .ph-wrap {
+    max-width: 1100px; margin: 0 auto;
+    padding: 40px 24px 100px;
+  }
+
+  .ph-intro {
+    text-align: center;
+    margin-bottom: 32px;
+  }
+  .ph-intro h1 {
+    font-size: clamp(32px, 4vw, 48px);
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    line-height: 1.05;
+    margin-bottom: 12px;
+  }
+  .ph-intro h1 .acc { color: var(--accent); }
+  .ph-intro p {
+    color: var(--ink-dim);
+    font-size: 17px;
+    max-width: 620px;
+    margin: 0 auto;
+    line-height: 1.5;
+  }
+
+  /* Material picker */
+  .ph-input-card {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: var(--r-3);
+    padding: 24px;
+    margin-bottom: 32px;
+    box-shadow: 0 1px 3px rgba(10,37,64,0.04);
+  }
+  .ph-input-card h3 {
+    font-size: 14px; font-weight: 600;
+    color: var(--ink-muted); letter-spacing: 0.05em;
+    text-transform: uppercase; margin-bottom: 14px;
+  }
+  .ph-input-row {
+    display: flex; gap: 10px;
+  }
+  .ph-input {
+    flex: 1;
+    padding: 14px 16px;
+    border: 1px solid var(--line-2);
+    border-radius: var(--r-2);
+    font-family: var(--font-sans);
+    font-size: 16px;
+    color: var(--ink);
+    background: var(--paper);
+  }
+  .ph-input:focus {
+    outline: none; border-color: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 15%, transparent);
+  }
+  .ph-go {
+    padding: 14px 24px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: var(--r-2);
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .ph-go:hover { background: var(--accent-ink); transform: translateY(-1px); }
+  .ph-go:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .ph-examples {
+    display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px;
+  }
+  .ph-chip {
+    padding: 6px 12px;
+    background: var(--paper-2);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    font-size: 13px;
+    color: var(--ink-dim);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .ph-chip:hover { background: var(--accent-soft); color: var(--accent-ink); border-color: var(--accent); }
+
+  /* Simulation layout */
+  .sim-layout {
+    display: grid;
+    grid-template-columns: 400px 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+  @media (max-width: 820px) {
+    .sim-layout { grid-template-columns: 1fr; }
+  }
+
+  /* WhatsApp phone */
+  .phone {
+    background: #121212;
+    border-radius: 32px;
+    padding: 10px;
+    box-shadow: 0 20px 60px rgba(10,37,64,0.15),
+                inset 0 0 0 1px rgba(255,255,255,0.06);
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto;
+    position: sticky;
+    top: 100px;
+  }
+  .phone-screen {
+    background: #0b141a;
+    border-radius: 24px;
+    overflow: hidden;
+    height: 640px;
+    display: flex;
+    flex-direction: column;
+  }
+  .phone-hdr {
+    background: #1f2c34;
+    padding: 16px 14px;
+    display: flex; align-items: center; gap: 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+  .phone-av {
+    width: 38px; height: 38px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--orange));
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-weight: 600; font-size: 16px;
+  }
+  .phone-name { color: #e9edef; font-size: 15px; font-weight: 500; }
+  .phone-status { color: #25d366; font-size: 11px; }
+  .phone-body {
+    flex: 1;
+    background: #0b141a;
+    padding: 14px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    overflow-y: auto;
+    scroll-behavior: smooth;
+  }
+  .msg {
+    max-width: 80%;
+    padding: 8px 12px;
+    border-radius: 10px;
+    font-size: 13px;
+    line-height: 1.4;
+    color: #e9edef;
+    opacity: 0;
+    transform: translateY(6px);
+    animation: msgIn 0.3s forwards;
+  }
+  @keyframes msgIn {
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .msg-u { background: #005c4b; align-self: flex-end; border-bottom-right-radius: 3px; }
+  .msg-b { background: #1f2c33; align-self: flex-start; border-bottom-left-radius: 3px; }
+  .msg-time { font-size: 10px; color: rgba(233,237,239,0.5); margin-top: 2px; text-align: right; }
+  .typing {
+    align-self: flex-start;
+    background: #1f2c33;
+    padding: 10px 14px;
+    border-radius: 10px;
+    border-bottom-left-radius: 3px;
+    display: flex;
+    gap: 4px;
+  }
+  .typing span {
+    width: 6px; height: 6px; border-radius: 50%; background: #8696a0;
+    animation: typingBounce 1.2s infinite;
+  }
+  .typing span:nth-child(2) { animation-delay: 0.2s; }
+  .typing span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes typingBounce {
+    0%, 60%, 100% { opacity: 0.3; transform: translateY(0); }
+    30% { opacity: 1; transform: translateY(-4px); }
+  }
+  .quote-card {
+    background: #1f2c33;
+    border-radius: 8px;
+    padding: 10px;
+    margin-top: 4px;
+    border-left: 2px solid var(--accent);
+    font-size: 12px;
+  }
+  .quote-row { display: flex; justify-content: space-between; padding: 4px 0; }
+  .quote-row.win { color: var(--accent); font-weight: 600; }
+  .quote-row.win::before { content: '→ '; }
+  .quote-btn {
+    display: block; width: 100%; margin-top: 6px;
+    padding: 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1);
+    background: transparent; color: #e9edef; cursor: pointer;
+    font-family: inherit; font-size: 12px;
+    transition: all 0.15s;
+  }
+  .quote-btn:hover { background: rgba(99,91,255,0.15); border-color: var(--accent); }
+  .quote-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+  /* Backend panel */
+  .backend {
+    display: flex; flex-direction: column; gap: 16px;
+  }
+  .step {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: var(--r-3);
+    padding: 20px;
+    opacity: 0.4;
+    transition: all 0.4s;
+  }
+  .step.active {
+    opacity: 1;
+    border-color: var(--accent);
+    box-shadow: 0 8px 30px rgba(99,91,255,0.12);
+  }
+  .step.done {
+    opacity: 1;
+    border-color: #00A95F;
+  }
+  .step-title {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 8px;
+  }
+  .step-icon {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--paper-2);
+    color: var(--ink-muted);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 600;
+    transition: all 0.3s;
+  }
+  .step.active .step-icon {
+    background: var(--accent);
+    color: #fff;
+    animation: stepPulse 2s infinite;
+  }
+  .step.done .step-icon {
+    background: #00A95F;
+    color: #fff;
+  }
+  @keyframes stepPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(99,91,255,0.4); }
+    50% { box-shadow: 0 0 0 8px rgba(99,91,255,0); }
+  }
+  .step-label { font-size: 14px; font-weight: 600; color: var(--ink); }
+  .step-detail {
+    margin-left: 40px;
+    font-size: 13px;
+    color: var(--ink-dim);
+    line-height: 1.5;
+  }
+  .supplier-list {
+    margin-top: 12px; display: flex; flex-direction: column; gap: 8px;
+  }
+  .supplier {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 12px; background: var(--paper-2);
+    border-radius: var(--r-2);
+    font-size: 13px;
+    transition: all 0.3s;
+  }
+  .supplier.responded {
+    background: rgba(0,169,95,0.08);
+    border: 1px solid rgba(0,169,95,0.25);
+  }
+  .supplier-status {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--ink-muted);
+  }
+  .supplier.responded .supplier-status {
+    color: #00A95F; font-weight: 500;
+  }
+  .supplier-dot {
+    display: inline-block; width: 7px; height: 7px;
+    border-radius: 50%; background: #ccc; margin-right: 6px;
+  }
+  .supplier.contacting .supplier-dot {
+    background: var(--amber);
+    animation: dotPulse 1.2s infinite;
+  }
+  .supplier.responded .supplier-dot { background: #00A95F; }
+  @keyframes dotPulse {
+    0%, 100% { opacity: 1; } 50% { opacity: 0.3; }
+  }
+
+  /* CTA al final */
+  .finale {
+    margin-top: 40px;
+    padding: 40px;
+    background: linear-gradient(135deg, var(--accent-soft) 0%, #FFF0E8 100%);
+    border-radius: var(--r-4);
+    text-align: center;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.6s var(--ease);
+  }
+  .finale.show { opacity: 1; transform: translateY(0); }
+  .finale h2 {
+    font-size: 32px; font-weight: 600;
+    letter-spacing: -0.02em; color: var(--ink);
+    margin-bottom: 8px;
+  }
+  .finale h2 .acc { color: var(--accent); }
+  .finale p {
+    color: var(--ink-dim); font-size: 16px;
+    margin-bottom: 24px;
+  }
+  .finale-ctas {
+    display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;
+  }
+  .btn {
+    padding: 12px 24px;
+    border-radius: var(--r-2);
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+    border: none;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+  }
+  .btn-primary:hover { background: var(--accent-ink); }
+  .btn-wa {
+    background: #25D366;
+    color: #fff;
+  }
+  .btn-wa:hover { background: #20BA5A; }
+  .btn-ghost {
+    background: var(--paper);
+    color: var(--ink);
+    border: 1px solid var(--line-2);
+  }
+
+  .hidden { display: none; }
+</style>
+</head>
+<body data-accent="violet">
+
+<header class="ph-header">
+  <a href="/" class="ph-brand">
+    <span class="ph-brand-dot"></span>
+    OBRA YA
+  </a>
+  <a href="/" class="ph-back">← Volver al inicio</a>
+</header>
+
+<main class="ph-wrap">
+  <div class="ph-intro">
+    <h1>Prueba <span class="acc">ObraYa</span> en 60 segundos</h1>
+    <p>Escribe qué material necesitas como si le hablaras a tu proveedor. Mira cómo el agente lo cotiza con proveedores reales, compara precios y cierra la orden.</p>
+  </div>
+
+  <!-- Input -->
+  <div class="ph-input-card" id="input-card">
+    <h3>¿Qué material necesitas para tu obra?</h3>
+    <div class="ph-input-row">
+      <input type="text" class="ph-input" id="material-input"
+             placeholder="Ej: 15m³ de concreto f'c 250 para mañana en Zapopan"
+             maxlength="200">
+      <button class="ph-go" id="start-btn">Simular →</button>
+    </div>
+    <div class="ph-examples">
+      <span class="ph-chip" data-ex="15m³ de concreto f'c 250 para mañana en Zapopan">Concreto</span>
+      <span class="ph-chip" data-ex="200 varillas del 3/8 grado 42 en Tlaquepaque">Varilla</span>
+      <span class="ph-chip" data-ex="3 viajes de grava 3/4 para miércoles, GDL">Grava</span>
+      <span class="ph-chip" data-ex="500 blocks de 15cm en Zapopan, urgente">Block</span>
+      <span class="ph-chip" data-ex="100 bultos de cemento gris CPC-30R en Tonalá">Cemento</span>
+    </div>
+  </div>
+
+  <!-- Simulation -->
+  <div class="sim-layout hidden" id="sim">
+    <div class="phone">
+      <div class="phone-screen">
+        <div class="phone-hdr">
+          <div class="phone-av">O</div>
+          <div>
+            <div class="phone-name">ObraYa</div>
+            <div class="phone-status">● en línea</div>
+          </div>
+        </div>
+        <div class="phone-body" id="chat"></div>
+      </div>
+    </div>
+
+    <div class="backend">
+      <div class="step" id="step-1">
+        <div class="step-title">
+          <div class="step-icon">1</div>
+          <div class="step-label">Entendí tu pedido</div>
+        </div>
+        <div class="step-detail" id="s1-detail">Esperando mensaje…</div>
+      </div>
+
+      <div class="step" id="step-2">
+        <div class="step-title">
+          <div class="step-icon">2</div>
+          <div class="step-label">Contacto a 5 proveedores en paralelo</div>
+        </div>
+        <div class="step-detail">
+          El agente les manda WhatsApp a todos al mismo tiempo pidiendo cotización.
+        </div>
+        <div class="supplier-list" id="suppliers"></div>
+      </div>
+
+      <div class="step" id="step-3">
+        <div class="step-title">
+          <div class="step-icon">3</div>
+          <div class="step-label">Comparo precios + califico proveedores</div>
+        </div>
+        <div class="step-detail">
+          Saco precio total, tiempo de entrega, calificación histórica y recomiendo la mejor opción.
+        </div>
+      </div>
+
+      <div class="step" id="step-4">
+        <div class="step-title">
+          <div class="step-icon">4</div>
+          <div class="step-label">Eliges con un botón</div>
+        </div>
+        <div class="step-detail">
+          La orden se crea, el proveedor recibe aviso, el residente lo sigue en WhatsApp.
+        </div>
+      </div>
+
+      <div class="step" id="step-5">
+        <div class="step-title">
+          <div class="step-icon">5</div>
+          <div class="step-label">Entrega y confirmación</div>
+        </div>
+        <div class="step-detail">
+          Avisos automáticos: "En camino", "Llegó a la obra", confirmación de recepción, calificación.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="finale hidden" id="finale">
+    <h2>¿Te late? <span class="acc">Probarlo de verdad</span> es igual de fácil.</h2>
+    <p>Manda tu pedido real al número de ObraYa en WhatsApp. Sin app, sin cuenta, sin costo.</p>
+    <div class="finale-ctas">
+      <a href="https://wa.me/5213318526297?text=Hola%2C+quiero+cotizar+material+real" class="btn btn-wa" id="cta-wa">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 14.4c-.3-.1-1.7-.8-2-.9-.3-.1-.5-.2-.7.2-.2.3-.7.9-.9 1.1-.2.2-.3.2-.6.1-.3-.1-1.2-.4-2.3-1.4-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.5.1-.6.1-.1.3-.3.4-.5.1-.1.2-.3.2-.4 0-.2 0-.3-.1-.5 0-.1-.6-1.5-.9-2.1-.2-.5-.5-.5-.7-.5H7.7c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.4 0 1.4 1 2.8 1.2 3 .1.2 2.1 3.1 5 4.3.7.3 1.2.5 1.7.6.7.2 1.3.2 1.8.1.6-.1 1.7-.7 1.9-1.3.2-.7.2-1.2.2-1.3 0-.2-.3-.3-.6-.4zM12 2C6.5 2 2 6.5 2 12c0 1.7.5 3.4 1.3 4.8L2 22l5.2-1.3C8.6 21.5 10.3 22 12 22c5.5 0 10-4.5 10-10S17.5 2 12 2z"/></svg>
+        Cotizar en WhatsApp
+      </a>
+      <button class="btn btn-ghost" id="retry-btn">Probar otro material</button>
+    </div>
+  </div>
+</main>
+
+<script>
+(function() {
+  const SUPPLIERS = [
+    { name: "Concretos JAL", base: 42500, time: "24h", rating: 4.6, delay: 4200 },
+    { name: "CEMEX Guadalajara", base: 45200, time: "Mañana 7AM", rating: 4.8, delay: 2800 },
+    { name: "Materiales GDL", base: 47800, time: "48h", rating: 4.2, delay: 6500 },
+    { name: "Holcim Apasco GDL", base: 46000, time: "Mañana 10AM", rating: 4.5, delay: 5200 },
+    { name: "Concretos del Bajío", base: 48500, time: "3 días", rating: 3.9, delay: 3500 },
+  ];
+
+  const $ = (id) => document.getElementById(id);
+  const chat = () => $("chat");
+  const input = $("material-input");
+  const startBtn = $("start-btn");
+
+  $("material-input").addEventListener("keydown", e => {
+    if (e.key === "Enter") startBtn.click();
+  });
+
+  document.querySelectorAll(".ph-chip").forEach(c => {
+    c.addEventListener("click", () => { input.value = c.dataset.ex; input.focus(); });
+  });
+
+  startBtn.addEventListener("click", async () => {
+    const txt = input.value.trim();
+    if (!txt) return;
+    $("input-card").classList.add("hidden");
+    $("sim").classList.remove("hidden");
+    // Track lead
+    try {
+      fetch("/api/demo/track", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ mensaje: txt, origen: "probar" }),
+      }).catch(() => {});
+    } catch(e) {}
+    await runSimulation(txt);
+  });
+
+  $("retry-btn")?.addEventListener("click", () => location.reload());
+
+  function addMsg(kind, html) {
+    const el = document.createElement("div");
+    el.className = "msg " + (kind === "u" ? "msg-u" : "msg-b");
+    el.innerHTML = html + `<div class="msg-time">${nowTime()}</div>`;
+    chat().appendChild(el);
+    chat().scrollTop = chat().scrollHeight;
+    return el;
+  }
+
+  function addTyping() {
+    const el = document.createElement("div");
+    el.className = "typing";
+    el.innerHTML = "<span></span><span></span><span></span>";
+    chat().appendChild(el);
+    chat().scrollTop = chat().scrollHeight;
+    return el;
+  }
+
+  function removeTyping(el) { el?.remove(); }
+
+  function nowTime() {
+    const d = new Date();
+    return String(d.getHours()).padStart(2,'0') + ":" + String(d.getMinutes()).padStart(2,'0');
+  }
+
+  const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+  function setStep(n, state) {
+    const el = $("step-" + n);
+    if (!el) return;
+    el.classList.remove("active", "done");
+    if (state) el.classList.add(state);
+  }
+
+  async function runSimulation(mensaje) {
+    // === Scene 1: user message ===
+    addMsg("u", escape(mensaje));
+    await sleep(400);
+
+    setStep(1, "active");
+    let typing = addTyping();
+    await sleep(900);
+    removeTyping(typing);
+
+    addMsg("b", "Recibido 👍 Déjame interpretar tu pedido...");
+    await sleep(800);
+
+    // Parse message (simple heuristics for demo)
+    const parsed = parsePedido(mensaje);
+    $("s1-detail").innerHTML = `
+      <b>Producto:</b> ${parsed.producto}<br>
+      <b>Cantidad:</b> ${parsed.cantidad}<br>
+      <b>Entrega:</b> ${parsed.fecha}<br>
+      <b>Zona:</b> ${parsed.zona}
+    `;
+    setStep(1, "done");
+    await sleep(300);
+
+    // === Scene 2: contact suppliers ===
+    setStep(2, "active");
+    typing = addTyping();
+    await sleep(800);
+    removeTyping(typing);
+    addMsg("b", "Contactando 5 proveedores de <b>" + parsed.zona + "</b>... dame 2-3 min ⏱️");
+
+    const supplierListEl = $("suppliers");
+    supplierListEl.innerHTML = "";
+    const responses = [];
+    // Seed deterministic order based on message hash
+    const seed = [...mensaje].reduce((a,c) => a + c.charCodeAt(0), 0);
+    const shuffled = [...SUPPLIERS].sort(() => ((seed % 7) - 3.5) * 0.01 + Math.random() - 0.5);
+
+    shuffled.forEach((s, i) => {
+      const row = document.createElement("div");
+      row.className = "supplier contacting";
+      row.innerHTML = `<span><span class="supplier-dot"></span>${s.name}</span><span class="supplier-status">esperando...</span>`;
+      row.id = "sup-" + i;
+      supplierListEl.appendChild(row);
+    });
+
+    // Simulate parallel responses (realistic timing)
+    const speedupFactor = 0.45;
+    const responsePromises = shuffled.map((s, i) => (async () => {
+      await sleep(s.delay * speedupFactor);
+      const variance = 1 + ((seed + i) % 13) / 100 - 0.06;
+      const total = Math.round(s.base * parsed.multiplier * variance / 100) * 100;
+      const row = $("sup-" + i);
+      row.classList.remove("contacting");
+      row.classList.add("responded");
+      row.innerHTML = `<span><span class="supplier-dot"></span>${s.name}</span><span class="supplier-status">$${total.toLocaleString('es-MX')} · ${s.time}</span>`;
+      responses.push({ ...s, total, i });
+    })());
+
+    await Promise.all(responsePromises);
+    setStep(2, "done");
+    await sleep(400);
+
+    // === Scene 3: compare ===
+    setStep(3, "active");
+    typing = addTyping();
+    await sleep(900);
+    removeTyping(typing);
+
+    responses.sort((a, b) => a.total - b.total);
+    const best = responses[0];
+    const savings = responses[responses.length-1].total - best.total;
+
+    let html = `<b>Pedido #${Math.floor(1000 + Math.random()*9000)} — ${responses.length} opciones:</b>`;
+    html += `<div class="quote-card">`;
+    responses.slice(0, 4).forEach((r, idx) => {
+      html += `<div class="quote-row${idx === 0 ? ' win' : ''}"><span>${r.name}</span><span>$${r.total.toLocaleString('es-MX')}</span></div>`;
+    });
+    html += `</div>`;
+    html += `<div style="font-size:11px;color:#4ade80;margin-top:6px;">Ahorras $${savings.toLocaleString('es-MX')} vs el más caro</div>`;
+
+    html += `<button class="quote-btn" data-choice="${best.name}">✓ Elegir ${best.name}</button>`;
+    html += `<button class="quote-btn" data-choice="${responses[1].name}">Elegir ${responses[1].name}</button>`;
+
+    const msgEl = addMsg("b", html);
+    setStep(3, "done");
+
+    // Wait for user to click
+    await new Promise(resolve => {
+      msgEl.querySelectorAll(".quote-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          msgEl.querySelectorAll(".quote-btn").forEach(b => b.disabled = true);
+          btn.classList.add("active");
+          resolve(btn.dataset.choice);
+        });
+      });
+    });
+
+    // User chose
+    const chosen = msgEl.querySelector(".quote-btn.active").dataset.choice;
+    await sleep(400);
+    addMsg("u", chosen + " 👍");
+    await sleep(800);
+
+    setStep(4, "active");
+    typing = addTyping();
+    await sleep(900);
+    removeTyping(typing);
+    addMsg("b", `✅ Orden confirmada con <b>${chosen}</b><br>Entrega: ${best.time}<br>Total: <b>$${best.total.toLocaleString('es-MX')} MXN</b>`);
+    setStep(4, "done");
+    await sleep(600);
+
+    // === Scene 5: delivery ===
+    setStep(5, "active");
+    typing = addTyping();
+    await sleep(700);
+    removeTyping(typing);
+    addMsg("b", `Chofer: <b>Juan Ramírez</b> · Placas: <b>ABC-1234</b><br>Va en camino 🚚`);
+    await sleep(1200);
+    addMsg("b", `📍 A 12 minutos de tu obra...`);
+    await sleep(1000);
+    addMsg("b", `🏗️ Llegó a tu obra. Responde *OK* cuando recibas todo.`);
+    await sleep(600);
+    addMsg("u", "Todo OK, gracias 🙌");
+    await sleep(700);
+    addMsg("b", `Perfecto, orden cerrada. ¿Cómo calificas el servicio del 1 al 5?`);
+    setStep(5, "done");
+
+    await sleep(600);
+    $("finale").classList.remove("hidden");
+    await sleep(100);
+    $("finale").classList.add("show");
+    // Scroll a CTA
+    setTimeout(() => $("finale").scrollIntoView({behavior: "smooth", block: "center"}), 300);
+  }
+
+  // === Parse utils ===
+  function parsePedido(txt) {
+    const t = txt.toLowerCase();
+    let producto = "Material de construcción";
+    let multiplier = 1;
+
+    if (/concreto|cemento premezclado/.test(t)) { producto = "Concreto premezclado"; multiplier = 1; }
+    else if (/varilla/.test(t)) { producto = "Varilla corrugada"; multiplier = 0.8; }
+    else if (/grava|arena|agregad/.test(t)) { producto = "Agregados (grava/arena)"; multiplier = 0.5; }
+    else if (/block/.test(t)) { producto = "Block de concreto"; multiplier = 0.3; }
+    else if (/cemento/.test(t)) { producto = "Cemento en saco"; multiplier = 0.6; }
+
+    const cantMatch = t.match(/(\d+(?:\.\d+)?)\s*(m[³3]|m2|varillas|piezas|bultos|viajes|blocks?|metros|kg|toneladas?)/);
+    const cantidad = cantMatch ? `${cantMatch[1]} ${cantMatch[2].replace('3','³')}` : "Según especifiques";
+    if (cantMatch) multiplier *= Math.max(1, Number(cantMatch[1]) / 10);
+
+    let zona = "Guadalajara";
+    if (/zapopan/.test(t)) zona = "Zapopan";
+    else if (/tlaquepaque/.test(t)) zona = "Tlaquepaque";
+    else if (/tonal[aá]/.test(t)) zona = "Tonalá";
+    else if (/tlajomulco/.test(t)) zona = "Tlajomulco";
+
+    let fecha = "Lo antes posible";
+    if (/ma[nñ]ana/.test(t)) fecha = "Mañana";
+    else if (/hoy/.test(t)) fecha = "Hoy mismo";
+    else if (/urgente/.test(t)) fecha = "Urgente (mismo día)";
+    else if (/mi[eé]rcoles/.test(t)) fecha = "Miércoles";
+    else if (/jueves/.test(t)) fecha = "Jueves";
+
+    return { producto, cantidad, fecha, zona, multiplier: Math.max(0.8, Math.min(multiplier, 12)) };
+  }
+
+  function escape(s) {
+    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+})();
+</script>
+
+<a class="mobile-wa-fab" href="https://wa.me/5213318526297?text=Hola%2C%20quiero%20cotizar%20material" aria-label="Abrir WhatsApp">
+  <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 14.4c-.3-.1-1.7-.8-2-.9-.3-.1-.5-.2-.7.2-.2.3-.7.9-.9 1.1-.2.2-.3.2-.6.1-.3-.1-1.2-.4-2.3-1.4-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.5.1-.6.1-.1.3-.3.4-.5.1-.1.2-.3.2-.4 0-.2 0-.3-.1-.5 0-.1-.6-1.5-.9-2.1-.2-.5-.5-.5-.7-.5H7.7c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.4 0 1.4 1 2.8 1.2 3 .1.2 2.1 3.1 5 4.3.7.3 1.2.5 1.7.6.7.2 1.3.2 1.8.1.6-.1 1.7-.7 1.9-1.3.2-.7.2-1.2.2-1.3 0-.2-.3-.3-.6-.4zM12 2C6.5 2 2 6.5 2 12c0 1.7.5 3.4 1.3 4.8L2 22l5.2-1.3C8.6 21.5 10.3 22 12 22c5.5 0 10-4.5 10-10S17.5 2 12 2z"/></svg>
+</a>
+</body>
+</html>
